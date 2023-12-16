@@ -1,26 +1,10 @@
 package sofia
 
 import (
+   "bytes"
    "encoding/binary"
    "io"
 )
-
-func (b *Box) Decode(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Header.Size)
-   if err != nil {
-      return err
-   }
-   _, err = r.Read(b.Header.Type[:])
-   if err != nil {
-      return err
-   }
-   b.Payload = make([]byte, b.Header.Size)
-   _, err = r.Read(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
 
 // aligned(8) class BoxHeader (
 // unsigned int(32) boxtype,
@@ -50,4 +34,40 @@ type BoxHeader struct {
 type Box struct {
    Header BoxHeader
    Payload []byte
+}
+
+func (b Box) Type() string {
+   return string(b.Header.Type[:])
+}
+
+func (b Box) Boxes() ([]Box, error) {
+   r := bytes.NewReader(b.Payload)
+   var vs []Box
+   for {
+      var v Box
+      err := v.Decode(r)
+      if err == io.EOF {
+         return vs, nil
+      } else if err != nil {
+         return nil, err
+      }
+      vs = append(vs, v)
+   }
+}
+
+func (b *Box) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Header.Size)
+   if err != nil {
+      return err
+   }
+   _, err = r.Read(b.Header.Type[:])
+   if err != nil {
+      return err
+   }
+   b.Payload = make([]byte, b.Header.Size)
+   _, err = r.Read(b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
 }

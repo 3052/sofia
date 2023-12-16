@@ -12,11 +12,11 @@ func Test_Moof(t *testing.T) {
       t.Fatal(err)
    }
    defer f.Close()
-   var moof MovieFragment
-   if err := moof.Decode(f); err != nil {
+   var b Box
+   if err := b.Decode(f); err != nil {
       t.Fatal(err)
    }
-   for _, b := range moof {
-      fmt.Println(b.Type())
+   for _, v := range b.Boxes() {
+      fmt.Printf("%q\n", v.Type())
    }
 }

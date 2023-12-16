@@ -9,17 +9,12 @@ import (
 //    unsigned int(32) sequence_number;
 // }
 type MovieFragmentHeader struct {
-   BoxHeader BoxHeader
    FullBoxHeader FullBoxHeader
    Sequence_Number uint32
 }
 
 func (m *MovieFragmentHeader) Decode(r io.Reader) error {
-   err := m.BoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = m.FullBoxHeader.Decode(r)
+   err := m.FullBoxHeader.Decode(r)
    if err != nil {
       return err
    }

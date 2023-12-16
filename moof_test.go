@@ -1,7 +1,7 @@
 package sofia
 
 import (
-   "fmt"
+   "encoding/json"
    "os"
    "testing"
 )
@@ -12,9 +12,11 @@ func Test_Box(t *testing.T) {
       t.Fatal(err)
    }
    defer f.Close()
-   var b Box
-   if err := b.Decode(f); err != nil {
+   var moof MovieFragment
+   if err := moof.Decode(f); err != nil {
       t.Fatal(err)
    }
-   fmt.Printf("%+v\n", b)
+   enc := json.NewEncoder(os.Stdout)
+   enc.SetIndent("", " ")
+   enc.Encode(moof)
 }

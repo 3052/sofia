@@ -1,16 +1,26 @@
 package sofia
 
-// aligned(8) class FullBox(
-//    unsigned int(32) boxtype,
-//    unsigned int(8) v, bit(24) f,
-//    optional unsigned int(8)[16] extended_type
-// ) extends Box(boxtype, extended_type) {
-//    FullBoxHeader(v, f);
-//    // the remaining bytes are the FullBoxPayload
-// }
-type FullBox struct{}
+import (
+   "encoding/binary"
+   "io"
+)
 
 // aligned(8) class MovieFragmentHeaderBox extends FullBox('mfhd', 0, 0) {
 //    unsigned int(32) sequence_number;
 // }
-type MovieFragmentHeader struct{}
+type MovieFragmentHeader struct {
+   Box FullBox
+   Sequence_Number uint32
+}
+
+func (m *MovieFragmentHeader) Decode(r io.Reader) error {
+   err := m.Box.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, m.Sequence_Number)
+   if err != nil {
+      return err
+   }
+   return nil
+}

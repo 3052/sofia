@@ -5,6 +5,23 @@ import (
    "io"
 )
 
+func (b *Box) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Header.Size)
+   if err != nil {
+      return err
+   }
+   _, err = r.Read(b.Header.Type[:])
+   if err != nil {
+      return err
+   }
+   b.Payload = make([]byte, b.Header.Size)
+   _, err = r.Read(b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
 // aligned(8) class BoxHeader (
 // unsigned int(32) boxtype,
 // optional unsigned int(8)[16] extended_type) {

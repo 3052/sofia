@@ -13,8 +13,8 @@ func Test_Moof(t *testing.T) {
    }
    defer f.Close()
    var m MovieFragmentBox
-   if err := m.Decode(f); err != nil {
+   if err := m.Box.Decode(f); err != nil {
       t.Fatal(err)
    }
-   fmt.Printf("%+v\n", m)
+   fmt.Printf("%+v\n", m.Box)
 }

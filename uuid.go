@@ -1,4 +1,4 @@
-package main
+package sofia
 
 import (
    "bytes"
@@ -6,7 +6,7 @@ import (
    "fmt"
 )
 
-func main() {
+func UUID(uuid_box []byte) {
    r := bytes.NewReader(uuid_box)
    var usertype [16]byte // a2394f52-5a9b-4f14-a244-6c427c648df4
    r.Read(usertype[:])

@@ -6,13 +6,13 @@ import (
    "testing"
 )
 
-func Test_Box(t *testing.T) {
+func Test_Moof(t *testing.T) {
    f, err := os.Open("index_video_5_0_1.mp4")
    if err != nil {
       t.Fatal(err)
    }
    defer f.Close()
-   var moof MovieFragment
+   var moof MovieFragmentBox
    if err := moof.Decode(f); err != nil {
       t.Fatal(err)
    }

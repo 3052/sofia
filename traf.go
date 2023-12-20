@@ -7,7 +7,9 @@ import (
 
 // aligned(8) class TrackFragmentBox extends Box('traf') {
 // }
-type TrackFragmentBox struct{}
+type TrackFragmentBox struct {
+   Senc SampleEncryptionBox
+}
 
 func (t *TrackFragmentBox) Decode(r io.Reader) error {
    for {

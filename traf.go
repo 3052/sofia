@@ -22,13 +22,16 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
       }
       size := head.Size.Payload()
       switch head.Type.String() {
+      case "senc":
+         err := t.Senc.Decode(io.LimitReader(r, size))
+         if err != nil {
+            return err
+         }
       case "saio":
          io.CopyN(io.Discard, r, size)
       case "saiz":
          io.CopyN(io.Discard, r, size)
       case "sbgp":
-         io.CopyN(io.Discard, r, size)
-      case "senc":
          io.CopyN(io.Discard, r, size)
       case "sgpd":
          io.CopyN(io.Discard, r, size)

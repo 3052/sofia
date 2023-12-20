@@ -1,6 +1,7 @@
 package sofia
 
 import (
+   "encoding/json"
    "os"
    "testing"
 )
@@ -15,4 +16,7 @@ func Test_Moof(t *testing.T) {
    if err := f.Decode(video); err != nil {
       t.Fatal(err)
    }
+   enc := json.NewEncoder(os.Stdout)
+   enc.SetIndent("", " ")
+   enc.Encode(f)
 }

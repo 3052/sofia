@@ -27,9 +27,6 @@ ISOBMFF
                    - defaultKID: 5c222a3e-2cfb-4b86-9773-ea680f1f3363
 [moof] size=6665
   [traf] size=6641
-    [saio] size=20 version=0 flags=000000
-     - sampleCount: 1
-     - offset[1]=2025
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
@@ -62,9 +59,6 @@ ISOBMFF
     [uuid] size=1952
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: unknown
-    [saio] size=20 version=0 flags=000000
-     - sampleCount: 1
-     - offset[1]=1564
 ~~~
 
 ## nbc
@@ -88,9 +82,6 @@ ISOBMFF
                    - defaultKID: 0f8f0b8a-ff43-4541-8a1e-72162017884e
 [moof] size=1889
   [traf] size=1865
-    [saio] size=20 version=0 flags=000000
-     - sampleCount: 1
-     - offset[1]=929
     [senc] size=976 version=0 flags=000002
      - sampleCount: 60
      - perSampleIVSize: 8
@@ -117,9 +108,6 @@ ISOBMFF
                    - defaultKID: bf9eeb01-706e-4067-ac06-3e15c3ba38d0
 [moof] size=4177
   [traf] size=4153
-    [saio] size=20 version=0 flags=000000
-     - sampleCount: 1
-     - offset[1]=1873
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
@@ -149,9 +137,4 @@ ISOBMFF
     [senc] size=1072 version=0 flags=000002
      - sampleCount: 48
      - perSampleIVSize: 8
-    [saio] size=32 version=1 flags=000001
-     - auxInfoType: cenc
-     - auxInfoTypeParameter: 0
-     - sampleCount: 1
-     - offset[1]=1389
 ~~~

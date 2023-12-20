@@ -8,25 +8,34 @@ ISOBMFF
 
 ## amc
 
+init:
+
 ~~~
-[moov] size=1937
-  [trak] size=565
-    [mdia] size=465
-      [minf] size=372
-        [stbl] size=308
-          [stsd] size=232 version=0 flags=000000
-            [encv] size=216
-             - width: 384
-             - height: 216
+[moov] size=1950
+  [trak] size=578
+    [mdia] size=478
+      [minf] size=385
+        [stbl] size=321
+          [stsd] size=245 version=0 flags=000000
+            [encv] size=229
+             - width: 1152
+             - height: 648
              - compressorName: ""
               [sinf] size=80
                 [schi] size=40
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 5c222a3e-2cfb-4b86-9773-ea680f1f3363
+                   - defaultKID: bc791d3b-444f-4aca-83de-23f37aea4f78
+~~~
+
+segment:
+
+~~~
 [moof] size=6665
   [traf] size=6641
+    [trun] size=1752 version=0 flags=000b05
+     - sampleCount: 144
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
@@ -56,12 +65,16 @@ ISOBMFF
                    - defaultKID: 21b82dc2-ebb2-4d5a-a9f8-631f04726650
 [moof] size=3641
   [traf] size=3617
+    [trun] size=1464 version=0 flags=000b05
+     - sampleCount: 120
     [uuid] size=1952
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: unknown
 ~~~
 
 ## nbc
+
+init:
 
 ~~~
 [moov] size=1819
@@ -71,23 +84,32 @@ ISOBMFF
         [stbl] size=325
           [stsd] size=249 version=0 flags=000000
             [encv] size=233
-             - width: 512
-             - height: 288
+             - width: 1280
+             - height: 720
              - compressorName: ""
               [sinf] size=80
                 [schi] size=40
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 0f8f0b8a-ff43-4541-8a1e-72162017884e
+                   - defaultKID: 0a95c346-cec8-4e49-9679-59580ab7789b
+~~~
+
+segment:
+
+~~~
 [moof] size=1889
   [traf] size=1865
+    [trun] size=744 version=1 flags=000b05
+     - sampleCount: 60
     [senc] size=976 version=0 flags=000002
      - sampleCount: 60
      - perSampleIVSize: 8
 ~~~
 
 ## paramount
+
+init:
 
 ~~~
 [moov] size=1866
@@ -97,17 +119,24 @@ ISOBMFF
         [stbl] size=313
           [stsd] size=237 version=0 flags=000000
             [encv] size=221
-             - width: 416
-             - height: 234
+             - width: 1280
+             - height: 720
              - compressorName: "AVC Coding"
               [sinf] size=80
                 [schi] size=40
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: bf9eeb01-706e-4067-ac06-3e15c3ba38d0
+                   - defaultKID: 2ae3928e-7686-4505-aa84-99db218b0288
+~~~
+
+segment:
+
+~~~
 [moof] size=4177
   [traf] size=4153
+    [trun] size=1748 version=0 flags=000e01
+     - sampleCount: 144
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
@@ -115,25 +144,34 @@ ISOBMFF
 
 ## roku
 
+init:
+
 ~~~
-[moov] size=1484
-  [trak] size=600
-    [mdia] size=500
-      [minf] size=400
-        [stbl] size=336
-          [stsd] size=260 version=0 flags=000000
-            [encv] size=244
-             - width: 384
-             - height: 216
+[moov] size=1489
+  [trak] size=605
+    [mdia] size=505
+      [minf] size=405
+        [stbl] size=341
+          [stsd] size=265 version=0 flags=000000
+            [encv] size=249
+             - width: 1280
+             - height: 720
              - compressorName: "Elemental H.264"
               [sinf] size=80
                 [schi] size=40
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: bdfa4d6c-db39-702e-5b68-1f90617f9a7e
+                   - defaultKID: a965fe62-4f17-7ae2-3a0d-cd0097a813e9
+~~~
+
+segment:
+
+~~~
 [moof] size=2574
   [traf] size=1849
+    [trun] size=600 version=1 flags=000b05
+     - sampleCount: 48
     [senc] size=1072 version=0 flags=000002
      - sampleCount: 48
      - perSampleIVSize: 8

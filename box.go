@@ -9,7 +9,10 @@ import (
 //    unsigned int(32) boxtype,
 //    optional unsigned int(8)[16] extended_type
 // ) {
-//    BoxHeader(boxtype, extended_type);
+//    BoxHeader(
+//       boxtype,
+//       extended_type
+//    );
 //    // the remaining bytes are the BoxPayload
 // }
 

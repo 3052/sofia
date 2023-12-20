@@ -8,9 +8,7 @@ import (
 // aligned(8) class MovieFragmentBox extends Box('moof') {
 // }
 type MovieFragmentBox struct {
-   Mfhd []byte
-   Pssh []byte
-   Traf []byte
+   Traf TrackFragmentBox
 }
 
 func (m *MovieFragmentBox) Decode(r io.Reader) error {
@@ -22,26 +20,17 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      switch string(head.Type[:]) {
-      case "mfhd":
-         m.Mfhd = make([]byte, head.Size)
-         _, err := r.Read(m.Mfhd)
-         if err != nil {
-            return err
-         }
-      case "pssh":
-         pssh := make([]byte, head.Size)
-         _, err := r.Read(pssh)
-         if err != nil {
-            return err
-         }
-         m.Pssh = append(m.Pssh, pssh...)
+      size := head.Size.Payload()
+      switch head.Type.String() {
       case "traf":
-         m.Traf = make([]byte, head.Size)
-         _, err := r.Read(m.Traf)
+         err := m.Traf.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
+      case "mfhd":
+         io.CopyN(io.Discard, r, size)
+      case "pssh":
+         io.CopyN(io.Discard, r, size)
       default:
          return fmt.Errorf("%q", head.Type)
       }

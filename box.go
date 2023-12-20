@@ -5,31 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class Box (
-//    unsigned int(32) boxtype,
-//    optional unsigned int(8)[16] extended_type
-// ) {
-//    BoxHeader(boxtype, extended_type);
-//    // the remaining bytes are the BoxPayload
-// }
-type Box struct {
-   Header BoxHeader
-   Payload []byte
-}
-
-func (b *Box) Decode(r io.Reader) error {
-   err := b.Header.Decode(r)
-   if err != nil {
-      return err
-   }
-   b.Payload = make([]byte, b.Header.Size)
-   _, err = r.Read(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
 // aligned(8) class BoxHeader (
 //    unsigned int(32) boxtype,
 //    optional unsigned int(8)[16] extended_type
@@ -62,6 +37,10 @@ func (b *BoxHeader) Decode(r io.Reader) error {
    return nil
 }
 
+func (b BoxHeader) String() string {
+   return string(b.Type[:])
+}
+
 // aligned(8) class FullBox(
 //    unsigned int(32) boxtype,
 //    unsigned int(8) v, bit(24) f,
@@ -74,23 +53,6 @@ type FullBox struct {
    BoxHeader BoxHeader
    Header FullBoxHeader
    Payload []byte
-}
-
-func (f *FullBox) Decode(r io.Reader) error {
-   err := f.BoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = f.Header.Decode(r)
-   if err != nil {
-      return err
-   }
-   f.Payload = make([]byte, f.BoxHeader.Size - f.Header.Size())
-   _, err = r.Read(f.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
 }
 
 // aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {

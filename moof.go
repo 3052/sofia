@@ -43,7 +43,7 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("%q\n", head.Type)
+         return fmt.Errorf("%q", head.Type)
       }
    }
 }

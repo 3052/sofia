@@ -5,15 +5,14 @@ import (
    "io"
 )
 
-// aligned(8) class MovieFragmentBox extends Box('moof') {
-// }
-type MovieFragmentBox struct {
-   Mfhd []byte
-   Pssh []byte
-   Traf []byte
+type File struct {
+   Moof MovieFragmentBox
+   Mdat []byte
+   Styp []byte
+   Sidx []byte
 }
 
-func (m *MovieFragmentBox) Decode(r io.Reader) error {
+func (f *File) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -22,28 +21,13 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      switch string(head.Type[:]) {
-      case "mfhd":
-         m.Mfhd = make([]byte, head.Size)
-         _, err := r.Read(m.Mfhd)
-         if err != nil {
-            return err
-         }
-      case "pssh":
-         pssh := make([]byte, head.Size)
-         _, err := r.Read(pssh)
-         if err != nil {
-            return err
-         }
-         m.Pssh = append(m.Pssh, pssh...)
-      case "traf":
-         m.Traf = make([]byte, head.Size)
-         _, err := r.Read(m.Traf)
-         if err != nil {
-            return err
-         }
+      switch head.String() {
+      case "mdat":
+         io.CopyN(io.Discard, r, int64(head.Size)-8)
+      case "moof":
+         io.CopyN(io.Discard, r, int64(head.Size)-8)
       default:
-         return fmt.Errorf("%q\n", head.Type)
+         return fmt.Errorf("%q", head.Type)
       }
    }
 }

@@ -6,44 +6,6 @@ ISOBMFF
 - https://github.com/abema/go-mp4
 - https://github.com/yapingcat/gomedia
 
-## amc
-
-init:
-
-~~~
-[moov] size=1950
-  [trak] size=578
-    [mdia] size=478
-      [minf] size=385
-        [stbl] size=321
-          [stsd] size=245 version=0 flags=000000
-            [encv] size=229
-             - width: 1152
-             - height: 648
-             - compressorName: ""
-              [sinf] size=80
-                [schi] size=40
-                  [tenc] size=32 version=0 flags=000000
-                   - defaultIsProtected: 1
-                   - defaultPerSampleIVSize: 8
-                   - defaultKID: bc791d3b-444f-4aca-83de-23f37aea4f78
-~~~
-
-segment:
-
-~~~
-[moof] size=6665
-  [traf] size=6641
-    [trun] size=1752 version=0 flags=000b05
-     - sampleCount: 144
-    [senc] size=2320 version=0 flags=000002
-     - sampleCount: 144
-     - perSampleIVSize: 8
-    [uuid] size=2336
-     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
-     - subType: unknown
-~~~
-
 ## hulu
 
 ~~~

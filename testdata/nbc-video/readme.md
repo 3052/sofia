@@ -30,6 +30,10 @@ nbc -b 9000283421 -v debug -m 359387
 ~~~
 [moof] size=1889
   [traf] size=1865
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 01010000 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
     [trun] size=744 version=1 flags=000b05
      - sampleCount: 60
      - DataOffset: 1897

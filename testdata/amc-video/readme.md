@@ -33,6 +33,11 @@ amc `
 ~~~
 [moof] size=6665
   [traf] size=6641
+    [tfhd] size=24 version=0 flags=020028
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleDuration: 1001
+     - defaultSampleFlags: 01010000 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
     [trun] size=1752 version=0 flags=000b05
      - sampleCount: 144
      - DataOffset: 6673

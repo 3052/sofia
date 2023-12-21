@@ -29,7 +29,7 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
             return err
          }
       case "trun":
-         err := t.Trun.Decode(io.LimitReader(r, size))
+         err := t.Trun.Decode(r)
          if err != nil {
             return err
          }

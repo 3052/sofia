@@ -27,6 +27,12 @@ paramount -b KtQCLnOCgoQiTRF_uGCbqesqmz7SjwRm -d -v debug -vb 0
 ~~~
 [moof] size=1305
   [traf] size=1281
+    [tfhd] size=28 version=0 flags=02002a
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 1
+     - defaultSampleDuration: 1024
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
     [trun] size=1148 version=0 flags=000201
      - sampleCount: 282
      - DataOffset: 3569

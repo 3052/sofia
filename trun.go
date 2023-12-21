@@ -5,6 +5,9 @@ import (
    "io"
 )
 
+// If the data-offset is present, it is relative to the base-data-offset
+// established in the track fragment header.
+// 
 // aligned(8) class TrackRunBox extends FullBox(
 //    'trun',
 //    version,
@@ -29,7 +32,30 @@ type TrackRunBox struct {
    Sample_Count uint32
    Data_Offset int32
    First_Sample_Flags uint32
-   Samples []TrackRun
+   Samples []SampleTrackRun
+}
+
+type SampleTrackRun struct {
+   Duration uint32
+   Size uint32
+   Flags uint32
+   Composition_Time_Offset [4]byte
+}
+
+func (t TrackRunBox) Composition_Time_Offsets_Present() bool {
+   return t.Header.Flags & 0x800 >= 1
+}
+
+func (t TrackRunBox) Duration_Present() bool {
+   return t.Header.Flags & 0x100 >= 1
+}
+
+func (t TrackRunBox) Flags_Present() bool {
+   return t.Header.Flags & 0x400 >= 1
+}
+
+func (t TrackRunBox) Sample_Flags_Present() bool {
+   return t.Header.Flags & 4 >= 1
 }
 
 func (t *TrackRunBox) Decode(r io.Reader) error {
@@ -45,54 +71,37 @@ func (t *TrackRunBox) Decode(r io.Reader) error {
    if err != nil {
       return err
    }
-   if t.First_Sample_Flags_Present() {
+   if t.Sample_Flags_Present() {
       err := binary.Read(r, binary.BigEndian, &t.First_Sample_Flags)
       if err != nil {
          return err
       }
    }
    for count := t.Sample_Count; count >= 1; count-- {
-      var run TrackRun
-      if t.Sample_Duration_Present() {
-         err := binary.Read(r, binary.BigEndian, &run.Sample_Duration)
+      var run SampleTrackRun
+      if t.Duration_Present() {
+         err := binary.Read(r, binary.BigEndian, &run.Duration)
          if err != nil {
             return err
          }
       }
-      err := binary.Read(r, binary.BigEndian, &run.Sample_Size)
+      err := binary.Read(r, binary.BigEndian, &run.Size)
       if err != nil {
          return err
       }
-      if t.Sample_Flags_Present() {
-         err := binary.Read(r, binary.BigEndian, &run.Sample_Flags)
+      if t.Flags_Present() {
+         err := binary.Read(r, binary.BigEndian, &run.Flags)
+         if err != nil {
+            return err
+         }
+      }
+      if t.Composition_Time_Offsets_Present() {
+         _, err := r.Read(run.Composition_Time_Offset[:])
          if err != nil {
             return err
          }
       }
       t.Samples = append(t.Samples, run)
    }
-   _, err = io.ReadAll(r)
-   if err != nil {
-      return err
-   }
    return nil
-}
-
-type TrackRun struct {
-   Sample_Duration uint32
-   Sample_Size uint32
-   Sample_Flags uint32
-   Sample_Composition_Time_Offset [4]byte
-}
-
-func (t TrackRunBox) Sample_Flags_Present() bool {
-   return t.Header.Flags & 0x400 >= 1
-}
-
-func (t TrackRunBox) Sample_Duration_Present() bool {
-   return t.Header.Flags & 0x100 >= 1
-}
-
-func (t TrackRunBox) First_Sample_Flags_Present() bool {
-   return t.Header.Flags & 4 >= 1
 }

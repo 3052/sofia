@@ -27,6 +27,10 @@ roku -b 1ad93a236d88595b86d312eb04e3646c -v debug -vb 0
 ~~~
 [moof] size=1958
   [traf] size=1233
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 0aa00000 (isLeading=2 dependsOn=2 isDependedOn=2 hasRedundancy=2 padding=0 isNonSync=false degradationPriority=0)
     [trun] size=632 version=1 flags=000b01
      - sampleCount: 51
      - DataOffset: 1966

@@ -30,6 +30,10 @@ hulu -a hulu.com/watch/023c49bf-6a99-4c67-851c-4c9e7609cc1d -b 437551
 ~~~
 [moof] size=3641
   [traf] size=3617
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 01010000 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
     [trun] size=1464 version=0 flags=000b05
      - sampleCount: 120
      - DataOffset: 3649

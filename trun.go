@@ -1,33 +1,35 @@
 package sofia
 
-// 0x000004 first-sample-flags-present; this overrides the default flags for the
-// first sample only, defined in 8.8.3.1. This makes it possible to record a
-// group of frames where the first is a key and the rest are difference frames,
-// without supplying explicit flags for every sample. If this flag and field
-// are used, sample-flags-present shall not be set.
-// 
 // aligned(8) class TrackRunBox extends FullBox(
 //    'trun',
 //    version,
 //    tr_flags
 // ) {
 //    unsigned int(32) sample_count;
-//    signed int(32) data_offset;
-//    // the following are optional fields
-//    unsigned int(32) first_sample_flags;
-//    // all fields in the following array are optional
-//    // as indicated by bits set in the tr_flags
+//    signed int(32) data_offset; // 0x000001, assume present
+//    unsigned int(32) first_sample_flags; // 0x000004
 //    {
-//       unsigned int(32) sample_duration;
-//       unsigned int(32) sample_size;
-//       unsigned int(32) sample_flags
+//       unsigned int(32) sample_duration; // 0x000100
+//       unsigned int(32) sample_size; // 0x000200, assume present
+//       unsigned int(32) sample_flags // 0x000400
 //       if (version == 0) {
-//          unsigned int(32) sample_composition_time_offset;
+//          unsigned int(32) sample_composition_time_offset; // 0x000800
 //       } else {
-//          signed int(32) sample_composition_time_offset;
+//          signed int(32) sample_composition_time_offset; // 0x000800
 //       }
 //    }[ sample_count ]
 // }
 type TrackRunBox struct {
+   Header FullBoxHeader
    Sample_Count uint32
+   Data_Offset int32
+   First_Sample_Flags uint32
+   Samples []TrackRun
+}
+
+type TrackRun struct {
+   Sample_Duration uint32
+   Sample_Size uint32
+   Sample_Flags uint32
+   Sample_Composition_Time_Offset [4]byte
 }

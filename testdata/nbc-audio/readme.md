@@ -30,6 +30,8 @@ nbc -b 9000283421 -v debug -m 0
     [trun] size=772 version=0 flags=000301
      - sampleCount: 94
      - DataOffset: 1653
+     - sample[1]: dur=1024 size=249
+     - sample[2]: dur=1024 size=281
     [senc] size=16 version=0 flags=000000
      - sampleCount: 94
      - perSampleIVSize: 0

@@ -29,23 +29,6 @@ func (b *BoxHeader) Decode(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, b)
 }
 
-// aligned(8) class FullBoxHeader(
-//    unsigned int(8) v,
-//    bit(24) f
-// ) {
-//    unsigned int(8) version = v;
-//    bit(24) flags = f;
-// }
-type FullBoxHeader [4]byte
-
-func (f FullBoxHeader) Decode(r io.Reader) error {
-   _, err := r.Read(f[:])
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
 type Size uint32
 
 // aligned(8) class Box (
@@ -66,4 +49,30 @@ type Type [4]byte
 
 func (t Type) String() string {
    return string(t[:])
+}
+
+// aligned(8) class FullBoxHeader(
+//    unsigned int(8) v,
+//    bit(24) f
+// ) {
+//    unsigned int(8) version = v;
+//    bit(24) flags = f;
+// }
+type FullBoxHeader struct {
+   Version uint8
+   Flags uint32
+}
+
+func (f *FullBoxHeader) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &f.Version)
+   if err != nil {
+      return err
+   }
+   var b [4]byte
+   _, err = r.Read(b[1:])
+   if err != nil {
+      return err
+   }
+   f.Flags = binary.BigEndian.Uint32(b[:])
+   return nil
 }

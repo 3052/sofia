@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Moof(t *testing.T) {
-   video, err := os.Open("index_video_5_0_1.mp4")
+   video, err := os.Open("testdata/roku-video/index_video_8_0_1.mp4")
    if err != nil {
       t.Fatal(err)
    }

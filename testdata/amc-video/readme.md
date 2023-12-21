@@ -37,6 +37,8 @@ amc `
      - sampleCount: 144
      - DataOffset: 6673
      - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=1001 size=97 compositionTimeOffset=2002
+     - sample[2]: dur=1001 size=2883 compositionTimeOffset=4004
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8

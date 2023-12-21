@@ -34,6 +34,8 @@ nbc -b 9000283421 -v debug -m 359387
      - sampleCount: 60
      - DataOffset: 1897
      - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=1001 size=2957 compositionTimeOffset=0
+     - sample[2]: dur=1001 size=1384 compositionTimeOffset=2002
     [senc] size=976 version=0 flags=000002
      - sampleCount: 60
      - perSampleIVSize: 8

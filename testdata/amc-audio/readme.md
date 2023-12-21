@@ -33,6 +33,8 @@ amc `
     [trun] size=2252 version=0 flags=000301
      - sampleCount: 279
      - DataOffset: 6881
+     - sample[1]: dur=1024 size=17
+     - sample[2]: dur=1024 size=20
     [senc] size=16 version=0 flags=000000
      - sampleCount: 279
      - perSampleIVSize: 0

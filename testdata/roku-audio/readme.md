@@ -39,4 +39,5 @@ roku -b 1ad93a236d88595b86d312eb04e3646c -v debug -vb 0
     [senc] size=424 version=0 flags=000000
      - sampleCount: 51
      - perSampleIVSize: 8
+[mdat] size=34976
 ~~~

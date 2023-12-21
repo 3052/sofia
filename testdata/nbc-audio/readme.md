@@ -38,4 +38,5 @@ nbc -b 9000283421 -v debug -m 0
     [senc] size=16 version=0 flags=000000
      - sampleCount: 94
      - perSampleIVSize: 0
+[mdat] size=23464
 ~~~

@@ -50,4 +50,5 @@ amc `
     [uuid] size=2336
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: unknown
+[mdat] size=179944
 ~~~

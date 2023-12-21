@@ -41,4 +41,5 @@ paramount -b KtQCLnOCgoQiTRF_uGCbqesqmz7SjwRm -d -v debug -vb 0
     [senc] size=16 version=0 flags=000000
      - sampleCount: 282
      - perSampleIVSize: 0
+[mdat] size=94632
 ~~~

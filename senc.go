@@ -14,13 +14,7 @@ func (s *Subsample) Decode(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, s)
 }
 
-type Sample struct {
-   InitializationVector [8]byte
-   Subsample_Count uint16
-   Subsamples []Subsample
-}
-
-func (s *Sample) Decode(r io.Reader) error {
+func (s *SampleEncryption) Decode(r io.Reader) error {
    _, err := r.Read(s.InitializationVector[:])
    if err != nil {
       return err
@@ -36,6 +30,26 @@ func (s *Sample) Decode(r io.Reader) error {
          return err
       }
       s.Subsamples = append(s.Subsamples, sub)
+   }
+   return nil
+}
+
+func (s *SampleEncryptionBox) Decode(r io.Reader) error {
+   err := s.Header.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &s.Sample_Count)
+   if err != nil {
+      return err
+   }
+   for count := s.Sample_Count; count >= 1; count-- {
+      var sam SampleEncryption
+      err := sam.Decode(r)
+      if err != nil {
+         return err
+      }
+      s.Samples = append(s.Samples, sam)
    }
    return nil
 }
@@ -58,25 +72,11 @@ func (s *Sample) Decode(r io.Reader) error {
 type SampleEncryptionBox struct {
    Header FullBoxHeader
    Sample_Count uint32
-   Samples []Sample
+   Samples []SampleEncryption
 }
 
-func (s *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := s.Header.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.Sample_Count)
-   if err != nil {
-      return err
-   }
-   for count := s.Sample_Count; count >= 1; count-- {
-      var sam Sample
-      err := sam.Decode(r)
-      if err != nil {
-         return err
-      }
-      s.Samples = append(s.Samples, sam)
-   }
-   return nil
+type SampleEncryption struct {
+   InitializationVector [8]byte
+   Subsample_Count uint16
+   Subsamples []Subsample
 }

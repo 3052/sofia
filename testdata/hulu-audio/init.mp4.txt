@@ -1,0 +1,31 @@
+[ftyp] Size=24 MajorBrand="dash" MinorVersion=0 CompatibleBrands=[{CompatibleBrand="iso6"}, {CompatibleBrand="piff"}]
+[moov] Size=1449
+  [mvhd] Size=108 ... (use "-full mvhd" to show all)
+  [pssh] Size=700 ... (use "-full pssh" to show all)
+  [pssh] Size=62 ... (use "-full pssh" to show all)
+  [trak] Size=531
+    [tkhd] Size=104 ... (use "-full tkhd" to show all)
+    [mdia] Size=419
+      [mdhd] Size=44 Version=1 Flags=0x000000 CreationTimeV1=0 ModificationTimeV1=0 Timescale=10000000 DurationV1=18446744073709551615 Language="und" PreDefined=0
+      [hdlr] Size=45 Version=0 Flags=0x000000 PreDefined=0 HandlerType="soun" Name="SoundHandler"
+      [minf] Size=322
+        [smhd] Size=16 Version=0 Flags=0x000000 Balance=0
+        [dinf] Size=36
+          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
+            [url ] Size=12 Version=0 Flags=0x000001
+        [stbl] Size=262
+          [stsd] Size=186 Version=0 Flags=0x000000 EntryCount=1
+            [enca] Size=170 DataReferenceIndex=1 EntryVersion=0 ChannelCount=2 SampleSize=16 PreDefined=0 SampleRate=48000
+              [esds] Size=54 ... (use "-full esds" to show all)
+              [sinf] Size=80
+                [frma] Size=12 DataFormat="mp4a"
+                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
+                [schi] Size=40
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=21b82dc2-ebb2-4d5a-a9f8-631f04726650
+          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
+          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
+  [mvex] Size=40
+    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=0 DefaultSampleSize=0 DefaultSampleFlags=0x0
+[sidx] Size=6296 ... (use "-full sidx" to show all)

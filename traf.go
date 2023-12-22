@@ -14,6 +14,26 @@ type TrackFragmentBox struct {
    Boxes []Box
 }
 
+func (t TrackFragmentBox) Encode(dst io.Writer) error {
+   err := t.Header.Encode(dst)
+   if err != nil {
+      return err
+   }
+   if err := t.Senc.Encode(dst); err != nil {
+      return err
+   }
+   if err := t.Trun.Encode(dst); err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (t *TrackFragmentBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader

@@ -1,0 +1,10 @@
+[moof] Size=2081
+  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
+  [traf] Size=2057
+    [tfhd] Size=20 Version=0 Flags=0x020020 TrackID=1 DefaultSampleFlags=0x2000000
+    [tfdt] Size=16 Version=0 Flags=0x000000 BaseMediaDecodeTimeV0=0
+    [trun] Size=984 Version=0 Flags=0x000305 SampleCount=120 DataOffset=2089 FirstSampleFlags=0x2000000 
+    [uuid] (unsupported box type) Size=992 Data=[...] (use "-full uuid" to show all)
+    [saiz] Size=17 Version=0 Flags=0x000000 DefaultSampleInfoSize=8 SampleCount=120
+    [saio] Size=20 Version=0 Flags=0x000000 EntryCount=1 OffsetV0=[1084]
+[mdat] Size=41326 Data=[...] (use "-full mdat" to show all)

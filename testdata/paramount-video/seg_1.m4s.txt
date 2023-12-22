@@ -1,0 +1,12 @@
+[styp] Size=40 ... (use "-full styp" to show all)
+[sidx] Size=44 ... (use "-full sidx" to show all)
+[moof] Size=4177
+  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
+  [traf] Size=4153
+    [tfhd] Size=24 Version=0 Flags=0x02000a TrackID=1 SampleDescriptionIndex=1 DefaultSampleDuration=1001
+    [tfdt] Size=16 Version=0 Flags=0x000000 BaseMediaDecodeTimeV0=0
+    [trun] Size=1748 Version=0 Flags=0x000e01 SampleCount=144 DataOffset=4185 
+    [saiz] Size=17 Version=0 Flags=0x000000 DefaultSampleInfoSize=16 SampleCount=144
+    [saio] Size=20 Version=0 Flags=0x000000 EntryCount=1 OffsetV0=[1873]
+    [senc] (unsupported box type) Size=2320 Data=[...] (use "-full senc" to show all)
+[mdat] Size=59078 Data=[...] (use "-full mdat" to show all)

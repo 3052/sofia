@@ -1,0 +1,35 @@
+[ftyp] Size=36 ... (use "-full ftyp" to show all)
+[moov] Size=1786
+  [mvhd] Size=108 ... (use "-full mvhd" to show all)
+  [meta] Size=148 Version=0 Flags=0x000000
+    [hdlr] Size=32 Version=0 Flags=0x000000 PreDefined=0 HandlerType="ID32" Name=""
+    [ID32] (unsupported box type) Size=104 Data=[...] (use "-full ID32" to show all)
+  [trak] Size=518
+    [tkhd] Size=92 ... (use "-full tkhd" to show all)
+    [mdia] Size=418
+      [mdhd] Size=32 Version=0 Flags=0x000000 CreationTimeV0=3784822698 ModificationTimeV0=3784822698 Timescale=48000 DurationV0=0 Language="eng" PreDefined=0
+      [hdlr] Size=45 Version=0 Flags=0x000000 PreDefined=0 HandlerType="soun" Name="SoundHandler"
+      [minf] Size=333
+        [dinf] Size=36
+          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
+            [url ] Size=12 Version=0 Flags=0x000001
+        [stbl] Size=273
+          [stsd] Size=171 Version=0 Flags=0x000000 EntryCount=1
+            [enca] Size=155 DataReferenceIndex=1 EntryVersion=0 ChannelCount=2 SampleSize=16 PreDefined=0 SampleRate=48000
+              [esds] Size=39 ... (use "-full esds" to show all)
+              [sinf] Size=80
+                [frma] Size=12 DataFormat="mp4a"
+                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
+                [schi] Size=40
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=2ae3928e-7686-4505-aa84-99db218b0288
+          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
+          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
+          [sgpd] Size=26 Version=1 Flags=0x000000 GroupingType="roll" DefaultLength=2 EntryCount=1 RollDistances=[-1]
+        [smhd] Size=16 Version=0 Flags=0x000000 Balance=0
+  [mvex] Size=56
+    [mehd] Size=16 Version=0 Flags=0x000000 FragmentDurationV0=110464000
+    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=1024 DefaultSampleSize=0 DefaultSampleFlags=0x0
+  [pssh] Size=88 ... (use "-full pssh" to show all)
+  [pssh] Size=860 ... (use "-full pssh" to show all)

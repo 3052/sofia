@@ -1,0 +1,16 @@
+[moof] Size=2574
+  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
+  [pssh] Size=634 ... (use "-full pssh" to show all)
+  [pssh] Size=67 ... (use "-full pssh" to show all)
+  [traf] Size=1849
+    [tfhd] Size=20 Version=0 Flags=0x020020 TrackID=1 DefaultSampleFlags=0x610000
+    [tfdt] Size=20 Version=1 Flags=0x000000 BaseMediaDecodeTimeV1=3158
+    [trun] Size=600 Version=1 Flags=0x000b05 SampleCount=48 DataOffset=2582 FirstSampleFlags=0x2600000 
+    [senc] (unsupported box type) Size=1072 Data=[...] (use "-full senc" to show all)
+    [saio] Size=32 Version=1 Flags=0x000001 AuxInfoType="cenc" AuxInfoTypeParameter=0x0 EntryCount=1 OffsetV1=[1389]
+    [saiz] Size=25 Version=0 Flags=0x000001 AuxInfoType="cenc" AuxInfoTypeParameter=0x0 DefaultSampleInfoSize=22 SampleCount=48
+    [sbgp] Size=28 Version=0 Flags=0x000000 GroupingType=1936025959 EntryCount=1 Entries=[{SampleCount=48 GroupDescriptionIndex=65537}]
+    [sgpd] Size=44 ... (use "-full sgpd" to show all)
+[mdat] Size=8859 Data=[...] (use "-full mdat" to show all)
+[styp] Size=24 MajorBrand="msdh" MinorVersion=0 CompatibleBrands=[{CompatibleBrand="msdh"}, {CompatibleBrand="msix"}]
+[sidx] Size=52 ... (use "-full sidx" to show all)

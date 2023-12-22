@@ -1,0 +1,32 @@
+[ftyp] Size=28 MajorBrand="isom" MinorVersion=1 CompatibleBrands=[{CompatibleBrand="isom"}, {CompatibleBrand="avc1"}, {CompatibleBrand="dash"}]
+[moov] Size=1484
+  [mvhd] Size=108 ... (use "-full mvhd" to show all)
+  [pssh] Size=634 ... (use "-full pssh" to show all)
+  [pssh] Size=67 ... (use "-full pssh" to show all)
+  [iods] (unsupported box type) Size=27 Data=[...] (use "-full iods" to show all)
+  [trak] Size=600
+    [tkhd] Size=92 ... (use "-full tkhd" to show all)
+    [mdia] Size=500
+      [mdhd] Size=32 Version=0 Flags=0x000000 CreationTimeV0=3773632156 ModificationTimeV0=3773632156 Timescale=24000 DurationV0=0 Language="und" PreDefined=0
+      [hdlr] Size=60 Version=0 Flags=0x000000 PreDefined=0 HandlerType="vide" Name="ETI ISO Video Media Handler"
+      [minf] Size=400
+        [vmhd] Size=20 Version=0 Flags=0x000001 Graphicsmode=0 Opcolor=[0, 0, 0]
+        [dinf] Size=36
+          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
+            [url ] Size=12 Version=0 Flags=0x000001
+        [stbl] Size=336
+          [stsd] Size=260 Version=0 Flags=0x000000 EntryCount=1
+            [encv] Size=244 ... (use "-full encv" to show all)
+              [pasp] Size=16 HSpacing=1 VSpacing=1
+              [avcC] Size=62 ... (use "-full avcC" to show all)
+              [sinf] Size=80
+                [frma] Size=12 DataFormat="avc1"
+                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
+                [schi] Size=40
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=a965fe62-4f17-7ae2-3a0d-cd0097a813e9
+          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
+          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
+  [mvex] Size=40
+    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=0 DefaultSampleSize=0 DefaultSampleFlags=0x0

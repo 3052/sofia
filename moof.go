@@ -25,7 +25,7 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
       case "traf":
          err := m.Traf.Decode(io.LimitReader(r, size))
          if err != nil {
-            return err
+            return fmt.Errorf("traf %v", err)
          }
       case "mfhd":
          io.CopyN(io.Discard, r, size)

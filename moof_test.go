@@ -6,13 +6,13 @@ import (
 )
 
 func Test_Moof(t *testing.T) {
-   video, err := os.Open("testdata/amc-audio/segment0.m4f")
+   media, err := os.Open("testdata/amc-audio/segment0.m4f")
    if err != nil {
       t.Fatal(err)
    }
-   defer video.Close()
+   defer media.Close()
    var f File
-   if err := f.Decode(video); err != nil {
+   if err := f.Decode(media); err != nil {
       t.Fatal(err)
    }
 }

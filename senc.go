@@ -5,18 +5,32 @@ import (
    "io"
 )
 
-// senc_use_subsamples: flag mask is 0x000002.
-func (s SampleEncryptionBox) Senc_Use_Subsamples() bool {
-   return s.Header.Flags & 2 >= 1
+type EncryptionSample struct {
+   InitializationVector [8]byte
+   Subsample_Count uint16
+   Subsamples []Subsample
 }
 
-type Subsample struct {
-   BytesOfClearData uint16
-   BytesOfProtectedData uint32
-}
-
-func (s *Subsample) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, s)
+func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
+   _, err := r.Read(e.InitializationVector[:])
+   if err != nil {
+      return err
+   }
+   if s.Senc_Use_Subsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for count := e.Subsample_Count; count >= 1; count-- {
+         var sub Subsample
+         err := sub.Decode(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples = append(e.Subsamples, sub)
+      }
+   }
+   return nil
 }
 
 // if the version of the SampleEncryptionBox is 0 and the flag
@@ -42,35 +56,7 @@ func (s *Subsample) Decode(r io.Reader) error {
 type SampleEncryptionBox struct {
    Header FullBoxHeader
    Sample_Count uint32
-   Samples []SampleEncryption
-}
-
-type SampleEncryption struct {
-   InitializationVector [8]byte
-   Subsample_Count uint16
-   Subsamples []Subsample
-}
-
-func (s *SampleEncryption) Decode(b *SampleEncryptionBox, r io.Reader) error {
-   _, err := r.Read(s.InitializationVector[:])
-   if err != nil {
-      return err
-   }
-   if b.Senc_Use_Subsamples() {
-      err := binary.Read(r, binary.BigEndian, &s.Subsample_Count)
-      if err != nil {
-         return err
-      }
-      for count := s.Subsample_Count; count >= 1; count-- {
-         var sub Subsample
-         err := sub.Decode(r)
-         if err != nil {
-            return err
-         }
-         s.Subsamples = append(s.Subsamples, sub)
-      }
-   }
-   return nil
+   Samples []EncryptionSample
 }
 
 func (s *SampleEncryptionBox) Decode(r io.Reader) error {
@@ -83,7 +69,7 @@ func (s *SampleEncryptionBox) Decode(r io.Reader) error {
       return err
    }
    for count := s.Sample_Count; count >= 1; count-- {
-      var sam SampleEncryption
+      var sam EncryptionSample
       err := sam.Decode(s, r)
       if err != nil {
          return err
@@ -91,4 +77,18 @@ func (s *SampleEncryptionBox) Decode(r io.Reader) error {
       s.Samples = append(s.Samples, sam)
    }
    return nil
+}
+
+// senc_use_subsamples: flag mask is 0x000002.
+func (s SampleEncryptionBox) Senc_Use_Subsamples() bool {
+   return s.Header.Flags & 2 >= 1
+}
+
+type Subsample struct {
+   BytesOfClearData uint16
+   BytesOfProtectedData uint32
+}
+
+func (s *Subsample) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, s)
 }

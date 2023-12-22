@@ -10,40 +10,26 @@ amc `
 ## init
 
 ~~~
-[moov] size=1875
-  [trak] size=503
-    [mdia] size=403
-      [minf] size=310
-        [stbl] size=250
-          [stsd] size=174 version=0 flags=000000
-            [enca] size=158
-              [sinf] size=80
-                [schi] size=40
-                  [tenc] size=32 version=0 flags=000000
-                   - defaultIsProtected: 1
-                   - defaultPerSampleIVSize: 8
-                   - defaultKID: 5e7d369b-9eca-4426-a43e-15a76f09dd7e
+[moov] Size=1875
+  [trak] Size=503
+    [mdia] Size=403
+      [minf] Size=310
+        [stbl] Size=250
+          [stsd] Size=174 Version=0 Flags=0x000000 EntryCount=1
+            [enca] Size=158 DataReferenceIndex=1 EntryVersion=0 ChannelCount=2 SampleSize=16 PreDefined=0 SampleRate=48000
+              [sinf] Size=80
+                [schi] Size=40
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=5e7d369b-9eca-4426-a43e-15a76f09dd7e
 ~~~
 
 ## segment
 
 ~~~
-[moof] size=4641
-  [traf] size=4617
-    [tfhd] size=20 version=0 flags=020008
-     - trackID: 1
-     - defaultBaseIsMoof: true
-     - defaultSampleDuration: 1024
-    [trun] size=2252 version=0 flags=000301
-     - sampleCount: 279
-     - DataOffset: 6881
-     - sample[1]: dur=1024 size=17
-     - sample[2]: dur=1024 size=20
-    [senc] size=16 version=0 flags=000000
-     - sampleCount: 279
-     - perSampleIVSize: 0
-    [uuid] size=2264
-     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
-     - subType: unknown
-[mdat] size=91874
+[moof] Size=6873
+  [traf] Size=6849
+    [tfhd] Size=20 Version=0 Flags=0x020008 TrackID=1 DefaultSampleDuration=1024
+    [trun] Size=2252 Version=0 Flags=0x000301 SampleCount=279 DataOffset=6881 
+    [senc] (unsupported box type) Size=2248 Data=[...] (use "-full senc" to show all)
+    [uuid] (unsupported box type) Size=2264 Data=[...] (use "-full uuid" to show all)
+[mdat] Size=91874 Data=[...] (use "-full mdat" to show all)
 ~~~

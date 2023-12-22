@@ -115,3 +115,25 @@ type SampleEncryptionBox struct {
    Sample_Count uint32
    Samples []EncryptionSample
 }
+
+func (s SampleEncryptionBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   err = s.FullBoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, s.Sample_Count)
+   if err != nil {
+      return err
+   }
+   for _, sample := range s.Samples {
+      err := sample.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}

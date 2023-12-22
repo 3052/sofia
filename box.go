@@ -5,6 +5,25 @@ import (
    "io"
 )
 
+// aligned(8) class Box (
+//    unsigned int(32) boxtype,
+//    optional unsigned int(8)[16] extended_type
+// ) {
+//    BoxHeader(
+//       boxtype,
+//       extended_type
+//    );
+//    // the remaining bytes are the BoxPayload
+// }
+type Box struct {
+   Header BoxHeader
+   Payload []byte
+}
+
+func (b *BoxHeader) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, b)
+}
+
 // aligned(8) class BoxHeader (
 //    unsigned int(32) boxtype,
 //    optional unsigned int(8)[16] extended_type
@@ -21,12 +40,16 @@ import (
 //    }
 // }
 type BoxHeader struct {
-   Size Size
-   Type Type
+   Size uint32
+   Type [4]byte
 }
 
-func (b *BoxHeader) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, b)
+func (b BoxHeader) BoxType() string {
+   return string(b.Type[:])
+}
+
+func (b BoxHeader) BoxPayload() int64 {
+   return int64(b.Size) - 8
 }
 
 // aligned(8) class FullBoxHeader(
@@ -53,26 +76,4 @@ func (f *FullBoxHeader) Decode(r io.Reader) error {
    }
    f.Flags = binary.BigEndian.Uint32(b[:])
    return nil
-}
-
-type Size uint32
-
-// aligned(8) class Box (
-//    unsigned int(32) boxtype,
-//    optional unsigned int(8)[16] extended_type
-// ) {
-//    BoxHeader(
-//       boxtype,
-//       extended_type
-//    );
-//    // the remaining bytes are the BoxPayload
-// }
-func (s Size) Payload() int64 {
-   return int64(s) - 8
-}
-
-type Type [4]byte
-
-func (t Type) String() string {
-   return string(t[:])
 }

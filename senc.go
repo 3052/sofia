@@ -5,6 +5,33 @@ import (
    "io"
 )
 
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+// 
+// aligned(8) class SampleEncryptionBox extends FullBox(
+//    'senc',
+//    version,
+//    flags
+// ) {
+//    unsigned int(32) sample_count;
+//    {
+//       unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//       if (UseSubSampleEncryption) {
+//          unsigned int(16) subsample_count;
+//          {
+//             unsigned int(16) BytesOfClearData;
+//             unsigned int(32) BytesOfProtectedData;
+//          } [subsample_count ]
+//       }
+//    }[ sample_count ]
+// }
+type SampleEncryptionBox struct {
+   BoxHeader BoxHeader
+   FullBoxHeader FullBoxHeader
+   Sample_Count uint32
+   Samples []EncryptionSample
+}
+
 type EncryptionSample struct {
    InitializationVector [8]byte
    Subsample_Count uint16
@@ -33,34 +60,8 @@ func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
    return nil
 }
 
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-// 
-// aligned(8) class SampleEncryptionBox extends FullBox(
-//    'senc',
-//    version,
-//    flags
-// ) {
-//    unsigned int(32) sample_count;
-//    {
-//       unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//       if (UseSubSampleEncryption) {
-//          unsigned int(16) subsample_count;
-//          {
-//             unsigned int(16) BytesOfClearData;
-//             unsigned int(32) BytesOfProtectedData;
-//          } [subsample_count ]
-//       }
-//    }[ sample_count ]
-// }
-type SampleEncryptionBox struct {
-   Header FullBoxHeader
-   Sample_Count uint32
-   Samples []EncryptionSample
-}
-
 func (s *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := s.Header.Decode(r)
+   err := s.FullBoxHeader.Decode(r)
    if err != nil {
       return err
    }
@@ -81,7 +82,7 @@ func (s *SampleEncryptionBox) Decode(r io.Reader) error {
 
 // senc_use_subsamples: flag mask is 0x000002.
 func (s SampleEncryptionBox) Senc_Use_Subsamples() bool {
-   return s.Header.Flags & 2 >= 1
+   return s.FullBoxHeader.Flags & 2 >= 1
 }
 
 type Subsample struct {

@@ -7,30 +7,34 @@ import (
 
 type File struct {
    Moof MovieFragmentBox
+   Boxes []Box
 }
 
-func (f *File) Decode(r io.Reader) error {
+func (f *File) Decode(src io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(r)
+      err := head.Decode(src)
       if err == io.EOF {
          return nil
       } else if err != nil {
          return err
       }
-      size := head.Size.Payload()
-      switch head.Type.String() {
+      size := head.BoxPayload()
+      switch head.BoxType() {
       case "moof":
-         err := f.Moof.Decode(io.LimitReader(r, size))
+         f.Moof.Header = head
+         err := f.Moof.Decode(io.LimitReader(src, size))
          if err != nil {
-            return fmt.Errorf("moof %v", err)
+            return err
          }
-      case "mdat":
-         io.CopyN(io.Discard, r, size)
-      case "sidx":
-         io.CopyN(io.Discard, r, size)
-      case "styp":
-         io.CopyN(io.Discard, r, size)
+      case "mdat", "sidx", "styp":
+         b := Box{Header: head}
+         b.Payload = make([]byte, size)
+         _, err := src.Read(b.Payload)
+         if err != nil {
+            return err
+         }
+         f.Boxes = append(f.Boxes, b)
       default:
          return fmt.Errorf("%q", head.Type)
       }

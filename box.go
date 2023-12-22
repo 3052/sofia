@@ -29,28 +29,6 @@ func (b *BoxHeader) Decode(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, b)
 }
 
-type Size uint32
-
-// aligned(8) class Box (
-//    unsigned int(32) boxtype,
-//    optional unsigned int(8)[16] extended_type
-// ) {
-//    BoxHeader(
-//       boxtype,
-//       extended_type
-//    );
-//    // the remaining bytes are the BoxPayload
-// }
-func (s Size) Payload() int64 {
-   return int64(s) - 8
-}
-
-type Type [4]byte
-
-func (t Type) String() string {
-   return string(t[:])
-}
-
 // aligned(8) class FullBoxHeader(
 //    unsigned int(8) v,
 //    bit(24) f
@@ -75,4 +53,26 @@ func (f *FullBoxHeader) Decode(r io.Reader) error {
    }
    f.Flags = binary.BigEndian.Uint32(b[:])
    return nil
+}
+
+type Size uint32
+
+// aligned(8) class Box (
+//    unsigned int(32) boxtype,
+//    optional unsigned int(8)[16] extended_type
+// ) {
+//    BoxHeader(
+//       boxtype,
+//       extended_type
+//    );
+//    // the remaining bytes are the BoxPayload
+// }
+func (s Size) Payload() int64 {
+   return int64(s) - 8
+}
+
+type Type [4]byte
+
+func (t Type) String() string {
+   return string(t[:])
 }

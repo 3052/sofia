@@ -5,39 +5,7 @@ import (
    "io"
 )
 
-func (s *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := s.Header.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.Sample_Count)
-   if err != nil {
-      return err
-   }
-   for count := s.Sample_Count; count >= 1; count-- {
-      var sam SampleEncryption
-      _, err := r.Read(sam.InitializationVector[:])
-      if err != nil {
-         return err
-      }
-      if s.Senc_Use_Subsamples() {
-         err := binary.Read(r, binary.BigEndian, &sam.Subsample_Count)
-         if err != nil {
-            return err
-         }
-         for count := sam.Subsample_Count; count >= 1; count-- {
-            var sub Subsample
-            err := sub.Decode(r)
-            if err != nil {
-               return err
-            }
-            sam.Subsamples = append(sam.Subsamples, sub)
-         }
-      }
-      s.Samples = append(s.Samples, sam)
-   }
-   return nil
-}
+// senc_use_subsamples: flag mask is 0x000002.
 func (s SampleEncryptionBox) Senc_Use_Subsamples() bool {
    return s.Header.Flags & 2 >= 1
 }
@@ -47,8 +15,10 @@ type Subsample struct {
    BytesOfProtectedData uint32
 }
 
-// senc_use_subsamples: flag mask is 0x000002.
-// 
+func (s *Subsample) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, s)
+}
+
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 // 
@@ -81,6 +51,44 @@ type SampleEncryption struct {
    Subsamples []Subsample
 }
 
-func (s *Subsample) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, s)
+func (s *SampleEncryption) Decode(b *SampleEncryptionBox, r io.Reader) error {
+   _, err := r.Read(s.InitializationVector[:])
+   if err != nil {
+      return err
+   }
+   if b.Senc_Use_Subsamples() {
+      err := binary.Read(r, binary.BigEndian, &s.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for count := s.Subsample_Count; count >= 1; count-- {
+         var sub Subsample
+         err := sub.Decode(r)
+         if err != nil {
+            return err
+         }
+         s.Subsamples = append(s.Subsamples, sub)
+      }
+   }
+   return nil
+}
+
+func (s *SampleEncryptionBox) Decode(r io.Reader) error {
+   err := s.Header.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &s.Sample_Count)
+   if err != nil {
+      return err
+   }
+   for count := s.Sample_Count; count >= 1; count-- {
+      var sam SampleEncryption
+      err := sam.Decode(s, r)
+      if err != nil {
+         return err
+      }
+      s.Samples = append(s.Samples, sam)
+   }
+   return nil
 }

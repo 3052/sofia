@@ -23,7 +23,7 @@ func (f *File) Decode(r io.Reader) error {
       case "moof":
          err := f.Moof.Decode(io.LimitReader(r, size))
          if err != nil {
-            return err
+            return fmt.Errorf("moof %v", err)
          }
       case "mdat":
          io.CopyN(io.Discard, r, size)

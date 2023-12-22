@@ -26,12 +26,12 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
       case "senc":
          err := t.Senc.Decode(r)
          if err != nil {
-            return err
+            return fmt.Errorf("senc %v", err)
          }
       case "trun":
          err := t.Trun.Decode(r)
          if err != nil {
-            return err
+            return fmt.Errorf("trun %v", err)
          }
       case "saio":
          io.CopyN(io.Discard, r, size)
@@ -44,6 +44,8 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
       case "tfdt":
          io.CopyN(io.Discard, r, size)
       case "tfhd":
+         io.CopyN(io.Discard, r, size)
+      case "uuid":
          io.CopyN(io.Discard, r, size)
       default:
          return fmt.Errorf("%q", head.Type)

@@ -24,7 +24,7 @@ func (t *TrackFragmentBox) Decode(src io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.BoxType() {
+      switch head.Type() {
       case "senc":
          t.Senc.BoxHeader = head
          err := t.Senc.Decode(src)
@@ -46,7 +46,7 @@ func (t *TrackFragmentBox) Decode(src io.Reader) error {
          }
          t.Boxes = append(t.Boxes, b)
       default:
-         return fmt.Errorf("%q", head.Type)
+         return fmt.Errorf("%q", head.RawType)
       }
    }
 }

@@ -20,7 +20,7 @@ func (f *File) Decode(src io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.BoxType() {
+      switch head.Type() {
       case "moof":
          f.Moof.Header = head
          err := f.Moof.Decode(io.LimitReader(src, size))
@@ -36,7 +36,7 @@ func (f *File) Decode(src io.Reader) error {
          }
          f.Boxes = append(f.Boxes, b)
       default:
-         return fmt.Errorf("%q", head.Type)
+         return fmt.Errorf("%q", head.RawType)
       }
    }
 }

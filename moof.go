@@ -23,7 +23,7 @@ func (m *MovieFragmentBox) Decode(src io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.BoxType() {
+      switch head.Type() {
       case "traf":
          m.Traf.Header = head
          err := m.Traf.Decode(io.LimitReader(src, size))
@@ -39,7 +39,7 @@ func (m *MovieFragmentBox) Decode(src io.Reader) error {
          }
          m.Boxes = append(m.Boxes, b)
       default:
-         return fmt.Errorf("%q", head.Type)
+         return fmt.Errorf("%q", head.RawType)
       }
    }
 }

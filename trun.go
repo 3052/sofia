@@ -68,22 +68,22 @@ func (t *TrackRunBox) Decode(r io.Reader) error {
 
 // 0x000004 first-sample-flags-present
 func (t TrackRunBox) First_Sample_Flags_Present() bool {
-   return t.FullBoxHeader.Flags & 4 >= 1
+   return t.FullBoxHeader.Flags() & 4 >= 1
 }
 
 // 0x000800 sample-composition-time-offsets-present
 func (t TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
-   return t.FullBoxHeader.Flags & 0x800 >= 1
+   return t.FullBoxHeader.Flags() & 0x800 >= 1
 }
 
 // 0x000100 sample-duration-present
 func (t TrackRunBox) Sample_Duration_Present() bool {
-   return t.FullBoxHeader.Flags & 0x100 >= 1
+   return t.FullBoxHeader.Flags() & 0x100 >= 1
 }
 
 // 0x000400 sample-flags-present
 func (t TrackRunBox) Sample_Flags_Present() bool {
-   return t.FullBoxHeader.Flags & 0x400 >= 1
+   return t.FullBoxHeader.Flags() & 0x400 >= 1
 }
 
 type TrackRunSample struct {

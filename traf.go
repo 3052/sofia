@@ -8,45 +8,43 @@ import (
 // aligned(8) class TrackFragmentBox extends Box('traf') {
 // }
 type TrackFragmentBox struct {
+   Header BoxHeader
    Senc SampleEncryptionBox
    Trun TrackRunBox
+   Boxes []Box
 }
 
-func (t *TrackFragmentBox) Decode(r io.Reader) error {
+func (t *TrackFragmentBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(r)
+      err := head.Decode(src)
       if err == io.EOF {
          return nil
       } else if err != nil {
          return err
       }
-      size := head.Size.Payload()
-      switch head.Type.String() {
+      size := head.BoxPayload()
+      switch head.BoxType() {
       case "senc":
-         err := t.Senc.Decode(r)
+         t.Senc.BoxHeader = head
+         err := t.Senc.Decode(src)
          if err != nil {
-            return fmt.Errorf("senc %v", err)
+            return err
          }
       case "trun":
-         err := t.Trun.Decode(r)
+         t.Trun.BoxHeader = head
+         err := t.Trun.Decode(src)
          if err != nil {
-            return fmt.Errorf("trun %v", err)
+            return err
          }
-      case "saio":
-         io.CopyN(io.Discard, r, size)
-      case "saiz":
-         io.CopyN(io.Discard, r, size)
-      case "sbgp":
-         io.CopyN(io.Discard, r, size)
-      case "sgpd":
-         io.CopyN(io.Discard, r, size)
-      case "tfdt":
-         io.CopyN(io.Discard, r, size)
-      case "tfhd":
-         io.CopyN(io.Discard, r, size)
-      case "uuid":
-         io.CopyN(io.Discard, r, size)
+      case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd", "uuid":
+         b := Box{Header: head}
+         b.Payload = make([]byte, size)
+         _, err := src.Read(b.Payload)
+         if err != nil {
+            return err
+         }
+         t.Boxes = append(t.Boxes, b)
       default:
          return fmt.Errorf("%q", head.Type)
       }

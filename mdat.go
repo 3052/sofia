@@ -1,13 +1,44 @@
 package sofia
 
-import "io"
+import (
+   "crypto/aes"
+   "crypto/cipher"
+   "io"
+)
 
-// aligned(8) class MediaDataBox extends Box('mdat') {
-//    bit(8) data[];
-// }
+func CryptSampleCenc(
+   sample, key, iv []byte, subSamplePatterns []Subsample,
+) error {
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      return err
+   }
+   stream := cipher.NewCTR(block, iv)
+   if len(subSamplePatterns) >= 1 {
+      var pos uint32
+      for _, ss := range subSamplePatterns {
+         nrClear := uint32(ss.BytesOfClearData)
+         if nrClear >= 1 {
+            pos += nrClear
+         }
+         nrEnc := ss.BytesOfProtectedData
+         if nrEnc >= 1 {
+            stream.XORKeyStream(sample[pos:pos+nrEnc], sample[pos:pos+nrEnc])
+            pos += nrEnc
+         }
+      }
+   } else {
+      stream.XORKeyStream(sample, sample)
+   }
+   return nil
+}
+
+//   aligned(8) class MediaDataBox extends Box('mdat') {
+//      bit(8) data[];
+//   }
 type MediaDataBox struct {
    Header BoxHeader
-   Data [][]byte
+   Data   [][]byte
 }
 
 func (m MediaDataBox) Encode(w io.Writer) error {

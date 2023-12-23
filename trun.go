@@ -10,37 +10,6 @@ func (t TrackRunBox) First_Sample_Flags_Present() bool {
    return t.FullBoxHeader.Flags() & 4 >= 1
 }
 
-// If the data-offset is present, it is relative to the base-data-offset
-// established in the track fragment header.
-// 
-// aligned(8) class TrackRunBox extends FullBox(
-//    'trun',
-//    version,
-//    tr_flags
-// ) {
-//    unsigned int(32) sample_count;
-//    signed int(32) data_offset; // 0x000001, assume present
-//    unsigned int(32) first_sample_flags; // 0x000004
-//    {
-//       unsigned int(32) sample_duration; // 0x000100
-//       unsigned int(32) sample_size; // 0x000200, assume present
-//       unsigned int(32) sample_flags // 0x000400
-//       if (version == 0) {
-//          unsigned int(32) sample_composition_time_offset; // 0x000800
-//       } else {
-//          signed int(32) sample_composition_time_offset; // 0x000800
-//       }
-//    }[ sample_count ]
-// }
-type TrackRunBox struct {
-   BoxHeader BoxHeader
-   FullBoxHeader FullBoxHeader
-   Sample_Count uint32
-   Data_Offset int32
-   First_Sample_Flags uint32
-   Samples []TrackRunSample
-}
-
 // 0x000800 sample-composition-time-offsets-present
 func (t TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
    return t.FullBoxHeader.Flags() & 0x800 >= 1
@@ -89,32 +58,6 @@ func (s *TrackRunSample) Decode(b *TrackRunBox, r io.Reader) error {
    return nil
 }
 
-func (s TrackRunSample) Encode(b TrackRunBox, w io.Writer) error {
-   if b.Sample_Duration_Present() {
-      err := binary.Write(w, binary.BigEndian, s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   err := binary.Write(w, binary.BigEndian, s.Size)
-   if err != nil {
-      return err
-   }
-   if b.Sample_Flags_Present() {
-      err := binary.Write(w, binary.BigEndian, s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if b.Sample_Composition_Time_Offsets_Present() {
-      _, err := w.Write(s.Composition_Time_Offset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (t *TrackRunBox) Decode(r io.Reader) error {
    err := t.FullBoxHeader.Decode(r)
    if err != nil {
@@ -145,9 +88,69 @@ func (t *TrackRunBox) Decode(r io.Reader) error {
    return nil
 }
 
-func (t TrackRunBox) Encode(w io.Writer) error {
-   err := t.FullBoxHeader.Encode(w)
+func (s TrackRunSample) Encode(b TrackRunBox, w io.Writer) error {
+   if b.Sample_Duration_Present() {
+      err := binary.Write(w, binary.BigEndian, s.Duration)
+      if err != nil {
+         return err
+      }
+   }
+   err := binary.Write(w, binary.BigEndian, s.Size)
    if err != nil {
+      return err
+   }
+   if b.Sample_Flags_Present() {
+      err := binary.Write(w, binary.BigEndian, s.Flags)
+      if err != nil {
+         return err
+      }
+   }
+   if b.Sample_Composition_Time_Offsets_Present() {
+      _, err := w.Write(s.Composition_Time_Offset[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+// If the data-offset is present, it is relative to the base-data-offset
+// established in the track fragment header.
+// 
+// aligned(8) class TrackRunBox extends FullBox(
+//    'trun',
+//    version,
+//    tr_flags
+// ) {
+//    unsigned int(32) sample_count;
+//    signed int(32) data_offset; // 0x000001, assume present
+//    unsigned int(32) first_sample_flags; // 0x000004
+//    {
+//       unsigned int(32) sample_duration; // 0x000100
+//       unsigned int(32) sample_size; // 0x000200, assume present
+//       unsigned int(32) sample_flags // 0x000400
+//       if (version == 0) {
+//          unsigned int(32) sample_composition_time_offset; // 0x000800
+//       } else {
+//          signed int(32) sample_composition_time_offset; // 0x000800
+//       }
+//    }[ sample_count ]
+// }
+type TrackRunBox struct {
+   BoxHeader BoxHeader
+   FullBoxHeader FullBoxHeader
+   Sample_Count uint32
+   Data_Offset int32
+   First_Sample_Flags uint32
+   Samples []TrackRunSample
+}
+
+func (t TrackRunBox) Encode(w io.Writer) error {
+   err := t.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := t.FullBoxHeader.Encode(w); err != nil {
       return err
    }
    if err := binary.Write(w, binary.BigEndian, t.Sample_Count); err != nil {

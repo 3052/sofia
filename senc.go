@@ -81,12 +81,10 @@ func (s SampleEncryptionBox) Encode(w io.Writer) error {
    if err != nil {
       return err
    }
-   err = s.FullBoxHeader.Encode(w)
-   if err != nil {
+   if err := s.FullBoxHeader.Encode(w); err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, s.Sample_Count)
-   if err != nil {
+   if err := binary.Write(w, binary.BigEndian, s.Sample_Count); err != nil {
       return err
    }
    for _, sample := range s.Samples {

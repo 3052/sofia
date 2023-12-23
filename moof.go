@@ -9,16 +9,13 @@ import (
 // }
 type MovieFragmentBox struct {
    Header BoxHeader
-   Traf TrackFragmentBox
    Boxes []Box
+   Traf TrackFragmentBox
 }
 
 func (m MovieFragmentBox) Encode(dst io.Writer) error {
    err := m.Header.Encode(dst)
    if err != nil {
-      return err
-   }
-   if err := m.Traf.Encode(dst); err != nil {
       return err
    }
    for _, b := range m.Boxes {
@@ -27,7 +24,7 @@ func (m MovieFragmentBox) Encode(dst io.Writer) error {
          return err
       }
    }
-   return nil
+   return m.Traf.Encode(dst)
 }
 
 func (m *MovieFragmentBox) Decode(src io.Reader) error {

@@ -10,8 +10,8 @@ import (
 type TrackFragmentBox struct {
    Header BoxHeader
    Boxes []Box
-   Senc SampleEncryptionBox
    Trun TrackRunBox
+   Senc SampleEncryptionBox
 }
 
 func (t TrackFragmentBox) Encode(dst io.Writer) error {
@@ -25,13 +25,10 @@ func (t TrackFragmentBox) Encode(dst io.Writer) error {
          return err
       }
    }
-   if err := t.Senc.Encode(dst); err != nil {
-      return err
-   }
    if err := t.Trun.Encode(dst); err != nil {
       return err
    }
-   return nil
+   return t.Senc.Encode(dst)
 }
 
 func (t *TrackFragmentBox) Decode(src io.Reader) error {

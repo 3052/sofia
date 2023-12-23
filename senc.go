@@ -5,28 +5,6 @@ import (
    "io"
 )
 
-func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
-   _, err := r.Read(e.InitializationVector[:])
-   if err != nil {
-      return err
-   }
-   if s.Senc_Use_Subsamples() {
-      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
-      if err != nil {
-         return err
-      }
-      for count := e.Subsample_Count; count >= 1; count-- {
-         var sub Subsample
-         err := sub.Decode(r)
-         if err != nil {
-            return err
-         }
-         e.Subsamples = append(e.Subsamples, sub)
-      }
-   }
-   return nil
-}
-
 func (s *SampleEncryptionBox) Decode(r io.Reader) error {
    err := s.FullBoxHeader.Decode(r)
    if err != nil {
@@ -63,24 +41,6 @@ func (s Subsample) Encode(w io.Writer) error {
 type Subsample struct {
    BytesOfClearData uint16
    BytesOfProtectedData uint32
-}
-
-func (e EncryptionSample) Encode(w io.Writer) error {
-   _, err := w.Write(e.InitializationVector[:])
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, e.Subsample_Count)
-   if err != nil {
-      return err
-   }
-   for _, sample := range e.Subsamples {
-      err := sample.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }
 
 type EncryptionSample struct {
@@ -130,9 +90,51 @@ func (s SampleEncryptionBox) Encode(w io.Writer) error {
       return err
    }
    for _, sample := range s.Samples {
-      err := sample.Encode(w)
+      err := sample.Encode(s, w)
       if err != nil {
          return err
+      }
+   }
+   return nil
+}
+
+func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
+   _, err := r.Read(e.InitializationVector[:])
+   if err != nil {
+      return err
+   }
+   if s.Senc_Use_Subsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for count := e.Subsample_Count; count >= 1; count-- {
+         var sub Subsample
+         err := sub.Decode(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples = append(e.Subsamples, sub)
+      }
+   }
+   return nil
+}
+
+func (e EncryptionSample) Encode(s SampleEncryptionBox, w io.Writer) error {
+   _, err := w.Write(e.InitializationVector[:])
+   if err != nil {
+      return err
+   }
+   if s.Senc_Use_Subsamples() {
+      err := binary.Write(w, binary.BigEndian, e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for _, sample := range e.Subsamples {
+         err := sample.Encode(w)
+         if err != nil {
+            return err
+         }
       }
    }
    return nil

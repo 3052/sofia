@@ -13,6 +13,23 @@ type MovieFragmentBox struct {
    Boxes []Box
 }
 
+func (m MovieFragmentBox) Encode(dst io.Writer) error {
+   err := m.Header.Encode(dst)
+   if err != nil {
+      return err
+   }
+   if err := m.Traf.Encode(dst); err != nil {
+      return err
+   }
+   for _, b := range m.Boxes {
+      err := b.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (m *MovieFragmentBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader

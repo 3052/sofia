@@ -43,21 +43,13 @@ type Subsample struct {
    BytesOfProtectedData uint32
 }
 
-type EncryptionSample struct {
-   InitializationVector [8]byte
-   Subsample_Count      uint16
-   Subsamples           []Subsample
-}
-
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 //
 // aligned(8) class SampleEncryptionBox extends FullBox(
-//
 //   'senc',
 //   version,
 //   flags
-//
 //   ) {
 //      unsigned int(32) sample_count;
 //      {
@@ -99,7 +91,7 @@ func (s SampleEncryptionBox) Encode(w io.Writer) error {
 }
 
 func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
-   _, err := r.Read(e.InitializationVector[:])
+   _, err := r.Read(e.InitializationVector[:8])
    if err != nil {
       return err
    }
@@ -120,8 +112,14 @@ func (e *EncryptionSample) Decode(s *SampleEncryptionBox, r io.Reader) error {
    return nil
 }
 
+type EncryptionSample struct {
+   InitializationVector [16]byte
+   Subsample_Count      uint16
+   Subsamples           []Subsample
+}
+
 func (e EncryptionSample) Encode(s SampleEncryptionBox, w io.Writer) error {
-   _, err := w.Write(e.InitializationVector[:])
+   _, err := w.Write(e.InitializationVector[:8])
    if err != nil {
       return err
    }

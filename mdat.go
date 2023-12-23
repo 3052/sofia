@@ -6,17 +6,16 @@ import (
    "io"
 )
 
-func CryptSampleCenc(
-   sample, key, iv []byte, subSamplePatterns []Subsample,
-) error {
+// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    block, err := aes.NewCipher(key)
    if err != nil {
       return err
    }
-   stream := cipher.NewCTR(block, iv)
-   if len(subSamplePatterns) >= 1 {
+   stream := cipher.NewCTR(block, enc.InitializationVector[:])
+   if len(enc.Subsamples) >= 1 {
       var pos uint32
-      for _, ss := range subSamplePatterns {
+      for _, ss := range enc.Subsamples {
          nrClear := uint32(ss.BytesOfClearData)
          if nrClear >= 1 {
             pos += nrClear
@@ -33,9 +32,9 @@ func CryptSampleCenc(
    return nil
 }
 
-//   aligned(8) class MediaDataBox extends Box('mdat') {
-//      bit(8) data[];
-//   }
+// aligned(8) class MediaDataBox extends Box('mdat') {
+//    bit(8) data[];
+// }
 type MediaDataBox struct {
    Header BoxHeader
    Data   [][]byte

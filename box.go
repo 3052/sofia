@@ -5,12 +5,31 @@ import (
    "io"
 )
 
-func (b BoxHeader) Encode(w io.Writer) error {
-   return binary.Write(w, binary.BigEndian, b)
+// aligned(8) class Box (
+//    unsigned int(32) boxtype,
+//    optional unsigned int(8)[16] extended_type
+// ) {
+//    BoxHeader(
+//       boxtype,
+//       extended_type
+//    );
+//    // the remaining bytes are the BoxPayload
+// }
+type Box struct {
+   Header BoxHeader
+   Payload []byte
 }
 
-func (b BoxHeader) BoxPayload() int64 {
-   return int64(b.Size) - 8
+func (b Box) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   _, err = w.Write(b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
 }
 
 // aligned(8) class BoxHeader (
@@ -33,22 +52,20 @@ type BoxHeader struct {
    RawType [4]byte
 }
 
-func (b BoxHeader) Type() string {
-   return string(b.RawType[:])
-}
-
 func (b *BoxHeader) Decode(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, b)
 }
 
-func (f *FullBoxHeader) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, f)
+func (b BoxHeader) Encode(w io.Writer) error {
+   return binary.Write(w, binary.BigEndian, b)
 }
 
-func (f FullBoxHeader) Flags() uint32 {
-   b := []byte{0}
-   b = append(b, f.RawFlags[:]...)
-   return binary.BigEndian.Uint32(b)
+func (b BoxHeader) BoxPayload() int64 {
+   return int64(b.Size) - 8
+}
+
+func (b BoxHeader) Type() string {
+   return string(b.RawType[:])
 }
 
 // aligned(8) class FullBoxHeader(
@@ -63,33 +80,16 @@ type FullBoxHeader struct {
    RawFlags [3]byte
 }
 
+func (f *FullBoxHeader) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, f)
+}
+
 func (f FullBoxHeader) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
 }
 
-func (b Box) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-// aligned(8) class Box (
-//    unsigned int(32) boxtype,
-//    optional unsigned int(8)[16] extended_type
-// ) {
-//    BoxHeader(
-//       boxtype,
-//       extended_type
-//    );
-//    // the remaining bytes are the BoxPayload
-// }
-type Box struct {
-   Header BoxHeader
-   Payload []byte
+func (f FullBoxHeader) Flags() uint32 {
+   b := []byte{0}
+   b = append(b, f.RawFlags[:]...)
+   return binary.BigEndian.Uint32(b)
 }

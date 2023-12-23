@@ -9,9 +9,9 @@ import (
 // }
 type TrackFragmentBox struct {
    Header BoxHeader
+   Boxes []Box
    Senc SampleEncryptionBox
    Trun TrackRunBox
-   Boxes []Box
 }
 
 func (t TrackFragmentBox) Encode(dst io.Writer) error {
@@ -19,17 +19,17 @@ func (t TrackFragmentBox) Encode(dst io.Writer) error {
    if err != nil {
       return err
    }
-   if err := t.Senc.Encode(dst); err != nil {
-      return err
-   }
-   if err := t.Trun.Encode(dst); err != nil {
-      return err
-   }
    for _, b := range t.Boxes {
       err := b.Encode(dst)
       if err != nil {
          return err
       }
+   }
+   if err := t.Senc.Encode(dst); err != nil {
+      return err
+   }
+   if err := t.Trun.Encode(dst); err != nil {
+      return err
    }
    return nil
 }

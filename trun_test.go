@@ -1,13 +1,13 @@
 package sofia
 
 import (
-   "encoding/json"
+   "fmt"
    "os"
    "testing"
 )
 
 func Test_Trun(t *testing.T) {
-   media, err := os.Open("testdata/roku-video/index_video_8_0_1.mp4")
+   media, err := os.Open("testdata/amc-video/segment0.m4f")
    if err != nil {
       t.Fatal(err)
    }
@@ -16,7 +16,8 @@ func Test_Trun(t *testing.T) {
    if err := f.Decode(media); err != nil {
       t.Fatal(err)
    }
-   enc := json.NewEncoder(os.Stdout)
-   enc.SetIndent("", " ")
-   enc.Encode(f.Moof.Traf.Trun)
+   for _, sample := range f.Moof.Traf.Trun.Samples {
+      fmt.Println(sample.Size)
+   }
+   fmt.Println("len(f.Moof.Traf.Trun.Samples)", len(f.Moof.Traf.Trun.Samples))
 }

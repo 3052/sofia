@@ -1,6 +1,7 @@
 package sofia
 
 import (
+   "fmt"
    "os"
    "testing"
 )
@@ -15,4 +16,8 @@ func Test_Mdat(t *testing.T) {
    if err := f.Decode(media); err != nil {
       t.Fatal(err)
    }
+   for _, data := range f.Mdat.Data {
+      fmt.Println(len(data))
+   }
+   fmt.Println("len(f.Mdat.Data)", len(f.Mdat.Data))
 }

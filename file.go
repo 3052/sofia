@@ -6,22 +6,23 @@ import (
 )
 
 type File struct {
-   Moof MovieFragmentBox
    Boxes []Box
+   Moof MovieFragmentBox
+   Mdat MediaDataBox
 }
 
 func (f File) Encode(dst io.Writer) error {
-   err := f.Moof.Encode(dst)
-   if err != nil {
-      return err
-   }
    for _, b := range f.Boxes {
       err := b.Encode(dst)
       if err != nil {
          return err
       }
    }
-   return nil
+   err := f.Moof.Encode(dst)
+   if err != nil {
+      return err
+   }
+   return f.Mdat.Encode(dst)
 }
 
 func (f *File) Decode(src io.Reader) error {
@@ -35,13 +36,19 @@ func (f *File) Decode(src io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
+      case "mdat":
+         f.Mdat.Header = head
+         err := f.Mdat.Decode(f.Moof.Traf.Trun, src)
+         if err != nil {
+            return err
+         }
       case "moof":
          f.Moof.Header = head
          err := f.Moof.Decode(io.LimitReader(src, size))
          if err != nil {
             return err
          }
-      case "mdat", "sidx", "styp":
+      case "sidx", "styp":
          b := Box{Header: head}
          b.Payload = make([]byte, size)
          _, err := src.Read(b.Payload)

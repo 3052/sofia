@@ -2,7 +2,6 @@ package sofia
 
 import (
    "encoding/json"
-   "fmt"
    "os"
    "testing"
 )
@@ -20,9 +19,4 @@ func Test_Trun(t *testing.T) {
    enc := json.NewEncoder(os.Stdout)
    enc.SetIndent("", " ")
    enc.Encode(f.Moof.Traf.Trun)
-   var size uint32
-   for _, sample := range f.Moof.Traf.Trun.Samples {
-      size += sample.Size
-   }
-   fmt.Println(size)
 }

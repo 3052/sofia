@@ -48,7 +48,7 @@ func (f *File) Decode(src io.Reader) error {
          if err != nil {
             return err
          }
-      case "sidx", "styp":
+      case "ftyp", "moov", "sidx", "styp":
          b := Box{Header: head}
          b.Payload = make([]byte, size)
          _, err := src.Read(b.Payload)

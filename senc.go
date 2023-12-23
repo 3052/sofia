@@ -5,6 +5,33 @@ import (
    "io"
 )
 
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+// aligned(8) class SampleEncryptionBox extends FullBox(
+//   'senc',
+//   version,
+//   flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type SampleEncryptionBox struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   Sample_Count  uint32
+   Samples       []EncryptionSample
+}
+
 func (s *SampleEncryptionBox) Decode(r io.Reader) error {
    err := s.FullBoxHeader.Decode(r)
    if err != nil {
@@ -41,33 +68,6 @@ func (s Subsample) Encode(w io.Writer) error {
 type Subsample struct {
    BytesOfClearData     uint16
    BytesOfProtectedData uint32
-}
-
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-// aligned(8) class SampleEncryptionBox extends FullBox(
-//   'senc',
-//   version,
-//   flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type SampleEncryptionBox struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   Sample_Count  uint32
-   Samples       []EncryptionSample
 }
 
 func (s SampleEncryptionBox) Encode(w io.Writer) error {

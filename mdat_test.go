@@ -30,7 +30,13 @@ func segment(dst io.Writer) error {
       }
    }
    for _, b := range f.Moof.Traf.Boxes {
+      if b.Header.Type() == "saio" {
+         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
+      }
       if b.Header.Type() == "saiz" {
+         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
+      }
+      if b.Header.Type() == "senc" {
          b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
       }
    }
@@ -51,6 +57,11 @@ func Test_Mdat(t *testing.T) {
    var f File
    if err := f.Decode(src); err != nil {
       t.Fatal(err)
+   }
+   for _, b := range f.Moov.Boxes {
+      if b.Header.Type() == "pssh" {
+         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
+      }
    }
    if err := f.Encode(dst); err != nil {
       t.Fatal(err)

@@ -13,20 +13,6 @@ type MovieFragmentBox struct {
    Traf   TrackFragmentBox
 }
 
-func (m MovieFragmentBox) Encode(dst io.Writer) error {
-   err := m.Header.Encode(dst)
-   if err != nil {
-      return err
-   }
-   for _, b := range m.Boxes {
-      err := b.Encode(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return m.Traf.Encode(dst)
-}
-
 func (m *MovieFragmentBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader
@@ -56,4 +42,18 @@ func (m *MovieFragmentBox) Decode(src io.Reader) error {
          return fmt.Errorf("%q", head.RawType)
       }
    }
+}
+
+func (m MovieFragmentBox) Encode(dst io.Writer) error {
+   err := m.Header.Encode(dst)
+   if err != nil {
+      return err
+   }
+   for _, b := range m.Boxes {
+      err := b.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return m.Traf.Encode(dst)
 }

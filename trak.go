@@ -5,14 +5,14 @@ import (
    "io"
 )
 
-// aligned(8) class MovieBox extends Box('moov') {
+// aligned(8) class TrackBox extends Box('trak') {
 // }
-type MovieBox struct {
+type TrackBox struct {
    Header  BoxHeader
-   Boxes []*Box
+   Boxes []Box
 }
 
-func (m MovieBox) Encode(dst io.Writer) error {
+func (m TrackBox) Encode(dst io.Writer) error {
    err := m.Header.Encode(dst)
    if err != nil {
       return err
@@ -26,7 +26,7 @@ func (m MovieBox) Encode(dst io.Writer) error {
    return nil
 }
 
-func (m *MovieBox) Decode(src io.Reader) error {
+func (m *TrackBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(src)
@@ -44,7 +44,7 @@ func (m *MovieBox) Decode(src io.Reader) error {
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, &b)
+         m.Boxes = append(m.Boxes, b)
       default:
          return fmt.Errorf("%q", head.RawType)
       }

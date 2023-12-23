@@ -1,5 +1,17 @@
 # test
 
+we might need to remove this too:
+
+~~~
+[moov] Size=1948
+  [trak] Size=576
+    [mdia] Size=476
+      [minf] Size=383
+        [stbl] Size=319
+          [stsd] Size=243 Version=0 Flags=0x000000 EntryCount=1
+            [encv] Size=227 ... (use "-full encv" to show all)
+~~~
+
 ## Mozilla Firefox
 
 ## VLC media player mp4 small

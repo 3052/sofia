@@ -6,13 +6,21 @@ import (
 )
 
 func Test_Moov(t *testing.T) {
-   media, err := os.Open("testdata/amc-audio/segment0.m4f")
+   src, err := os.Open("testdata/amc-video/init.m4f")
    if err != nil {
       t.Fatal(err)
    }
-   defer media.Close()
+   defer src.Close()
+   dst, err := os.Create("init.m4f")
+   if err != nil {
+      t.Fatal(err)
+   }
+   defer dst.Close()
    var f File
-   if err := f.Decode(media); err != nil {
+   if err := f.Decode(src); err != nil {
+      t.Fatal(err)
+   }
+   if err := f.Encode(dst); err != nil {
       t.Fatal(err)
    }
 }

@@ -10,6 +10,20 @@ type File struct {
    Boxes []Box
 }
 
+func (f File) Encode(dst io.Writer) error {
+   err := f.Moof.Encode(dst)
+   if err != nil {
+      return err
+   }
+   for _, b := range f.Boxes {
+      err := b.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (f *File) Decode(src io.Reader) error {
    for {
       var head BoxHeader

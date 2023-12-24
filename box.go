@@ -5,6 +5,14 @@ import (
    "io"
 )
 
+func (f FullBoxHeader) Flags() uint32 {
+   var v uint32
+   v |= uint32(f.RawFlags[0])<<16
+   v |= uint32(f.RawFlags[1])<<8
+   v |= uint32(f.RawFlags[2])
+   return v
+}
+
 // aligned(8) class Box (
 //
 //   unsigned int(32) boxtype,
@@ -92,10 +100,4 @@ func (f *FullBoxHeader) Decode(r io.Reader) error {
 
 func (f FullBoxHeader) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
-}
-
-func (f FullBoxHeader) Flags() uint32 {
-   b := []byte{0}
-   b = append(b, f.RawFlags[:]...)
-   return binary.BigEndian.Uint32(b)
 }

@@ -5,15 +5,14 @@ import (
    "io"
 )
 
-// aligned(8) class MediaBox extends Box('mdia') {
+// aligned(8) class MediaInformationBox extends Box('minf') {
 // }
-type MediaBox struct {
+type MediaInformationBox struct {
    Header  BoxHeader
    Boxes []Box
-   Minf MediaInformationBox
 }
 
-func (b *MediaBox) Decode(r io.Reader) error {
+func (b *MediaInformationBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -24,7 +23,7 @@ func (b *MediaBox) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "hdlr", "mdhd":
+      case "dinf", "stbl", "vmhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := r.Read(value.Payload)
@@ -32,19 +31,13 @@ func (b *MediaBox) Decode(r io.Reader) error {
             return err
          }
          b.Boxes = append(b.Boxes, value)
-      case "minf":
-         b.Minf.Header = head
-         err := b.Minf.Decode(r)
-         if err != nil {
-            return err
-         }
       default:
          return fmt.Errorf("%q", head.RawType)
       }
    }
 }
 
-func (b MediaBox) Encode(w io.Writer) error {
+func (b MediaInformationBox) Encode(w io.Writer) error {
    err := b.Header.Encode(w)
    if err != nil {
       return err
@@ -55,5 +48,5 @@ func (b MediaBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Minf.Encode(w)
+   return nil
 }

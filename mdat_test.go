@@ -29,17 +29,6 @@ func segment(dst io.Writer) error {
          return err
       }
    }
-   for _, b := range f.Moof.Traf.Boxes {
-      if b.Header.Type() == "saio" {
-         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
-      }
-      if b.Header.Type() == "saiz" {
-         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
-      }
-      if b.Header.Type() == "senc" {
-         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
    return f.Encode(dst)
 }
 
@@ -60,6 +49,7 @@ func Test_Mdat(t *testing.T) {
    }
    for _, b := range f.Moov.Boxes {
       if b.Header.Type() == "pssh" {
+         // Firefox
          b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
       }
    }
@@ -70,3 +60,16 @@ func Test_Mdat(t *testing.T) {
       t.Fatal(err)
    }
 }
+
+/*
+firefox
+encv -> avc1, sinf -> free
+[moov] Size=1948
+  [trak] Size=576
+    [mdia] Size=476
+      [minf] Size=383
+        [stbl] Size=319
+          [stsd] Size=243 Version=0 Flags=0x000000 EntryCount=1
+            [encv] Size=227 ... (use "-full encv" to show all)
+              [sinf] Size=80
+*/

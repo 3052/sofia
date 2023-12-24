@@ -5,6 +5,25 @@ import (
    "io"
 )
 
+func (b *SampleEncryptionBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
+   if err != nil {
+      return err
+   }
+   b.Samples = make([]*EncryptionSample, b.Sample_Count)
+   for _, sample := range b.Samples {
+      err := sample.Decode(b, r)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 //
@@ -29,27 +48,7 @@ type SampleEncryptionBox struct {
    BoxHeader     BoxHeader
    FullBoxHeader FullBoxHeader
    Sample_Count  uint32
-   Samples       []EncryptionSample
-}
-
-func (b *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
-   if err != nil {
-      return err
-   }
-   for count := b.Sample_Count; count >= 1; count-- {
-      var sam EncryptionSample
-      err := sam.Decode(b, r)
-      if err != nil {
-         return err
-      }
-      b.Samples = append(b.Samples, sam)
-   }
-   return nil
+   Samples       []*EncryptionSample
 }
 
 // senc_use_subsamples: flag mask is 0x000002.

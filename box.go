@@ -30,6 +30,22 @@ type Box struct {
    Payload []byte
 }
 
+func (b *Box) Decode(r io.Reader) error {
+   err := b.Header.Decode(r)
+   if err != nil {
+      return err
+   }
+   b.Payload = make([]byte, b.Header.BoxPayload())
+   if _, err := r.Read(b.Payload); err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b BoxHeader) BoxPayload() int64 {
+   return int64(b.Size) - 8
+}
+
 func (b Box) Encode(w io.Writer) error {
    err := b.Header.Encode(w)
    if err != nil {
@@ -70,10 +86,6 @@ func (b *BoxHeader) Decode(r io.Reader) error {
 
 func (b BoxHeader) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, b)
-}
-
-func (b BoxHeader) BoxPayload() int64 {
-   return int64(b.Size) - 8
 }
 
 func (b BoxHeader) Type() string {

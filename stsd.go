@@ -1,49 +1,39 @@
 package sofia
 
 import (
-   "fmt"
+   "encoding/binary"
    "io"
 )
 
-// aligned(8) class SampleTableBox extends Box('stbl') {
+// aligned(8) class SampleDescriptionBox() extends FullBox(
+//    'stsd',
+//    version,
+//    0
+// ) {
+//    int i ;
+//    unsigned int(32) entry_count;
+//    for (i = 1 ; i <= entry_count ; i++){
+//       SampleEntry(); // an instance of a class derived from SampleEntry
+//    }
 // }
-type SampleTableBox struct {
-   Header  BoxHeader
-   Boxes []Box
+type SampleDescriptionBox struct {
+   BoxHeader  BoxHeader
+   FullBoxHeader FullBoxHeader
+   Entry_Count uint32
+   Entries []*Box
 }
 
-func (b *SampleTableBox) Decode(r io.Reader) error {
-   for {
-      var head BoxHeader
-      err := head.Decode(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      size := head.BoxPayload()
-      switch head.Type() {
-      case "stco", "stsc", "stsd", "stsz", "stts":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
-         if err != nil {
-            return err
-         }
-         b.Boxes = append(b.Boxes, value)
-      default:
-         return fmt.Errorf("%q", head.RawType)
-      }
-   }
-}
-
-func (b SampleTableBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+func (b *SampleDescriptionBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
+   if err := binary.Read(r, binary.BigEndian, &b.Entry_Count); err != nil {
+      return err
+   }
+   b.Entries = make([]*Box, b.Entry_Count)
+   for _, entry := range b.Entries {
+      err := entry.Decode(r)
       if err != nil {
          return err
       }

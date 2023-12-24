@@ -5,6 +5,35 @@ import (
    "io"
 )
 
+func (b *TrackRunBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Data_Offset)
+   if err != nil {
+      return err
+   }
+   if b.First_Sample_Flags_Present() {
+      err := binary.Read(r, binary.BigEndian, &b.First_Sample_Flags)
+      if err != nil {
+         return err
+      }
+   }
+   b.Samples = make([]*TrackRunSample, b.Sample_Count)
+   for _, run := range b.Samples {
+      err := run.Decode(b, r)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 // If the data-offset is present, it is relative to the base-data-offset
 // established in the track fragment header.
 //
@@ -35,7 +64,7 @@ type TrackRunBox struct {
    Sample_Count       uint32
    Data_Offset        int32
    First_Sample_Flags uint32
-   Samples            []TrackRunSample
+   Samples            []*TrackRunSample
 }
 
 type TrackRunSample struct {
@@ -87,36 +116,6 @@ func (s *TrackRunSample) Decode(b *TrackRunBox, r io.Reader) error {
       if err != nil {
          return err
       }
-   }
-   return nil
-}
-
-func (b *TrackRunBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Data_Offset)
-   if err != nil {
-      return err
-   }
-   if b.First_Sample_Flags_Present() {
-      err := binary.Read(r, binary.BigEndian, &b.First_Sample_Flags)
-      if err != nil {
-         return err
-      }
-   }
-   for count := b.Sample_Count; count >= 1; count-- {
-      var run TrackRunSample
-      err := run.Decode(b, r)
-      if err != nil {
-         return err
-      }
-      b.Samples = append(b.Samples, run)
    }
    return nil
 }

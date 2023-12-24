@@ -9,7 +9,8 @@ import (
 // }
 type MovieBox struct {
    Header  BoxHeader
-   Boxes []*Box
+   Boxes []Box
+   Trak TrackBox
 }
 
 func (m MovieBox) Encode(dst io.Writer) error {
@@ -23,7 +24,7 @@ func (m MovieBox) Encode(dst io.Writer) error {
          return err
       }
    }
-   return nil
+   return m.Trak.Encode(dst)
 }
 
 func (m *MovieBox) Decode(src io.Reader) error {
@@ -37,14 +38,20 @@ func (m *MovieBox) Decode(src io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "mvex", "mvhd", "pssh", "trak":
+      case "mvex", "mvhd", "pssh":
          b := Box{Header: head}
          b.Payload = make([]byte, size)
          _, err := src.Read(b.Payload)
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, &b)
+         m.Boxes = append(m.Boxes, b)
+      case "trak":
+         m.Trak.Header = head
+         err := m.Trak.Decode(io.LimitReader(src, size))
+         if err != nil {
+            return err
+         }
       default:
          return fmt.Errorf("%q", head.RawType)
       }

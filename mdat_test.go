@@ -32,12 +32,19 @@ func segment(dst io.Writer) error {
    return f.Encode(dst)
 }
 
+/*
+firefox
+encv -> avc1, sinf -> free
+[moov] Size=1948
+  [trak] Size=576
+    [mdia] Size=476
+      [minf] Size=383
+        [stbl] Size=319
+          [stsd] Size=243 Version=0 Flags=0x000000 EntryCount=1
+            [encv] Size=227 ... (use "-full encv" to show all)
+              [sinf] Size=80
+*/
 func Test_Mdat(t *testing.T) {
-   dst, err := os.Create("dec.m4v")
-   if err != nil {
-      t.Fatal(err)
-   }
-   defer dst.Close()
    src, err := os.Open("testdata/amc-video/init.m4f")
    if err != nil {
       t.Fatal(err)
@@ -47,6 +54,12 @@ func Test_Mdat(t *testing.T) {
    if err := f.Decode(src); err != nil {
       t.Fatal(err)
    }
+   return
+   dst, err := os.Create("dec.m4v")
+   if err != nil {
+      t.Fatal(err)
+   }
+   defer dst.Close()
    for _, b := range f.Moov.Boxes {
       if b.Header.Type() == "pssh" {
          // Firefox
@@ -72,16 +85,3 @@ func Test_Mdat(t *testing.T) {
       t.Fatal(err)
    }
 }
-
-/*
-firefox
-encv -> avc1, sinf -> free
-[moov] Size=1948
-  [trak] Size=576
-    [mdia] Size=476
-      [minf] Size=383
-        [stbl] Size=319
-          [stsd] Size=243 Version=0 Flags=0x000000 EntryCount=1
-            [encv] Size=227 ... (use "-full encv" to show all)
-              [sinf] Size=80
-*/

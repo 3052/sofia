@@ -34,12 +34,12 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
          b.Boxes = append(b.Boxes, value)
       case "stbl":
          b.Stbl.Header = head
-         err := b.Stbl.Decode(r)
+         err := b.Stbl.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("minf %q", head.RawType)
       }
    }
 }

@@ -53,7 +53,7 @@ func (b *MovieBox) Decode(src io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("moov %q", head.RawType)
       }
    }
 }

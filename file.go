@@ -12,10 +12,10 @@ type File struct {
    Mdat MediaDataBox
 }
 
-func (f *File) Decode(src io.Reader) error {
+func (f *File) Decode(r io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(src)
+      err := head.Decode(r)
       if err == io.EOF {
          return nil
       } else if err != nil {
@@ -24,58 +24,58 @@ func (f *File) Decode(src io.Reader) error {
       size := head.BoxPayload()
       switch head.Type() {
       case "ftyp", "sidx", "styp":
-         b := Box{Header: head}
-         b.Payload = make([]byte, size)
-         _, err := src.Read(b.Payload)
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := r.Read(value.Payload)
          if err != nil {
             return err
          }
-         f.Boxes = append(f.Boxes, b)
+         f.Boxes = append(f.Boxes, value)
       case "moov":
          f.Moov.Header = head
-         err := f.Moov.Decode(io.LimitReader(src, size))
+         err := f.Moov.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "moof":
          f.Moof.Header = head
-         err := f.Moof.Decode(io.LimitReader(src, size))
+         err := f.Moof.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "mdat":
          f.Mdat.Header = head
-         err := f.Mdat.Decode(f.Moof.Traf.Trun, src)
+         err := f.Mdat.Decode(f.Moof.Traf.Trun, r)
          if err != nil {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("file %q", head.RawType)
       }
    }
 }
 
-func (f File) Encode(dst io.Writer) error {
-   for _, b := range f.Boxes {
-      err := b.Encode(dst)
+func (f File) Encode(w io.Writer) error {
+   for _, value := range f.Boxes {
+      err := value.Encode(w)
       if err != nil {
          return err
       }
    }
    if f.Moov.Header.Size >= 1 {
-      err := f.Moov.Encode(dst)
+      err := f.Moov.Encode(w)
       if err != nil {
          return err
       }
    }
    if f.Moof.Header.Size >= 1 {
-      err := f.Moof.Encode(dst)
+      err := f.Moof.Encode(w)
       if err != nil {
          return err
       }
    }
    if f.Mdat.Header.Size >= 1 {
-      err := f.Mdat.Encode(dst)
+      err := f.Mdat.Encode(w)
       if err != nil {
          return err
       }

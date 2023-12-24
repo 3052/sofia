@@ -5,46 +5,6 @@ import (
    "io"
 )
 
-func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.Senc_Use_Subsamples() {
-      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
-      if err != nil {
-         return err
-      }
-      e.Subsamples = make([]*Subsample, e.Subsample_Count)
-      for _, sample := range e.Subsamples {
-         err := sample.Decode(r)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return nil
-}
-
-func (b *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
-   if err != nil {
-      return err
-   }
-   b.Samples = make([]*EncryptionSample, b.Sample_Count)
-   for _, sample := range b.Samples {
-      err := sample.Decode(b, r)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 //
@@ -132,6 +92,48 @@ func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
             return err
          }
       }
+   }
+   return nil
+}
+
+func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if b.Senc_Use_Subsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for count := e.Subsample_Count; count >= 1; count-- {
+         var sample Subsample
+         err := sample.Decode(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples = append(e.Subsamples, &sample)
+      }
+   }
+   return nil
+}
+
+func (b *SampleEncryptionBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
+   if err != nil {
+      return err
+   }
+   for count := b.Sample_Count; count >= 1; count-- {
+      var sample EncryptionSample
+      err := sample.Decode(b, r)
+      if err != nil {
+         return err
+      }
+      b.Samples = append(b.Samples, &sample)
    }
    return nil
 }

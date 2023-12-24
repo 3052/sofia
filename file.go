@@ -12,34 +12,6 @@ type File struct {
    Mdat MediaDataBox
 }
 
-func (f File) Encode(dst io.Writer) error {
-   for _, b := range f.Boxes {
-      err := b.Encode(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Moov.Header.Size >= 1 {
-      err := f.Moov.Encode(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Moof.Header.Size >= 1 {
-      err := f.Moof.Encode(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Mdat.Header.Size >= 1 {
-      err := f.Mdat.Encode(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (f *File) Decode(src io.Reader) error {
    for {
       var head BoxHeader
@@ -81,4 +53,32 @@ func (f *File) Decode(src io.Reader) error {
          return fmt.Errorf("%q", head.RawType)
       }
    }
+}
+
+func (f File) Encode(dst io.Writer) error {
+   for _, b := range f.Boxes {
+      err := b.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Moov.Header.Size >= 1 {
+      err := f.Moov.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Moof.Header.Size >= 1 {
+      err := f.Moof.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Mdat.Header.Size >= 1 {
+      err := f.Mdat.Encode(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

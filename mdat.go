@@ -20,7 +20,7 @@ func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func CryptSampleCenc(sample, key []byte, enc *EncryptionSample) error {
+func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    block, err := aes.NewCipher(key)
    if err != nil {
       return err

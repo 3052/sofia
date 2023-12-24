@@ -5,33 +5,6 @@ import (
    "io"
 )
 
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-// aligned(8) class SampleEncryptionBox extends FullBox(
-//   'senc',
-//   version,
-//   flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type SampleEncryptionBox struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   Sample_Count  uint32
-   Samples       []*EncryptionSample
-}
-
 // senc_use_subsamples: flag mask is 0x000002.
 func (b SampleEncryptionBox) Senc_Use_Subsamples() bool {
    return b.FullBoxHeader.Flags()&2 >= 1
@@ -70,10 +43,39 @@ func (b SampleEncryptionBox) Encode(w io.Writer) error {
    return nil
 }
 
+////////////////////////
+
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+// aligned(8) class SampleEncryptionBox extends FullBox(
+//   'senc',
+//   version,
+//   flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type SampleEncryptionBox struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   Sample_Count  uint32
+   Samples       []EncryptionSample
+}
+
 type EncryptionSample struct {
    InitializationVector uint64
    Subsample_Count      uint16
-   Subsamples           []*Subsample
+   Subsamples           []Subsample
 }
 
 func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
@@ -112,7 +114,7 @@ func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
          if err != nil {
             return err
          }
-         e.Subsamples = append(e.Subsamples, &sample)
+         e.Subsamples = append(e.Subsamples, sample)
       }
    }
    return nil
@@ -133,7 +135,7 @@ func (b *SampleEncryptionBox) Decode(r io.Reader) error {
       if err != nil {
          return err
       }
-      b.Samples = append(b.Samples, &sample)
+      b.Samples = append(b.Samples, sample)
    }
    return nil
 }

@@ -21,7 +21,7 @@ type SampleEntry struct {
    Header BoxHeader
    Reserved [6]uint8
    Data_Reference_Index uint16
-   Boxes []Box
+   Boxes []*Box
 }
 
 func (s *SampleEntry) Decode(r io.Reader) error {
@@ -50,7 +50,7 @@ func (s *SampleEntry) Decode(r io.Reader) error {
          if err != nil {
             return err
          }
-         s.Boxes = append(s.Boxes, value)
+         s.Boxes = append(s.Boxes, &value)
       default:
          return fmt.Errorf("%q", head.RawType)
       }

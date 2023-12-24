@@ -108,13 +108,13 @@ func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
       if err != nil {
          return err
       }
-      for count := e.Subsample_Count; count >= 1; count-- {
-         var sample Subsample
+      e.Subsamples = make([]Subsample, e.Subsample_Count)
+      for i, sample := range e.Subsamples {
          err := sample.Decode(r)
          if err != nil {
             return err
          }
-         e.Subsamples = append(e.Subsamples, sample)
+         e.Subsamples[i] = sample
       }
    }
    return nil
@@ -129,13 +129,13 @@ func (b *SampleEncryptionBox) Decode(r io.Reader) error {
    if err != nil {
       return err
    }
-   for count := b.Sample_Count; count >= 1; count-- {
-      var sample EncryptionSample
+   b.Samples = make([]EncryptionSample, b.Sample_Count)
+   for i, sample := range b.Samples {
       err := sample.Decode(b, r)
       if err != nil {
          return err
       }
-      b.Samples = append(b.Samples, sample)
+      b.Samples[i] = sample
    }
    return nil
 }

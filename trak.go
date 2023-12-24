@@ -13,20 +13,6 @@ type TrackBox struct {
    Mdia MediaBox
 }
 
-func (b TrackBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return b.Mdia.Encode(w)
-}
-
 func (b *TrackBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -48,12 +34,26 @@ func (b *TrackBox) Decode(r io.Reader) error {
          b.Boxes = append(b.Boxes, value)
       case "mdia":
          b.Mdia.Header = head
-         err := b.Mdia.Decode(r)
+         err := b.Mdia.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("trak %q", head.RawType)
       }
    }
+}
+
+func (b TrackBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return b.Mdia.Encode(w)
 }

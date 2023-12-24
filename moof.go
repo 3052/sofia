@@ -39,7 +39,7 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("moof %q", head.RawType)
       }
    }
 }

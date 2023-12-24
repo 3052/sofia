@@ -165,13 +165,13 @@ func (b *TrackRunBox) Decode(r io.Reader) error {
          return err
       }
    }
-   for count := b.Sample_Count; count >= 1; count-- {
-      var run TrackRunSample
-      err := run.Decode(b, r)
+   b.Samples = make([]TrackRunSample, b.Sample_Count)
+   for i, sample := range b.Samples {
+      err := sample.Decode(b, r)
       if err != nil {
          return err
       }
-      b.Samples = append(b.Samples, run)
+      b.Samples[i] = sample
    }
    return nil
 }

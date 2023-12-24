@@ -34,12 +34,12 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
          b.Boxes = append(b.Boxes, value)
       case "stsd":
          b.Stsd.BoxHeader = head
-         err := b.Stsd.Decode(r)
+         err := b.Stsd.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("stbl %q", head.RawType)
       }
    }
 }

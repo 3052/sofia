@@ -5,26 +5,6 @@ import (
    "io"
 )
 
-func (s SampleDescriptionBox) Encode(w io.Writer) error {
-   err := s.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   if err := s.FullBoxHeader.Encode(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
-      return err
-   }
-   for _, entry := range s.Entries {
-      err := entry.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // aligned(8) class SampleDescriptionBox() extends FullBox(
 //    'stsd',
 //    version,
@@ -58,6 +38,26 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
          return err
       }
       b.Entries = append(b.Entries, &entry)
+   }
+   return nil
+}
+
+func (s SampleDescriptionBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
+      return err
+   }
+   for _, entry := range s.Entries {
+      err := entry.Encode(w)
+      if err != nil {
+         return err
+      }
    }
    return nil
 }

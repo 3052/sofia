@@ -9,7 +9,7 @@ import (
 // }
 type TrackFragmentBox struct {
    Header BoxHeader
-   Boxes  []*Box
+   Boxes  []Box
    Trun   TrackRunBox
    Senc   SampleEncryptionBox
 }
@@ -44,7 +44,7 @@ func (t *TrackFragmentBox) Decode(src io.Reader) error {
          if err != nil {
             return err
          }
-         t.Boxes = append(t.Boxes, &b)
+         t.Boxes = append(t.Boxes, b)
       default:
          return fmt.Errorf("%q", head.RawType)
       }

@@ -6,6 +6,14 @@ import (
    "io"
 )
 
+// aligned(8) class MediaDataBox extends Box('mdat') {
+//    bit(8) data[];
+// }
+type MediaDataBox struct {
+   Header BoxHeader
+   Data   [][]byte
+}
+
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
 func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    block, err := aes.NewCipher(key)
@@ -30,14 +38,6 @@ func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
       stream.XORKeyStream(sample, sample)
    }
    return nil
-}
-
-// aligned(8) class MediaDataBox extends Box('mdat') {
-//    bit(8) data[];
-// }
-type MediaDataBox struct {
-   Header BoxHeader
-   Data   [][]byte
 }
 
 func (m MediaDataBox) Encode(w io.Writer) error {

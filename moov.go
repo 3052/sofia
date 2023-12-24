@@ -13,21 +13,21 @@ type MovieBox struct {
    Trak TrackBox
 }
 
-func (m MovieBox) Encode(dst io.Writer) error {
-   err := m.Header.Encode(dst)
+func (b MovieBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
    if err != nil {
       return err
    }
-   for _, b := range m.Boxes {
-      err := b.Encode(dst)
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
       if err != nil {
          return err
       }
    }
-   return m.Trak.Encode(dst)
+   return b.Trak.Encode(w)
 }
 
-func (m *MovieBox) Decode(src io.Reader) error {
+func (b *MovieBox) Decode(src io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(src)
@@ -39,16 +39,16 @@ func (m *MovieBox) Decode(src io.Reader) error {
       size := head.BoxPayload()
       switch head.Type() {
       case "mvex", "mvhd", "pssh":
-         b := Box{Header: head}
-         b.Payload = make([]byte, size)
-         _, err := src.Read(b.Payload)
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := src.Read(value.Payload)
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, b)
+         b.Boxes = append(b.Boxes, value)
       case "trak":
-         m.Trak.Header = head
-         err := m.Trak.Decode(io.LimitReader(src, size))
+         b.Trak.Header = head
+         err := b.Trak.Decode(io.LimitReader(src, size))
          if err != nil {
             return err
          }

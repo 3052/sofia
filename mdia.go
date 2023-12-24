@@ -5,17 +5,17 @@ import (
    "io"
 )
 
-// aligned(8) class TrackBox extends Box('trak') {
+// aligned(8) class MediaBox extends Box('mdia') {
 // }
-type TrackBox struct {
+type MediaBox struct {
    Header  BoxHeader
    Boxes []Box
 }
 
-func (m *TrackBox) Decode(src io.Reader) error {
+func (b *MediaBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(src)
+      err := head.Decode(r)
       if err == io.EOF {
          return nil
       } else if err != nil {
@@ -23,27 +23,27 @@ func (m *TrackBox) Decode(src io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "mdia", "tkhd":
-         b := Box{Header: head}
-         b.Payload = make([]byte, size)
-         _, err := src.Read(b.Payload)
+      case "minf":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := r.Read(value.Payload)
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, b)
+         b.Boxes = append(b.Boxes, value)
       default:
          return fmt.Errorf("%q", head.RawType)
       }
    }
 }
 
-func (m TrackBox) Encode(dst io.Writer) error {
-   err := m.Header.Encode(dst)
+func (b MediaBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
    if err != nil {
       return err
    }
-   for _, b := range m.Boxes {
-      err := b.Encode(dst)
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
       if err != nil {
          return err
       }

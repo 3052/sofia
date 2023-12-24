@@ -14,10 +14,10 @@ type TrackFragmentBox struct {
    Senc   SampleEncryptionBox
 }
 
-func (t *TrackFragmentBox) Decode(src io.Reader) error {
+func (b *TrackFragmentBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(src)
+      err := head.Decode(r)
       if err == io.EOF {
          return nil
       } else if err != nil {
@@ -26,44 +26,44 @@ func (t *TrackFragmentBox) Decode(src io.Reader) error {
       size := head.BoxPayload()
       switch head.Type() {
       case "senc":
-         t.Senc.BoxHeader = head
-         err := t.Senc.Decode(src)
+         b.Senc.BoxHeader = head
+         err := b.Senc.Decode(r)
          if err != nil {
             return err
          }
       case "trun":
-         t.Trun.BoxHeader = head
-         err := t.Trun.Decode(src)
+         b.Trun.BoxHeader = head
+         err := b.Trun.Decode(r)
          if err != nil {
             return err
          }
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd", "uuid":
-         b := Box{Header: head}
-         b.Payload = make([]byte, size)
-         _, err := src.Read(b.Payload)
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := r.Read(value.Payload)
          if err != nil {
             return err
          }
-         t.Boxes = append(t.Boxes, b)
+         b.Boxes = append(b.Boxes, value)
       default:
          return fmt.Errorf("%q", head.RawType)
       }
    }
 }
 
-func (t TrackFragmentBox) Encode(dst io.Writer) error {
-   err := t.Header.Encode(dst)
+func (b TrackFragmentBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
    if err != nil {
       return err
    }
-   for _, b := range t.Boxes {
-      err := b.Encode(dst)
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
       if err != nil {
          return err
       }
    }
-   if err := t.Trun.Encode(dst); err != nil {
+   if err := b.Trun.Encode(w); err != nil {
       return err
    }
-   return t.Senc.Encode(dst)
+   return b.Senc.Encode(w)
 }

@@ -20,7 +20,27 @@ type SampleDescriptionBox struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
    Entry_Count uint32
-   SampleEntry []SampleEntry
+   Entries []*SampleEntry
+}
+
+func (s SampleDescriptionBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
+      return err
+   }
+   for _, entry := range s.Entries {
+      err := entry.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }
 
 func (b *SampleDescriptionBox) Decode(r io.Reader) error {
@@ -30,6 +50,13 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    }
    if err := binary.Read(r, binary.BigEndian, &b.Entry_Count); err != nil {
       return err
+   }
+   b.Entries = make([]*SampleEntry, b.Entry_Count)
+   for _, entry := range b.Entries {
+      err := entry.Decode(r)
+      if err != nil {
+         return err
+      }
    }
    return nil
 }

@@ -20,7 +20,7 @@ type SampleDescriptionBox struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
    Entry_Count uint32
-   Entries []*Box
+   SampleEntry []SampleEntry
 }
 
 func (b *SampleDescriptionBox) Decode(r io.Reader) error {
@@ -30,13 +30,6 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    }
    if err := binary.Read(r, binary.BigEndian, &b.Entry_Count); err != nil {
       return err
-   }
-   b.Entries = make([]*Box, b.Entry_Count)
-   for _, entry := range b.Entries {
-      err := entry.Decode(r)
-      if err != nil {
-         return err
-      }
    }
    return nil
 }

@@ -57,6 +57,12 @@ func Test_Mdat(t *testing.T) {
       if entry.Header.Type() == "encv" {
          // Firefox
          copy(entry.Header.RawType[:], "avc1")
+         for _, b := range entry.Boxes {
+            if b.Header.Type() == "sinf" {
+               // Firefox
+               copy(b.Header.RawType[:], "free")
+            }
+         }
       }
    }
    if err := f.Encode(dst); err != nil {

@@ -9,7 +9,7 @@ import (
 // }
 type MovieBox struct {
    Header  BoxHeader
-   Boxes []Box
+   Boxes []*Box
    Trak TrackBox
 }
 
@@ -45,7 +45,7 @@ func (b *MovieBox) Decode(src io.Reader) error {
          if err != nil {
             return err
          }
-         b.Boxes = append(b.Boxes, value)
+         b.Boxes = append(b.Boxes, &value)
       case "trak":
          b.Trak.Header = head
          err := b.Trak.Decode(io.LimitReader(src, size))

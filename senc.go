@@ -91,7 +91,7 @@ func (b SampleEncryptionBox) Encode(w io.Writer) error {
 }
 
 func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
-   _, err := r.Read(e.InitializationVector[:8])
+   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
    if err != nil {
       return err
    }
@@ -113,13 +113,13 @@ func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
 }
 
 type EncryptionSample struct {
-   InitializationVector [16]byte
+   InitializationVector uint64
    Subsample_Count      uint16
    Subsamples           []Subsample
 }
 
 func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
-   _, err := w.Write(e.InitializationVector[:8])
+   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
    if err != nil {
       return err
    }

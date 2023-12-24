@@ -10,6 +10,7 @@ import (
 type SampleTableBox struct {
    Header  BoxHeader
    Boxes []Box
+   Stsd SampleDescriptionBox
 }
 
 func (b *SampleTableBox) Decode(r io.Reader) error {
@@ -23,7 +24,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "stco", "stsc", "stsd", "stsz", "stts":
+      case "stco", "stsc", "stsz", "stts":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := r.Read(value.Payload)
@@ -31,6 +32,12 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
             return err
          }
          b.Boxes = append(b.Boxes, value)
+      case "stsd":
+         b.Stsd.BoxHeader = head
+         err := b.Stsd.Decode(r)
+         if err != nil {
+            return err
+         }
       default:
          return fmt.Errorf("%q", head.RawType)
       }

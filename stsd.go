@@ -5,24 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class SampleDescriptionBox() extends FullBox(
-//    'stsd',
-//    version,
-//    0
-// ) {
-//    int i ;
-//    unsigned int(32) entry_count;
-//    for (i = 1 ; i <= entry_count ; i++){
-//       SampleEntry(); // an instance of a class derived from SampleEntry
-//    }
-// }
-type SampleDescriptionBox struct {
-   BoxHeader  BoxHeader
-   FullBoxHeader FullBoxHeader
-   Entry_Count uint32
-   Entries []*SampleEntry
-}
-
 func (s SampleDescriptionBox) Encode(w io.Writer) error {
    err := s.BoxHeader.Encode(w)
    if err != nil {
@@ -43,6 +25,24 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
    return nil
 }
 
+// aligned(8) class SampleDescriptionBox() extends FullBox(
+//    'stsd',
+//    version,
+//    0
+// ) {
+//    int i ;
+//    unsigned int(32) entry_count;
+//    for (i = 1 ; i <= entry_count ; i++){
+//       SampleEntry(); // an instance of a class derived from SampleEntry
+//    }
+// }
+type SampleDescriptionBox struct {
+   BoxHeader  BoxHeader
+   FullBoxHeader FullBoxHeader
+   Entry_Count uint32
+   Entries []*SampleEntry
+}
+
 func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    err := b.FullBoxHeader.Decode(r)
    if err != nil {
@@ -51,12 +51,13 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    if err := binary.Read(r, binary.BigEndian, &b.Entry_Count); err != nil {
       return err
    }
-   b.Entries = make([]*SampleEntry, b.Entry_Count)
-   for _, entry := range b.Entries {
+   for count := b.Entry_Count; count >= 1; count-- {
+      var entry SampleEntry
       err := entry.Decode(r)
       if err != nil {
          return err
       }
+      b.Entries = append(b.Entries, &entry)
    }
    return nil
 }

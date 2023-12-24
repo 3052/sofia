@@ -50,7 +50,13 @@ func Test_Mdat(t *testing.T) {
    for _, b := range f.Moov.Boxes {
       if b.Header.Type() == "pssh" {
          // Firefox
-         b.Header.RawType = [4]byte{'f', 'r', 'e', 'e'}
+         copy(b.Header.RawType[:], "free")
+      }
+   }
+   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
+      if entry.Header.Type() == "encv" {
+         // Firefox
+         copy(entry.Header.RawType[:], "avc1")
       }
    }
    if err := f.Encode(dst); err != nil {

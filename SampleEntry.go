@@ -24,27 +24,6 @@ type SampleEntry struct {
    Boxes []Box
 }
 
-func (s SampleEntry) Encode(w io.Writer) error {
-   err := s.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(s.Reserved[:]); err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
-   if err != nil {
-      return err
-   }
-   for _, value := range s.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (s *SampleEntry) Decode(r io.Reader) error {
    _, err := r.Read(s.Reserved[:])
    if err != nil {
@@ -76,4 +55,25 @@ func (s *SampleEntry) Decode(r io.Reader) error {
          return fmt.Errorf("%q", head.RawType)
       }
    }
+}
+
+func (s SampleEntry) Encode(w io.Writer) error {
+   err := s.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(s.Reserved[:]); err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
+   if err != nil {
+      return err
+   }
+   for _, value := range s.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

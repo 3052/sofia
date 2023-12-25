@@ -39,7 +39,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("stbl %q", head.RawType)
       }
    }
 }

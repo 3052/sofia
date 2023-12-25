@@ -7,7 +7,7 @@ import (
    "testing"
 )
 
-func segment(dst io.Writer) error {
+func encode_segment(dst io.Writer) error {
    src, err := os.Open("testdata/amc-video/segment0.m4f")
    if err != nil {
       return err
@@ -32,55 +32,44 @@ func segment(dst io.Writer) error {
    return f.Encode(dst)
 }
 
-/*
-firefox
-encv -> avc1, sinf -> free
-[moov] Size=1948
-  [trak] Size=576
-    [mdia] Size=476
-      [minf] Size=383
-        [stbl] Size=319
-          [stsd] Size=243 Version=0 Flags=0x000000 EntryCount=1
-            [encv] Size=227 ... (use "-full encv" to show all)
-              [sinf] Size=80
-*/
-func Test_Mdat(t *testing.T) {
+func encode_init(dst io.Writer) error {
    src, err := os.Open("testdata/amc-video/init.m4f")
    if err != nil {
-      t.Fatal(err)
+      return err
    }
    defer src.Close()
    var f File
    if err := f.Decode(src); err != nil {
-      t.Fatal(err)
+      return err
    }
+   for _, b := range f.Moov.Boxes {
+      if b.Header.Type() == "pssh" {
+         copy(b.Header.RawType[:], "free") // Firefox
+      }
+   }
+   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
+      if entry.Entry.Header.Type() == "encv" {
+         copy(entry.Entry.Header.RawType[:], "avc1") // Firefox
+         for _, b := range entry.Boxes {
+            if b.Header.Type() == "sinf" {
+               copy(b.Header.RawType[:], "free") // Firefox
+            }
+         }
+      }
+   }
+   return f.Encode(dst)
+}
+
+func Test_Mdat(t *testing.T) {
    dst, err := os.Create("dec.m4v")
    if err != nil {
       t.Fatal(err)
    }
    defer dst.Close()
-   for _, b := range f.Moov.Boxes {
-      if b.Header.Type() == "pssh" {
-         // Firefox
-         copy(b.Header.RawType[:], "free")
-      }
-   }
-   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
-      if entry.Entry.Header.Type() == "encv" {
-         // Firefox
-         copy(entry.Entry.Header.RawType[:], "avc1")
-         for _, b := range entry.Boxes {
-            if b.Header.Type() == "sinf" {
-               // Firefox
-               copy(b.Header.RawType[:], "free")
-            }
-         }
-      }
-   }
-   if err := f.Encode(dst); err != nil {
+   if err := encode_init(dst); err != nil {
       t.Fatal(err)
    }
-   if err := segment(dst); err != nil {
+   if err := encode_segment(dst); err != nil {
       t.Fatal(err)
    }
 }

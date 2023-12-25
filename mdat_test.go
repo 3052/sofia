@@ -55,14 +55,19 @@ func (t testdata) encode_init(dst io.Writer) error {
          copy(b.Header.RawType[:], "free") // Firefox
       }
    }
-   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
-      if entry.Entry.Header.Type() == "encv" {
-         copy(entry.Entry.Header.RawType[:], "avc1") // Firefox
-         for _, b := range entry.Boxes {
-            if b.Header.Type() == "sinf" {
-               copy(b.Header.RawType[:], "free") // Firefox
-            }
-         }
+   stsd := f.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   // Firefox
+   copy(stsd.Enca.Entry.Header.RawType[:], "mp4a")
+   for _, b := range stsd.Enca.Boxes {
+      if b.Header.Type() == "sinf" {
+         copy(b.Header.RawType[:], "free") // Firefox
+      }
+   }
+   // Firefox
+   copy(stsd.Encv.Entry.Header.RawType[:], "avc1")
+   for _, b := range stsd.Encv.Boxes {
+      if b.Header.Type() == "sinf" {
+         copy(b.Header.RawType[:], "free") // Firefox
       }
    }
    return f.Encode(dst)

@@ -16,50 +16,6 @@ type SampleEntry struct {
    Data_Reference_Index uint16
 }
 
-func (s *SampleEntry) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, s)
-}
-
-func (s SampleEntry) Encode(w io.Writer) error {
-   return binary.Write(w, binary.BigEndian, s)
-}
-
-// class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
-//    unsigned int(16) pre_defined = 0;
-//    const unsigned int(16) reserved = 0;
-//    unsigned int(32)[3] pre_defined = 0;
-//    unsigned int(16) width;
-//    unsigned int(16) height;
-//    template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
-//    template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
-//    const unsigned int(32) reserved = 0;
-//    template unsigned int(16) frame_count = 1;
-//    uint(8)[32] compressorname;
-//    template unsigned int(16) depth = 0x0018;
-//    int(16) pre_defined = -1;
-//    // other boxes from derived specifications
-//    CleanApertureBox clap; // optional
-//    PixelAspectRatioBox pasp; // optional
-// }
-type VisualSampleEntry struct {
-   Entry SampleEntry
-   Extends struct {
-      Pre_Defined uint16
-      Reserved uint16
-      _ [3]uint32
-      Width uint16
-      Height uint16
-      HorizResolution uint32
-      VertResolution uint32
-      _ uint32
-      Frame_Count uint16
-      CompressorName [32]uint8
-      Depth uint16
-      _ int16
-   }
-   Boxes []*Box
-}
-
 // class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //    const unsigned int(32)[2] reserved = 0;
 //    unsigned int(16) channelcount;
@@ -69,7 +25,9 @@ type VisualSampleEntry struct {
 //    template unsigned int(32) samplerate = { default samplerate of media}<<16;
 // }
 type AudioSampleEntry struct {
-   Entry SampleEntry
+   Header  BoxHeader
+   Reserved [6]uint8
+   Data_Reference_Index uint16
    Extends struct {
       Reserved [2]uint32
       ChannelCount uint16
@@ -82,7 +40,14 @@ type AudioSampleEntry struct {
 }
 
 func (a AudioSampleEntry) Encode(w io.Writer) error {
-   err := binary.Write(w, binary.BigEndian, a.Entry)
+   err := binary.Write(w, binary.BigEndian, a.Header)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(a.Reserved[:]); err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, a.Data_Reference_Index)
    if err != nil {
       return err
    }
@@ -99,8 +64,15 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
 }
 
 func (a *AudioSampleEntry) Decode(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &a.Entry)
+   _, err := r.Read(a.Reserved[:])
    if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &a.Data_Reference_Index)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &a.Entry); err != nil {
       return err
    }
    if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
@@ -125,13 +97,17 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          }
          a.Boxes = append(a.Boxes, &value)
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("SampleEntry %q", head.RawType)
       }
    }
 }
 
 func (v *VisualSampleEntry) Decode(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &v.Entry)
+   _, err := r.Read(v.Reserved[:])
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &v.Data_Reference_Index)
    if err != nil {
       return err
    }
@@ -162,8 +138,53 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
    }
 }
 
+// class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
+//    unsigned int(16) pre_defined = 0;
+//    const unsigned int(16) reserved = 0;
+//    unsigned int(32)[3] pre_defined = 0;
+//    unsigned int(16) width;
+//    unsigned int(16) height;
+//    template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
+//    template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
+//    const unsigned int(32) reserved = 0;
+//    template unsigned int(16) frame_count = 1;
+//    uint(8)[32] compressorname;
+//    template unsigned int(16) depth = 0x0018;
+//    int(16) pre_defined = -1;
+//    // other boxes from derived specifications
+//    CleanApertureBox clap; // optional
+//    PixelAspectRatioBox pasp; // optional
+// }
+type VisualSampleEntry struct {
+   Header  BoxHeader
+   Reserved [6]uint8
+   Data_Reference_Index uint16
+   Extends struct {
+      Pre_Defined uint16
+      Reserved uint16
+      _ [3]uint32
+      Width uint16
+      Height uint16
+      HorizResolution uint32
+      VertResolution uint32
+      _ uint32
+      Frame_Count uint16
+      CompressorName [32]uint8
+      Depth uint16
+      _ int16
+   }
+   Boxes []*Box
+}
+
 func (v VisualSampleEntry) Encode(w io.Writer) error {
-   err := binary.Write(w, binary.BigEndian, v.Entry)
+   err := v.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(v.Reserved[:]); err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, v.Data_Reference_Index)
    if err != nil {
       return err
    }

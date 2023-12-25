@@ -39,7 +39,7 @@ func (b *MediaBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("mdia %q", head.RawType)
       }
    }
 }

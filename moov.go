@@ -27,10 +27,10 @@ func (b MovieBox) Encode(w io.Writer) error {
    return b.Trak.Encode(w)
 }
 
-func (b *MovieBox) Decode(src io.Reader) error {
+func (b *MovieBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
-      err := head.Decode(src)
+      err := head.Decode(r)
       if err == io.EOF {
          return nil
       } else if err != nil {
@@ -41,14 +41,14 @@ func (b *MovieBox) Decode(src io.Reader) error {
       case "mvex", "mvhd", "pssh":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := src.Read(value.Payload)
+         _, err := r.Read(value.Payload)
          if err != nil {
             return err
          }
          b.Boxes = append(b.Boxes, &value)
       case "trak":
          b.Trak.Header = head
-         err := b.Trak.Decode(io.LimitReader(src, size))
+         err := b.Trak.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }

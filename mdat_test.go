@@ -54,7 +54,6 @@ func Test_Mdat(t *testing.T) {
    if err := f.Decode(src); err != nil {
       t.Fatal(err)
    }
-   return
    dst, err := os.Create("dec.m4v")
    if err != nil {
       t.Fatal(err)
@@ -67,9 +66,9 @@ func Test_Mdat(t *testing.T) {
       }
    }
    for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
-      if entry.Header.Type() == "encv" {
+      if entry.Entry.Header.Type() == "encv" {
          // Firefox
-         copy(entry.Header.RawType[:], "avc1")
+         copy(entry.Entry.Header.RawType[:], "avc1")
          for _, b := range entry.Boxes {
             if b.Header.Type() == "sinf" {
                // Firefox

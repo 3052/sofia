@@ -13,20 +13,6 @@ type SampleTableBox struct {
    Stsd SampleDescriptionBox
 }
 
-func (b SampleTableBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return b.Stsd.Encode(w)
-}
-
 func (b *SampleTableBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -56,4 +42,18 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
          return fmt.Errorf("%q", head.RawType)
       }
    }
+}
+
+func (b SampleTableBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return b.Stsd.Encode(w)
 }

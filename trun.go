@@ -38,11 +38,63 @@ type TrackRunBox struct {
    Samples            []TrackRunSample
 }
 
-type TrackRunSample struct {
-   Duration                uint32
-   Size                    uint32
-   Flags                   uint32
-   Composition_Time_Offset [4]byte
+func (b *TrackRunBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Data_Offset)
+   if err != nil {
+      return err
+   }
+   if b.First_Sample_Flags_Present() {
+      err := binary.Read(r, binary.BigEndian, &b.First_Sample_Flags)
+      if err != nil {
+         return err
+      }
+   }
+   b.Samples = make([]TrackRunSample, b.Sample_Count)
+   for i, sample := range b.Samples {
+      err := sample.Decode(b, r)
+      if err != nil {
+         return err
+      }
+      b.Samples[i] = sample
+   }
+   return nil
+}
+
+func (b TrackRunBox) Encode(w io.Writer) error {
+   err := b.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := b.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, b.Sample_Count); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, b.Data_Offset); err != nil {
+      return err
+   }
+   if b.First_Sample_Flags_Present() {
+      err := binary.Write(w, binary.BigEndian, b.First_Sample_Flags)
+      if err != nil {
+         return err
+      }
+   }
+   for _, sample := range b.Samples {
+      err := sample.Encode(b, w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }
 
 // 0x000004 first-sample-flags-present
@@ -63,6 +115,13 @@ func (b TrackRunBox) Sample_Duration_Present() bool {
 // 0x000400 sample-flags-present
 func (b TrackRunBox) Sample_Flags_Present() bool {
    return b.FullBoxHeader.Flags()&0x400 >= 1
+}
+
+type TrackRunSample struct {
+   Duration                uint32
+   Size                    uint32
+   Flags                   uint32
+   Composition_Time_Offset [4]byte
 }
 
 func (s *TrackRunSample) Decode(b *TrackRunBox, r io.Reader) error {
@@ -113,65 +172,6 @@ func (s TrackRunSample) Encode(b TrackRunBox, w io.Writer) error {
       if err != nil {
          return err
       }
-   }
-   return nil
-}
-
-func (b TrackRunBox) Encode(w io.Writer) error {
-   err := b.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   if err := b.FullBoxHeader.Encode(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, b.Sample_Count); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, b.Data_Offset); err != nil {
-      return err
-   }
-   if b.First_Sample_Flags_Present() {
-      err := binary.Write(w, binary.BigEndian, b.First_Sample_Flags)
-      if err != nil {
-         return err
-      }
-   }
-   for _, sample := range b.Samples {
-      err := sample.Encode(b, w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *TrackRunBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Data_Offset)
-   if err != nil {
-      return err
-   }
-   if b.First_Sample_Flags_Present() {
-      err := binary.Read(r, binary.BigEndian, &b.First_Sample_Flags)
-      if err != nil {
-         return err
-      }
-   }
-   b.Samples = make([]TrackRunSample, b.Sample_Count)
-   for i, sample := range b.Samples {
-      err := sample.Decode(b, r)
-      if err != nil {
-         return err
-      }
-      b.Samples[i] = sample
    }
    return nil
 }

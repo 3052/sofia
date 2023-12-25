@@ -9,6 +9,18 @@ import (
 
 var tests = []testdata{
    {
+      "testdata/roku-video/index_video_8_0_init.mp4",
+      "testdata/roku-video/index_video_8_0_1.mp4",
+      "1ba08384626f9523e37b9db17f44da2b",
+      "roku-video.mp4",
+   },
+   {
+      "testdata/paramount-video/init.m4v",
+      "testdata/paramount-video/seg_1.m4s",
+      "d98277ff6d7406ec398b49bbd52937d4",
+      "paramount-video.mp4",
+   },
+   {
       "testdata/nbc-video/_227156876_5.mp4",
       "testdata/nbc-video/_227156876_5_0.mp4",
       "3e2e8ccff89d0a72598a347feab5e7c8",
@@ -20,6 +32,34 @@ var tests = []testdata{
       "c58d3308ed18d43776a78232f552dbe0",
       "amc-video.mp4",
    },
+}
+
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Moov.Boxes {
+      if b.Header.Type() == "pssh" {
+         copy(b.Header.RawType[:], "free") // Firefox
+      }
+   }
+   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
+      if entry.Entry.Header.Type() == "encv" {
+         copy(entry.Entry.Header.RawType[:], "avc1") // Firefox
+         for _, b := range entry.Boxes {
+            if b.Header.Type() == "sinf" {
+               copy(b.Header.RawType[:], "free") // Firefox
+            }
+         }
+      }
+   }
+   return f.Encode(dst)
 }
 
 func Test_Mdat(t *testing.T) {
@@ -45,34 +85,6 @@ type testdata struct {
    segment string
    key string
    out string
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Moov.Boxes {
-      if b.Header.Type() == "pssh" {
-         //copy(b.Header.RawType[:], "free") // Firefox
-      }
-   }
-   for _, entry := range f.Moov.Trak.Mdia.Minf.Stbl.Stsd.Entries {
-      if entry.Entry.Header.Type() == "encv" {
-         //copy(entry.Entry.Header.RawType[:], "avc1") // Firefox
-         for _, b := range entry.Boxes {
-            if b.Header.Type() == "sinf" {
-               //copy(b.Header.RawType[:], "free") // Firefox
-            }
-         }
-      }
-   }
-   return f.Encode(dst)
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {

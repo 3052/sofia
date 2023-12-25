@@ -24,7 +24,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "tkhd":
+      case "edts", "tkhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := r.Read(value.Payload)

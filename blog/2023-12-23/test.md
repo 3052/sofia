@@ -2,26 +2,18 @@
 
 ## Mozilla Firefox
 
-## VLC media player mp4 small
+pass
 
-## VLC media player one
+## VLC media player
 
-## VLC media player two
+pass
 
-## fast start fmp4
+## fast start
 
-## fast start mp4 big
+## jerk between fragments
 
-## jerk between fragments two
+## nbc
 
-## nbc one
+## paramount
 
-## nbc two
-
-## paramount one
-
-## paramount two
-
-## roku one
-
-## roku two
+## roku

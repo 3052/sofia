@@ -13,20 +13,6 @@ type MovieBox struct {
    Trak TrackBox
 }
 
-func (b MovieBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return b.Trak.Encode(w)
-}
-
 func (b *MovieBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -53,7 +39,21 @@ func (b *MovieBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("moov %q", head.RawType)
+         return fmt.Errorf("%q", head.RawType)
       }
    }
+}
+
+func (b MovieBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return b.Trak.Encode(w)
 }

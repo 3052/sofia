@@ -60,6 +60,76 @@ type VisualSampleEntry struct {
    Boxes []*Box
 }
 
+// class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
+//    const unsigned int(32)[2] reserved = 0;
+//    unsigned int(16) channelcount;
+//    template unsigned int(16) samplesize = 16;
+//    unsigned int(16) pre_defined = 0;
+//    const unsigned int(16) reserved = 0 ;
+//    template unsigned int(32) samplerate = { default samplerate of media}<<16;
+// }
+type AudioSampleEntry struct {
+   Entry SampleEntry
+   Extends struct {
+      Reserved [2]uint32
+      ChannelCount uint16
+      SampleSize uint16
+      Pre_Defined uint16
+      _ uint16
+      SampleRate uint32
+   }
+   Boxes []*Box
+}
+
+func (a AudioSampleEntry) Encode(w io.Writer) error {
+   err := binary.Write(w, binary.BigEndian, a.Entry)
+   if err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+      return err
+   }
+   for _, value := range a.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (a *AudioSampleEntry) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &a.Entry)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Decode(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      size := head.BoxPayload()
+      switch head.Type() {
+      case "sinf":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := r.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+         a.Boxes = append(a.Boxes, &value)
+      default:
+         return fmt.Errorf("%q", head.RawType)
+      }
+   }
+}
+
 func (v *VisualSampleEntry) Decode(r io.Reader) error {
    err := binary.Read(r, binary.BigEndian, &v.Entry)
    if err != nil {
@@ -87,7 +157,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          }
          v.Boxes = append(v.Boxes, &value)
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("VisualSampleEntry %q", head.RawType)
       }
    }
 }

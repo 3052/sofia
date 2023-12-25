@@ -24,7 +24,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.Type() {
-      case "dinf", "vmhd":
+      case "dinf", "smhd", "vmhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := r.Read(value.Payload)

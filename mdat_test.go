@@ -9,6 +9,12 @@ import (
 
 var tests = []testdata{
    {
+      "testdata/amc-audio/init.m4f",
+      "testdata/amc-audio/segment0.m4f",
+      "91d888dfb0562ebc3abdd845d451e858",
+      "amc-audio.mp4",
+   },
+   {
       "testdata/roku-video/index_video_8_0_init.mp4",
       "testdata/roku-video/index_video_8_0_1.mp4",
       "1ba08384626f9523e37b9db17f44da2b",

@@ -1,0 +1,31 @@
+[ftyp] Size=20 MajorBrand="iso6" MinorVersion=0 CompatibleBrands=[{CompatibleBrand="cmfc"}]
+[moov] Size=1819
+  [mvhd] Size=108 ... (use "-full mvhd" to show all)
+  [trak] Size=582
+    [tkhd] Size=92 ... (use "-full tkhd" to show all)
+    [mdia] Size=482
+      [mdhd] Size=32 Version=0 Flags=0x000000 CreationTimeV0=0 ModificationTimeV0=0 Timescale=30000 DurationV0=0 Language="und" PreDefined=0
+      [hdlr] Size=53 Version=0 Flags=0x000000 PreDefined=0 HandlerType="vide" Name="Bento4 Video Handler"
+      [minf] Size=389
+        [vmhd] Size=20 Version=0 Flags=0x000001 Graphicsmode=0 Opcolor=[0, 0, 0]
+        [dinf] Size=36
+          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
+            [url ] Size=12 Version=0 Flags=0x000001
+        [stbl] Size=325
+          [stsd] Size=249 Version=0 Flags=0x000000 EntryCount=1
+            [encv] Size=233 ... (use "-full encv" to show all)
+              [avcC] Size=51 ... (use "-full avcC" to show all)
+              [pasp] Size=16 HSpacing=1 VSpacing=1
+              [sinf] Size=80
+                [frma] Size=12 DataFormat="avc1"
+                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
+                [schi] Size=40
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=5081120a-bbf6-49af-a5f1-7581bb5c6dcd
+          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
+          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
+          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
+  [mvex] Size=40
+    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=0 DefaultSampleSize=0 DefaultSampleFlags=0x0
+  [pssh] Size=87 ... (use "-full pssh" to show all)
+  [pssh] Size=994 ... (use "-full pssh" to show all)

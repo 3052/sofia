@@ -14,17 +14,23 @@ pass
 
 ## nbc-video
 
+pass
+
+## paramount-video
+
+pass
+
+## roku-video
+
+pass
+
 ## amc-audio
 
 ## nbc-audio
 
 ## paramount-audio
 
-## paramount-video
-
 ## roku-audio
-
-## roku-video
 
 ## fast start
 

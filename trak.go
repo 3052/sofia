@@ -39,7 +39,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("trak %q", head.RawType)
+         return fmt.Errorf("%q", head.RawType)
       }
    }
 }

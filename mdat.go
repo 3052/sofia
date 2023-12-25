@@ -7,19 +7,6 @@ import (
    "io"
 )
 
-func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
-   b.Data = make([][]byte, t.Sample_Count)
-   for i := range b.Data {
-      data := make([]byte, t.Samples[i].Size)
-      _, err := r.Read(data)
-      if err != nil {
-         return err
-      }
-      b.Data[i] = data
-   }
-   return nil
-}
-
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
 func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    block, err := aes.NewCipher(key)
@@ -54,6 +41,19 @@ func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
 type MediaDataBox struct {
    Header BoxHeader
    Data   [][]byte
+}
+
+func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
+   b.Data = make([][]byte, t.Sample_Count)
+   for i := range b.Data {
+      data := make([]byte, t.Samples[i].Size)
+      _, err := r.Read(data)
+      if err != nil {
+         return err
+      }
+      b.Data[i] = data
+   }
+   return nil
 }
 
 func (b MediaDataBox) Encode(w io.Writer) error {

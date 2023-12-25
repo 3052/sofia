@@ -5,14 +5,6 @@ import (
    "io"
 )
 
-func (f FullBoxHeader) Flags() uint32 {
-   var v uint32
-   v |= uint32(f.RawFlags[0])<<16
-   v |= uint32(f.RawFlags[1])<<8
-   v |= uint32(f.RawFlags[2])
-   return v
-}
-
 // aligned(8) class Box (
 //
 //   unsigned int(32) boxtype,
@@ -28,22 +20,6 @@ func (f FullBoxHeader) Flags() uint32 {
 type Box struct {
    Header  BoxHeader
    Payload []byte
-}
-
-func (b *Box) Decode(r io.Reader) error {
-   err := b.Header.Decode(r)
-   if err != nil {
-      return err
-   }
-   b.Payload = make([]byte, b.Header.BoxPayload())
-   if _, err := r.Read(b.Payload); err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b BoxHeader) BoxPayload() int64 {
-   return int64(b.Size) - 8
 }
 
 func (b Box) Encode(w io.Writer) error {
@@ -88,15 +64,17 @@ func (b BoxHeader) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, b)
 }
 
+func (b BoxHeader) BoxPayload() int64 {
+   return int64(b.Size) - 8
+}
+
 func (b BoxHeader) Type() string {
    return string(b.RawType[:])
 }
 
 // aligned(8) class FullBoxHeader(
-//
 //   unsigned int(8) v,
 //   bit(24) f
-//
 //   ) {
 //      unsigned int(8) version = v;
 //      bit(24) flags = f;
@@ -112,4 +90,12 @@ func (f *FullBoxHeader) Decode(r io.Reader) error {
 
 func (f FullBoxHeader) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
+}
+
+func (f FullBoxHeader) Flags() uint32 {
+   var v uint32
+   v |= uint32(f.RawFlags[0])<<16
+   v |= uint32(f.RawFlags[1])<<8
+   v |= uint32(f.RawFlags[2])
+   return v
 }

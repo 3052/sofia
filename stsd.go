@@ -42,19 +42,21 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    size := head.BoxPayload()
    switch head.Type() {
    case "enca":
-      b.Enca.Entry.Header = head
+      b.Enca.Header = head
       err := b.Enca.Decode(io.LimitReader(r, size))
       if err != nil {
          return err
       }
    case "encv":
-      b.Encv.Entry.Header = head
+      b.Encv.Header = head
       err := b.Encv.Decode(io.LimitReader(r, size))
       if err != nil {
          return err
       }
+   default:
+      return fmt.Errorf("stsd %q", head.RawType)
    }
-   return fmt.Errorf("stsd %q", head.RawType)
+   return nil
 }
 
 func (s SampleDescriptionBox) Encode(w io.Writer) error {
@@ -68,13 +70,13 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
    if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
       return err
    }
-   if s.Enca.Entry.Header.Size >= 1 {
+   if s.Enca.Header.Size >= 1 {
       err := s.Enca.Encode(w)
       if err != nil {
          return err
       }
    }
-   if s.Encv.Entry.Header.Size >= 1 {
+   if s.Encv.Header.Size >= 1 {
       err := s.Encv.Encode(w)
       if err != nil {
          return err

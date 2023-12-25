@@ -27,7 +27,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
       case "dinf", "smhd", "vmhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }

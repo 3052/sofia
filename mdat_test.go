@@ -9,6 +9,30 @@ import (
 
 var tests = []testdata{
    {
+      "testdata/amc-video/init.m4f",
+      "testdata/amc-video/segment0.m4f",
+      "c58d3308ed18d43776a78232f552dbe0",
+      "amc-video.mp4",
+   },
+   {
+      "testdata/roku-audio/index_audio_2_0_init.mp4",
+      "testdata/roku-audio/index_audio_2_0_1.mp4",
+      "1ba08384626f9523e37b9db17f44da2b",
+      "roku-audio.mp4",
+   },
+   {
+      "testdata/paramount-audio/init.m4v",
+      "testdata/paramount-audio/seg_1.m4s",
+      "d98277ff6d7406ec398b49bbd52937d4",
+      "paramount-audio.mp4",
+   },
+   {
+      "testdata/nbc-audio/_227156876_6_1.mp4",
+      "testdata/nbc-audio/_227156876_6_1_0.mp4",
+      "3e2e8ccff89d0a72598a347feab5e7c8",
+      "nbc-audio.mp4",
+   },
+   {
       "testdata/amc-audio/init.m4f",
       "testdata/amc-audio/segment0.m4f",
       "91d888dfb0562ebc3abdd845d451e858",
@@ -32,12 +56,6 @@ var tests = []testdata{
       "3e2e8ccff89d0a72598a347feab5e7c8",
       "nbc-video.mp4",
    },
-   {
-      "testdata/amc-video/init.m4f",
-      "testdata/amc-video/segment0.m4f",
-      "c58d3308ed18d43776a78232f552dbe0",
-      "amc-video.mp4",
-   },
 }
 
 func (t testdata) encode_init(dst io.Writer) error {
@@ -55,21 +73,19 @@ func (t testdata) encode_init(dst io.Writer) error {
          copy(b.Header.RawType[:], "free") // Firefox
       }
    }
-   stsd := f.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   // Firefox
-   copy(stsd.Enca.Entry.Header.RawType[:], "mp4a")
-   for _, b := range stsd.Enca.Boxes {
-      if b.Header.Type() == "sinf" {
-         copy(b.Header.RawType[:], "free") // Firefox
-      }
-   }
-   // Firefox
-   copy(stsd.Encv.Entry.Header.RawType[:], "avc1")
+   stsd := &f.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   copy(stsd.Encv.Header.RawType[:], "avc1") // Firefox
    for _, b := range stsd.Encv.Boxes {
       if b.Header.Type() == "sinf" {
          copy(b.Header.RawType[:], "free") // Firefox
       }
    }
+   for _, b := range stsd.Enca.Boxes {
+      if b.Header.Type() == "sinf" {
+         copy(b.Header.RawType[:], "free") // Firefox
+      }
+   }
+   copy(stsd.Enca.Header.RawType[:], "mp4a") // Firefox
    return f.Encode(dst)
 }
 

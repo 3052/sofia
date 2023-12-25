@@ -1,26 +1,21 @@
 package sofia
 
 import (
-   "os"
+   "net/http"
    "testing"
 )
 
 func Test_File(t *testing.T) {
-   src, err := os.Open("testdata/amc-audio/segment0.m4f")
+   res, err := http.Get("https://redirector.us-east-1.prod-a.boltdns.net/v1/6245817279001/4a947ef9-6981-46a6-916c-27f57bb91326/xdb/69683dd1-74bf-43c2-9888-a1ffb8d67485/init.m4f")
    if err != nil {
       t.Fatal(err)
    }
-   defer src.Close()
-   dst, err := os.Create("segment0.m4f")
-   if err != nil {
-      t.Fatal(err)
+   defer res.Body.Close()
+   if res.StatusCode != http.StatusOK {
+      t.Fatal(res.Status)
    }
-   defer src.Close()
    var f File
-   if err := f.Decode(src); err != nil {
-      t.Fatal(err)
-   }
-   if err := f.Encode(dst); err != nil {
+   if err := f.Decode(res.Body); err != nil {
       t.Fatal(err)
    }
 }

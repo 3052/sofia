@@ -33,13 +33,13 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
       case "mfhd", "pssh":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }
          b.Boxes = append(b.Boxes, value)
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("moof %q", head.RawType)
       }
    }
 }

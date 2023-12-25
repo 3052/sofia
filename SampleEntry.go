@@ -6,16 +6,6 @@ import (
    "io"
 )
 
-// aligned(8) abstract class SampleEntry(unsigned int(32) format) extends Box(format) {
-//    const unsigned int(8)[6] reserved = 0;
-//    unsigned int(16) data_reference_index;
-// }
-type SampleEntry struct {
-   Header  BoxHeader
-   Reserved [6]uint8
-   Data_Reference_Index uint16
-}
-
 // class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //    const unsigned int(32)[2] reserved = 0;
 //    unsigned int(16) channelcount;
@@ -37,6 +27,42 @@ type AudioSampleEntry struct {
       SampleRate uint32
    }
    Boxes []*Box
+}
+
+func (a *AudioSampleEntry) Decode(r io.Reader) error {
+   _, err := io.ReadFull(r, a.Reserved[:])
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &a.Data_Reference_Index)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Decode(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      size := head.BoxPayload()
+      switch head.Type() {
+      case "esds", "sinf":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := io.ReadFull(r, value.Payload)
+         if err != nil {
+            return err
+         }
+         a.Boxes = append(a.Boxes, &value)
+      default:
+         return fmt.Errorf("SampleEntry %q", head.RawType)
+      }
+   }
 }
 
 func (a AudioSampleEntry) Encode(w io.Writer) error {
@@ -63,79 +89,14 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
    return nil
 }
 
-func (a *AudioSampleEntry) Decode(r io.Reader) error {
-   _, err := r.Read(a.Reserved[:])
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &a.Data_Reference_Index)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &a.Entry); err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Decode(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      size := head.BoxPayload()
-      switch head.Type() {
-      case "sinf":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
-         if err != nil {
-            return err
-         }
-         a.Boxes = append(a.Boxes, &value)
-      default:
-         return fmt.Errorf("SampleEntry %q", head.RawType)
-      }
-   }
-}
-
-func (v *VisualSampleEntry) Decode(r io.Reader) error {
-   _, err := r.Read(v.Reserved[:])
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &v.Data_Reference_Index)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Decode(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      size := head.BoxPayload()
-      switch head.Type() {
-      case "avcC", "pasp", "sinf":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
-         if err != nil {
-            return err
-         }
-         v.Boxes = append(v.Boxes, &value)
-      default:
-         return fmt.Errorf("VisualSampleEntry %q", head.RawType)
-      }
-   }
+// aligned(8) abstract class SampleEntry(unsigned int(32) format) extends Box(format) {
+//    const unsigned int(8)[6] reserved = 0;
+//    unsigned int(16) data_reference_index;
+// }
+type SampleEntry struct {
+   Header  BoxHeader
+   Reserved [6]uint8
+   Data_Reference_Index uint16
 }
 
 // class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
@@ -174,6 +135,42 @@ type VisualSampleEntry struct {
       _ int16
    }
    Boxes []*Box
+}
+
+func (v *VisualSampleEntry) Decode(r io.Reader) error {
+   _, err := io.ReadFull(r, v.Reserved[:])
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &v.Data_Reference_Index)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Decode(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      size := head.BoxPayload()
+      switch head.Type() {
+      case "avcC", "pasp", "sinf":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := io.ReadFull(r, value.Payload)
+         if err != nil {
+            return err
+         }
+         v.Boxes = append(v.Boxes, &value)
+      default:
+         return fmt.Errorf("VisualSampleEntry %q", head.RawType)
+      }
+   }
 }
 
 func (v VisualSampleEntry) Encode(w io.Writer) error {

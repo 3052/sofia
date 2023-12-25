@@ -40,13 +40,13 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd", "uuid":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }
          b.Boxes = append(b.Boxes, value)
       default:
-         return fmt.Errorf("%q", head.RawType)
+         return fmt.Errorf("traf %q", head.RawType)
       }
    }
 }

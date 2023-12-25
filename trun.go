@@ -142,7 +142,7 @@ func (s *TrackRunSample) Decode(b *TrackRunBox, r io.Reader) error {
       }
    }
    if b.Sample_Composition_Time_Offsets_Present() {
-      _, err := r.Read(s.Composition_Time_Offset[:])
+      _, err := io.ReadFull(r, s.Composition_Time_Offset[:])
       if err != nil {
          return err
       }

@@ -19,7 +19,7 @@
                 [frma] Size=12 DataFormat="mp4a"
                 [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
                 [schi] Size=40
-                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=0a95c346-cec8-4e49-9679-59580ab7789b
+                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=5081120a-bbf6-49af-a5f1-7581bb5c6dcd
           [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
           [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
           [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]

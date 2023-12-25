@@ -26,11 +26,19 @@ pass
 
 ## amc-audio
 
+pass
+
 ## nbc-audio
+
+pass
 
 ## paramount-audio
 
+pass
+
 ## roku-audio
+
+pass
 
 ## fast start
 

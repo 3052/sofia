@@ -26,7 +26,7 @@ func (f *File) Decode(r io.Reader) error {
       case "ftyp", "sidx", "styp":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }

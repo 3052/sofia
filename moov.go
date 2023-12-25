@@ -27,7 +27,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
       case "iods", "meta", "mvex", "mvhd", "pssh":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }

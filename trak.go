@@ -27,7 +27,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
       case "edts", "tkhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
-         _, err := r.Read(value.Payload)
+         _, err := io.ReadFull(r, value.Payload)
          if err != nil {
             return err
          }

@@ -47,7 +47,7 @@ func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
    b.Data = make([][]byte, t.Sample_Count)
    for i := range b.Data {
       data := make([]byte, t.Samples[i].Size)
-      _, err := r.Read(data)
+      _, err := io.ReadFull(r, data)
       if err != nil {
          return err
       }

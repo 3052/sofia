@@ -16,6 +16,14 @@ type SampleEntry struct {
    Data_Reference_Index uint16
 }
 
+func (s SampleEntry) Encode(w io.Writer) error {
+   return binary.Write(w, binary.BigEndian, s)
+}
+
+func (s *SampleEntry) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, s)
+}
+
 // class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //    unsigned int(16) pre_defined = 0;
 //    const unsigned int(16) reserved = 0;
@@ -35,16 +43,68 @@ type SampleEntry struct {
 // }
 type VisualSampleEntry struct {
    Entry SampleEntry
-   Pre_Defined uint16
-   Reserved uint16
-   Pre_Defined [3]uint32
-   Width uint16
-   Height uint16
-   HorizResolution uint32
-   VertResolution uint32
-   Reserved uint32
-   Frame_Count uint16
-   CompressorName [32]uint8
-   Depth uint16
-   Pre_Defined int16
+   Extends struct {
+      Pre_Defined uint16
+      Reserved uint16
+      _ [3]uint32
+      Width uint16
+      Height uint16
+      HorizResolution uint32
+      VertResolution uint32
+      _ uint32
+      Frame_Count uint16
+      CompressorName [32]uint8
+      Depth uint16
+      _ int16
+   }
+   Boxes []*Box
+}
+
+func (v VisualSampleEntry) Encode(w io.Writer) error {
+   err := binary.Write(w, binary.BigEndian, v.Entry)
+   if err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, v.Extends); err != nil {
+      return err
+   }
+   for _, value := range v.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (v *VisualSampleEntry) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &v.Entry)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Decode(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      size := head.BoxPayload()
+      switch head.Type() {
+      case "avcC", "sinf":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := r.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+         v.Boxes = append(v.Boxes, &value)
+      default:
+         return fmt.Errorf("%q", head.RawType)
+      }
+   }
 }

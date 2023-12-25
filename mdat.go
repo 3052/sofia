@@ -8,13 +8,14 @@ import (
 )
 
 func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
-   for _, sample := range t.Samples {
-      data := make([]byte, sample.Size)
+   b.Data = make([][]byte, t.Sample_Count)
+   for i := range b.Data {
+      data := make([]byte, t.Samples[i].Size)
       _, err := r.Read(data)
       if err != nil {
          return err
       }
-      b.Data = append(b.Data, data)
+      b.Data[i] = data
    }
    return nil
 }

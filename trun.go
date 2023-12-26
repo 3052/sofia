@@ -5,6 +5,33 @@ import (
    "io"
 )
 
+// If the data-offset is present, it is relative to the base-data-offset
+// established in the track fragment header.
+//
+//  aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
+//     unsigned int(32) sample_count;
+//     signed int(32) data_offset; // 0x000001, assume present
+//     unsigned int(32) first_sample_flags; // 0x000004
+//     {
+//        unsigned int(32) sample_duration; // 0x000100
+//        unsigned int(32) sample_size; // 0x000200, assume present
+//        unsigned int(32) sample_flags // 0x000400
+//        if (version == 0) {
+//           unsigned int(32) sample_composition_time_offset; // 0x000800
+//        } else {
+//           signed int(32) sample_composition_time_offset; // 0x000800
+//        }
+//     }[ sample_count ]
+//  }
+type TrackRunBox struct {
+   BoxHeader          BoxHeader
+   FullBoxHeader      FullBoxHeader
+   Sample_Count       uint32
+   Data_Offset        int32
+   First_Sample_Flags uint32
+   Samples            []TrackRunSample
+}
+
 func (b *TrackRunBox) Decode(r io.Reader) error {
    err := b.FullBoxHeader.Decode(r)
    if err != nil {
@@ -141,31 +168,4 @@ func (s TrackRunSample) Encode(b TrackRunBox, w io.Writer) error {
       }
    }
    return nil
-}
-
-// If the data-offset is present, it is relative to the base-data-offset
-// established in the track fragment header.
-//
-//  aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
-//     unsigned int(32) sample_count;
-//     signed int(32) data_offset; // 0x000001, assume present
-//     unsigned int(32) first_sample_flags; // 0x000004
-//     {
-//        unsigned int(32) sample_duration; // 0x000100
-//        unsigned int(32) sample_size; // 0x000200, assume present
-//        unsigned int(32) sample_flags // 0x000400
-//        if (version == 0) {
-//           unsigned int(32) sample_composition_time_offset; // 0x000800
-//        } else {
-//           signed int(32) sample_composition_time_offset; // 0x000800
-//        }
-//     }[ sample_count ]
-//  }
-type TrackRunBox struct {
-   BoxHeader          BoxHeader
-   FullBoxHeader      FullBoxHeader
-   Sample_Count       uint32
-   Data_Offset        int32
-   First_Sample_Flags uint32
-   Samples            []TrackRunSample
 }

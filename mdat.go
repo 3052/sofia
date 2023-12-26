@@ -35,6 +35,15 @@ func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    return nil
 }
 
+// 8.1.1 Media data box
+//  aligned(8) class MediaDataBox extends Box('mdat') {
+//     bit(8) data[];
+//  }
+type MediaDataBox struct {
+   Header BoxHeader
+   Data   [][]byte
+}
+
 func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
    b.Data = make([][]byte, t.Sample_Count)
    for i := range b.Data {
@@ -60,13 +69,4 @@ func (b MediaDataBox) Encode(w io.Writer) error {
       }
    }
    return nil
-}
-
-// 8.1.1 Media data box
-//  aligned(8) class MediaDataBox extends Box('mdat') {
-//     bit(8) data[];
-//  }
-type MediaDataBox struct {
-   Header BoxHeader
-   Data   [][]byte
 }

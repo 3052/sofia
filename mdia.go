@@ -5,6 +5,15 @@ import (
    "io"
 )
 
+// 8.4.1 Media box
+//  aligned(8) class MediaBox extends Box('mdia') {
+//  }
+type MediaBox struct {
+   Header  BoxHeader
+   Boxes []Box
+   Minf MediaInformationBox
+}
+
 func (b *MediaBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -48,13 +57,4 @@ func (b MediaBox) Encode(w io.Writer) error {
       }
    }
    return b.Minf.Encode(w)
-}
-
-// 8.4.1 Media box
-//  aligned(8) class MediaBox extends Box('mdia') {
-//  }
-type MediaBox struct {
-   Header  BoxHeader
-   Boxes []Box
-   Minf MediaInformationBox
 }

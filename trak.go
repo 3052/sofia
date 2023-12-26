@@ -24,7 +24,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "edts", "tkhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -40,7 +40,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("trak %q", head.RawType)
+         return fmt.Errorf("trak %q", head.Type)
       }
    }
 }

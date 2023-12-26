@@ -24,7 +24,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "iods", "meta", "mvex", "mvhd", "pssh":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -40,7 +40,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("moov %q", head.RawType)
+         return fmt.Errorf("moov %q", head.Type)
       }
    }
 }

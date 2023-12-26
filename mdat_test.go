@@ -95,23 +95,23 @@ func (t testdata) encode_init(dst io.Writer) error {
       return err
    }
    for _, b := range f.Moov.Boxes {
-      if b.Header.Type() == "pssh" {
-         copy(b.Header.RawType[:], "free") // Firefox
+      if b.Header.BoxType() == "pssh" {
+         copy(b.Header.Type[:], "free") // Firefox
       }
    }
    stsd := &f.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   copy(stsd.Encv.Header.RawType[:], "avc1") // Firefox
+   copy(stsd.Encv.Header.Type[:], "avc1") // Firefox
    for _, b := range stsd.Encv.Boxes {
-      if b.Header.Type() == "sinf" {
-         copy(b.Header.RawType[:], "free") // Firefox
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
       }
    }
    for _, b := range stsd.Enca.Boxes {
-      if b.Header.Type() == "sinf" {
-         copy(b.Header.RawType[:], "free") // Firefox
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   copy(stsd.Enca.Header.RawType[:], "mp4a") // Firefox
+   copy(stsd.Enca.Header.Type[:], "mp4a") // Firefox
    return f.Encode(dst)
 }
 

@@ -22,7 +22,7 @@ func (f *File) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "ftyp", "sidx", "styp":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -50,7 +50,7 @@ func (f *File) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("file %q", head.RawType)
+         return fmt.Errorf("file %q", head.Type)
       }
    }
 }

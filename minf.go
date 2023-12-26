@@ -24,7 +24,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "dinf", "smhd", "vmhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -40,7 +40,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("minf %q", head.RawType)
+         return fmt.Errorf("minf %q", head.Type)
       }
    }
 }

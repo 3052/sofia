@@ -24,7 +24,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "sgpd", "stco", "stsc", "stsz", "stts":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -40,7 +40,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("stbl %q", head.RawType)
+         return fmt.Errorf("stbl %q", head.Type)
       }
    }
 }

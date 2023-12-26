@@ -37,7 +37,7 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
       return err
    }
    size := head.BoxPayload()
-   switch head.Type() {
+   switch head.BoxType() {
    case "enca":
       b.Enca.Header = head
       err := b.Enca.Decode(io.LimitReader(r, size))
@@ -51,7 +51,7 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
          return err
       }
    default:
-      return fmt.Errorf("stsd %q", head.RawType)
+      return fmt.Errorf("stsd %q", head.Type)
    }
    return nil
 }

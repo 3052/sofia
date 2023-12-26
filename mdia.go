@@ -24,7 +24,7 @@ func (b *MediaBox) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "hdlr", "mdhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -40,7 +40,7 @@ func (b *MediaBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("mdia %q", head.RawType)
+         return fmt.Errorf("mdia %q", head.Type)
       }
    }
 }

@@ -51,7 +51,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "esds", "sinf":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -61,7 +61,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          }
          a.Boxes = append(a.Boxes, &value)
       default:
-         return fmt.Errorf("SampleEntry %q", head.RawType)
+         return fmt.Errorf("SampleEntry %q", head.Type)
       }
    }
 }
@@ -163,7 +163,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          return err
       }
       size := head.BoxPayload()
-      switch head.Type() {
+      switch head.BoxType() {
       case "avcC", "pasp", "sinf":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
@@ -173,7 +173,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          }
          v.Boxes = append(v.Boxes, &value)
       default:
-         return fmt.Errorf("VisualSampleEntry %q", head.RawType)
+         return fmt.Errorf("VisualSampleEntry %q", head.Type)
       }
    }
 }

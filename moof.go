@@ -5,14 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class MovieFragmentBox extends Box('moof') {
-// }
-type MovieFragmentBox struct {
-   Header BoxHeader
-   Boxes  []Box
-   Traf   TrackFragmentBox
-}
-
 func (b *MovieFragmentBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -56,4 +48,13 @@ func (b MovieFragmentBox) Encode(w io.Writer) error {
       }
    }
    return b.Traf.Encode(w)
+}
+
+// 8.8.4 Movie fragment box
+//  aligned(8) class MovieFragmentBox extends Box('moof') {
+//  }
+type MovieFragmentBox struct {
+   Header BoxHeader
+   Boxes  []Box
+   Traf   TrackFragmentBox
 }

@@ -5,15 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class TrackFragmentBox extends Box('traf') {
-// }
-type TrackFragmentBox struct {
-   Header BoxHeader
-   Boxes  []Box
-   Trun   TrackRunBox
-   Senc   SampleEncryptionBox
-}
-
 func (b *TrackFragmentBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -66,4 +57,14 @@ func (b TrackFragmentBox) Encode(w io.Writer) error {
       return err
    }
    return b.Senc.Encode(w)
+}
+
+// 8.8.6 Track fragment box
+//  aligned(8) class TrackFragmentBox extends Box('traf') {
+//  }
+type TrackFragmentBox struct {
+   Header BoxHeader
+   Boxes  []Box
+   Trun   TrackRunBox
+   Senc   SampleEncryptionBox
 }

@@ -7,6 +7,32 @@ import (
    "testing"
 )
 
+func Test_Mdat(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         dst, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer dst.Close()
+         if err := test.encode_init(dst); err != nil {
+            t.Fatal(err)
+         }
+         if err := test.encode_segment(dst); err != nil {
+            t.Fatal(err)
+         }
+      }()
+      break
+   }
+}
+
+type testdata struct {
+   init string
+   segment string
+   key string
+   out string
+}
+
 var tests = []testdata{
    {
       "testdata/amc-video/init.m4f",
@@ -87,31 +113,6 @@ func (t testdata) encode_init(dst io.Writer) error {
    }
    copy(stsd.Enca.Header.RawType[:], "mp4a") // Firefox
    return f.Encode(dst)
-}
-
-func Test_Mdat(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         dst, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer dst.Close()
-         if err := test.encode_init(dst); err != nil {
-            t.Fatal(err)
-         }
-         if err := test.encode_segment(dst); err != nil {
-            t.Fatal(err)
-         }
-      }()
-      break
-   }
-}
-type testdata struct {
-   init string
-   segment string
-   key string
-   out string
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {

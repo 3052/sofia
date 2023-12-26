@@ -6,25 +6,6 @@ import (
    "io"
 )
 
-// aligned(8) class SampleDescriptionBox() extends FullBox(
-//    'stsd',
-//    version,
-//    0
-// ) {
-//    int i ;
-//    unsigned int(32) entry_count;
-//    for (i = 1 ; i <= entry_count ; i++){
-//       SampleEntry(); // an instance of a class derived from SampleEntry
-//    }
-// }
-type SampleDescriptionBox struct {
-   BoxHeader  BoxHeader
-   FullBoxHeader FullBoxHeader
-   Entry_Count uint32
-   Enca AudioSampleEntry
-   Encv VisualSampleEntry
-}
-
 func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    err := b.FullBoxHeader.Decode(r)
    if err != nil {
@@ -83,4 +64,20 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
       }
    }
    return nil
+}
+
+// 8.5.2 Sample description box
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescriptionBox struct {
+   BoxHeader  BoxHeader
+   FullBoxHeader FullBoxHeader
+   Entry_Count uint32
+   Enca AudioSampleEntry
+   Encv VisualSampleEntry
 }

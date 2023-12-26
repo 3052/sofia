@@ -5,14 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class TrackBox extends Box('trak') {
-// }
-type TrackBox struct {
-   Header  BoxHeader
-   Boxes []Box
-   Mdia MediaBox
-}
-
 func (b *TrackBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -56,4 +48,13 @@ func (b TrackBox) Encode(w io.Writer) error {
       }
    }
    return b.Mdia.Encode(w)
+}
+
+// 8.3.1 Track box
+//  aligned(8) class TrackBox extends Box('trak') {
+//  }
+type TrackBox struct {
+   Header  BoxHeader
+   Boxes []Box
+   Mdia MediaBox
 }

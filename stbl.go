@@ -5,14 +5,6 @@ import (
    "io"
 )
 
-// aligned(8) class SampleTableBox extends Box('stbl') {
-// }
-type SampleTableBox struct {
-   Header  BoxHeader
-   Boxes []Box
-   Stsd SampleDescriptionBox
-}
-
 func (b *SampleTableBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -56,4 +48,13 @@ func (b SampleTableBox) Encode(w io.Writer) error {
       }
    }
    return b.Stsd.Encode(w)
+}
+
+// 8.5.1 Sample table box
+//  aligned(8) class SampleTableBox extends Box('stbl') {
+//  }
+type SampleTableBox struct {
+   Header  BoxHeader
+   Boxes []Box
+   Stsd SampleDescriptionBox
 }

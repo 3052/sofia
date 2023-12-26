@@ -6,31 +6,6 @@ import (
 )
 
 // 4.2.2 Object definitions
-//  aligned(8) class Box (
-//     unsigned int(32) boxtype,
-//     optional unsigned int(8)[16] extended_type
-//  ) {
-//     BoxHeader(boxtype, extended_type);
-//     // the remaining bytes are the BoxPayload
-//  }
-type Box struct {
-   Header  BoxHeader
-   Payload []byte
-}
-
-func (b Box) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-// 4.2.2 Object definitions
 //  aligned(8) class BoxHeader (
 //     unsigned int(32) boxtype,
 //     optional unsigned int(8)[16] extended_type
@@ -65,6 +40,31 @@ func (b BoxHeader) BoxPayload() int64 {
 
 func (b BoxHeader) Type() string {
    return string(b.RawType[:])
+}
+
+// 4.2.2 Object definitions
+//  aligned(8) class Box (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     BoxHeader(boxtype, extended_type);
+//     // the remaining bytes are the BoxPayload
+//  }
+type Box struct {
+   Header  BoxHeader
+   Payload []byte
+}
+
+func (b Box) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   _, err = w.Write(b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
 }
 
 // 4.2.2 Object definitions

@@ -1,31 +1,72 @@
-[ftyp] Size=20 MajorBrand="iso6" MinorVersion=0 CompatibleBrands=[{CompatibleBrand="cmfc"}]
-[moov] Size=1819
-  [mvhd] Size=108 ... (use "-full mvhd" to show all)
-  [trak] Size=582
-    [tkhd] Size=92 ... (use "-full tkhd" to show all)
-    [mdia] Size=482
-      [mdhd] Size=32 Version=0 Flags=0x000000 CreationTimeV0=0 ModificationTimeV0=0 Timescale=30000 DurationV0=0 Language="und" PreDefined=0
-      [hdlr] Size=53 Version=0 Flags=0x000000 PreDefined=0 HandlerType="vide" Name="Bento4 Video Handler"
-      [minf] Size=389
-        [vmhd] Size=20 Version=0 Flags=0x000001 Graphicsmode=0 Opcolor=[0, 0, 0]
-        [dinf] Size=36
-          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
-            [url ] Size=12 Version=0 Flags=0x000001
-        [stbl] Size=325
-          [stsd] Size=249 Version=0 Flags=0x000000 EntryCount=1
-            [encv] Size=233 ... (use "-full encv" to show all)
-              [avcC] Size=51 ... (use "-full avcC" to show all)
-              [pasp] Size=16 HSpacing=1 VSpacing=1
-              [sinf] Size=80
-                [frma] Size=12 DataFormat="avc1"
-                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
-                [schi] Size=40
-                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=5081120a-bbf6-49af-a5f1-7581bb5c6dcd
-          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
-          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
-          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
-          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
-  [mvex] Size=40
-    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=0 DefaultSampleSize=0 DefaultSampleFlags=0x0
-  [pssh] Size=87 ... (use "-full pssh" to show all)
-  [pssh] Size=994 ... (use "-full pssh" to show all)
+[ftyp] size=20
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: cmfc
+[moov] size=1819
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=582
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+     - Width: 512.0, Height: 288.0
+    [mdia] size=482
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 30000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=53 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "Bento4 Video Handler"
+      [minf] size=389
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=325
+          [stsd] size=249 version=0 flags=000000
+            [encv] size=233
+             - width: 512
+             - height: 288
+             - compressorName: ""
+              [avcC] size=51
+               - AVCProfileIndication: 77
+               - profileCompatibility: 40
+               - AVCLevelIndication: 21
+               - SPS: 674d4015e8804012d80b50101014000003019000005daa3c58b448
+               - PPS: 68ebe52c80
+              [pasp] size=16
+               - hSpacing:vSpacing: 1:1
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 5081120a-bbf6-49af-a5f1-7581bb5c6dcd
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=87 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [pssh] size=994 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)

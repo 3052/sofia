@@ -1,30 +1,64 @@
-[ftyp] Size=20 MajorBrand="iso6" MinorVersion=0 CompatibleBrands=[{CompatibleBrand="cmfc"}]
-[moov] Size=1737
-  [mvhd] Size=108 ... (use "-full mvhd" to show all)
-  [trak] Size=500
-    [tkhd] Size=92 ... (use "-full tkhd" to show all)
-    [mdia] Size=400
-      [mdhd] Size=32 Version=0 Flags=0x000000 CreationTimeV0=0 ModificationTimeV0=0 Timescale=48000 DurationV0=0 Language="eng" PreDefined=0
-      [hdlr] Size=53 Version=0 Flags=0x000000 PreDefined=0 HandlerType="soun" Name="Bento4 Sound Handler"
-      [minf] Size=307
-        [smhd] Size=16 Version=0 Flags=0x000000 Balance=0
-        [dinf] Size=36
-          [dref] Size=28 Version=0 Flags=0x000000 EntryCount=1
-            [url ] Size=12 Version=0 Flags=0x000001
-        [stbl] Size=247
-          [stsd] Size=171 Version=0 Flags=0x000000 EntryCount=1
-            [enca] Size=155 DataReferenceIndex=1 EntryVersion=0 ChannelCount=2 SampleSize=16 PreDefined=0 SampleRate=48000
-              [esds] Size=39 ... (use "-full esds" to show all)
-              [sinf] Size=80
-                [frma] Size=12 DataFormat="mp4a"
-                [schm] Size=20 Version=0 Flags=0x000000 SchemeType="cenc" SchemeVersion=0x10000
-                [schi] Size=40
-                  [tenc] Size=32 Version=0 Flags=0x000000 Reserved=0 DefaultCryptByteBlock=0 DefaultSkipByteBlock=0 DefaultIsProtected=1 DefaultPerSampleIVSize=8 DefaultKID=5081120a-bbf6-49af-a5f1-7581bb5c6dcd
-          [stts] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
-          [stsc] Size=16 Version=0 Flags=0x000000 EntryCount=0 Entries=[]
-          [stsz] Size=20 Version=0 Flags=0x000000 SampleSize=0 SampleCount=0 EntrySize=[]
-          [stco] Size=16 Version=0 Flags=0x000000 EntryCount=0 ChunkOffset=[]
-  [mvex] Size=40
-    [trex] Size=32 Version=0 Flags=0x000000 TrackID=1 DefaultSampleDescriptionIndex=1 DefaultSampleDuration=0 DefaultSampleSize=0 DefaultSampleFlags=0x0
-  [pssh] Size=87 ... (use "-full pssh" to show all)
-  [pssh] Size=994 ... (use "-full pssh" to show all)
+[ftyp] size=20
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: cmfc
+[moov] size=1737
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=500
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+    [mdia] size=400
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 48000
+       - creation time: 0
+       - modification time: 0
+       - language: eng
+      [hdlr] size=53 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "Bento4 Sound Handler"
+      [minf] size=307
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=247
+          [stsd] size=171 version=0 flags=000000
+            [enca] size=155
+              [esds] size=39 version=0 flags=000000
+               - maxBitrate: 130125
+               - avgBitrate: 93375
+               - decConfig: 1190
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: mp4a
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 5081120a-bbf6-49af-a5f1-7581bb5c6dcd
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=87 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [pssh] size=994 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)

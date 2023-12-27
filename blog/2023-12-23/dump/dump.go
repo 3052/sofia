@@ -9,7 +9,7 @@ import (
 func main() {
    if len(os.Args) == 2 {
       input := os.Args[1]
-      cmd := exec.Command("mp4tool", "dump", "-full", "tenc,trun", input)
+      cmd := exec.Command("mp4ff-info", input)
       fmt.Println(cmd.Args)
       out, err := cmd.Output()
       if err != nil {

@@ -9,16 +9,28 @@ import (
 
 var tests = []testdata{
    {
-      "testdata/hulu-video/init.mp4",
-      "testdata/hulu-video/segment-1.0001.m4s",
-      "602a9289bfb9b1995b75ac63f123fc86",
-      "hulu-video.mp4",
+      "testdata/paramount-video/init.m4v",
+      "testdata/paramount-video/seg_1.m4s",
+      "d98277ff6d7406ec398b49bbd52937d4",
+      "paramount-video.mp4",
    },
    {
       "testdata/amc-video/init.m4f",
       "testdata/amc-video/segment0.m4f",
       "c58d3308ed18d43776a78232f552dbe0",
       "amc-video.mp4",
+   },
+   {
+      "testdata/hulu-video/init.mp4",
+      "testdata/hulu-video/segment-1.0001.m4s",
+      "602a9289bfb9b1995b75ac63f123fc86",
+      "hulu-video.mp4",
+   },
+   {
+      "testdata/roku-video/index_video_8_0_init.mp4",
+      "testdata/roku-video/index_video_8_0_1.mp4",
+      "1ba08384626f9523e37b9db17f44da2b",
+      "roku-video.mp4",
    },
    {
       "testdata/roku-audio/index_audio_2_0_init.mp4",
@@ -43,18 +55,6 @@ var tests = []testdata{
       "testdata/amc-audio/segment0.m4f",
       "91d888dfb0562ebc3abdd845d451e858",
       "amc-audio.mp4",
-   },
-   {
-      "testdata/roku-video/index_video_8_0_init.mp4",
-      "testdata/roku-video/index_video_8_0_1.mp4",
-      "1ba08384626f9523e37b9db17f44da2b",
-      "roku-video.mp4",
-   },
-   {
-      "testdata/paramount-video/init.m4v",
-      "testdata/paramount-video/seg_1.m4s",
-      "d98277ff6d7406ec398b49bbd52937d4",
-      "paramount-video.mp4",
    },
    {
       "testdata/nbc-video/_227156876_5.mp4",

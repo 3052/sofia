@@ -1,11 +1,25 @@
-[moof] Size=6873
-  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
-  [traf] Size=6849
-    [tfhd] Size=20 Version=0 Flags=0x020008 TrackID=1 DefaultSampleDuration=1024
-    [tfdt] Size=20 Version=1 Flags=0x000000 BaseMediaDecodeTimeV1=0
-    [trun] Size=2252 Version=0 Flags=0x000301 SampleCount=279 DataOffset=6881 
-    [saiz] Size=17 Version=0 Flags=0x000000 DefaultSampleInfoSize=8 SampleCount=279
-    [saio] Size=20 Version=0 Flags=0x000000 EntryCount=1 OffsetV0=[2377]
-    [senc] (unsupported box type) Size=2248 Data=[...] (use "-full senc" to show all)
-    [uuid] (unsupported box type) Size=2264 Data=[...] (use "-full uuid" to show all)
-[mdat] Size=91874 Data=[...] (use "-full mdat" to show all)
+[moof] size=4641
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=4617
+    [tfhd] size=20 version=0 flags=020008
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleDuration: 1024
+    [tfdt] size=20 version=1 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=2252 version=0 flags=000301
+     - sampleCount: 279
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 279
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=2377
+    [senc] size=16 version=0 flags=000000
+     - sampleCount: 279
+     - perSampleIVSize: 0
+    [uuid] size=2264
+     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
+     - subType: unknown
+[mdat] size=91874

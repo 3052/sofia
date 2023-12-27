@@ -1,10 +1,22 @@
-[moof] Size=3641
-  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
-  [traf] Size=3617
-    [tfhd] Size=20 Version=0 Flags=0x020020 TrackID=1 DefaultSampleFlags=0x1010000
-    [tfdt] Size=16 Version=0 Flags=0x000000 BaseMediaDecodeTimeV0=0
-    [trun] Size=1464 Version=0 Flags=0x000b05 SampleCount=120 DataOffset=3649 FirstSampleFlags=0x2000000 
-    [uuid] (unsupported box type) Size=1952 Data=[...] (use "-full uuid" to show all)
-    [saiz] Size=137 ... (use "-full saiz" to show all)
-    [saio] Size=20 Version=0 Flags=0x000000 EntryCount=1 OffsetV0=[1564]
-[mdat] Size=186478 Data=[...] (use "-full mdat" to show all)
+[moof] size=3641
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=3617
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 01010000 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=1464 version=0 flags=000b05
+     - sampleCount: 120
+    [uuid] size=1952
+     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
+     - subType: unknown
+    [saiz] size=137 version=0 flags=000000
+     - defaultSampleInfoSize: 0
+     - sampleCount: 120
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=1564
+[mdat] size=186478

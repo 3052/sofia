@@ -2,6 +2,7 @@ package sofia
 
 import (
    "encoding/binary"
+   "encoding/hex"
    "io"
 )
 
@@ -56,6 +57,39 @@ func (f FullBoxHeader) Flags() uint32 {
    return v
 }
 
+// 4.2.2 Object definitions
+//  aligned(8) class BoxHeader (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     unsigned int(32) size;
+//     unsigned int(32) type = boxtype;
+//     if (size==1) {
+//        unsigned int(64) largesize;
+//     } else if (size==0) {
+//        // box extends to end of file
+//     }
+//     if (boxtype=='uuid') {
+//        unsigned int(8)[16] usertype = extended_type;
+//     }
+//  }
+type BoxHeader struct {
+   Size uint32
+   Type [4]uint8
+   UserType [16]uint8
+}
+
+func (b BoxHeader) Extended_Type() string {
+   return hex.EncodeToString(b.UserType[:])
+}
+
+func (b BoxHeader) BoxPayload() int64 {
+   if b.BoxType() == "uuid" {
+      b.Size -= 16
+   }
+   return int64(b.Size) - 4 - 4
+}
+
 func (b BoxHeader) BoxType() string {
    return string(b.Type[:])
 }
@@ -92,33 +126,4 @@ func (b BoxHeader) Encode(w io.Writer) error {
       }
    }
    return nil
-}
-
-// 4.2.2 Object definitions
-//  aligned(8) class BoxHeader (
-//     unsigned int(32) boxtype,
-//     optional unsigned int(8)[16] extended_type
-//  ) {
-//     unsigned int(32) size;
-//     unsigned int(32) type = boxtype;
-//     if (size==1) {
-//        unsigned int(64) largesize;
-//     } else if (size==0) {
-//        // box extends to end of file
-//     }
-//     if (boxtype=='uuid') {
-//        unsigned int(8)[16] usertype = extended_type;
-//     }
-//  }
-type BoxHeader struct {
-   Size uint32
-   Type [4]uint8
-   UserType [16]uint8
-}
-
-func (b BoxHeader) BoxPayload() int64 {
-   if b.BoxType() == "uuid" {
-      b.Size -= 16
-   }
-   return int64(b.Size) - 4 - 4
 }

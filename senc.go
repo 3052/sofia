@@ -5,6 +5,51 @@ import (
    "io"
 )
 
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+//  aligned(8) class SampleEncryptionBox extends FullBox(
+//     'senc', version, flags
+//  ) {
+//     unsigned int(32) sample_count;
+//     {
+//        unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//        if (UseSubSampleEncryption) {
+//           unsigned int(16) subsample_count;
+//           {
+//              unsigned int(16) BytesOfClearData;
+//              unsigned int(32) BytesOfProtectedData;
+//           } [subsample_count ]
+//        }
+//     }[ sample_count ]
+//  }
+type SampleEncryptionBox struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   Sample_Count  uint32
+   Samples       []EncryptionSample
+}
+
+func (b *SampleEncryptionBox) Decode(r io.Reader) error {
+   err := b.FullBoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
+   if err != nil {
+      return err
+   }
+   b.Samples = make([]EncryptionSample, b.Sample_Count)
+   for i, sample := range b.Samples {
+      err := sample.Decode(b, r)
+      if err != nil {
+         return err
+      }
+      b.Samples[i] = sample
+   }
+   return nil
+}
+
 type EncryptionSample struct {
    InitializationVector uint64
    Subsample_Count      uint16
@@ -49,51 +94,6 @@ func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
             return err
          }
       }
-   }
-   return nil
-}
-
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-//  aligned(8) class SampleEncryptionBox extends FullBox(
-//     'senc', version, flags
-//  ) {
-//     unsigned int(32) sample_count;
-//     {
-//        unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//        if (UseSubSampleEncryption) {
-//           unsigned int(16) subsample_count;
-//           {
-//              unsigned int(16) BytesOfClearData;
-//              unsigned int(32) BytesOfProtectedData;
-//           } [subsample_count ]
-//        }
-//     }[ sample_count ]
-//  }
-type SampleEncryptionBox struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   Sample_Count  uint32
-   Samples       []EncryptionSample
-}
-
-func (b *SampleEncryptionBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.Sample_Count)
-   if err != nil {
-      return err
-   }
-   b.Samples = make([]EncryptionSample, b.Sample_Count)
-   for i, sample := range b.Samples {
-      err := sample.Decode(b, r)
-      if err != nil {
-         return err
-      }
-      b.Samples[i] = sample
    }
    return nil
 }

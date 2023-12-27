@@ -7,33 +7,13 @@ import (
    "testing"
 )
 
-func Test_Mdat(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         dst, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer dst.Close()
-         if err := test.encode_init(dst); err != nil {
-            t.Fatal(err)
-         }
-         if err := test.encode_segment(dst); err != nil {
-            t.Fatal(err)
-         }
-      }()
-      break
-   }
-}
-
-type testdata struct {
-   init string
-   segment string
-   key string
-   out string
-}
-
 var tests = []testdata{
+   {
+      "testdata/hulu-video/init.mp4",
+      "testdata/hulu-video/segment-1.0001.m4s",
+      "602a9289bfb9b1995b75ac63f123fc86",
+      "hulu-video.mp4",
+   },
    {
       "testdata/amc-video/init.m4f",
       "testdata/amc-video/segment0.m4f",
@@ -82,6 +62,32 @@ var tests = []testdata{
       "3e2e8ccff89d0a72598a347feab5e7c8",
       "nbc-video.mp4",
    },
+}
+
+func Test_Mdat(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         dst, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer dst.Close()
+         if err := test.encode_init(dst); err != nil {
+            t.Fatal(err)
+         }
+         if err := test.encode_segment(dst); err != nil {
+            t.Fatal(err)
+         }
+      }()
+      break
+   }
+}
+
+type testdata struct {
+   init string
+   segment string
+   key string
+   out string
 }
 
 func (t testdata) encode_init(dst io.Writer) error {

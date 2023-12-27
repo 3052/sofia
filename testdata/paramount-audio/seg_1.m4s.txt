@@ -1,13 +1,40 @@
-[styp] Size=36 ... (use "-full styp" to show all)
-[sidx] Size=44 ... (use "-full sidx" to show all)
-[moof] Size=3561
-  [mfhd] Size=16 Version=0 Flags=0x000000 SequenceNumber=1
-  [traf] Size=3537
-    [tfhd] Size=28 Version=0 Flags=0x02002a TrackID=1 SampleDescriptionIndex=1 DefaultSampleDuration=1024 DefaultSampleFlags=0x0
-    [tfdt] Size=16 Version=0 Flags=0x000000 BaseMediaDecodeTimeV0=0
-    [trun] Size=1148 Version=0 Flags=0x000201 SampleCount=282 DataOffset=3569 
-    [sbgp] Size=28 Version=0 Flags=0x000000 GroupingType=1919904876 EntryCount=1 Entries=[{SampleCount=282 GroupDescriptionIndex=1}]
-    [saiz] Size=17 Version=0 Flags=0x000000 DefaultSampleInfoSize=8 SampleCount=282
-    [saio] Size=20 Version=0 Flags=0x000000 EntryCount=1 OffsetV0=[1305]
-    [senc] (unsupported box type) Size=2272 Data=[...] (use "-full senc" to show all)
-[mdat] Size=94632 Data=[...] (use "-full mdat" to show all)
+[styp] size=36
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: cmfs
+[sidx] size=44 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 48000
+ - earliestPresentationTime: 0
+ - firstOffset: 0
+[moof] size=1305
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=1281
+    [tfhd] size=28 version=0 flags=02002a
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 1
+     - defaultSampleDuration: 1024
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=1148 version=0 flags=000201
+     - sampleCount: 282
+    [sbgp] size=28 version=0 flags=000000
+     - groupingType: roll
+     - entryCount: 1
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 282
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=1305
+    [senc] size=16 version=0 flags=000000
+     - sampleCount: 282
+     - perSampleIVSize: 0
+[mdat] size=94632

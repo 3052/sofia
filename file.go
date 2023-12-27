@@ -23,17 +23,9 @@ func (f *File) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.BoxType() {
-      case "ftyp", "sidx", "styp":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
-         if err != nil {
-            return err
-         }
-         f.Boxes = append(f.Boxes, value)
-      case "moov":
-         f.Moov.Header = head
-         err := f.Moov.Decode(io.LimitReader(r, size))
+      case "mdat":
+         f.Mdat.Header = head
+         err := f.Mdat.Decode(f.Moof.Traf.Trun, r)
          if err != nil {
             return err
          }
@@ -43,12 +35,20 @@ func (f *File) Decode(r io.Reader) error {
          if err != nil {
             return err
          }
-      case "mdat":
-         f.Mdat.Header = head
-         err := f.Mdat.Decode(f.Moof.Traf.Trun, r)
+      case "moov":
+         f.Moov.Header = head
+         err := f.Moov.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
+      case "ftyp", "sidx", "styp":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := io.ReadFull(r, value.Payload)
+         if err != nil {
+            return err
+         }
+         f.Boxes = append(f.Boxes, value)
       default:
          return fmt.Errorf("file %q", head.Type)
       }

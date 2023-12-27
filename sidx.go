@@ -1,10 +1,5 @@
 package sofia
 
-import (
-   "fmt"
-   "io"
-)
-
 // 8.16.3 Segment index box
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -32,4 +27,18 @@ type SegmentIndexBox struct {
    FullBoxHeader FullBoxHeader
    Reference_ID uint32
    Timescale uint32
+   Earliest_Presentation_Time []byte
+   First_Offset []byte
+   Reserved uint16
+   Reference_Count uint16
+   References []Reference
+}
+
+type Reference struct {
+   Reference_Type bool
+   Referenced_Size uint32
+   Subsegment_Duration uint32
+   Starts_With_SAP bool
+   SAP_type uint8
+   SAP_delta_time uint32
 }

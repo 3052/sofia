@@ -10,6 +10,7 @@ type File struct {
    Moov MovieBox
    Moof MovieFragmentBox
    Mdat MediaDataBox
+   Sidx SegmentIndexBox
 }
 
 func (f *File) Decode(r io.Reader) error {
@@ -23,6 +24,14 @@ func (f *File) Decode(r io.Reader) error {
       }
       size := head.BoxPayload()
       switch head.BoxType() {
+      case "ftyp", "styp":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := io.ReadFull(r, value.Payload)
+         if err != nil {
+            return err
+         }
+         f.Boxes = append(f.Boxes, value)
       case "mdat":
          f.Mdat.Header = head
          err := f.Mdat.Decode(f.Moof.Traf.Trun, r)
@@ -41,14 +50,12 @@ func (f *File) Decode(r io.Reader) error {
          if err != nil {
             return err
          }
-      case "ftyp", "sidx", "styp":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+      case "sidx":
+         f.Sidx.BoxHeader = head
+         err := f.Sidx.Decode(r)
          if err != nil {
             return err
          }
-         f.Boxes = append(f.Boxes, value)
       default:
          return fmt.Errorf("file %q", head.Type)
       }
@@ -76,6 +83,12 @@ func (f File) Encode(w io.Writer) error {
    }
    if f.Mdat.Header.Size >= 1 {
       err := f.Mdat.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Sidx.BoxHeader.Size >= 1 {
+      err := f.Sidx.Encode(w)
       if err != nil {
          return err
       }

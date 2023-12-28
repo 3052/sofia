@@ -1,5 +1,24 @@
 package sofia
 
+import (
+   "encoding/binary"
+   "io"
+)
+
+type Reference [3]uint32
+
+func (r Reference) Referenced_Size() uint32 {
+   return r[0] & (0xFFFFFFFF>>1)
+}
+
+func (r *Reference) Decode(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) Encode(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
+}
+
 // 8.16.3 Segment index box
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -34,11 +53,81 @@ type SegmentIndexBox struct {
    References []Reference
 }
 
-type Reference struct {
-   Reference_Type bool
-   Referenced_Size uint32
-   Subsegment_Duration uint32
-   Starts_With_SAP bool
-   SAP_type uint8
-   SAP_delta_time uint32
+func (s SegmentIndexBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.First_Offset); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
+      return err
+   }
+   for _, ref := range s.References {
+      err := ref.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (s *SegmentIndexBox) Decode(r io.Reader) error {
+   err := s.BoxHeader.Decode(r)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Decode(r); err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &s.Reference_ID); err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &s.Timescale); err != nil {
+      return err
+   }
+   if s.FullBoxHeader.Version == 0 {
+      s.Earliest_Presentation_Time = make([]byte, 4)
+      s.First_Offset = make([]byte, 4)
+   } else {
+      s.Earliest_Presentation_Time = make([]byte, 8)
+      s.First_Offset = make([]byte, 8)
+   }
+   if _, err := io.ReadFull(r, s.Earliest_Presentation_Time); err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, s.First_Offset); err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &s.Reference_Count); err != nil {
+      return err
+   }
+   s.References = make([]Reference, s.Reference_Count)
+   for i, ref := range s.References {
+      err := ref.Decode(r)
+      if err != nil {
+         return err
+      }
+      s.References[i] = ref
+   }
+   return nil
 }

@@ -1,7 +1,7 @@
-[moof] size=4641
+[moof] size=6873
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
-  [traf] size=4617
+  [traf] size=6849
     [tfhd] size=20 version=0 flags=020008
      - trackID: 1
      - defaultBaseIsMoof: true
@@ -16,9 +16,9 @@
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=2377
-    [senc] size=16 version=0 flags=000000
+    [senc] size=2248 version=0 flags=000000
      - sampleCount: 279
-     - perSampleIVSize: 0
+     - perSampleIVSize: 8
     [uuid] size=2264
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: unknown

@@ -5,20 +5,6 @@ import (
    "io"
 )
 
-type Reference [3]uint32
-
-func (r Reference) Referenced_Size() uint32 {
-   return r[0] & (0xFFFFFFFF>>1)
-}
-
-func (r *Reference) Decode(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) Encode(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
 // 8.16.3 Segment index box
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -51,6 +37,30 @@ type SegmentIndexBox struct {
    Reserved uint16
    Reference_Count uint16
    References []Reference
+}
+
+func (s SegmentIndexBox) Byte_Ranges(start uint32) [][2]uint32 {
+   ranges := make([][2]uint32, s.Reference_Count)
+   for i, ref := range s.References {
+      size := ref.Referenced_Size()
+      ranges[i] = [2]uint32{start, start + size - 1}
+      start += size
+   }
+   return ranges
+}
+
+func (r Reference) Referenced_Size() uint32 {
+   return r[0] & (0xFFFFFFFF>>1)
+}
+
+type Reference [3]uint32
+
+func (r *Reference) Decode(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) Encode(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
 }
 
 func (s SegmentIndexBox) Encode(w io.Writer) error {
@@ -89,10 +99,6 @@ func (s SegmentIndexBox) Encode(w io.Writer) error {
 }
 
 func (s *SegmentIndexBox) Decode(r io.Reader) error {
-   err := s.BoxHeader.Decode(r)
-   if err != nil {
-      return err
-   }
    if err := s.FullBoxHeader.Decode(r); err != nil {
       return err
    }

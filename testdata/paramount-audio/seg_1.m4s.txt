@@ -11,10 +11,10 @@
  - timeScale: 48000
  - earliestPresentationTime: 0
  - firstOffset: 0
-[moof] size=1305
+[moof] size=3561
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
-  [traf] size=1281
+  [traf] size=3537
     [tfhd] size=28 version=0 flags=02002a
      - trackID: 1
      - defaultBaseIsMoof: true
@@ -34,7 +34,7 @@
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=1305
-    [senc] size=16 version=0 flags=000000
+    [senc] size=2272 version=0 flags=000000
      - sampleCount: 282
-     - perSampleIVSize: 0
+     - perSampleIVSize: 8
 [mdat] size=94632

@@ -1,9 +1,87 @@
 package sofia
 
 import (
+   "crypto/aes"
+   "crypto/cipher"
    "encoding/binary"
    "io"
 )
+
+type EncryptionSample struct {
+   InitializationVector uint64
+   Subsample_Count      uint16
+   Subsamples           []Subsample
+}
+
+func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if b.Senc_Use_Subsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      e.Subsamples = make([]Subsample, e.Subsample_Count)
+      for i, sample := range e.Subsamples {
+         err := sample.Decode(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples[i] = sample
+      }
+   }
+   return nil
+}
+
+// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+func (e EncryptionSample) Decrypt_CENC(sample, key []byte) error {
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      return err
+   }
+   var iv [16]byte
+   binary.BigEndian.PutUint64(iv[:], e.InitializationVector)
+   stream := cipher.NewCTR(block, iv[:])
+   if len(e.Subsamples) >= 1 {
+      var pos uint32
+      for _, ss := range e.Subsamples {
+         nrClear := uint32(ss.BytesOfClearData)
+         if nrClear >= 1 {
+            pos += nrClear
+         }
+         nrEnc := ss.BytesOfProtectedData
+         if nrEnc >= 1 {
+            stream.XORKeyStream(sample[pos:pos+nrEnc], sample[pos:pos+nrEnc])
+            pos += nrEnc
+         }
+      }
+   } else {
+      stream.XORKeyStream(sample, sample)
+   }
+   return nil
+}
+
+func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
+   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if b.Senc_Use_Subsamples() {
+      err := binary.Write(w, binary.BigEndian, e.Subsample_Count)
+      if err != nil {
+         return err
+      }
+      for _, sample := range e.Subsamples {
+         err := sample.Encode(w)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return nil
+}
 
 // Container: TrackFragmentBox
 //
@@ -48,54 +126,6 @@ func (b *SampleEncryptionBox) Decode(r io.Reader) error {
          return err
       }
       b.Samples[i] = sample
-   }
-   return nil
-}
-
-type EncryptionSample struct {
-   InitializationVector uint64
-   Subsample_Count      uint16
-   Subsamples           []Subsample
-}
-
-func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.Senc_Use_Subsamples() {
-      err := binary.Read(r, binary.BigEndian, &e.Subsample_Count)
-      if err != nil {
-         return err
-      }
-      e.Subsamples = make([]Subsample, e.Subsample_Count)
-      for i, sample := range e.Subsamples {
-         err := sample.Decode(r)
-         if err != nil {
-            return err
-         }
-         e.Subsamples[i] = sample
-      }
-   }
-   return nil
-}
-
-func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
-   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.Senc_Use_Subsamples() {
-      err := binary.Write(w, binary.BigEndian, e.Subsample_Count)
-      if err != nil {
-         return err
-      }
-      for _, sample := range e.Subsamples {
-         err := sample.Encode(w)
-         if err != nil {
-            return err
-         }
-      }
    }
    return nil
 }

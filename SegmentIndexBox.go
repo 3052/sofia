@@ -5,6 +5,20 @@ import (
    "io"
 )
 
+type Reference [3]uint32
+
+func (r *Reference) Decode(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) Encode(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
+}
+
+func (r Reference) Referenced_Size() uint32 {
+   return r[0] & (0xFFFFFFFF>>1)
+}
+
 // Container: File
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -49,55 +63,6 @@ func (s SegmentIndexBox) Byte_Ranges(start uint32) [][2]uint32 {
    return ranges
 }
 
-func (r Reference) Referenced_Size() uint32 {
-   return r[0] & (0xFFFFFFFF>>1)
-}
-
-type Reference [3]uint32
-
-func (r *Reference) Decode(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) Encode(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
-func (s SegmentIndexBox) Encode(w io.Writer) error {
-   err := s.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   if err := s.FullBoxHeader.Encode(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.First_Offset); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
-      return err
-   }
-   for _, ref := range s.References {
-      err := ref.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (s *SegmentIndexBox) Decode(r io.Reader) error {
    if err := s.FullBoxHeader.Decode(r); err != nil {
       return err
@@ -134,6 +99,41 @@ func (s *SegmentIndexBox) Decode(r io.Reader) error {
          return err
       }
       s.References[i] = ref
+   }
+   return nil
+}
+
+func (s SegmentIndexBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.First_Offset); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
+      return err
+   }
+   for _, ref := range s.References {
+      err := ref.Encode(w)
+      if err != nil {
+         return err
+      }
    }
    return nil
 }

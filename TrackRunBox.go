@@ -34,33 +34,6 @@ type TrackRunBox struct {
    Samples            []TrackRunSample
 }
 
-// 0x000400 sample-flags-present
-func (b TrackRunBox) Sample_Flags_Present() bool {
-   return b.FullBoxHeader.Flags()&0x400 >= 1
-}
-
-// 0x000800 sample-composition-time-offsets-present
-func (b TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
-   return b.FullBoxHeader.Flags()&0x800 >= 1
-}
-
-type TrackRunSample struct {
-   Duration                uint32
-   Size                    uint32
-   Flags                   uint32
-   Composition_Time_Offset [4]byte
-}
-
-// 0x000004 first-sample-flags-present
-func (b TrackRunBox) First_Sample_Flags_Present() bool {
-   return b.FullBoxHeader.Flags()&4 >= 1
-}
-
-// 0x000100 sample-duration-present
-func (b TrackRunBox) Sample_Duration_Present() bool {
-   return b.FullBoxHeader.Flags()&0x100 >= 1
-}
-
 func (b *TrackRunBox) Decode(r io.Reader) error {
    err := b.FullBoxHeader.Decode(r)
    if err != nil {
@@ -120,9 +93,36 @@ func (b TrackRunBox) Encode(w io.Writer) error {
    return nil
 }
 
+// 0x000004 first-sample-flags-present
+func (b TrackRunBox) First_Sample_Flags_Present() bool {
+   return b.FullBoxHeader.Flags()&4 >= 1
+}
+
+// 0x000800 sample-composition-time-offsets-present
+func (b TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
+   return b.FullBoxHeader.Flags()&0x800 >= 1
+}
+
+// 0x000100 sample-duration-present
+func (b TrackRunBox) Sample_Duration_Present() bool {
+   return b.FullBoxHeader.Flags()&0x100 >= 1
+}
+
+// 0x000400 sample-flags-present
+func (b TrackRunBox) Sample_Flags_Present() bool {
+   return b.FullBoxHeader.Flags()&0x400 >= 1
+}
+
 // 0x000200 sample-size-present
 func (b TrackRunBox) Sample_Size_Present() bool {
    return b.FullBoxHeader.Flags() & 0x200 >= 1
+}
+
+type TrackRunSample struct {
+   Duration                uint32
+   Size                    uint32
+   Flags                   uint32
+   Composition_Time_Offset [4]byte
 }
 
 func (s *TrackRunSample) Decode(b *TrackRunBox, r io.Reader) error {

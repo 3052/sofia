@@ -7,6 +7,44 @@ import (
    "log/slog"
 )
 
+// Container: SampleDescriptionBox
+//  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
+//     unsigned int(16) pre_defined = 0;
+//     const unsigned int(16) reserved = 0;
+//     unsigned int(32)[3] pre_defined = 0;
+//     unsigned int(16) width;
+//     unsigned int(16) height;
+//     template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
+//     template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
+//     const unsigned int(32) reserved = 0;
+//     template unsigned int(16) frame_count = 1;
+//     uint(8)[32] compressorname;
+//     template unsigned int(16) depth = 0x0018;
+//     int(16) pre_defined = -1;
+//     // other boxes from derived specifications
+//     CleanApertureBox clap; // optional
+//     PixelAspectRatioBox pasp; // optional
+//  }
+type VisualSampleEntry struct {
+   Entry SampleEntry
+   Extends struct {
+      Pre_Defined uint16
+      Reserved uint16
+      _ [3]uint32
+      Width uint16
+      Height uint16
+      HorizResolution uint32
+      VertResolution uint32
+      _ uint32
+      Frame_Count uint16
+      CompressorName [32]uint8
+      Depth uint16
+      _ int16
+   }
+   Boxes []*Box
+   ProtectionScheme ProtectionSchemeInfoBox
+}
+
 // 8.5.2 Sample description box
 //  aligned(8) abstract class SampleEntry(
 //     unsigned int(32) format
@@ -58,7 +96,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
       slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
-      case "esds", "sinf":
+      case "esds":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
@@ -66,27 +104,16 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
             return err
          }
          a.Boxes = append(a.Boxes, &value)
+      case "sinf":
+         a.ProtectionScheme.Header = head
+         err := a.ProtectionScheme.Decode(r)
+         if err != nil {
+            return err
+         }
       default:
          return errors.New("BoxType")
       }
    }
-}
-
-func (a AudioSampleEntry) Encode(w io.Writer) error {
-   err := a.Entry.Encode(w)
-   if err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
-      return err
-   }
-   for _, value := range a.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }
 
 // Container: SampleDescriptionBox
@@ -109,6 +136,24 @@ type AudioSampleEntry struct {
       SampleRate uint32
    }
    Boxes []*Box
+   ProtectionScheme ProtectionSchemeInfoBox
+}
+
+func (a AudioSampleEntry) Encode(w io.Writer) error {
+   err := a.Entry.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+      return err
+   }
+   for _, value := range a.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return a.ProtectionScheme.Encode(w)
 }
 
 func (v *VisualSampleEntry) Decode(r io.Reader) error {
@@ -130,7 +175,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
       slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
-      case "avcC", "pasp", "sinf":
+      case "avcC", "pasp":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
@@ -138,47 +183,16 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
             return err
          }
          v.Boxes = append(v.Boxes, &value)
+      case "sinf":
+         v.ProtectionScheme.Header = head
+         err := v.ProtectionScheme.Decode(r)
+         if err != nil {
+            return err
+         }
       default:
          return errors.New("BoxType")
       }
    }
-}
-
-// 12.1.3 Sample entry
-//  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
-//     unsigned int(16) pre_defined = 0;
-//     const unsigned int(16) reserved = 0;
-//     unsigned int(32)[3] pre_defined = 0;
-//     unsigned int(16) width;
-//     unsigned int(16) height;
-//     template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
-//     template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
-//     const unsigned int(32) reserved = 0;
-//     template unsigned int(16) frame_count = 1;
-//     uint(8)[32] compressorname;
-//     template unsigned int(16) depth = 0x0018;
-//     int(16) pre_defined = -1;
-//     // other boxes from derived specifications
-//     CleanApertureBox clap; // optional
-//     PixelAspectRatioBox pasp; // optional
-//  }
-type VisualSampleEntry struct {
-   Entry SampleEntry
-   Extends struct {
-      Pre_Defined uint16
-      Reserved uint16
-      _ [3]uint32
-      Width uint16
-      Height uint16
-      HorizResolution uint32
-      VertResolution uint32
-      _ uint32
-      Frame_Count uint16
-      CompressorName [32]uint8
-      Depth uint16
-      _ int16
-   }
-   Boxes []*Box
 }
 
 func (v VisualSampleEntry) Encode(w io.Writer) error {
@@ -195,5 +209,5 @@ func (v VisualSampleEntry) Encode(w io.Writer) error {
          return err
       }
    }
-   return nil
+   return v.ProtectionScheme.Encode(w)
 }

@@ -1,0 +1,22 @@
+[moof] size=2721
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=2697
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=1304 version=0 flags=000305
+     - sampleCount: 160
+    [uuid] size=1312
+     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
+     - subType: unknown
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 160
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=1404
+[mdat] size=163848

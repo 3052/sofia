@@ -1,0 +1,72 @@
+[ftyp] size=24
+ - majorBrand: dash
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: piff
+[moov] size=1409
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [pssh] size=700 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [pssh] size=62 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [trak] size=491
+    [tkhd] size=104 version=1 flags=00000f
+     - trackID: 1
+     - duration: 18446744073709551615
+     - creation time: 0
+     - modification time: 0
+    [mdia] size=379
+      [mdhd] size=44 version=1 flags=000000
+       - timeScale: 10000000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "SoundHandler"
+      [minf] size=282
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=222
+          [stsd] size=146 version=0 flags=000000
+            [enca] size=130
+              [dec3] size=14
+               - bitrate=256kbps
+               - sampleRateCode=0 => sampleRate=48000
+               - nrChannels=6, chanmap=f801
+               - nrSubstreams=1
+                 - 1 fscod=0 bsid=16 asvc=0 bsmod=0 acmod=7 lfeon=1 num_dep_sub=0 chan_loc=0
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: ec-3
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: b5640735-8b80-408a-8a95-c00d36d69731
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+[sidx] size=16088 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 10000000
+ - earliestPresentationTime: 0
+ - firstOffset: 0

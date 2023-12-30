@@ -1,22 +1,23 @@
 package sofia
 
 import (
-   "encoding/json"
+   "log/slog"
    "os"
    "testing"
 )
 
 func Test_Trun(t *testing.T) {
-   media, err := os.Open("testdata/amc-video/segment0.m4f")
+   h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+      Level: slog.LevelDebug,
+   })
+   slog.SetDefault(slog.New(h))
+   seg, err := os.Open("ignore/seg_1303.m4s")
    if err != nil {
       t.Fatal(err)
    }
-   defer media.Close()
+   defer seg.Close()
    var f File
-   if err := f.Decode(media); err != nil {
+   if err := f.Decode(seg); err != nil {
       t.Fatal(err)
    }
-   enc := json.NewEncoder(os.Stdout)
-   enc.SetIndent("", " ")
-   enc.Encode(f.Moof.Traf.Trun)
 }

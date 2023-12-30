@@ -1,8 +1,9 @@
 package sofia
 
 import (
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 type File struct {
@@ -22,6 +23,7 @@ func (f *File) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "ftyp", "styp":
@@ -57,7 +59,7 @@ func (f *File) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("file %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }

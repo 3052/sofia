@@ -2,8 +2,9 @@ package sofia
 
 import (
    "encoding/binary"
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 // 12.2.3 Sample entry
@@ -87,6 +88,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "esds", "sinf":
@@ -98,7 +100,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          }
          a.Boxes = append(a.Boxes, &value)
       default:
-         return fmt.Errorf("SampleEntry %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }
@@ -162,6 +164,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "avcC", "pasp", "sinf":
@@ -173,7 +176,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          }
          v.Boxes = append(v.Boxes, &value)
       default:
-         return fmt.Errorf("VisualSampleEntry %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }

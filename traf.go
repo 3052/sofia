@@ -1,8 +1,9 @@
 package sofia
 
 import (
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 // 8.8.6 Track fragment box
@@ -24,6 +25,7 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd":
@@ -71,7 +73,7 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
             b.Boxes = append(b.Boxes, value)
          }
       default:
-         return fmt.Errorf("traf %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }

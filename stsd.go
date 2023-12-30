@@ -2,8 +2,9 @@ package sofia
 
 import (
    "encoding/binary"
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 // 8.5.2 Sample description box
@@ -36,6 +37,7 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    } else if err != nil {
       return err
    }
+   slog.Debug("*", "BoxType", head.BoxType())
    size := head.BoxPayload()
    switch head.BoxType() {
    case "enca":
@@ -51,7 +53,7 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
          return err
       }
    default:
-      return fmt.Errorf("stsd %q", head.Type)
+      return errors.New("BoxType")
    }
    return nil
 }

@@ -8,7 +8,7 @@ import "io"
 //  }
 type MediaDataBox struct {
    Header BoxHeader
-   Data   [][]byte
+   Data [][]byte
 }
 
 func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {

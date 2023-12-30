@@ -53,7 +53,7 @@ type SegmentIndexBox struct {
    References []Reference
 }
 
-func (s SegmentIndexBox) Byte_Ranges(start uint32) [][2]uint32 {
+func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
    ranges := make([][2]uint32, s.Reference_Count)
    for i, ref := range s.References {
       size := ref.Referenced_Size()

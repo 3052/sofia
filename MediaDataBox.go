@@ -7,7 +7,7 @@ import (
    "io"
 )
 
-// 8.1.1 Media data box
+// Container: File
 //  aligned(8) class MediaDataBox extends Box('mdat') {
 //     bit(8) data[];
 //  }
@@ -19,8 +19,16 @@ type MediaDataBox struct {
 func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
    b.Data = make([][]byte, t.Sample_Count)
    for i := range b.Data {
-      data := make([]byte, t.Samples[i].Size)
-      _, err := io.ReadFull(r, data)
+      var (
+         data []byte
+         err error
+      )
+      if size := t.Samples[i].Size; size >= 1 {
+         data = make([]byte, size)
+         _, err = io.ReadFull(r, data)
+      } else {
+         data, err = io.ReadAll(r)
+      }
       if err != nil {
          return err
       }

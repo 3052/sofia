@@ -6,7 +6,7 @@ import (
    "log/slog"
 )
 
-// 8.8.6 Track fragment box
+// Container: MovieFragmentBox
 //  aligned(8) class TrackFragmentBox extends Box('traf') {
 //  }
 type TrackFragmentBox struct {

@@ -11,7 +11,7 @@ func Test_Trun(t *testing.T) {
       Level: slog.LevelDebug,
    })
    slog.SetDefault(slog.New(h))
-   seg, err := os.Open("ignore/seg_1303.m4s")
+   seg, err := os.Open("testdata/paramount-video/seg_1303.m4s")
    if err != nil {
       t.Fatal(err)
    }

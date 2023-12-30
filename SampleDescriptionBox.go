@@ -7,7 +7,7 @@ import (
    "log/slog"
 )
 
-// 8.5.2 Sample description box
+// Container: SampleTableBox
 //  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
 //     int i ;
 //     unsigned int(32) entry_count;

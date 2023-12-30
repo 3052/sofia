@@ -7,7 +7,7 @@ import (
    "log/slog"
 )
 
-// 12.2.3 Sample entry
+// Container: SampleDescriptionBox
 //  class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //     const unsigned int(32)[2] reserved = 0;
 //     unsigned int(16) channelcount;

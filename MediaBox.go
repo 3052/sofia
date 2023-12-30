@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// 8.4.4 Media information box
-//  aligned(8) class MediaInformationBox extends Box('minf') {
+// Container: TrackBox
+//  aligned(8) class MediaBox extends Box('mdia') {
 //  }
-type MediaInformationBox struct {
+type MediaBox struct {
    Header  BoxHeader
    Boxes []Box
-   Stbl SampleTableBox
+   Minf MediaInformationBox
 }
 
-func (b *MediaInformationBox) Decode(r io.Reader) error {
+func (b *MediaBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -27,7 +27,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
       slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
-      case "dinf", "smhd", "vmhd":
+      case "hdlr", "mdhd":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
@@ -35,9 +35,9 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
             return err
          }
          b.Boxes = append(b.Boxes, value)
-      case "stbl":
-         b.Stbl.Header = head
-         err := b.Stbl.Decode(io.LimitReader(r, size))
+      case "minf":
+         b.Minf.Header = head
+         err := b.Minf.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -47,7 +47,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
    }
 }
 
-func (b MediaInformationBox) Encode(w io.Writer) error {
+func (b MediaBox) Encode(w io.Writer) error {
    err := b.Header.Encode(w)
    if err != nil {
       return err
@@ -58,5 +58,5 @@ func (b MediaInformationBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Stbl.Encode(w)
+   return b.Minf.Encode(w)
 }

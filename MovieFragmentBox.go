@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// 8.4.1 Media box
-//  aligned(8) class MediaBox extends Box('mdia') {
+// Container: File
+//  aligned(8) class MovieFragmentBox extends Box('moof') {
 //  }
-type MediaBox struct {
-   Header  BoxHeader
-   Boxes []Box
-   Minf MediaInformationBox
+type MovieFragmentBox struct {
+   Header BoxHeader
+   Boxes  []Box
+   Traf   TrackFragmentBox
 }
 
-func (b *MediaBox) Decode(r io.Reader) error {
+func (b *MovieFragmentBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -27,7 +27,13 @@ func (b *MediaBox) Decode(r io.Reader) error {
       slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
-      case "hdlr", "mdhd":
+      case "traf":
+         b.Traf.Header = head
+         err := b.Traf.Decode(io.LimitReader(r, size))
+         if err != nil {
+            return err
+         }
+      case "mfhd", "pssh":
          value := Box{Header: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
@@ -35,19 +41,13 @@ func (b *MediaBox) Decode(r io.Reader) error {
             return err
          }
          b.Boxes = append(b.Boxes, value)
-      case "minf":
-         b.Minf.Header = head
-         err := b.Minf.Decode(io.LimitReader(r, size))
-         if err != nil {
-            return err
-         }
       default:
          return errors.New("BoxType")
       }
    }
 }
 
-func (b MediaBox) Encode(w io.Writer) error {
+func (b MovieFragmentBox) Encode(w io.Writer) error {
    err := b.Header.Encode(w)
    if err != nil {
       return err
@@ -58,5 +58,5 @@ func (b MediaBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Minf.Encode(w)
+   return b.Traf.Encode(w)
 }

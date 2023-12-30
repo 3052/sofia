@@ -5,7 +5,7 @@ import (
    "io"
 )
 
-// 8.16.3 Segment index box
+// Container: File
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
 //     unsigned int(32) timescale;

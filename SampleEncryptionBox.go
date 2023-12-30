@@ -5,6 +5,8 @@ import (
    "io"
 )
 
+// Container: TrackFragmentBox
+//
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 //

@@ -6,7 +6,7 @@ import (
    "log/slog"
 )
 
-// 8.2.1 Movie box
+// Container: File
 //  aligned(8) class MovieBox extends Box('moov') {
 //  }
 type MovieBox struct {

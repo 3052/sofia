@@ -6,7 +6,7 @@ import (
    "log/slog"
 )
 
-// 8.5.1 Sample table box
+// Container: MediaInformationBox
 //  aligned(8) class SampleTableBox extends Box('stbl') {
 //  }
 type SampleTableBox struct {

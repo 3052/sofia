@@ -5,33 +5,8 @@ import (
    "io"
 )
 
-// 0x000400 sample-flags-present
-func (b TrackRunBox) Sample_Flags_Present() bool {
-   return b.FullBoxHeader.Flags()&0x400 >= 1
-}
-
-// 0x000800 sample-composition-time-offsets-present
-func (b TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
-   return b.FullBoxHeader.Flags()&0x800 >= 1
-}
-
-type TrackRunSample struct {
-   Duration                uint32
-   Size                    uint32
-   Flags                   uint32
-   Composition_Time_Offset [4]byte
-}
-
-// 0x000004 first-sample-flags-present
-func (b TrackRunBox) First_Sample_Flags_Present() bool {
-   return b.FullBoxHeader.Flags()&4 >= 1
-}
-
-// 0x000100 sample-duration-present
-func (b TrackRunBox) Sample_Duration_Present() bool {
-   return b.FullBoxHeader.Flags()&0x100 >= 1
-}
-
+// Container: TrackFragmentBox
+//
 // If the data-offset is present, it is relative to the base-data-offset
 // established in the track fragment header.
 //
@@ -57,6 +32,33 @@ type TrackRunBox struct {
    Data_Offset        int32
    First_Sample_Flags uint32
    Samples            []TrackRunSample
+}
+
+// 0x000400 sample-flags-present
+func (b TrackRunBox) Sample_Flags_Present() bool {
+   return b.FullBoxHeader.Flags()&0x400 >= 1
+}
+
+// 0x000800 sample-composition-time-offsets-present
+func (b TrackRunBox) Sample_Composition_Time_Offsets_Present() bool {
+   return b.FullBoxHeader.Flags()&0x800 >= 1
+}
+
+type TrackRunSample struct {
+   Duration                uint32
+   Size                    uint32
+   Flags                   uint32
+   Composition_Time_Offset [4]byte
+}
+
+// 0x000004 first-sample-flags-present
+func (b TrackRunBox) First_Sample_Flags_Present() bool {
+   return b.FullBoxHeader.Flags()&4 >= 1
+}
+
+// 0x000100 sample-duration-present
+func (b TrackRunBox) Sample_Duration_Present() bool {
+   return b.FullBoxHeader.Flags()&0x100 >= 1
 }
 
 func (b *TrackRunBox) Decode(r io.Reader) error {

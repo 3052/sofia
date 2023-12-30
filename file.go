@@ -36,7 +36,7 @@ func (f *File) Decode(r io.Reader) error {
          f.Boxes = append(f.Boxes, value)
       case "mdat":
          f.Mdat.Header = head
-         err := f.Mdat.Decode(f.Moof.Traf.Trun, r)
+         err := f.Mdat.Decode(f.Moof.Traf.Trun, io.LimitReader(r, size))
          if err != nil {
             return err
          }

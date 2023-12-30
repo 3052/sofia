@@ -12,7 +12,7 @@ import (
 type MediaBox struct {
    Header  BoxHeader
    Boxes []Box
-   Media MediaInformationBox
+   MediaInformation MediaInformationBox
 }
 
 func (b *MediaBox) Decode(r io.Reader) error {
@@ -36,8 +36,8 @@ func (b *MediaBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "minf":
-         b.Media.Header = head
-         err := b.Media.Decode(io.LimitReader(r, size))
+         b.MediaInformation.Header = head
+         err := b.MediaInformation.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b MediaBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Media.Encode(w)
+   return b.MediaInformation.Encode(w)
 }

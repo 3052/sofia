@@ -12,8 +12,8 @@ import (
 type TrackFragmentBox struct {
    Header BoxHeader
    Boxes  []Box
-   Trun   TrackRunBox
-   Senc   SampleEncryptionBox
+   TrackRun   TrackRunBox
+   SampleEncryption   SampleEncryptionBox
 }
 
 func (b *TrackFragmentBox) Decode(r io.Reader) error {
@@ -37,29 +37,29 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "trun":
-         b.Trun.BoxHeader = head
-         err := b.Trun.Decode(r)
+         b.TrackRun.BoxHeader = head
+         err := b.TrackRun.Decode(r)
          if err != nil {
             return err
          }
       case "senc":
-         b.Senc.BoxHeader = head
-         err := b.Senc.Decode(r)
+         b.SampleEncryption.BoxHeader = head
+         err := b.SampleEncryption.Decode(r)
          if err != nil {
             return err
          }
       case "uuid":
          decode := func() bool {
             if head.Extended_Type() == "a2394f525a9b4f14a2446c427c648df4" {
-               if b.Senc.Sample_Count == 0 {
+               if b.SampleEncryption.Sample_Count == 0 {
                   return true
                }
             }
             return false
          }
          if decode() {
-            b.Senc.BoxHeader = head
-            err := b.Senc.Decode(r)
+            b.SampleEncryption.BoxHeader = head
+            err := b.SampleEncryption.Decode(r)
             if err != nil {
                return err
             }
@@ -89,8 +89,8 @@ func (b TrackFragmentBox) Encode(w io.Writer) error {
          return err
       }
    }
-   if err := b.Trun.Encode(w); err != nil {
+   if err := b.TrackRun.Encode(w); err != nil {
       return err
    }
-   return b.Senc.Encode(w)
+   return b.SampleEncryption.Encode(w)
 }

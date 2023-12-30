@@ -12,7 +12,7 @@ import (
 type SampleTableBox struct {
    Header  BoxHeader
    Boxes []Box
-   Stsd SampleDescriptionBox
+   SampleDescription SampleDescriptionBox
 }
 
 func (b *SampleTableBox) Decode(r io.Reader) error {
@@ -36,8 +36,8 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "stsd":
-         b.Stsd.BoxHeader = head
-         err := b.Stsd.Decode(io.LimitReader(r, size))
+         b.SampleDescription.BoxHeader = head
+         err := b.SampleDescription.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b SampleTableBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Stsd.Encode(w)
+   return b.SampleDescription.Encode(w)
 }

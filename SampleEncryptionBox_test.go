@@ -21,8 +21,8 @@ func (t testdata) encode_segment(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for i, data := range f.Media.Data {
-      sample := f.MovieFragment.Track.Senc.Samples[i]
+   for i, data := range f.MediaData.Data {
+      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
       err := sample.Decrypt_CENC(data, key)
       if err != nil {
          return err
@@ -134,19 +134,24 @@ func (t testdata) encode_init(dst io.Writer) error {
          copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   stsd := &f.Movie.Track.Mdia.Media.Sample.Stsd
-   copy(stsd.Encv.Header.Type[:], "avc1") // Firefox
-   for _, b := range stsd.Encv.Boxes {
+   desc := &f.Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription
+   copy(desc.VisualSample.Header.Type[:], "avc1") // Firefox
+   for _, b := range desc.VisualSample.Boxes {
       if b.Header.BoxType() == "sinf" {
          copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   for _, b := range stsd.Audio.Boxes {
+   for _, b := range desc.AudioSample.Boxes {
       if b.Header.BoxType() == "sinf" {
          copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   copy(stsd.Audio.Header.Type[:], "mp4a") // Firefox
+   copy(desc.AudioSample.Header.Type[:], "mp4a") // Firefox
    return f.Encode(dst)
 }
 

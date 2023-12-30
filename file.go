@@ -10,8 +10,8 @@ type File struct {
    Boxes []Box
    Movie MovieBox
    MovieFragment MovieFragmentBox
-   Media MediaDataBox
-   Segment SegmentIndexBox
+   MediaData MediaDataBox
+   SegmentIndex SegmentIndexBox
 }
 
 func (f *File) Decode(r io.Reader) error {
@@ -35,9 +35,9 @@ func (f *File) Decode(r io.Reader) error {
          }
          f.Boxes = append(f.Boxes, value)
       case "mdat":
-         f.Media.Header = head
-         err := f.Media.Decode(
-            f.MovieFragment.Track.Trun, io.LimitReader(r, size),
+         f.MediaData.Header = head
+         err := f.MediaData.Decode(
+            f.MovieFragment.TrackFragment.TrackRun, io.LimitReader(r, size),
          )
          if err != nil {
             return err
@@ -55,8 +55,8 @@ func (f *File) Decode(r io.Reader) error {
             return err
          }
       case "sidx":
-         f.Segment.BoxHeader = head
-         err := f.Segment.Decode(r)
+         f.SegmentIndex.BoxHeader = head
+         err := f.SegmentIndex.Decode(r)
          if err != nil {
             return err
          }
@@ -85,14 +85,14 @@ func (f File) Encode(w io.Writer) error {
          return err
       }
    }
-   if f.Media.Header.Size >= 1 {
-      err := f.Media.Encode(w)
+   if f.MediaData.Header.Size >= 1 {
+      err := f.MediaData.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.Segment.BoxHeader.Size >= 1 {
-      err := f.Segment.Encode(w)
+   if f.SegmentIndex.BoxHeader.Size >= 1 {
+      err := f.SegmentIndex.Encode(w)
       if err != nil {
          return err
       }

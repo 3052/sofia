@@ -7,6 +7,42 @@ import (
    "testing"
 )
 
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Movie.Boxes {
+      if b.Header.BoxType() == "pssh" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   desc := &f.Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription
+   copy(desc.VisualSample.Header.Type[:], "avc1") // Firefox
+   for _, b := range desc.VisualSample.Boxes {
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   for _, b := range desc.AudioSample.Boxes {
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   copy(desc.AudioSample.Header.Type[:], "mp4a") // Firefox
+   return f.Encode(dst)
+}
+
 func (t testdata) encode_segment(dst io.Writer) error {
    src, err := os.Open(t.segment)
    if err != nil {
@@ -118,40 +154,3 @@ type testdata struct {
    key string
    out string
 }
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Movie.Boxes {
-      if b.Header.BoxType() == "pssh" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   desc := &f.Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   copy(desc.VisualSample.Header.Type[:], "avc1") // Firefox
-   for _, b := range desc.VisualSample.Boxes {
-      if b.Header.BoxType() == "sinf" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   for _, b := range desc.AudioSample.Boxes {
-      if b.Header.BoxType() == "sinf" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   copy(desc.AudioSample.Header.Type[:], "mp4a") // Firefox
-   return f.Encode(dst)
-}
-

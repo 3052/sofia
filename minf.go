@@ -1,8 +1,9 @@
 package sofia
 
 import (
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 // 8.4.4 Media information box
@@ -23,6 +24,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "dinf", "smhd", "vmhd":
@@ -40,7 +42,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return fmt.Errorf("minf %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }

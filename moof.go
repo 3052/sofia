@@ -1,8 +1,9 @@
 package sofia
 
 import (
-   "fmt"
+   "errors"
    "io"
+   "log/slog"
 )
 
 // 8.8.4 Movie fragment box
@@ -23,6 +24,7 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
+      slog.Debug("*", "BoxType", head.BoxType())
       size := head.BoxPayload()
       switch head.BoxType() {
       case "traf":
@@ -40,7 +42,7 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       default:
-         return fmt.Errorf("moof %q", head.Type)
+         return errors.New("BoxType")
       }
    }
 }

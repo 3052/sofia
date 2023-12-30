@@ -7,6 +7,68 @@ import (
    "log/slog"
 )
 
+func (a *AudioSampleEntry) Decode(r io.Reader) error {
+   err := a.Entry.Decode(r)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Decode(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      slog.Debug("*", "BoxType", head.BoxType())
+      size := head.BoxPayload()
+      switch head.BoxType() {
+      case "dec3", "esds":
+         value := Box{Header: head}
+         value.Payload = make([]byte, size)
+         _, err := io.ReadFull(r, value.Payload)
+         if err != nil {
+            return err
+         }
+         a.Boxes = append(a.Boxes, &value)
+      case "sinf":
+         a.ProtectionScheme.Header = head
+         err := a.ProtectionScheme.Decode(r)
+         if err != nil {
+            return err
+         }
+      default:
+         return errors.New("BoxType")
+      }
+   }
+}
+
+// Container: SampleDescriptionBox
+//  class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
+//     const unsigned int(32)[2] reserved = 0;
+//     unsigned int(16) channelcount;
+//     template unsigned int(16) samplesize = 16;
+//     unsigned int(16) pre_defined = 0;
+//     const unsigned int(16) reserved = 0 ;
+//     template unsigned int(32) samplerate = { default samplerate of media}<<16;
+//  }
+type AudioSampleEntry struct {
+   Entry SampleEntry
+   Extends struct {
+      Reserved [2]uint32
+      ChannelCount uint16
+      SampleSize uint16
+      Pre_Defined uint16
+      _ uint16
+      SampleRate uint32
+   }
+   Boxes []*Box
+   ProtectionScheme ProtectionSchemeInfoBox
+}
+
 // Container: SampleDescriptionBox
 //  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //     unsigned int(16) pre_defined = 0;
@@ -75,68 +137,6 @@ func (s *SampleEntry) Decode(r io.Reader) error {
       return err
    }
    return binary.Read(r, binary.BigEndian, &s.Data_Reference_Index)
-}
-
-func (a *AudioSampleEntry) Decode(r io.Reader) error {
-   err := a.Entry.Decode(r)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Decode(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
-      switch head.BoxType() {
-      case "esds":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
-         if err != nil {
-            return err
-         }
-         a.Boxes = append(a.Boxes, &value)
-      case "sinf":
-         a.ProtectionScheme.Header = head
-         err := a.ProtectionScheme.Decode(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("BoxType")
-      }
-   }
-}
-
-// Container: SampleDescriptionBox
-//  class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
-//     const unsigned int(32)[2] reserved = 0;
-//     unsigned int(16) channelcount;
-//     template unsigned int(16) samplesize = 16;
-//     unsigned int(16) pre_defined = 0;
-//     const unsigned int(16) reserved = 0 ;
-//     template unsigned int(32) samplerate = { default samplerate of media}<<16;
-//  }
-type AudioSampleEntry struct {
-   Entry SampleEntry
-   Extends struct {
-      Reserved [2]uint32
-      ChannelCount uint16
-      SampleSize uint16
-      Pre_Defined uint16
-      _ uint16
-      SampleRate uint32
-   }
-   Boxes []*Box
-   ProtectionScheme ProtectionSchemeInfoBox
 }
 
 func (a AudioSampleEntry) Encode(w io.Writer) error {

@@ -7,6 +7,28 @@ import (
    "io"
 )
 
+// 8.1.1 Media data box
+//  aligned(8) class MediaDataBox extends Box('mdat') {
+//     bit(8) data[];
+//  }
+type MediaDataBox struct {
+   Header BoxHeader
+   Data   [][]byte
+}
+
+func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
+   b.Data = make([][]byte, t.Sample_Count)
+   for i := range b.Data {
+      data := make([]byte, t.Samples[i].Size)
+      _, err := io.ReadFull(r, data)
+      if err != nil {
+         return err
+      }
+      b.Data[i] = data
+   }
+   return nil
+}
+
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
 func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
    block, err := aes.NewCipher(key)
@@ -31,28 +53,6 @@ func CryptSampleCenc(sample, key []byte, enc EncryptionSample) error {
       }
    } else {
       stream.XORKeyStream(sample, sample)
-   }
-   return nil
-}
-
-// 8.1.1 Media data box
-//  aligned(8) class MediaDataBox extends Box('mdat') {
-//     bit(8) data[];
-//  }
-type MediaDataBox struct {
-   Header BoxHeader
-   Data   [][]byte
-}
-
-func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
-   b.Data = make([][]byte, t.Sample_Count)
-   for i := range b.Data {
-      data := make([]byte, t.Samples[i].Size)
-      _, err := io.ReadFull(r, data)
-      if err != nil {
-         return err
-      }
-      b.Data[i] = data
    }
    return nil
 }

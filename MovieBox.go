@@ -10,9 +10,9 @@ import (
 //  aligned(8) class MovieBox extends Box('moov') {
 //  }
 type MovieBox struct {
-   Header  BoxHeader
+   Header BoxHeader
    Boxes []*Box
-   Trak TrackBox
+   Track TrackBox
 }
 
 func (b *MovieBox) Decode(r io.Reader) error {
@@ -36,8 +36,8 @@ func (b *MovieBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, &value)
       case "trak":
-         b.Trak.Header = head
-         err := b.Trak.Decode(io.LimitReader(r, size))
+         b.Track.Header = head
+         err := b.Track.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b MovieBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Trak.Encode(w)
+   return b.Track.Encode(w)
 }

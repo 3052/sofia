@@ -16,7 +16,7 @@ func Test_Sidx(t *testing.T) {
    if err := f.Decode(media); err != nil {
       t.Fatal(err)
    }
-   for _, byte_range := range f.Sidx.Byte_Ranges(0) {
+   for _, byte_range := range f.Segment.ByteRanges(0) {
       fmt.Println(byte_range)
    }
 }

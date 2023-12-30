@@ -8,10 +8,10 @@ import (
 
 type File struct {
    Boxes []Box
-   Moov MovieBox
-   Moof MovieFragmentBox
-   Mdat MediaDataBox
-   Sidx SegmentIndexBox
+   Movie MovieBox
+   MovieFragment MovieFragmentBox
+   Media MediaDataBox
+   Segment SegmentIndexBox
 }
 
 func (f *File) Decode(r io.Reader) error {
@@ -35,26 +35,28 @@ func (f *File) Decode(r io.Reader) error {
          }
          f.Boxes = append(f.Boxes, value)
       case "mdat":
-         f.Mdat.Header = head
-         err := f.Mdat.Decode(f.Moof.Traf.Trun, io.LimitReader(r, size))
+         f.Media.Header = head
+         err := f.Media.Decode(
+            f.MovieFragment.Track.Trun, io.LimitReader(r, size),
+         )
          if err != nil {
             return err
          }
       case "moof":
-         f.Moof.Header = head
-         err := f.Moof.Decode(io.LimitReader(r, size))
+         f.MovieFragment.Header = head
+         err := f.MovieFragment.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "moov":
-         f.Moov.Header = head
-         err := f.Moov.Decode(io.LimitReader(r, size))
+         f.Movie.Header = head
+         err := f.Movie.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "sidx":
-         f.Sidx.BoxHeader = head
-         err := f.Sidx.Decode(r)
+         f.Segment.BoxHeader = head
+         err := f.Segment.Decode(r)
          if err != nil {
             return err
          }
@@ -71,26 +73,26 @@ func (f File) Encode(w io.Writer) error {
          return err
       }
    }
-   if f.Moov.Header.Size >= 1 {
-      err := f.Moov.Encode(w)
+   if f.Movie.Header.Size >= 1 {
+      err := f.Movie.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.Moof.Header.Size >= 1 {
-      err := f.Moof.Encode(w)
+   if f.MovieFragment.Header.Size >= 1 {
+      err := f.MovieFragment.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.Mdat.Header.Size >= 1 {
-      err := f.Mdat.Encode(w)
+   if f.Media.Header.Size >= 1 {
+      err := f.Media.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.Sidx.BoxHeader.Size >= 1 {
-      err := f.Sidx.Encode(w)
+   if f.Segment.BoxHeader.Size >= 1 {
+      err := f.Segment.Encode(w)
       if err != nil {
          return err
       }

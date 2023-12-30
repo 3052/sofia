@@ -21,43 +21,13 @@ func (t testdata) encode_segment(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for i, sample := range f.Mdat.Data {
-      err := f.Moof.Traf.Senc.Samples[i].Decrypt_CENC(sample, key)
+   for i, data := range f.Media.Data {
+      sample := f.MovieFragment.Track.Senc.Samples[i]
+      err := sample.Decrypt_CENC(data, key)
       if err != nil {
          return err
       }
    }
-   return f.Encode(dst)
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Moov.Boxes {
-      if b.Header.BoxType() == "pssh" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   stsd := &f.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   copy(stsd.Encv.Header.Type[:], "avc1") // Firefox
-   for _, b := range stsd.Encv.Boxes {
-      if b.Header.BoxType() == "sinf" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   for _, b := range stsd.Enca.Boxes {
-      if b.Header.BoxType() == "sinf" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   copy(stsd.Enca.Header.Type[:], "mp4a") // Firefox
    return f.Encode(dst)
 }
 
@@ -148,3 +118,35 @@ type testdata struct {
    key string
    out string
 }
+
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Movie.Boxes {
+      if b.Header.BoxType() == "pssh" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   stsd := &f.Movie.Track.Mdia.Media.Sample.Stsd
+   copy(stsd.Encv.Header.Type[:], "avc1") // Firefox
+   for _, b := range stsd.Encv.Boxes {
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   for _, b := range stsd.Audio.Boxes {
+      if b.Header.BoxType() == "sinf" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   copy(stsd.Audio.Header.Type[:], "mp4a") // Firefox
+   return f.Encode(dst)
+}
+

@@ -7,6 +7,29 @@ import (
    "testing"
 )
 
+func (t testdata) encode_segment(dst io.Writer) error {
+   src, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   key, err := hex.DecodeString(t.key)
+   if err != nil {
+      return err
+   }
+   for i, sample := range f.Mdat.Data {
+      err := f.Moof.Traf.Senc.Samples[i].Decrypt_CENC(sample, key)
+      if err != nil {
+         return err
+      }
+   }
+   return f.Encode(dst)
+}
+
 func (t testdata) encode_init(dst io.Writer) error {
    src, err := os.Open(t.init)
    if err != nil {
@@ -124,29 +147,4 @@ type testdata struct {
    segment string
    key string
    out string
-}
-
-func (t testdata) encode_segment(dst io.Writer) error {
-   src, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   for i := range f.Mdat.Data {
-      sample := f.Mdat.Data[i]
-      enc := f.Moof.Traf.Senc.Samples[i]
-      err := CryptSampleCenc(sample, key, enc)
-      if err != nil {
-         return err
-      }
-   }
-   return f.Encode(dst)
 }

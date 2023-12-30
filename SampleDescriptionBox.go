@@ -41,13 +41,13 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    size := head.BoxPayload()
    switch head.BoxType() {
    case "enca":
-      b.AudioSample.Header = head
+      b.AudioSample.Entry.Header = head
       err := b.AudioSample.Decode(io.LimitReader(r, size))
       if err != nil {
          return err
       }
    case "encv":
-      b.VisualSample.Header = head
+      b.VisualSample.Entry.Header = head
       err := b.VisualSample.Decode(io.LimitReader(r, size))
       if err != nil {
          return err
@@ -69,13 +69,13 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
    if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
       return err
    }
-   if s.AudioSample.Header.Size >= 1 {
+   if s.AudioSample.Entry.Header.Size >= 1 {
       err := s.AudioSample.Encode(w)
       if err != nil {
          return err
       }
    }
-   if s.VisualSample.Header.Size >= 1 {
+   if s.VisualSample.Entry.Header.Size >= 1 {
       err := s.VisualSample.Encode(w)
       if err != nil {
          return err

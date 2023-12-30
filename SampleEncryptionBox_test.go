@@ -22,13 +22,8 @@ func (t testdata) encode_init(dst io.Writer) error {
          copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   desc := &f.Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   copy(desc.VisualSample.Header.Type[:], "avc1") // Firefox
+   desc := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
+   copy(desc.VisualSample.Entry.Header.Type[:], "avc1") // Firefox
    for _, b := range desc.VisualSample.Boxes {
       if b.Header.BoxType() == "sinf" {
          copy(b.Header.Type[:], "free") // Firefox
@@ -39,7 +34,7 @@ func (t testdata) encode_init(dst io.Writer) error {
          copy(b.Header.Type[:], "free") // Firefox
       }
    }
-   copy(desc.AudioSample.Header.Type[:], "mp4a") // Firefox
+   copy(desc.AudioSample.Entry.Header.Type[:], "mp4a") // Firefox
    return f.Encode(dst)
 }
 

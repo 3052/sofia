@@ -7,6 +7,24 @@ import (
    "testing"
 )
 
+func Test_SampleEncryption(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         dst, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer dst.Close()
+         if err := test.encode_init(dst); err != nil {
+            t.Fatal(err)
+         }
+         if err := test.encode_segment(dst); err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
 func (t testdata) encode_init(dst io.Writer) error {
    src, err := os.Open(t.init)
    if err != nil {
@@ -123,24 +141,6 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-video.mp4",
    },
-}
-
-func Test_Mdat(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         dst, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer dst.Close()
-         if err := test.encode_init(dst); err != nil {
-            t.Fatal(err)
-         }
-         if err := test.encode_segment(dst); err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
 }
 
 type testdata struct {

@@ -12,7 +12,7 @@ import (
 type MovieFragmentBox struct {
    Header BoxHeader
    Boxes  []Box
-   Track TrackFragmentBox
+   TrackFragment TrackFragmentBox
 }
 
 func (b *MovieFragmentBox) Decode(r io.Reader) error {
@@ -28,8 +28,8 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "traf":
-         b.Track.Header = head
-         err := b.Track.Decode(io.LimitReader(r, size))
+         b.TrackFragment.Header = head
+         err := b.TrackFragment.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b MovieFragmentBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Track.Encode(w)
+   return b.TrackFragment.Encode(w)
 }

@@ -12,7 +12,7 @@ import (
 type TrackBox struct {
    Header  BoxHeader
    Boxes []Box
-   Mdia MediaBox
+   Media MediaBox
 }
 
 func (b *TrackBox) Decode(r io.Reader) error {
@@ -36,8 +36,8 @@ func (b *TrackBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "mdia":
-         b.Mdia.Header = head
-         err := b.Mdia.Decode(io.LimitReader(r, size))
+         b.Media.Header = head
+         err := b.Media.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b TrackBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Mdia.Encode(w)
+   return b.Media.Encode(w)
 }

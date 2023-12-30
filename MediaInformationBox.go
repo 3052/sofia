@@ -12,7 +12,7 @@ import (
 type MediaInformationBox struct {
    Header  BoxHeader
    Boxes []Box
-   Sample SampleTableBox
+   SampleTable SampleTableBox
 }
 
 func (b *MediaInformationBox) Decode(r io.Reader) error {
@@ -36,8 +36,8 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "stbl":
-         b.Sample.Header = head
-         err := b.Sample.Decode(io.LimitReader(r, size))
+         b.SampleTable.Header = head
+         err := b.SampleTable.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
@@ -58,5 +58,5 @@ func (b MediaInformationBox) Encode(w io.Writer) error {
          return err
       }
    }
-   return b.Sample.Encode(w)
+   return b.SampleTable.Encode(w)
 }

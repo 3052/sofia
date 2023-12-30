@@ -11,7 +11,7 @@ import "io"
 //  }
 type OriginalFormatBox struct {
    Header BoxHeader
-   Data_Format [4]byte
+   Data_Format [4]uint8
 }
 
 func (b *OriginalFormatBox) Decode(r io.Reader) error {

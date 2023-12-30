@@ -1,5 +1,7 @@
 package sofia
 
+import "io"
+
 // Container: ProtectionSchemeInfoBox
 //  aligned(8) class OriginalFormatBox(codingname) extends Box('frma') {
 //     unsigned int(32) data_format = codingname;
@@ -9,5 +11,24 @@ package sofia
 //  }
 type OriginalFormatBox struct {
    Header BoxHeader
-   Data_Format uint32
+   Data_Format [4]byte
+}
+
+func (b *OriginalFormatBox) Decode(r io.Reader) error {
+   _, err := io.ReadFull(r, b.Data_Format[:])
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b OriginalFormatBox) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(b.Data_Format[:]); err != nil {
+      return err
+   }
+   return nil
 }

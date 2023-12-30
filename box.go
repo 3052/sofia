@@ -86,7 +86,7 @@ func (f FullBoxHeader) Flags() uint32 {
 //  }
 type BoxHeader struct {
    Size uint32
-   Type [4]uint8
+   Type [4]byte
    UserType [16]uint8
 }
 

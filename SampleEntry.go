@@ -31,43 +31,6 @@ type AudioSampleEntry struct {
    Boxes []*Box
 }
 
-func (a AudioSampleEntry) Encode(w io.Writer) error {
-   err := a.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(a.Reserved[:]); err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, a.Data_Reference_Index)
-   if err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
-      return err
-   }
-   for _, value := range a.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-// 8.5.2 Sample description box
-//  aligned(8) abstract class SampleEntry(
-//     unsigned int(32) format
-//  ) extends Box(format) {
-//     const unsigned int(8)[6] reserved = 0;
-//     unsigned int(16) data_reference_index;
-//  }
-type SampleEntry struct {
-   Header  BoxHeader
-   Reserved [6]uint8
-   Data_Reference_Index uint16
-}
-
 func (a *AudioSampleEntry) Decode(r io.Reader) error {
    _, err := io.ReadFull(r, a.Reserved[:])
    if err != nil {
@@ -103,6 +66,43 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          return errors.New("BoxType")
       }
    }
+}
+
+func (a AudioSampleEntry) Encode(w io.Writer) error {
+   err := a.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(a.Reserved[:]); err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, a.Data_Reference_Index)
+   if err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+      return err
+   }
+   for _, value := range a.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+// 8.5.2 Sample description box
+//  aligned(8) abstract class SampleEntry(
+//     unsigned int(32) format
+//  ) extends Box(format) {
+//     const unsigned int(8)[6] reserved = 0;
+//     unsigned int(16) data_reference_index;
+//  }
+type SampleEntry struct {
+   Header  BoxHeader
+   Reserved [6]uint8
+   Data_Reference_Index uint16
 }
 
 // 12.1.3 Sample entry

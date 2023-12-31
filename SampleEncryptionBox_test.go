@@ -7,6 +7,39 @@ import (
    "testing"
 )
 
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Movie.Boxes {
+      if b.Header.BoxType() == "pssh" {
+         copy(b.Header.Type[:], "free") // Firefox
+      }
+   }
+   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
+   if as := sd.AudioSample; as != nil {
+      copy(as.ProtectionScheme.Header.Type[:], "free") // Firefox
+      copy(
+         as.Entry.Header.Type[:],
+         as.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   if vs := sd.VisualSample; vs != nil {
+      copy(vs.ProtectionScheme.Header.Type[:], "free") // Firefox
+      copy(
+         vs.Entry.Header.Type[:],
+         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   return f.Encode(dst)
+}
+
 var tests = []testdata{
    {
       "testdata/amc-avc1/init.m4f",
@@ -92,36 +125,6 @@ func Test_SampleEncryption(t *testing.T) {
          }
       }()
    }
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Movie.Boxes {
-      if b.Header.BoxType() == "pssh" {
-         copy(b.Header.Type[:], "free") // Firefox
-      }
-   }
-   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
-   if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.Header.Type[:], "free") // Firefox
-      copy(
-         as.Entry.Header.Type[:],
-         as.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.Header.Type[:], "free") // Firefox
-      copy(vs.Entry.Header.Type[:], "avc1") // Firefox
-   }
-   return f.Encode(dst)
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {

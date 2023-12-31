@@ -69,6 +69,55 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
    }
 }
 
+func (a AudioSampleEntry) Encode(w io.Writer) error {
+   err := a.Entry.Encode(w)
+   if err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+      return err
+   }
+   for _, value := range a.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return a.ProtectionScheme.Encode(w)
+}
+
+// 8.5.2 Sample description box
+//  aligned(8) abstract class SampleEntry(
+//     unsigned int(32) format
+//  ) extends Box(format) {
+//     const unsigned int(8)[6] reserved = 0;
+//     unsigned int(16) data_reference_index;
+//  }
+type SampleEntry struct {
+   Header  BoxHeader
+   Reserved [6]uint8
+   Data_Reference_Index uint16
+}
+
+func (s *SampleEntry) Decode(r io.Reader) error {
+   _, err := io.ReadFull(r, s.Reserved[:])
+   if err != nil {
+      return err
+   }
+   return binary.Read(r, binary.BigEndian, &s.Data_Reference_Index)
+}
+
+func (s *SampleEntry) Encode(w io.Writer) error {
+   err := s.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(s.Reserved[:]); err != nil {
+      return err
+   }
+   return binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
+}
+
 // Container: SampleDescriptionBox
 //  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //     unsigned int(16) pre_defined = 0;
@@ -105,55 +154,6 @@ type VisualSampleEntry struct {
    }
    Boxes []*Box
    ProtectionScheme ProtectionSchemeInfoBox
-}
-
-// 8.5.2 Sample description box
-//  aligned(8) abstract class SampleEntry(
-//     unsigned int(32) format
-//  ) extends Box(format) {
-//     const unsigned int(8)[6] reserved = 0;
-//     unsigned int(16) data_reference_index;
-//  }
-type SampleEntry struct {
-   Header  BoxHeader
-   Reserved [6]uint8
-   Data_Reference_Index uint16
-}
-
-func (s *SampleEntry) Encode(w io.Writer) error {
-   err := s.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(s.Reserved[:]); err != nil {
-      return err
-   }
-   return binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
-}
-
-func (s *SampleEntry) Decode(r io.Reader) error {
-   _, err := io.ReadFull(r, s.Reserved[:])
-   if err != nil {
-      return err
-   }
-   return binary.Read(r, binary.BigEndian, &s.Data_Reference_Index)
-}
-
-func (a AudioSampleEntry) Encode(w io.Writer) error {
-   err := a.Entry.Encode(w)
-   if err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
-      return err
-   }
-   for _, value := range a.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return a.ProtectionScheme.Encode(w)
 }
 
 func (v *VisualSampleEntry) Decode(r io.Reader) error {

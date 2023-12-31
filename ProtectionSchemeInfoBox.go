@@ -6,6 +6,18 @@ import (
    "log/slog"
 )
 
+// Container: Protected Sample Entry
+//  aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
+//     OriginalFormatBox(fmt) original_format;
+//     SchemeTypeBox scheme_type_box; // optional
+//     SchemeInformationBox info; // optional
+//  }
+type ProtectionSchemeInfoBox struct {
+   Header BoxHeader
+   Boxes []Box
+   OriginalFormat OriginalFormatBox
+}
+
 func (b *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -36,18 +48,6 @@ func (b *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
          return errors.New("BoxType")
       }
    }
-}
-
-// Container: Protected Sample Entry
-//  aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
-//     OriginalFormatBox(fmt) original_format;
-//     SchemeTypeBox scheme_type_box; // optional
-//     SchemeInformationBox info; // optional
-//  }
-type ProtectionSchemeInfoBox struct {
-   Header BoxHeader
-   Boxes []Box
-   OriginalFormat OriginalFormatBox
 }
 
 func (b ProtectionSchemeInfoBox) Encode(w io.Writer) error {

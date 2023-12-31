@@ -23,5 +23,5 @@ func Test_OriginalFormat(t *testing.T) {
    }
    format := f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription.
       AudioSample.ProtectionScheme.OriginalFormat
-   fmt.Printf("%q\n", format.Data_Format)
+   fmt.Printf("%q\n", format.DataFormat)
 }

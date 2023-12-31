@@ -11,11 +11,11 @@ import "io"
 //  }
 type OriginalFormatBox struct {
    Header BoxHeader
-   Data_Format [4]uint8
+   DataFormat [4]uint8
 }
 
 func (b *OriginalFormatBox) Decode(r io.Reader) error {
-   _, err := io.ReadFull(r, b.Data_Format[:])
+   _, err := io.ReadFull(r, b.DataFormat[:])
    if err != nil {
       return err
    }
@@ -27,7 +27,7 @@ func (b OriginalFormatBox) Encode(w io.Writer) error {
    if err != nil {
       return err
    }
-   if _, err := w.Write(b.Data_Format[:]); err != nil {
+   if _, err := w.Write(b.DataFormat[:]); err != nil {
       return err
    }
    return nil

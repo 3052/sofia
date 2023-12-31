@@ -8,10 +8,10 @@ import (
 
 type File struct {
    Boxes []Box
-   Movie MovieBox
-   MovieFragment MovieFragmentBox
-   MediaData MediaDataBox
-   SegmentIndex SegmentIndexBox
+   MediaData *MediaDataBox
+   Movie *MovieBox
+   MovieFragment *MovieFragmentBox
+   SegmentIndex *SegmentIndexBox
 }
 
 func (f *File) Decode(r io.Reader) error {
@@ -35,6 +35,7 @@ func (f *File) Decode(r io.Reader) error {
          }
          f.Boxes = append(f.Boxes, value)
       case "mdat":
+         f.MediaData = new(MediaDataBox)
          f.MediaData.Header = head
          err := f.MediaData.Decode(
             f.MovieFragment.TrackFragment.TrackRun, io.LimitReader(r, size),
@@ -43,18 +44,21 @@ func (f *File) Decode(r io.Reader) error {
             return err
          }
       case "moof":
+         f.MovieFragment = new(MovieFragmentBox)
          f.MovieFragment.Header = head
          err := f.MovieFragment.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "moov":
+         f.Movie = new(MovieBox)
          f.Movie.Header = head
          err := f.Movie.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "sidx":
+         f.SegmentIndex = new(SegmentIndexBox)
          f.SegmentIndex.BoxHeader = head
          err := f.SegmentIndex.Decode(r)
          if err != nil {
@@ -73,25 +77,25 @@ func (f File) Encode(w io.Writer) error {
          return err
       }
    }
-   if f.Movie.Header.Size >= 1 {
+   if f.Movie != nil {
       err := f.Movie.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.MovieFragment.Header.Size >= 1 {
+   if f.MovieFragment != nil {
       err := f.MovieFragment.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.MediaData.Header.Size >= 1 {
+   if f.MediaData != nil {
       err := f.MediaData.Encode(w)
       if err != nil {
          return err
       }
    }
-   if f.SegmentIndex.BoxHeader.Size >= 1 {
+   if f.SegmentIndex != nil {
       err := f.SegmentIndex.Encode(w)
       if err != nil {
          return err

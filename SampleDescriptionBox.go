@@ -19,8 +19,8 @@ type SampleDescriptionBox struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
    Entry_Count uint32
-   AudioSample AudioSampleEntry
-   VisualSample VisualSampleEntry
+   AudioSample *AudioSampleEntry
+   VisualSample *VisualSampleEntry
 }
 
 func (b *SampleDescriptionBox) Decode(r io.Reader) error {
@@ -41,12 +41,14 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
    size := head.BoxPayload()
    switch head.BoxType() {
    case "enca":
+      b.AudioSample = new(AudioSampleEntry)
       b.AudioSample.Entry.Header = head
       err := b.AudioSample.Decode(io.LimitReader(r, size))
       if err != nil {
          return err
       }
    case "encv":
+      b.VisualSample = new(VisualSampleEntry)
       b.VisualSample.Entry.Header = head
       err := b.VisualSample.Decode(io.LimitReader(r, size))
       if err != nil {
@@ -69,13 +71,13 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
    if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
       return err
    }
-   if s.AudioSample.Entry.Header.Size >= 1 {
+   if s.AudioSample != nil {
       err := s.AudioSample.Encode(w)
       if err != nil {
          return err
       }
    }
-   if s.VisualSample.Entry.Header.Size >= 1 {
+   if s.VisualSample != nil {
       err := s.VisualSample.Encode(w)
       if err != nil {
          return err

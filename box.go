@@ -19,18 +19,6 @@ type Box struct {
    Payload []byte
 }
 
-func (b Box) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
 // 4.2.2 Object definitions
 //  aligned(8) class BoxHeader (
 //     unsigned int(32) boxtype,
@@ -83,23 +71,6 @@ func (b *BoxHeader) Decode(r io.Reader) error {
    return nil
 }
 
-func (b BoxHeader) Encode(w io.Writer) error {
-   err := binary.Write(w, binary.BigEndian, b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(b.Type[:]); err != nil {
-      return err
-   }
-   if b.BoxType() == "uuid" {
-      _, err := w.Write(b.UserType[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (b BoxHeader) Extended_Type() string {
    return hex.EncodeToString(b.UserType[:])
 }
@@ -128,4 +99,32 @@ func (f FullBoxHeader) Flags() uint32 {
    v |= uint32(f.RawFlags[1])<<8
    v |= uint32(f.RawFlags[2])
    return v
+}
+
+func (b Box) Encode(w io.Writer) error {
+   err := b.Header.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(b.Payload); err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b BoxHeader) Encode(w io.Writer) error {
+   err := binary.Write(w, binary.BigEndian, b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(b.Type[:]); err != nil {
+      return err
+   }
+   if b.BoxType() == "uuid" {
+      _, err := w.Write(b.UserType[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

@@ -38,6 +38,31 @@ func Test_SampleEncryption(t *testing.T) {
    }
 }
 
+func (t testdata) encode_segment(dst io.Writer) error {
+   src, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f sofia.File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   key, err := hex.DecodeString(t.key)
+   if err != nil {
+      return err
+   }
+   for i, data := range f.MediaData.Data {
+      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
+      err := sample.Decrypt_CENC(data, key)
+      if err != nil {
+         return err
+      }
+   }
+   f.MediaData.Header.Size = 0
+   return f.Encode(dst)
+}
+
 func (t testdata) Segment_2(dst io.Writer) error {
    src, err := os.Open("seg_2.m4s")
    if err != nil {
@@ -63,31 +88,6 @@ func (t testdata) Segment_2(dst io.Writer) error {
       }
    }
    return nil
-}
-
-func (t testdata) encode_segment(dst io.Writer) error {
-   src, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f sofia.File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   for i, data := range f.MediaData.Data {
-      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
-      err := sample.Decrypt_CENC(data, key)
-      if err != nil {
-         return err
-      }
-   }
-   f.MediaData.Header.Size = 0
-   return f.Encode(dst)
 }
 
 func (t testdata) encode_init(dst io.Writer) error {

@@ -29,3 +29,12 @@ remove `trun`s pass:
 > ffmpeg -v verbose -i pass.mp4
 [AVIOContext @ 000002027f2c4c80] Statistics: 262306 bytes read, 8 seeks
 ~~~
+
+the following have equal `mdat` and `moof`, but no length in Windows.
+
+~~~
+-movflags cmaf
+-movflags dash
+-movflags delay_moov
+-movflags empty_moov
+~~~

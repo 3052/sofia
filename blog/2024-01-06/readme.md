@@ -14,15 +14,17 @@ example 1:
 [AVIOContext @ 000001e2f20e4c80] Statistics: 226878 bytes read, 2 seeks
 ~~~
 
-remove `trun`s fail:
+these have equal `mdat` and `moof`, but no length in Windows:
 
 ~~~
-> ffmpeg -i BCRhBaFqtf0.mp4 -c copy -frag_size 6M -movflags dash fail.mp4
-> ffmpeg -v verbose -i fail.mp4
-[AVIOContext @ 00000244644b4c80] Statistics: 360452 bytes read, 9 seeks
+-movflags cmaf
+-movflags dash
+-movflags delay_moov
+-movflags empty_moov
 ~~~
 
-remove `trun`s pass:
+running them all through `mp4ff-info`, the smallest is `empty_moov`, so lets go
+with that. remove `trun`s pass:
 
 ~~~
 > ffmpeg -i BCRhBaFqtf0.mp4 -c copy -frag_size 6M pass.mp4
@@ -30,11 +32,12 @@ remove `trun`s pass:
 [AVIOContext @ 000002027f2c4c80] Statistics: 262306 bytes read, 8 seeks
 ~~~
 
-the following have equal `mdat` and `moof`, but no length in Windows.
+---
+
+remove `trun`s fail:
 
 ~~~
--movflags cmaf
--movflags dash
--movflags delay_moov
--movflags empty_moov
+> ffmpeg -i BCRhBaFqtf0.mp4 -c copy -frag_size 6M -movflags dash fail.mp4
+> ffmpeg -v verbose -i fail.mp4
+[AVIOContext @ 00000244644b4c80] Statistics: 360452 bytes read, 9 seeks
 ~~~

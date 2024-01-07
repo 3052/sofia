@@ -6,7 +6,13 @@ start with this:
 youtube -b BCRhBaFqtf0 -vc avc1
 ~~~
 
-create:
+split:
+
+~~~
+ffmpeg -i in.mp4 -c copy -frag_size 6M -movflags empty_moov frag.mp4
+~~~
+
+join:
 
 ~~~
 ffmpeg -i frag.mp4 -c copy -movflags default_base_moof out.mp4

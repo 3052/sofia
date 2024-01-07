@@ -9,7 +9,7 @@ youtube -b BCRhBaFqtf0 -vc avc1
 if you do this:
 
 ~~~
-ffmpeg -i in.mp4 -c copy -frag_size 6M -movflags omit_tfhd_offset frag.mp4
+ffmpeg -i in.mp4 -c copy -frag_size 6M -movflags empty_moov frag.mp4
 ~~~
 
 Windows reports as 1m10s, FFmpeg and MPC-HC reports as 8m1s. If you remove the
@@ -27,4 +27,10 @@ editing `mvhd`. other boxes:
 [stco] size=40 version=0 flags=000000
 - entryCount: 6
 - entry[1]: chunkOffset=24434
+~~~
+
+this is the smallest that has equal `moof` and `mdat`:
+
+~~~
+-movflags empty_moov
 ~~~

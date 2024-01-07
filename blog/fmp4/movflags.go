@@ -11,7 +11,6 @@ var movflags = []string{
    "rtphint",
    "empty_moov",
    "frag_keyframe",
-   "frag_every_frame",
    "separate_moof",
    "frag_custom",
    "cmaf",

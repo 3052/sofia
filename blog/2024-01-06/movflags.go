@@ -14,31 +14,30 @@ var movflags = []string{
    "frag_every_frame",
    "separate_moof",
    "frag_custom",
-   "isml",
-   "faststart",
-   "omit_tfhd_offset",
-   "disable_chpl",
-   "default_base_moof",
-   "dash",
    "cmaf",
-   "frag_discont",
+   "dash",
+   "default_base_moof",
    "delay_moov",
+   "disable_chpl",
+   "faststart",
+   "frag_discont",
    "global_sidx",
-   "skip_sidx",
-   "write_colr",
-   "prefer_icc",
-   "write_gama",
-   "use_metadata_tags",
-   "skip_trailer",
    "negative_cts_offsets",
+   "omit_tfhd_offset",
+   "prefer_icc",
+   "skip_sidx",
+   "skip_trailer",
+   "use_metadata_tags",
+   "write_colr",
+   "write_gama",
+   // "isml",
 }
 
 func main() {
    for _, flag := range movflags {
       arg := []string{
-         "-i", "BCRhBaFqtf0.mp4",
+         "-i", "in.mp4",
          "-c", "copy",
-         "-frag_size", "6M",
       }
       if flag != "" {
          arg = append(arg, "-movflags", flag)

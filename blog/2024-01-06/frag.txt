@@ -1,0 +1,100 @@
+[ftyp] size=36
+ - majorBrand: isom
+ - minorVersion: 512
+ - compatibleBrand: isom
+ - compatibleBrand: iso6
+ - compatibleBrand: iso2
+ - compatibleBrand: avc1
+ - compatibleBrand: mp41
+[moov] size=24390
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 70704
+   - creation time: 0
+   - modification time: 0
+  [trak] size=24136
+    [tkhd] size=92 version=0 flags=000003
+     - trackID: 1
+     - duration: 70704
+     - creation time: 0
+     - modification time: 0
+     - Width: 1920.0, Height: 1080.0
+    [mdia] size=24036
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 30000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=71 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "ISO Media file produced by Google Inc."
+      [minf] size=23925
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=23861
+          [stsd] size=209 version=0 flags=000000
+            [avc1] size=193
+             - width: 1920
+             - height: 1080
+             - compressorName: ""
+              [avcC] size=52
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 40
+               - SPS: 67640028acd100780227e5c05a808080a000007d20001d4c01e3062240
+               - PPS: 68ebef2c
+              [colr] size=19
+               - colorType: nclx
+               - ColorPrimaries: 1, TransferCharacteristics: 1, MatrixCoefficients: 1, FullRange: false
+              [pasp] size=16
+               - hSpacing:vSpacing: 1:1
+              [btrt] size=20
+               - bufferSizeDB: 0
+               - maxBitrate: 678536
+               - AvgBitrate: 678536
+          [stts] size=24 version=0 flags=000000
+           - sampleCount: 1
+          [stss] size=88 version=0 flags=000000
+           - syncSampleCount: 18
+          [ctts] size=14904 version=0 flags=000000
+           - sampleCount: 1861
+          [stsc] size=88 version=0 flags=000000
+           - entryCount: 6
+          [stsz] size=8500 version=0 flags=000000
+           - sampleCount: 2120
+          [stco] size=40 version=0 flags=000000
+           - entryCount: 6
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [udta] size=98
+    [meta] size=90 version=0 flags=000000
+      [hdlr] size=33 version=0 flags=000000
+       - handlerType: mdir
+       - handlerName: ""
+      [ilst] size=45
+        [©too] size=37
+          [data] size=29
+           - data: Lavf60.16.100
+[mdat] size=5999741
+[moof] size=26820
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=26796
+    [tfhd] size=36 version=0 flags=000039
+     - trackID: 1
+     - baseDataOffset=6024167
+     - defaultSampleDuration: 1001
+     - defaultSampleSize: 1103
+     - defaultSampleFlags: 01010000 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
+    [tfdt] size=20 version=1 flags=000000
+     - baseMediaDecodeTime: 2122120
+    [trun] size=26732 version=0 flags=000e01
+     - sampleCount: 2226

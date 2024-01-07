@@ -2,6 +2,7 @@ package main
 
 import (
    "fmt"
+   "os"
    "os/exec"
 )
 
@@ -49,5 +50,18 @@ func main() {
       if err != nil {
          panic(err)
       }
+      func() {
+         file, err := os.Create(flag + ".txt")
+         if err != nil {
+            panic(err)
+         }
+         defer file.Close()
+         cmd := exec.Command("mp4ff-info", flag + ".mp4")
+         cmd.Stdout = file
+         fmt.Println(cmd.Args)
+         if err := cmd.Run(); err != nil {
+            panic(err)
+         }
+      }()
    }
 }

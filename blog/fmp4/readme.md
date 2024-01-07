@@ -9,7 +9,7 @@ youtube -b BCRhBaFqtf0 -vc avc1
 if you do this:
 
 ~~~
-ffmpeg -i in.mp4 -c copy -frag_size 6M frag.mp4
+ffmpeg -i in.mp4 -c copy -frag_size 6M -movflags omit_tfhd_offset frag.mp4
 ~~~
 
 Windows reports as 1m10s, FFmpeg and MPC-HC reports as 8m1s. If you remove the

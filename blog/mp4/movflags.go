@@ -30,7 +30,6 @@ var movflags = []string{
    "use_metadata_tags",
    "write_colr",
    "write_gama",
-   // "isml",
 }
 
 func main() {

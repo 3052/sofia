@@ -20,6 +20,15 @@ func main() {
    if err != nil {
       panic(err)
    }
+   inMp4.Moov.Trak.Mdia.Minf.Stbl.Stco.ChunkOffset = []uint32{
+      40,
+   }
+   inMp4.Moov.Trak.Mdia.Minf.Stbl.Stsc.Entries = []mp4.StscEntry{
+      {
+         FirstChunk  : 1,
+         SamplesPerChunk : 14416,
+      },
+   }
    if err := inMp4.Encode(dst); err != nil {
       panic(err)
    }

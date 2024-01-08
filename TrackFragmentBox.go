@@ -26,12 +26,11 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd":
          b := Box{BoxHeader: head}
-         b.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, b.Payload)
+         err := b.Decode(r)
          if err != nil {
             return err
          }
@@ -65,8 +64,7 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
             }
          } else {
             b := Box{BoxHeader: head}
-            b.Payload = make([]byte, size)
-            _, err := io.ReadFull(r, b.Payload)
+            err := b.Decode(r)
             if err != nil {
                return err
             }

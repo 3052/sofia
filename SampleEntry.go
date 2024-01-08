@@ -18,7 +18,7 @@ import (
 //  }
 type AudioSampleEntry struct {
    Entry SampleEntry
-   Extends struct {
+   A struct {
       Reserved [2]uint32
       ChannelCount uint16
       SampleSize uint16
@@ -35,7 +35,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &a.A); err != nil {
       return err
    }
    for {
@@ -73,7 +73,7 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+   if err := binary.Write(w, binary.BigEndian, a.A); err != nil {
       return err
    }
    for _, b := range a.Boxes {
@@ -83,38 +83,6 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
       }
    }
    return a.ProtectionScheme.Encode(w)
-}
-
-// 8.5.2 Sample description box
-//  aligned(8) abstract class SampleEntry(
-//     unsigned int(32) format
-//  ) extends Box(format) {
-//     const unsigned int(8)[6] reserved = 0;
-//     unsigned int(16) data_reference_index;
-//  }
-type SampleEntry struct {
-   BoxHeader  BoxHeader
-   Reserved [6]uint8
-   Data_Reference_Index uint16
-}
-
-func (s *SampleEntry) Decode(r io.Reader) error {
-   _, err := io.ReadFull(r, s.Reserved[:])
-   if err != nil {
-      return err
-   }
-   return binary.Read(r, binary.BigEndian, &s.Data_Reference_Index)
-}
-
-func (s *SampleEntry) Encode(w io.Writer) error {
-   err := s.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(s.Reserved[:]); err != nil {
-      return err
-   }
-   return binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
 }
 
 // Container: SampleDescriptionBox
@@ -137,7 +105,7 @@ func (s *SampleEntry) Encode(w io.Writer) error {
 //  }
 type VisualSampleEntry struct {
    Entry SampleEntry
-   Extends struct {
+   A struct {
       Pre_Defined uint16
       Reserved uint16
       _ [3]uint32
@@ -155,12 +123,39 @@ type VisualSampleEntry struct {
    ProtectionScheme ProtectionSchemeInfoBox
 }
 
+// 8.5.2 Sample description box
+//  aligned(8) abstract class SampleEntry(
+//     unsigned int(32) format
+//  ) extends Box(format) {
+//     const unsigned int(8)[6] reserved = 0;
+//     unsigned int(16) data_reference_index;
+//  }
+type SampleEntry struct {
+   BoxHeader  BoxHeader
+   A struct {
+      Reserved [6]uint8
+      Data_Reference_Index uint16
+   }
+}
+
+func (s *SampleEntry) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, &s.A)
+}
+
+func (s *SampleEntry) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   return binary.Write(w, binary.BigEndian, s.A)
+}
+
 func (v *VisualSampleEntry) Decode(r io.Reader) error {
    err := v.Entry.Decode(r)
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &v.A); err != nil {
       return err
    }
    for {
@@ -198,7 +193,7 @@ func (v VisualSampleEntry) Encode(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, v.Extends); err != nil {
+   if err := binary.Write(w, binary.BigEndian, v.A); err != nil {
       return err
    }
    for _, b := range v.Boxes {

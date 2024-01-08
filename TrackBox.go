@@ -15,7 +15,7 @@ type TrackBox struct {
    Media MediaBox
 }
 
-func (b *TrackBox) Decode(r io.Reader) error {
+func (t *TrackBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -25,19 +25,18 @@ func (b *TrackBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "edts", "tkhd":
-         value := Box{BoxHeader: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+         b := Box{BoxHeader: head}
+         err := b.Decode(r)
          if err != nil {
             return err
          }
-         b.Boxes = append(b.Boxes, value)
+         t.Boxes = append(t.Boxes, b)
       case "mdia":
-         b.Media.BoxHeader = head
-         err := b.Media.Decode(io.LimitReader(r, size))
+         t.Media.BoxHeader = head
+         err := t.Media.Decode(r)
          if err != nil {
             return err
          }
@@ -47,16 +46,16 @@ func (b *TrackBox) Decode(r io.Reader) error {
    }
 }
 
-func (b TrackBox) Encode(w io.Writer) error {
-   err := b.BoxHeader.Encode(w)
+func (t TrackBox) Encode(w io.Writer) error {
+   err := t.BoxHeader.Encode(w)
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
+   for _, b := range t.Boxes {
+      err := b.Encode(w)
       if err != nil {
          return err
       }
    }
-   return b.Media.Encode(w)
+   return t.Media.Encode(w)
 }

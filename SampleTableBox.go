@@ -15,7 +15,7 @@ type SampleTableBox struct {
    SampleDescription SampleDescriptionBox
 }
 
-func (b *SampleTableBox) Decode(r io.Reader) error {
+func (s *SampleTableBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -25,19 +25,18 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "sgpd", "stco", "stsc", "stsz", "stts":
-         value := Box{BoxHeader: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+         b := Box{BoxHeader: head}
+         err := b.Decode(r)
          if err != nil {
             return err
          }
-         b.Boxes = append(b.Boxes, value)
+         s.Boxes = append(s.Boxes, b)
       case "stsd":
-         b.SampleDescription.BoxHeader = head
-         err := b.SampleDescription.Decode(io.LimitReader(r, size))
+         s.SampleDescription.BoxHeader = head
+         err := s.SampleDescription.Decode(r)
          if err != nil {
             return err
          }
@@ -47,16 +46,16 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
    }
 }
 
-func (b SampleTableBox) Encode(w io.Writer) error {
-   err := b.BoxHeader.Encode(w)
+func (s SampleTableBox) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
-      err := value.Encode(w)
+   for _, b := range s.Boxes {
+      err := b.Encode(w)
       if err != nil {
          return err
       }
    }
-   return b.SampleDescription.Encode(w)
+   return s.SampleDescription.Encode(w)
 }

@@ -14,41 +14,6 @@ type File struct {
    SegmentIndex *SegmentIndexBox
 }
 
-// KEEP THESE IN ORDER
-func (f File) Encode(w io.Writer) error {
-   for _, value := range f.Boxes {
-      err := value.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Movie != nil { // moov
-      err := f.Movie.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.MovieFragment != nil { // moof
-      err := f.MovieFragment.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.MediaData != nil { // mdat
-      err := f.MediaData.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (f *File) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -96,4 +61,39 @@ func (f *File) Decode(r io.Reader) error {
          return errors.New("BoxType")
       }
    }
+}
+
+// KEEP THESE IN ORDER
+func (f File) Encode(w io.Writer) error {
+   for _, value := range f.Boxes {
+      err := value.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Movie != nil { // moov
+      err := f.Movie.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.SegmentIndex != nil { // sidx
+      err := f.SegmentIndex.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.MovieFragment != nil { // moof
+      err := f.MovieFragment.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.MediaData != nil { // mdat
+      err := f.MediaData.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

@@ -85,6 +85,33 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
    return a.ProtectionScheme.Encode(w)
 }
 
+// 8.5.2 Sample description box
+//  aligned(8) abstract class SampleEntry(
+//     unsigned int(32) format
+//  ) extends Box(format) {
+//     const unsigned int(8)[6] reserved = 0;
+//     unsigned int(16) data_reference_index;
+//  }
+type SampleEntry struct {
+   BoxHeader  BoxHeader
+   A struct {
+      Reserved [6]uint8
+      Data_Reference_Index uint16
+   }
+}
+
+func (s *SampleEntry) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, &s.A)
+}
+
+func (s *SampleEntry) Encode(w io.Writer) error {
+   err := s.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   return binary.Write(w, binary.BigEndian, s.A)
+}
+
 // Container: SampleDescriptionBox
 //  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //     unsigned int(16) pre_defined = 0;
@@ -121,33 +148,6 @@ type VisualSampleEntry struct {
    }
    Boxes []*Box
    ProtectionScheme ProtectionSchemeInfoBox
-}
-
-// 8.5.2 Sample description box
-//  aligned(8) abstract class SampleEntry(
-//     unsigned int(32) format
-//  ) extends Box(format) {
-//     const unsigned int(8)[6] reserved = 0;
-//     unsigned int(16) data_reference_index;
-//  }
-type SampleEntry struct {
-   BoxHeader  BoxHeader
-   A struct {
-      Reserved [6]uint8
-      Data_Reference_Index uint16
-   }
-}
-
-func (s *SampleEntry) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, &s.A)
-}
-
-func (s *SampleEntry) Encode(w io.Writer) error {
-   err := s.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   return binary.Write(w, binary.BigEndian, s.A)
 }
 
 func (v *VisualSampleEntry) Decode(r io.Reader) error {

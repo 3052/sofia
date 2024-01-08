@@ -47,16 +47,15 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "dec3", "esds":
-         value := Box{BoxHeader: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+         b := Box{BoxHeader: head}
+         err := b.Decode(r)
          if err != nil {
             return err
          }
-         a.Boxes = append(a.Boxes, &value)
+         a.Boxes = append(a.Boxes, &b)
       case "sinf":
          a.ProtectionScheme.BoxHeader = head
          err := a.ProtectionScheme.Decode(r)
@@ -77,8 +76,8 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
    if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
       return err
    }
-   for _, value := range a.Boxes {
-      err := value.Encode(w)
+   for _, b := range a.Boxes {
+      err := b.Encode(w)
       if err != nil {
          return err
       }
@@ -173,16 +172,15 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "avcC", "pasp":
-         value := Box{BoxHeader: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+         b := Box{BoxHeader: head}
+         err := b.Decode(r)
          if err != nil {
             return err
          }
-         v.Boxes = append(v.Boxes, &value)
+         v.Boxes = append(v.Boxes, &b)
       case "sinf":
          v.ProtectionScheme.BoxHeader = head
          err := v.ProtectionScheme.Decode(r)
@@ -203,8 +201,8 @@ func (v VisualSampleEntry) Encode(w io.Writer) error {
    if err := binary.Write(w, binary.BigEndian, v.Extends); err != nil {
       return err
    }
-   for _, value := range v.Boxes {
-      err := value.Encode(w)
+   for _, b := range v.Boxes {
+      err := b.Encode(w)
       if err != nil {
          return err
       }

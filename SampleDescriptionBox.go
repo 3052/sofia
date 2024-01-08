@@ -23,12 +23,12 @@ type SampleDescriptionBox struct {
    VisualSample *VisualSampleEntry
 }
 
-func (b *SampleDescriptionBox) Decode(r io.Reader) error {
-   err := b.FullBoxHeader.Decode(r)
+func (s *SampleDescriptionBox) Decode(r io.Reader) error {
+   err := s.FullBoxHeader.Decode(r)
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &b.Entry_Count); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &s.Entry_Count); err != nil {
       return err
    }
    var head BoxHeader
@@ -38,19 +38,18 @@ func (b *SampleDescriptionBox) Decode(r io.Reader) error {
       return err
    }
    slog.Debug("*", "BoxType", head.BoxType())
-   size := head.BoxPayload()
    switch head.BoxType() {
    case "enca":
-      b.AudioSample = new(AudioSampleEntry)
-      b.AudioSample.Entry.BoxHeader = head
-      err := b.AudioSample.Decode(io.LimitReader(r, size))
+      s.AudioSample = new(AudioSampleEntry)
+      s.AudioSample.Entry.BoxHeader = head
+      err := s.AudioSample.Decode(r)
       if err != nil {
          return err
       }
    case "encv":
-      b.VisualSample = new(VisualSampleEntry)
-      b.VisualSample.Entry.BoxHeader = head
-      err := b.VisualSample.Decode(io.LimitReader(r, size))
+      s.VisualSample = new(VisualSampleEntry)
+      s.VisualSample.Entry.BoxHeader = head
+      err := s.VisualSample.Decode(r)
       if err != nil {
          return err
       }

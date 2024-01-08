@@ -10,7 +10,7 @@ import (
 //  aligned(8) class MediaInformationBox extends Box('minf') {
 //  }
 type MediaInformationBox struct {
-   Header  BoxHeader
+   BoxHeader  BoxHeader
    Boxes []Box
    SampleTable SampleTableBox
 }
@@ -28,7 +28,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "dinf", "smhd", "vmhd":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -36,7 +36,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "stbl":
-         b.SampleTable.Header = head
+         b.SampleTable.BoxHeader = head
          err := b.SampleTable.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
@@ -48,7 +48,7 @@ func (b *MediaInformationBox) Decode(r io.Reader) error {
 }
 
 func (b MediaInformationBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

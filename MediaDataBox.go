@@ -7,11 +7,11 @@ import "io"
 //     bit(8) data[];
 //  }
 type MediaDataBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    Data [][]byte
 }
 
-func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
+func (b *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
    b.Data = make([][]byte, t.Sample_Count)
    for i := range b.Data {
       var (
@@ -33,7 +33,7 @@ func (b *MediaDataBox) Decode(t TrackRunBox, r io.Reader) error {
 }
 
 func (b MediaDataBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

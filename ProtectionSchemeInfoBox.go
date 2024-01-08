@@ -13,7 +13,7 @@ import (
 //     SchemeInformationBox info; // optional
 //  }
 type ProtectionSchemeInfoBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    Boxes []Box
    OriginalFormat OriginalFormatBox
 }
@@ -31,7 +31,7 @@ func (b *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "schi", "schm":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -39,7 +39,7 @@ func (b *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "frma":
-         b.OriginalFormat.Header = head
+         b.OriginalFormat.BoxHeader = head
          err := b.OriginalFormat.Decode(r)
          if err != nil {
             return err
@@ -51,7 +51,7 @@ func (b *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
 }
 
 func (b ProtectionSchemeInfoBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

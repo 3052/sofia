@@ -59,42 +59,35 @@ func (f *File) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      size := head.BoxPayload()
+      r := io.LimitReader(r, head.BoxPayload())
       switch head.BoxType() {
       case "ftyp", "styp":
-         value := Box{Header: head}
-         value.Payload = make([]byte, size)
-         _, err := io.ReadFull(r, value.Payload)
+         b := Box{BoxHeader: head}
+         err := b.Decode(r)
          if err != nil {
             return err
          }
-         f.Boxes = append(f.Boxes, value)
+         f.Boxes = append(f.Boxes, b)
       case "mdat":
-         f.MediaData = new(MediaDataBox)
-         f.MediaData.Header = head
-         err := f.MediaData.Decode(
-            f.MovieFragment.TrackFragment.TrackRun, io.LimitReader(r, size),
-         )
+         f.MediaData = &MediaDataBox{BoxHeader: head}
+         err := f.MediaData.Decode(r, f.MovieFragment.TrackFragment.TrackRun)
          if err != nil {
             return err
          }
       case "moof":
-         f.MovieFragment = new(MovieFragmentBox)
-         f.MovieFragment.Header = head
-         err := f.MovieFragment.Decode(io.LimitReader(r, size))
+         f.MovieFragment = &MovieFragmentBox{BoxHeader: head}
+         err := f.MovieFragment.Decode(r)
          if err != nil {
             return err
          }
       case "moov":
-         f.Movie = new(MovieBox)
-         f.Movie.Header = head
-         err := f.Movie.Decode(io.LimitReader(r, size))
+         f.Movie = &MovieBox{BoxHeader: head}
+         err := f.Movie.Decode(r)
          if err != nil {
             return err
          }
       case "sidx":
-         f.SegmentIndex = new(SegmentIndexBox)
-         f.SegmentIndex.BoxHeader = head
+         f.SegmentIndex = &SegmentIndexBox{BoxHeader: head}
          err := f.SegmentIndex.Decode(r)
          if err != nil {
             return err

@@ -10,7 +10,7 @@ import (
 //  aligned(8) class TrackBox extends Box('trak') {
 //  }
 type TrackBox struct {
-   Header  BoxHeader
+   BoxHeader  BoxHeader
    Boxes []Box
    Media MediaBox
 }
@@ -28,7 +28,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "edts", "tkhd":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -36,7 +36,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, value)
       case "mdia":
-         b.Media.Header = head
+         b.Media.BoxHeader = head
          err := b.Media.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
@@ -48,7 +48,7 @@ func (b *TrackBox) Decode(r io.Reader) error {
 }
 
 func (b TrackBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

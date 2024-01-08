@@ -50,7 +50,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "dec3", "esds":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -58,7 +58,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
          }
          a.Boxes = append(a.Boxes, &value)
       case "sinf":
-         a.ProtectionScheme.Header = head
+         a.ProtectionScheme.BoxHeader = head
          err := a.ProtectionScheme.Decode(r)
          if err != nil {
             return err
@@ -94,7 +94,7 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
 //     unsigned int(16) data_reference_index;
 //  }
 type SampleEntry struct {
-   Header  BoxHeader
+   BoxHeader  BoxHeader
    Reserved [6]uint8
    Data_Reference_Index uint16
 }
@@ -108,7 +108,7 @@ func (s *SampleEntry) Decode(r io.Reader) error {
 }
 
 func (s *SampleEntry) Encode(w io.Writer) error {
-   err := s.Header.Encode(w)
+   err := s.BoxHeader.Encode(w)
    if err != nil {
       return err
    }
@@ -176,7 +176,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "avcC", "pasp":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -184,7 +184,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
          }
          v.Boxes = append(v.Boxes, &value)
       case "sinf":
-         v.ProtectionScheme.Header = head
+         v.ProtectionScheme.BoxHeader = head
          err := v.ProtectionScheme.Decode(r)
          if err != nil {
             return err

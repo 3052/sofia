@@ -10,7 +10,7 @@ import (
 //  aligned(8) class MovieBox extends Box('moov') {
 //  }
 type MovieBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    Boxes []*Box
    Track TrackBox
 }
@@ -28,7 +28,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "iods", "meta", "mvex", "mvhd", "pssh":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -36,7 +36,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
          }
          b.Boxes = append(b.Boxes, &value)
       case "trak":
-         b.Track.Header = head
+         b.Track.BoxHeader = head
          err := b.Track.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
@@ -48,7 +48,7 @@ func (b *MovieBox) Decode(r io.Reader) error {
 }
 
 func (b MovieBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

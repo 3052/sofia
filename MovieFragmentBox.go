@@ -10,7 +10,7 @@ import (
 //  aligned(8) class MovieFragmentBox extends Box('moof') {
 //  }
 type MovieFragmentBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    Boxes  []Box
    TrackFragment TrackFragmentBox
 }
@@ -28,13 +28,13 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "traf":
-         b.TrackFragment.Header = head
+         b.TrackFragment.BoxHeader = head
          err := b.TrackFragment.Decode(io.LimitReader(r, size))
          if err != nil {
             return err
          }
       case "mfhd", "pssh":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -48,7 +48,7 @@ func (b *MovieFragmentBox) Decode(r io.Reader) error {
 }
 
 func (b MovieFragmentBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

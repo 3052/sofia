@@ -10,7 +10,7 @@ import (
 //  aligned(8) class SampleTableBox extends Box('stbl') {
 //  }
 type SampleTableBox struct {
-   Header  BoxHeader
+   BoxHeader  BoxHeader
    Boxes []Box
    SampleDescription SampleDescriptionBox
 }
@@ -28,7 +28,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "sgpd", "stco", "stsc", "stsz", "stts":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -48,7 +48,7 @@ func (b *SampleTableBox) Decode(r io.Reader) error {
 }
 
 func (b SampleTableBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

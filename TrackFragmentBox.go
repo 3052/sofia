@@ -10,7 +10,7 @@ import (
 //  aligned(8) class TrackFragmentBox extends Box('traf') {
 //  }
 type TrackFragmentBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    Boxes  []Box
    TrackRun   TrackRunBox
    SampleEncryption   SampleEncryptionBox
@@ -29,7 +29,7 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
       size := head.BoxPayload()
       switch head.BoxType() {
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd":
-         value := Box{Header: head}
+         value := Box{BoxHeader: head}
          value.Payload = make([]byte, size)
          _, err := io.ReadFull(r, value.Payload)
          if err != nil {
@@ -64,7 +64,7 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
                return err
             }
          } else {
-            value := Box{Header: head}
+            value := Box{BoxHeader: head}
             value.Payload = make([]byte, size)
             _, err := io.ReadFull(r, value.Payload)
             if err != nil {
@@ -79,7 +79,7 @@ func (b *TrackFragmentBox) Decode(r io.Reader) error {
 }
 
 func (b TrackFragmentBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

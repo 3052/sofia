@@ -10,7 +10,7 @@ import "io"
 //     // and complete track information)
 //  }
 type OriginalFormatBox struct {
-   Header BoxHeader
+   BoxHeader BoxHeader
    DataFormat [4]uint8
 }
 
@@ -23,7 +23,7 @@ func (b *OriginalFormatBox) Decode(r io.Reader) error {
 }
 
 func (b OriginalFormatBox) Encode(w io.Writer) error {
-   err := b.Header.Encode(w)
+   err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
    }

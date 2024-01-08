@@ -36,22 +36,22 @@ func (t testdata) encode_init(dst io.Writer) error {
       return err
    }
    for _, b := range f.Movie.Boxes {
-      if b.Header.BoxType() == "pssh" {
-         copy(b.Header.Type[:], "free") // Firefox
+      if b.BoxHeader.BoxType() == "pssh" {
+         copy(b.BoxHeader.Type[:], "free") // Firefox
       }
    }
    sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
    if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.Header.Type[:], "free") // Firefox
+      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
       copy(
-         as.Entry.Header.Type[:],
+         as.Entry.BoxHeader.Type[:],
          as.ProtectionScheme.OriginalFormat.DataFormat[:],
       ) // Firefox
    }
    if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.Header.Type[:], "free") // Firefox
+      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
       copy(
-         vs.Entry.Header.Type[:],
+         vs.Entry.BoxHeader.Type[:],
          vs.ProtectionScheme.OriginalFormat.DataFormat[:],
       ) // Firefox
    }

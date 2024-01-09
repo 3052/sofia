@@ -25,7 +25,7 @@ func (t *TrackBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := io.LimitReader(r, head.BoxPayload())
+      r := head.Reader(r)
       switch head.BoxType() {
       case "edts", "tkhd":
          b := Box{BoxHeader: head}

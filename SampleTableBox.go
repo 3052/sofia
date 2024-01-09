@@ -25,7 +25,7 @@ func (s *SampleTableBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := io.LimitReader(r, head.BoxPayload())
+      r := head.Reader(r)
       switch head.BoxType() {
       case "sgpd", "stco", "stsc", "stsz", "stts":
          b := Box{BoxHeader: head}

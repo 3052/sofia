@@ -39,32 +39,6 @@ func (b Box) Encode(w io.Writer) error {
    return nil
 }
 
-// 4.2.2 Object definitions
-//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//     unsigned int(8) version = v;
-//     bit(24) flags = f;
-//  }
-type FullBoxHeader struct {
-   Version  uint8
-   RawFlags [3]byte
-}
-
-func (f *FullBoxHeader) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, f)
-}
-
-func (f FullBoxHeader) Encode(w io.Writer) error {
-   return binary.Write(w, binary.BigEndian, f)
-}
-
-func (f FullBoxHeader) Flags() uint32 {
-   var v uint32
-   v |= uint32(f.RawFlags[0])<<16
-   v |= uint32(f.RawFlags[1])<<8
-   v |= uint32(f.RawFlags[2])
-   return v
-}
-
 // unsigned int(32) type = boxtype;
 func (b BoxHeader) BoxType() string {
    return string(b.Type[:])
@@ -130,6 +104,25 @@ type BoxHeader struct {
    UserType [16]uint8
 }
 
+func (b BoxHeader) Reader(r io.Reader) io.Reader {
+   n := int64(b.BoxSize - b.Size())
+   return io.LimitReader(r, n)
+}
+
+func (f *FullBoxHeader) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, f)
+}
+
+func (f FullBoxHeader) Encode(w io.Writer) error {
+   return binary.Write(w, binary.BigEndian, f)
+}
+
+func (f FullBoxHeader) Flags() uint32 {
+   var b [4]byte
+   copy(b[1:], f.RawFlags[:])
+   return binary.BigEndian.Uint32(b[:])
+}
+
 func (b BoxHeader) Size() uint32 {
    var s uint32 = 4 // BoxSize
    s += 4 // Type
@@ -139,7 +132,17 @@ func (b BoxHeader) Size() uint32 {
    return s
 }
 
-func (b BoxHeader) Reader(r io.Reader) io.Reader {
-   n := int64(b.BoxSize - b.Size())
-   return io.LimitReader(r, n)
+// 4.2.2 Object definitions
+//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//     unsigned int(8) version = v;
+//     bit(24) flags = f;
+//  }
+type FullBoxHeader struct {
+   Version  uint8
+   RawFlags [3]byte
+}
+
+func (FullBoxHeader) Size() uint32 {
+   var s uint32 = 1 // Version
+   return s + 3 // RawFlags
 }

@@ -25,7 +25,7 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := io.LimitReader(r, head.BoxPayload())
+      r := head.Reader(r)
       switch head.BoxType() {
       case "traf":
          m.TrackFragment.BoxHeader = head

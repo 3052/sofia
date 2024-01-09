@@ -10,6 +10,9 @@ split:
 
 ~~~
 ffmpeg -i in.mp4 -c copy -frag_size 6M -movflags empty_moov frag.mp4
+
+1
+ffmpeg -i in.mp4 -c copy -frag_size 39M -y -movflags empty_moov frag.mp4
 ~~~
 
 join:

@@ -18,7 +18,7 @@ func (b *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
          data []byte
          err error
       )
-      if size := t.Samples[i].Sample_Size; size >= 1 {
+      if size := t.Sample[i].Sample_Size; size >= 1 {
          data = make([]byte, size)
          _, err = io.ReadFull(r, data)
       } else {

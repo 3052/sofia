@@ -13,7 +13,7 @@ type EncryptionSample struct {
    Subsamples           []Subsample
 }
 
-func (e *EncryptionSample) Decode(b *SampleEncryptionBox, r io.Reader) error {
+func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
    err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
    if err != nil {
       return err
@@ -63,7 +63,7 @@ func (e EncryptionSample) Decrypt_CENC(sample, key []byte) error {
    return nil
 }
 
-func (e EncryptionSample) Encode(b SampleEncryptionBox, w io.Writer) error {
+func (e EncryptionSample) Encode(w io.Writer, b SampleEncryptionBox) error {
    err := binary.Write(w, binary.BigEndian, e.InitializationVector)
    if err != nil {
       return err
@@ -121,7 +121,7 @@ func (b *SampleEncryptionBox) Decode(r io.Reader) error {
    }
    b.Samples = make([]EncryptionSample, b.Sample_Count)
    for i, sample := range b.Samples {
-      err := sample.Decode(b, r)
+      err := sample.Decode(r, b)
       if err != nil {
          return err
       }
@@ -142,7 +142,7 @@ func (b SampleEncryptionBox) Encode(w io.Writer) error {
       return err
    }
    for _, sample := range b.Samples {
-      err := sample.Encode(b, w)
+      err := sample.Encode(w, b)
       if err != nil {
          return err
       }

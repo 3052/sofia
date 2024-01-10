@@ -25,7 +25,7 @@ func (m *MediaBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := head.Reader(r)
+      r := head.BoxPayload(r)
       switch head.BoxType() {
       case "hdlr", "mdhd":
          b := Box{BoxHeader: head}

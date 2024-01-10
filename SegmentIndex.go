@@ -5,8 +5,6 @@ import (
    "io"
 )
 
-type Reference [3]uint32
-
 func (r *Reference) Decode(src io.Reader) error {
    return binary.Read(src, binary.BigEndian, r)
 }
@@ -19,9 +17,15 @@ func (r Reference) Referenced_Size() uint32 {
    return r[0] & (0xFFFFFFFF>>1)
 }
 
+type Reference [3]uint32
+
+func (Reference) Size() uint32 {
+   return 3 * 4
+}
+
 func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
    ranges := make([][2]uint32, s.Reference_Count)
-   for i, ref := range s.References {
+   for i, ref := range s.Reference {
       size := ref.Referenced_Size()
       ranges[i] = [2]uint32{start, start + size - 1}
       start += size
@@ -58,15 +62,69 @@ func (s *SegmentIndexBox) Decode(r io.Reader) error {
    if err := binary.Read(r, binary.BigEndian, &s.Reference_Count); err != nil {
       return err
    }
-   s.References = make([]Reference, s.Reference_Count)
-   for i, ref := range s.References {
+   s.Reference = make([]Reference, s.Reference_Count)
+   for i, ref := range s.Reference {
       err := ref.Decode(r)
       if err != nil {
          return err
       }
-      s.References[i] = ref
+      s.Reference[i] = ref
    }
    return nil
+}
+
+func (s SegmentIndexBox) Encode(w io.Writer) error {
+   if err := s.BoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.Encode(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.First_Offset); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
+      return err
+   }
+   for _, ref := range s.Reference {
+      err := ref.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (s SegmentIndexBox) Size() uint32 {
+   v := s.BoxHeader.Size()
+   v += s.FullBoxHeader.Size()
+   v += 4 // reference_ID
+   v += 4 // timescale
+   if s.FullBoxHeader.Version == 0 {
+      v += 4 // earliest_presentation_time
+      v += 4 // first_offset
+   } else {
+      v += 8 // earliest_presentation_time
+      v += 8 // first_offset
+   }
+   v += 2 // reserved
+   v += 2 // reference_count
+   for _, r := range s.Reference {
+      v += r.Size()
+   }
+   return v
 }
 
 // Container: File
@@ -100,39 +158,12 @@ type SegmentIndexBox struct {
    First_Offset []byte
    Reserved uint16
    Reference_Count uint16
-   References []Reference
+   Reference []Reference
 }
 
-func (s SegmentIndexBox) Encode(w io.Writer) error {
-   if err := s.BoxHeader.Encode(w); err != nil {
-      return err
-   }
-   if err := s.FullBoxHeader.Encode(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.First_Offset); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
-      return err
-   }
-   for _, ref := range s.References {
-      err := ref.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
+func (s *SegmentIndexBox) Global() {
+   s.BoxHeader.BoxSize = s.Size()
+   copy(s.BoxHeader.Type[:], "sidx")
+   s.Reference_ID = 1
+   s.Reference_Count = uint16(len(s.Reference))
 }

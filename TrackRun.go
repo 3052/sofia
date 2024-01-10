@@ -5,6 +5,13 @@ import (
    "io"
 )
 
+type TrackRunSample struct {
+   Duration uint32
+   Size uint32
+   Flags uint32
+   Composition_Time_Offset [4]byte
+}
+
 // Container: TrackFragmentBox
 //
 // If the data-offset is present, it is relative to the base-data-offset
@@ -95,25 +102,25 @@ func (t TrackRunBox) Encode(w io.Writer) error {
 
 func (s *TrackRunSample) Decode(r io.Reader, t *TrackRunBox) error {
    if t.Sample_Duration_Present() {
-      err := binary.Read(r, binary.BigEndian, &s.Sample_Duration)
+      err := binary.Read(r, binary.BigEndian, &s.Duration)
       if err != nil {
          return err
       }
    }
    if t.Sample_Size_Present() {
-      err := binary.Read(r, binary.BigEndian, &s.Sample_Size)
+      err := binary.Read(r, binary.BigEndian, &s.Size)
       if err != nil {
          return err
       }
    }
    if t.Sample_Flags_Present() {
-      err := binary.Read(r, binary.BigEndian, &s.Sample_Flags)
+      err := binary.Read(r, binary.BigEndian, &s.Flags)
       if err != nil {
          return err
       }
    }
    if t.Sample_Composition_Time_Offsets_Present() {
-      _, err := io.ReadFull(r, s.Sample_Composition_Time_Offset[:])
+      _, err := io.ReadFull(r, s.Composition_Time_Offset[:])
       if err != nil {
          return err
       }
@@ -146,51 +153,27 @@ func (t TrackRunBox) Sample_Size_Present() bool {
    return t.FullBoxHeader.Flags() & 0x200 >= 1
 }
 
-type TrackRunSample struct {
-   Sample_Duration uint32
-   Sample_Size uint32
-   Sample_Flags uint32
-   Sample_Composition_Time_Offset [4]byte
-}
-
-func (TrackRunSample) Size(t TrackRunBox) uint32 {
-   var s uint32
-   if t.Sample_Duration_Present() {
-      s += 4
-   }
-   if t.Sample_Size_Present() {
-      s += 4
-   }
-   if t.Sample_Flags_Present() {
-      s += 4
-   }
-   if t.Sample_Composition_Time_Offsets_Present() {
-      s += 4
-   }
-   return s
-}
-
 func (s TrackRunSample) Encode(w io.Writer, t TrackRunBox) error {
    if t.Sample_Duration_Present() {
-      err := binary.Write(w, binary.BigEndian, s.Sample_Duration)
+      err := binary.Write(w, binary.BigEndian, s.Duration)
       if err != nil {
          return err
       }
    }
    if t.Sample_Size_Present() {
-      err := binary.Write(w, binary.BigEndian, s.Sample_Size)
+      err := binary.Write(w, binary.BigEndian, s.Size)
       if err != nil {
          return err
       }
    }
    if t.Sample_Flags_Present() {
-      err := binary.Write(w, binary.BigEndian, s.Sample_Flags)
+      err := binary.Write(w, binary.BigEndian, s.Flags)
       if err != nil {
          return err
       }
    }
    if t.Sample_Composition_Time_Offsets_Present() {
-      _, err := w.Write(s.Sample_Composition_Time_Offset[:])
+      _, err := w.Write(s.Composition_Time_Offset[:])
       if err != nil {
          return err
       }

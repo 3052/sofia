@@ -13,16 +13,6 @@ func (r Reference) Encode(dst io.Writer) error {
    return binary.Write(dst, binary.BigEndian, r)
 }
 
-func (r Reference) Referenced_Size() uint32 {
-   return r[0] & (0xFFFFFFFF>>1)
-}
-
-type Reference [3]uint32
-
-func (Reference) Size() uint32 {
-   return 3 * 4
-}
-
 func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
    ranges := make([][2]uint32, s.Reference_Count)
    for i, ref := range s.Reference {
@@ -166,4 +156,21 @@ func (s *SegmentIndexBox) Global() {
    copy(s.BoxHeader.Type[:], "sidx")
    s.Reference_ID = 1
    s.Reference_Count = uint16(len(s.Reference))
+}
+
+func (Reference) Size() uint32 {
+   return 3 * 4
+}
+
+type Reference [3]uint32
+
+const referenced_size uint32 = 0xFFFFFFFF>>1
+
+func (r Reference) Referenced_Size() uint32 {
+   return r[0] & referenced_size
+}
+
+func (r Reference) Set_Referenced_Size(v uint32) {
+   r[0] &= ^referenced_size
+   r[0] |= v
 }

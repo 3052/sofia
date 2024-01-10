@@ -104,7 +104,7 @@ type BoxHeader struct {
    UserType [16]uint8
 }
 
-func (b BoxHeader) Reader(r io.Reader) io.Reader {
+func (b BoxHeader) BoxPayload(r io.Reader) io.Reader {
    n := int64(b.BoxSize - b.Size())
    return io.LimitReader(r, n)
 }

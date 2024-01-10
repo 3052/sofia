@@ -24,7 +24,7 @@ func (f *File) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := head.Reader(r)
+      r := head.BoxPayload(r)
       switch head.BoxType() {
       case "ftyp", "styp":
          b := Box{BoxHeader: head}
@@ -78,7 +78,7 @@ func (f File) Encode(w io.Writer) error {
       }
    }
    if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.Encode(w)
+      err := f.SegmentIndex.Encode(w) // this might be optional
       if err != nil {
          return err
       }

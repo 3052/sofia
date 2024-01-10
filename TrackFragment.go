@@ -26,7 +26,7 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
          return err
       }
       slog.Debug("*", "BoxType", head.BoxType())
-      r := head.Reader(r)
+      r := head.BoxPayload(r)
       switch head.BoxType() {
       case "saio", "saiz", "sbgp", "sgpd", "tfdt", "tfhd":
          b := Box{BoxHeader: head}

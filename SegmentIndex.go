@@ -5,14 +5,7 @@ import (
    "io"
 )
 
-func (r *Reference) Decode(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) Encode(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
+// return a slice so we can measure progress
 func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
    ranges := make([][2]uint32, s.Reference_Count)
    for i, ref := range s.Reference {
@@ -21,6 +14,14 @@ func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
       start += size
    }
    return ranges
+}
+
+func (r *Reference) Decode(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) Encode(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
 }
 
 func (s *SegmentIndexBox) Decode(r io.Reader) error {

@@ -36,7 +36,7 @@ func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func (e EncryptionSample) Decrypt_CENC(sample, key []byte) error {
+func (e EncryptionSample) DecryptCENC(sample, key []byte) error {
    block, err := aes.NewCipher(key)
    if err != nil {
       return err

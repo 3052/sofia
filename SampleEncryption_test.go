@@ -143,7 +143,7 @@ func (t testdata) encode_segment(dst io.Writer) error {
    }
    for i, data := range f.MediaData.Data {
       sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
-      err := sample.Decrypt_CENC(data, key)
+      err := sample.DecryptCENC(data, key)
       if err != nil {
          return err
       }

@@ -46,7 +46,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("*", "BoxType", head.BoxType())
+      slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
       case "dec3", "esds":
@@ -171,7 +171,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("*", "BoxType", head.BoxType())
+      slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
       case "avcC", "pasp":

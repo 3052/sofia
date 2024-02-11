@@ -23,7 +23,7 @@ func (f *File) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("*", "BoxType", head.BoxType())
+      slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
       case "ftyp", "styp":

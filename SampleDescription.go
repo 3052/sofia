@@ -37,7 +37,7 @@ func (s *SampleDescriptionBox) Decode(r io.Reader) error {
    } else if err != nil {
       return err
    }
-   slog.Debug("*", "BoxType", head.BoxType())
+   slog.Debug("BoxHeader", "type", head.BoxType())
    switch head.BoxType() {
    case "enca":
       s.AudioSample = new(AudioSampleEntry)

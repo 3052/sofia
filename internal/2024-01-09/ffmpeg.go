@@ -57,7 +57,7 @@ var flags = [][]string{
 func main() {
    for _, flag := range flags {
       arg := []string{
-         "-i", "frag.mp4",
+         "-i", "in.mp4",
          "-c", "copy",
          "-frag_size", "9K",
       }

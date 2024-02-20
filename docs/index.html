@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.1.4 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.1.5 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -41,7 +41,7 @@
           <li><a href="#BoxHeader.BoxType">func (b BoxHeader) BoxType() string</a></li>
           <li><a href="#BoxHeader.Decode">func (b *BoxHeader) Decode(r io.Reader) error</a></li>
           <li><a href="#BoxHeader.Encode">func (b BoxHeader) Encode(w io.Writer) error</a></li>
-          <li><a href="#BoxHeader.Extended_Type">func (b BoxHeader) Extended_Type() string</a></li>
+          <li><a href="#BoxHeader.ExtendedType">func (b BoxHeader) ExtendedType() string</a></li>
           <li><a href="#BoxHeader.Size">func (b BoxHeader) Size() uint32</a></li>
           </ul>
       </li>
@@ -123,8 +123,8 @@
       <ul>
           <li><a href="#Reference.Decode">func (r *Reference) Decode(src io.Reader) error</a></li>
           <li><a href="#Reference.Encode">func (r Reference) Encode(dst io.Writer) error</a></li>
-          <li><a href="#Reference.Referenced_Size">func (r Reference) Referenced_Size() uint32</a></li>
-          <li><a href="#Reference.Set_Referenced_Size">func (r Reference) Set_Referenced_Size(v uint32)</a></li>
+          <li><a href="#Reference.ReferencedSize">func (r Reference) ReferencedSize() uint32</a></li>
+          <li><a href="#Reference.SetReferencedSize">func (r Reference) SetReferencedSize(v uint32)</a></li>
           <li><a href="#Reference.Size">func (Reference) Size() uint32</a></li>
           </ul>
       </li>
@@ -140,7 +140,7 @@
       <ul>
           <li><a href="#SampleEncryptionBox.Decode">func (b *SampleEncryptionBox) Decode(r io.Reader) error</a></li>
           <li><a href="#SampleEncryptionBox.Encode">func (b SampleEncryptionBox) Encode(w io.Writer) error</a></li>
-          <li><a href="#SampleEncryptionBox.Senc_Use_Subsamples">func (b SampleEncryptionBox) Senc_Use_Subsamples() bool</a></li>
+          <li><a href="#SampleEncryptionBox.SencUseSubsamples">func (b SampleEncryptionBox) SencUseSubsamples() bool</a></li>
           </ul>
       </li>
   <li>
@@ -193,11 +193,11 @@
       <ul>
           <li><a href="#TrackRunBox.Decode">func (t *TrackRunBox) Decode(r io.Reader) error</a></li>
           <li><a href="#TrackRunBox.Encode">func (t TrackRunBox) Encode(w io.Writer) error</a></li>
-          <li><a href="#TrackRunBox.First_Sample_Flags_Present">func (t TrackRunBox) First_Sample_Flags_Present() bool</a></li>
-          <li><a href="#TrackRunBox.Sample_Composition_Time_Offsets_Present">func (t TrackRunBox) Sample_Composition_Time_Offsets_Present() bool</a></li>
-          <li><a href="#TrackRunBox.Sample_Duration_Present">func (t TrackRunBox) Sample_Duration_Present() bool</a></li>
-          <li><a href="#TrackRunBox.Sample_Flags_Present">func (t TrackRunBox) Sample_Flags_Present() bool</a></li>
-          <li><a href="#TrackRunBox.Sample_Size_Present">func (t TrackRunBox) Sample_Size_Present() bool</a></li>
+          <li><a href="#TrackRunBox.FirstSampleFlagsPresent">func (t TrackRunBox) FirstSampleFlagsPresent() bool</a></li>
+          <li><a href="#TrackRunBox.SampleCompositionTimeOffsetsPresent">func (t TrackRunBox) SampleCompositionTimeOffsetsPresent() bool</a></li>
+          <li><a href="#TrackRunBox.SampleDurationPresent">func (t TrackRunBox) SampleDurationPresent() bool</a></li>
+          <li><a href="#TrackRunBox.SampleFlagsPresent">func (t TrackRunBox) SampleFlagsPresent() bool</a></li>
+          <li><a href="#TrackRunBox.SampleSizePresent">func (t TrackRunBox) SampleSizePresent() bool</a></li>
           </ul>
       </li>
   <li>
@@ -222,7 +222,7 @@
 		<span id="AudioSampleEntry.Reserved"><span class="nx">Reserved</span></span>     <span class="p">[</span><span class="mi">2</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 		<span id="AudioSampleEntry.ChannelCount"><span class="nx">ChannelCount</span></span> <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 		<span id="AudioSampleEntry.SampleSize"><span class="nx">SampleSize</span></span>   <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
-		<span id="AudioSampleEntry.Pre_Defined"><span class="nx">Pre_Defined</span></span>  <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="AudioSampleEntry.PreDefined"><span class="nx">PreDefined</span></span>   <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 
 		<span id="AudioSampleEntry.SampleRate"><span class="nx">SampleRate</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 		<span class="c1">// contains filtered or unexported fields
@@ -289,20 +289,18 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">BoxPayload</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a></pre>
   <h4 id="BoxHeader.BoxType">func (BoxHeader) BoxType</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">BoxType</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
-  <p>unsigned int(32) type = boxtype;
-<h4 id="BoxHeader.Decode">func (*BoxHeader) Decode</h4>
+  <h4 id="BoxHeader.Decode">func (*BoxHeader) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="BoxHeader.Encode">func (BoxHeader) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="BoxHeader.Extended_Type">func (BoxHeader) Extended_Type</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">Extended_Type</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
-  <p>unsigned int(8)[16] usertype = extended_type;
-<h4 id="BoxHeader.Size">func (BoxHeader) Size</h4>
+  <h4 id="BoxHeader.ExtendedType">func (BoxHeader) ExtendedType</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">ExtendedType</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="BoxHeader.Size">func (BoxHeader) Size</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
   <h3 id="EncryptionSample">type EncryptionSample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">EncryptionSample</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="EncryptionSample.InitializationVector"><span class="nx">InitializationVector</span></span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
-	<span id="EncryptionSample.Subsample_Count"><span class="nx">Subsample_Count</span></span>      <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="EncryptionSample.SubsampleCount"><span class="nx">SubsampleCount</span></span>       <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 	<span id="EncryptionSample.Subsamples"><span class="nx">Subsamples</span></span>           <span class="p">[]</span><a href="#Subsample"><span class="nx">Subsample</span></a>
 <span class="p">}</span></pre>
     <h4 id="EncryptionSample.Decode">func (*EncryptionSample) Decode</h4>
@@ -454,17 +452,17 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">src</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="Reference.Encode">func (Reference) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="Reference.Referenced_Size">func (Reference) Referenced_Size</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Referenced_Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
-  <h4 id="Reference.Set_Referenced_Size">func (Reference) Set_Referenced_Size</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Set_Referenced_Size</span><span class="p">(</span><span class="nx">v</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
+  <h4 id="Reference.ReferencedSize">func (Reference) ReferencedSize</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">ReferencedSize</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
+  <h4 id="Reference.SetReferencedSize">func (Reference) SetReferencedSize</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">SetReferencedSize</span><span class="p">(</span><span class="nx">v</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
   <h4 id="Reference.Size">func (Reference) Size</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
   <h3 id="SampleDescriptionBox">type SampleDescriptionBox</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleDescriptionBox</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="SampleDescriptionBox.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="SampleDescriptionBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
-	<span id="SampleDescriptionBox.Entry_Count"><span class="nx">Entry_Count</span></span>   <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="SampleDescriptionBox.EntryCount"><span class="nx">EntryCount</span></span>    <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 	<span id="SampleDescriptionBox.AudioSample"><span class="nx">AudioSample</span></span>   <span class="o">*</span><a href="#AudioSampleEntry"><span class="nx">AudioSampleEntry</span></a>
 	<span id="SampleDescriptionBox.VisualSample"><span class="nx">VisualSample</span></span>  <span class="o">*</span><a href="#VisualSampleEntry"><span class="nx">VisualSampleEntry</span></a>
 <span class="p">}</span></pre>
@@ -485,7 +483,7 @@
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleEncryptionBox</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="SampleEncryptionBox.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="SampleEncryptionBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
-	<span id="SampleEncryptionBox.Sample_Count"><span class="nx">Sample_Count</span></span>  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="SampleEncryptionBox.SampleCount"><span class="nx">SampleCount</span></span>   <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 	<span id="SampleEncryptionBox.Samples"><span class="nx">Samples</span></span>       <span class="p">[]</span><a href="#EncryptionSample"><span class="nx">EncryptionSample</span></a>
 <span class="p">}</span></pre>
     <p>Container: TrackFragmentBox
@@ -511,14 +509,14 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#SampleEncryptionBox"><span class="nx">SampleEncryptionBox</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="SampleEncryptionBox.Encode">func (SampleEncryptionBox) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#SampleEncryptionBox"><span class="nx">SampleEncryptionBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="SampleEncryptionBox.Senc_Use_Subsamples">func (SampleEncryptionBox) Senc_Use_Subsamples</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#SampleEncryptionBox"><span class="nx">SampleEncryptionBox</span></a><span class="p">)</span> <span class="nf">Senc_Use_Subsamples</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <h4 id="SampleEncryptionBox.SencUseSubsamples">func (SampleEncryptionBox) SencUseSubsamples</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#SampleEncryptionBox"><span class="nx">SampleEncryptionBox</span></a><span class="p">)</span> <span class="nf">SencUseSubsamples</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>senc_use_subsamples: flag mask is 0x000002.
 <h3 id="SampleEntry">type SampleEntry</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleEntry</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="SampleEntry.BoxHeader"><span class="nx">BoxHeader</span></span>            <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="SampleEntry.Reserved"><span class="nx">Reserved</span></span>             <span class="p">[</span><span class="mi">6</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
-	<span id="SampleEntry.Data_Reference_Index"><span class="nx">Data_Reference_Index</span></span> <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="SampleEntry.BoxHeader"><span class="nx">BoxHeader</span></span>          <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="SampleEntry.Reserved"><span class="nx">Reserved</span></span>           <span class="p">[</span><span class="mi">6</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
+	<span id="SampleEntry.DataReferenceIndex"><span class="nx">DataReferenceIndex</span></span> <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 <span class="p">}</span></pre>
     <p>8.5.2 Sample description box
 <pre>aligned(8) abstract class SampleEntry(
@@ -548,15 +546,15 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SampleTableBox"><span class="nx">SampleTableBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h3 id="SegmentIndexBox">type SegmentIndexBox</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SegmentIndexBox</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="SegmentIndexBox.BoxHeader"><span class="nx">BoxHeader</span></span>                  <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="SegmentIndexBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span>              <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
-	<span id="SegmentIndexBox.Reference_ID"><span class="nx">Reference_ID</span></span>               <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="SegmentIndexBox.Timescale"><span class="nx">Timescale</span></span>                  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="SegmentIndexBox.Earliest_Presentation_Time"><span class="nx">Earliest_Presentation_Time</span></span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
-	<span id="SegmentIndexBox.First_Offset"><span class="nx">First_Offset</span></span>               <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
-	<span id="SegmentIndexBox.Reserved"><span class="nx">Reserved</span></span>                   <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
-	<span id="SegmentIndexBox.Reference_Count"><span class="nx">Reference_Count</span></span>            <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
-	<span id="SegmentIndexBox.Reference"><span class="nx">Reference</span></span>                  <span class="p">[]</span><a href="#Reference"><span class="nx">Reference</span></a>
+	<span id="SegmentIndexBox.BoxHeader"><span class="nx">BoxHeader</span></span>                <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="SegmentIndexBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span>            <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
+	<span id="SegmentIndexBox.ReferenceId"><span class="nx">ReferenceId</span></span>              <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="SegmentIndexBox.Timescale"><span class="nx">Timescale</span></span>                <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="SegmentIndexBox.EarliestPresentationTime"><span class="nx">EarliestPresentationTime</span></span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
+	<span id="SegmentIndexBox.FirstOffset"><span class="nx">FirstOffset</span></span>              <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
+	<span id="SegmentIndexBox.Reserved"><span class="nx">Reserved</span></span>                 <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="SegmentIndexBox.ReferenceCount"><span class="nx">ReferenceCount</span></span>           <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="SegmentIndexBox.Reference"><span class="nx">Reference</span></span>                <span class="p">[]</span><a href="#Reference"><span class="nx">Reference</span></a>
 <span class="p">}</span></pre>
     <p>Container: File
 <pre>aligned(8) class SegmentIndexBox extends FullBox(&apos;sidx&apos;, version, 0) {
@@ -632,12 +630,12 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackFragmentBox"><span class="nx">TrackFragmentBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h3 id="TrackRunBox">type TrackRunBox</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">TrackRunBox</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="TrackRunBox.BoxHeader"><span class="nx">BoxHeader</span></span>          <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="TrackRunBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span>      <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
-	<span id="TrackRunBox.Sample_Count"><span class="nx">Sample_Count</span></span>       <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="TrackRunBox.Data_Offset"><span class="nx">Data_Offset</span></span>        <a href="https://pkg.go.dev/builtin#int32"><span class="kt">int32</span></a>
-	<span id="TrackRunBox.First_Sample_Flags"><span class="nx">First_Sample_Flags</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="TrackRunBox.Sample"><span class="nx">Sample</span></span>             <span class="p">[]</span><a href="#TrackRunSample"><span class="nx">TrackRunSample</span></a>
+	<span id="TrackRunBox.BoxHeader"><span class="nx">BoxHeader</span></span>        <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="TrackRunBox.FullBoxHeader"><span class="nx">FullBoxHeader</span></span>    <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
+	<span id="TrackRunBox.SampleCount"><span class="nx">SampleCount</span></span>      <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="TrackRunBox.DataOffset"><span class="nx">DataOffset</span></span>       <a href="https://pkg.go.dev/builtin#int32"><span class="kt">int32</span></a>
+	<span id="TrackRunBox.FirstSampleFlags"><span class="nx">FirstSampleFlags</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="TrackRunBox.Sample"><span class="nx">Sample</span></span>           <span class="p">[]</span><a href="#TrackRunSample"><span class="nx">TrackRunSample</span></a>
 <span class="p">}</span></pre>
     <p>Container: TrackFragmentBox
 <p>If the data-offset is present, it is relative to the base-data-offset
@@ -662,27 +660,27 @@ established in the track fragment header.
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="TrackRunBox.Encode">func (TrackRunBox) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="TrackRunBox.First_Sample_Flags_Present">func (TrackRunBox) First_Sample_Flags_Present</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">First_Sample_Flags_Present</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <h4 id="TrackRunBox.FirstSampleFlagsPresent">func (TrackRunBox) FirstSampleFlagsPresent</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">FirstSampleFlagsPresent</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>0x000004 first-sample-flags-present
-<h4 id="TrackRunBox.Sample_Composition_Time_Offsets_Present">func (TrackRunBox) Sample_Composition_Time_Offsets_Present</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Sample_Composition_Time_Offsets_Present</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+<h4 id="TrackRunBox.SampleCompositionTimeOffsetsPresent">func (TrackRunBox) SampleCompositionTimeOffsetsPresent</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">SampleCompositionTimeOffsetsPresent</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>0x000800 sample-composition-time-offsets-present
-<h4 id="TrackRunBox.Sample_Duration_Present">func (TrackRunBox) Sample_Duration_Present</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Sample_Duration_Present</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+<h4 id="TrackRunBox.SampleDurationPresent">func (TrackRunBox) SampleDurationPresent</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">SampleDurationPresent</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>0x000100 sample-duration-present
-<h4 id="TrackRunBox.Sample_Flags_Present">func (TrackRunBox) Sample_Flags_Present</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Sample_Flags_Present</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+<h4 id="TrackRunBox.SampleFlagsPresent">func (TrackRunBox) SampleFlagsPresent</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">SampleFlagsPresent</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>0x000400 sample-flags-present
-<h4 id="TrackRunBox.Sample_Size_Present">func (TrackRunBox) Sample_Size_Present</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">Sample_Size_Present</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+<h4 id="TrackRunBox.SampleSizePresent">func (TrackRunBox) SampleSizePresent</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <span class="nf">SampleSizePresent</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
   <p>0x000200 sample-size-present
 <h3 id="TrackRunSample">type TrackRunSample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">TrackRunSample</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="TrackRunSample.Duration"><span class="nx">Duration</span></span>                <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="TrackRunSample.Size"><span class="nx">Size</span></span>                    <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="TrackRunSample.Flags"><span class="nx">Flags</span></span>                   <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
-	<span id="TrackRunSample.Composition_Time_Offset"><span class="nx">Composition_Time_Offset</span></span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
+	<span id="TrackRunSample.Duration"><span class="nx">Duration</span></span>              <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="TrackRunSample.Size"><span class="nx">Size</span></span>                  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="TrackRunSample.Flags"><span class="nx">Flags</span></span>                 <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="TrackRunSample.CompositionTimeOffset"><span class="nx">CompositionTimeOffset</span></span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a>
 <span class="p">}</span></pre>
     <h4 id="TrackRunSample.Decode">func (*TrackRunSample) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#TrackRunSample"><span class="nx">TrackRunSample</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span> <span class="nx">t</span> <span class="o">*</span><a href="#TrackRunBox"><span class="nx">TrackRunBox</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
@@ -692,15 +690,15 @@ established in the track fragment header.
     <pre class="chroma"><span class="kd">type</span> <span class="nx">VisualSampleEntry</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="VisualSampleEntry.Entry"><span class="nx">Entry</span></span> <a href="#SampleEntry"><span class="nx">SampleEntry</span></a>
 	<span id="VisualSampleEntry.S"><span class="nx">S</span></span>     <span class="kd">struct</span> <span class="p">{</span>
-		<span id="VisualSampleEntry.Pre_Defined"><span class="nx">Pre_Defined</span></span> <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
-		<span id="VisualSampleEntry.Reserved"><span class="nx">Reserved</span></span>    <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="VisualSampleEntry.PreDefined"><span class="nx">PreDefined</span></span> <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="VisualSampleEntry.Reserved"><span class="nx">Reserved</span></span>   <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 
 		<span id="VisualSampleEntry.Width"><span class="nx">Width</span></span>           <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 		<span id="VisualSampleEntry.Height"><span class="nx">Height</span></span>          <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 		<span id="VisualSampleEntry.HorizResolution"><span class="nx">HorizResolution</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 		<span id="VisualSampleEntry.VertResolution"><span class="nx">VertResolution</span></span>  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 
-		<span id="VisualSampleEntry.Frame_Count"><span class="nx">Frame_Count</span></span>    <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="VisualSampleEntry.FrameCount"><span class="nx">FrameCount</span></span>     <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 		<span id="VisualSampleEntry.CompressorName"><span class="nx">CompressorName</span></span> <span class="p">[</span><span class="mi">32</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
 		<span id="VisualSampleEntry.Depth"><span class="nx">Depth</span></span>          <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
 		<span class="c1">// contains filtered or unexported fields

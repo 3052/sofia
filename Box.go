@@ -72,7 +72,7 @@ func (b BoxHeader) Encode(w io.Writer) error {
 }
 
 // unsigned int(8)[16] usertype = extended_type;
-func (b BoxHeader) Extended_Type() string {
+func (b BoxHeader) ExtendedType() string {
    return hex.EncodeToString(b.UserType[:])
 }
 

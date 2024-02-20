@@ -6,7 +6,7 @@ import (
    "testing"
 )
 
-func Test_Trun(t *testing.T) {
+func TestTrun(t *testing.T) {
    h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
       Level: slog.LevelDebug,
    })

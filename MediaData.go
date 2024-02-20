@@ -12,7 +12,7 @@ type MediaDataBox struct {
 }
 
 func (b *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
-   b.Data = make([][]byte, t.Sample_Count)
+   b.Data = make([][]byte, t.SampleCount)
    for i := range b.Data {
       var (
          data []byte

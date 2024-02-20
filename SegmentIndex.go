@@ -7,9 +7,9 @@ import (
 
 // return a slice so we can measure progress
 func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
-   ranges := make([][2]uint32, s.Reference_Count)
+   ranges := make([][2]uint32, s.ReferenceCount)
    for i, ref := range s.Reference {
-      size := ref.Referenced_Size()
+      size := ref.ReferencedSize()
       ranges[i] = [2]uint32{start, start + size - 1}
       start += size
    }
@@ -28,32 +28,32 @@ func (s *SegmentIndexBox) Decode(r io.Reader) error {
    if err := s.FullBoxHeader.Decode(r); err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Reference_ID); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &s.ReferenceId); err != nil {
       return err
    }
    if err := binary.Read(r, binary.BigEndian, &s.Timescale); err != nil {
       return err
    }
    if s.FullBoxHeader.Version == 0 {
-      s.Earliest_Presentation_Time = make([]byte, 4)
-      s.First_Offset = make([]byte, 4)
+      s.EarliestPresentationTime = make([]byte, 4)
+      s.FirstOffset = make([]byte, 4)
    } else {
-      s.Earliest_Presentation_Time = make([]byte, 8)
-      s.First_Offset = make([]byte, 8)
+      s.EarliestPresentationTime = make([]byte, 8)
+      s.FirstOffset = make([]byte, 8)
    }
-   if _, err := io.ReadFull(r, s.Earliest_Presentation_Time); err != nil {
+   if _, err := io.ReadFull(r, s.EarliestPresentationTime); err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, s.First_Offset); err != nil {
+   if _, err := io.ReadFull(r, s.FirstOffset); err != nil {
       return err
    }
    if err := binary.Read(r, binary.BigEndian, &s.Reserved); err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Reference_Count); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &s.ReferenceCount); err != nil {
       return err
    }
-   s.Reference = make([]Reference, s.Reference_Count)
+   s.Reference = make([]Reference, s.ReferenceCount)
    for i, ref := range s.Reference {
       err := ref.Decode(r)
       if err != nil {
@@ -71,22 +71,22 @@ func (s SegmentIndexBox) Encode(w io.Writer) error {
    if err := s.FullBoxHeader.Encode(w); err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_ID); err != nil {
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
       return err
    }
    if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
       return err
    }
-   if _, err := w.Write(s.Earliest_Presentation_Time); err != nil {
+   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
       return err
    }
-   if _, err := w.Write(s.First_Offset); err != nil {
+   if _, err := w.Write(s.FirstOffset); err != nil {
       return err
    }
    if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Reference_Count); err != nil {
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
       return err
    }
    for _, ref := range s.Reference {
@@ -143,20 +143,20 @@ func (s SegmentIndexBox) Size() uint32 {
 type SegmentIndexBox struct {
    BoxHeader BoxHeader
    FullBoxHeader FullBoxHeader
-   Reference_ID uint32
+   ReferenceId uint32
    Timescale uint32
-   Earliest_Presentation_Time []byte
-   First_Offset []byte
+   EarliestPresentationTime []byte
+   FirstOffset []byte
    Reserved uint16
-   Reference_Count uint16
+   ReferenceCount uint16
    Reference []Reference
 }
 
 func (s *SegmentIndexBox) Global() {
    s.BoxHeader.BoxSize = s.Size()
    copy(s.BoxHeader.Type[:], "sidx")
-   s.Reference_ID = 1
-   s.Reference_Count = uint16(len(s.Reference))
+   s.ReferenceId = 1
+   s.ReferenceCount = uint16(len(s.Reference))
 }
 
 func (Reference) Size() uint32 {
@@ -167,11 +167,11 @@ type Reference [3]uint32
 
 const referenced_size uint32 = 0xFFFFFFFF>>1
 
-func (r Reference) Referenced_Size() uint32 {
+func (r Reference) ReferencedSize() uint32 {
    return r[0] & referenced_size
 }
 
-func (r Reference) Set_Referenced_Size(v uint32) {
+func (r Reference) SetReferencedSize(v uint32) {
    r[0] &= ^referenced_size
    r[0] |= v
 }

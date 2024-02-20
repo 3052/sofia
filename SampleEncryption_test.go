@@ -7,7 +7,7 @@ import (
    "testing"
 )
 
-func Test_SampleEncryption(t *testing.T) {
+func TestSampleEncryption(t *testing.T) {
    for _, test := range tests {
       func() {
          dst, err := os.Create(test.out)

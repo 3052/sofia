@@ -22,7 +22,7 @@ type AudioSampleEntry struct {
       Reserved [2]uint32
       ChannelCount uint16
       SampleSize uint16
-      Pre_Defined uint16
+      PreDefined uint16
       _ uint16
       SampleRate uint32
    }
@@ -95,7 +95,7 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
 type SampleEntry struct {
    BoxHeader  BoxHeader
    Reserved [6]uint8
-   Data_Reference_Index uint16
+   DataReferenceIndex uint16
 }
 
 func (s *SampleEntry) Decode(r io.Reader) error {
@@ -103,7 +103,7 @@ func (s *SampleEntry) Decode(r io.Reader) error {
    if err != nil {
       return err
    }
-   return binary.Read(r, binary.BigEndian, &s.Data_Reference_Index)
+   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
 }
 
 func (s *SampleEntry) Encode(w io.Writer) error {
@@ -114,7 +114,7 @@ func (s *SampleEntry) Encode(w io.Writer) error {
    if _, err := w.Write(s.Reserved[:]); err != nil {
       return err
    }
-   return binary.Write(w, binary.BigEndian, s.Data_Reference_Index)
+   return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
 }
 
 // Container: SampleDescriptionBox
@@ -138,7 +138,7 @@ func (s *SampleEntry) Encode(w io.Writer) error {
 type VisualSampleEntry struct {
    Entry SampleEntry
    S struct {
-      Pre_Defined uint16
+      PreDefined uint16
       Reserved uint16
       _ [3]uint32
       Width uint16
@@ -146,7 +146,7 @@ type VisualSampleEntry struct {
       HorizResolution uint32
       VertResolution uint32
       _ uint32
-      Frame_Count uint16
+      FrameCount uint16
       CompressorName [32]uint8
       Depth uint16
       _ int16

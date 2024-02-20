@@ -6,13 +6,13 @@ import (
    "testing"
 )
 
-func Test_Global(t *testing.T) {
+func TestGlobal(t *testing.T) {
    for i := 1; i <= 915; i++ {
       fmt.Printf("seg_%v.m4s\n", i)
    }
 }
 
-func Test_ByteRanges(t *testing.T) {
+func TestByteRanges(t *testing.T) {
    media, err := os.Open("testdata/hulu-video/init.mp4")
    if err != nil {
       t.Fatal(err)

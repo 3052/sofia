@@ -18,7 +18,7 @@ import (
 type SampleDescriptionBox struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
-   Entry_Count uint32
+   EntryCount uint32
    AudioSample *AudioSampleEntry
    VisualSample *VisualSampleEntry
 }
@@ -28,7 +28,7 @@ func (s *SampleDescriptionBox) Decode(r io.Reader) error {
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Entry_Count); err != nil {
+   if err := binary.Read(r, binary.BigEndian, &s.EntryCount); err != nil {
       return err
    }
    var head BoxHeader
@@ -67,7 +67,7 @@ func (s SampleDescriptionBox) Encode(w io.Writer) error {
    if err := s.FullBoxHeader.Encode(w); err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Entry_Count); err != nil {
+   if err := binary.Write(w, binary.BigEndian, s.EntryCount); err != nil {
       return err
    }
    if s.AudioSample != nil {

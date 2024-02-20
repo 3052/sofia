@@ -49,8 +49,8 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
          }
       case "uuid":
          decode := func() bool {
-            if head.Extended_Type() == "a2394f525a9b4f14a2446c427c648df4" {
-               if t.SampleEncryption.Sample_Count == 0 {
+            if head.ExtendedType() == "a2394f525a9b4f14a2446c427c648df4" {
+               if t.SampleEncryption.SampleCount == 0 {
                   return true
                }
             }

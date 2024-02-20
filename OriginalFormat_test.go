@@ -7,7 +7,7 @@ import (
    "testing"
 )
 
-func Test_OriginalFormat(t *testing.T) {
+func TestOriginalFormat(t *testing.T) {
    h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
       Level: slog.LevelDebug,
    })

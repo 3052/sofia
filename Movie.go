@@ -41,7 +41,7 @@ func (m *MovieBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("MovieBox.Decode")
       }
    }
 }

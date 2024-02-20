@@ -54,7 +54,7 @@ func (s *SampleDescriptionBox) Decode(r io.Reader) error {
          return err
       }
    default:
-      return errors.New("BoxType")
+      return errors.New("SampleDescriptionBox.Decode")
    }
    return nil
 }

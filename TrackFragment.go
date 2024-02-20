@@ -71,7 +71,7 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
             t.Boxes = append(t.Boxes, b)
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("TrackFragmentBox.Decode")
       }
    }
 }

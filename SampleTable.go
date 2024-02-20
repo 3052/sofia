@@ -41,7 +41,7 @@ func (s *SampleTableBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("SampleTableBox.Decode")
       }
    }
 }

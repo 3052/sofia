@@ -63,7 +63,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("AudioSampleEntry.Decode")
       }
    }
 }
@@ -174,7 +174,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "avcC", "pasp":
+      case "avcC", "btrt", "pasp":
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {
@@ -188,7 +188,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("VisualSampleEntry.Decode")
       }
    }
 }

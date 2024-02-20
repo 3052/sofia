@@ -44,7 +44,7 @@ func (p *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("BoxType")
+         return errors.New("ProtectionSchemeInfoBox.Decode")
       }
    }
 }

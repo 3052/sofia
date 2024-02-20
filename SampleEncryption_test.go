@@ -7,58 +7,13 @@ import (
    "testing"
 )
 
-func TestSampleEncryption(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         dst, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer dst.Close()
-         if err := test.encode_init(dst); err != nil {
-            t.Fatal(err)
-         }
-         if err := test.encode_segment(dst); err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Movie.Boxes {
-      if b.BoxHeader.BoxType() == "pssh" {
-         copy(b.BoxHeader.Type[:], "free") // Firefox
-      }
-   }
-   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
-   if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         as.Entry.BoxHeader.Type[:],
-         as.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         vs.Entry.BoxHeader.Type[:],
-         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   return f.Encode(dst)
-}
-
 var tests = []testdata{
+   {
+      "testdata/mubi-avc1/video=300168.dash",
+      "",
+      "",
+      "",
+   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
@@ -125,6 +80,57 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
+}
+
+func TestSampleEncryption(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         dst, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer dst.Close()
+         if err := test.encode_init(dst); err != nil {
+            t.Fatal(err)
+         }
+         if err := test.encode_segment(dst); err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Movie.Boxes {
+      if b.BoxHeader.BoxType() == "pssh" {
+         copy(b.BoxHeader.Type[:], "free") // Firefox
+      }
+   }
+   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
+   if as := sd.AudioSample; as != nil {
+      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         as.Entry.BoxHeader.Type[:],
+         as.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   if vs := sd.VisualSample; vs != nil {
+      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         vs.Entry.BoxHeader.Type[:],
+         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   return f.Encode(dst)
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {

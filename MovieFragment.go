@@ -41,7 +41,7 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
          }
          m.Boxes = append(m.Boxes, b)
       default:
-         return errors.New("BoxType")
+         return errors.New("MovieFragmentBox.Decode")
       }
    }
 }

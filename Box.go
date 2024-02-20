@@ -33,7 +33,6 @@ func (b BoxHeader) BoxPayload(r io.Reader) io.Reader {
    return io.LimitReader(r, n)
 }
 
-// unsigned int(32) type = boxtype;
 func (b BoxHeader) BoxType() string {
    return string(b.Type[:])
 }
@@ -71,7 +70,6 @@ func (b BoxHeader) Encode(w io.Writer) error {
    return nil
 }
 
-// unsigned int(8)[16] usertype = extended_type;
 func (b BoxHeader) ExtendedType() string {
    return hex.EncodeToString(b.UserType[:])
 }

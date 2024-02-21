@@ -30,7 +30,8 @@ func (p *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "schi", "schm":
+      case "schi", // Roku
+      "schm": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {

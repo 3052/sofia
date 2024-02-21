@@ -27,7 +27,11 @@ func (m *MovieBox) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "iods", "meta", "mvex", "mvhd", "pssh":
+      case "iods", // Roku
+      "meta", // Paramount
+      "mvex", // Roku
+      "mvhd", // Roku
+      "pssh": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {

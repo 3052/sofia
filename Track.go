@@ -27,7 +27,8 @@ func (t *TrackBox) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "edts", "tkhd":
+      case "edts", // Paramount
+      "tkhd": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {

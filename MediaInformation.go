@@ -27,7 +27,9 @@ func (m *MediaInformationBox) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "dinf", "smhd", "vmhd":
+      case "dinf", // Roku
+      "smhd", // Roku
+      "vmhd": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {

@@ -27,19 +27,20 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "traf":
-         m.TrackFragment.BoxHeader = head
-         err := m.TrackFragment.Decode(r)
-         if err != nil {
-            return err
-         }
-      case "mfhd", "pssh":
+      case "mfhd", // Roku
+      "pssh": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {
             return err
          }
          m.Boxes = append(m.Boxes, b)
+      case "traf":
+         m.TrackFragment.BoxHeader = head
+         err := m.TrackFragment.Decode(r)
+         if err != nil {
+            return err
+         }
       default:
          return errors.New("MovieFragmentBox.Decode")
       }

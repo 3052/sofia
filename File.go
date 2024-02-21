@@ -26,7 +26,9 @@ func (f *File) Decode(r io.Reader) error {
       slog.Debug("BoxHeader", "type", head.BoxType())
       r := head.BoxPayload(r)
       switch head.BoxType() {
-      case "free", "ftyp", "styp":
+      case "free", // Mubi
+      "ftyp", // Roku
+      "styp": // Roku
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {

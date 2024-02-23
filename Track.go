@@ -6,15 +6,6 @@ import (
    "log/slog"
 )
 
-// Container: MovieBox
-//  aligned(8) class TrackBox extends Box('trak') {
-//  }
-type TrackBox struct {
-   BoxHeader  BoxHeader
-   Boxes []Box
-   Media MediaBox
-}
-
 func (t *TrackBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -28,7 +19,8 @@ func (t *TrackBox) Decode(r io.Reader) error {
       r := head.BoxPayload(r)
       switch head.BoxType() {
       case "edts", // Paramount
-      "tkhd": // Roku
+      "tkhd", // Roku
+      "udta": // Mubi
          b := Box{BoxHeader: head}
          err := b.Decode(r)
          if err != nil {
@@ -45,6 +37,15 @@ func (t *TrackBox) Decode(r io.Reader) error {
          return errors.New("TrackBox.Decode")
       }
    }
+}
+
+// Container: MovieBox
+//  aligned(8) class TrackBox extends Box('trak') {
+//  }
+type TrackBox struct {
+   BoxHeader  BoxHeader
+   Boxes []Box
+   Media MediaBox
 }
 
 func (t TrackBox) Encode(w io.Writer) error {

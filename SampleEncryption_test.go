@@ -9,6 +9,12 @@ import (
 
 var tests = []testdata{
    {
+      "testdata/mubi-mp4a/audio_eng=128000.dash",
+      "",
+      "",
+      "",
+   },
+   {
       "testdata/mubi-avc1/video=300168.dash",
       "",
       "",

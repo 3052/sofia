@@ -98,26 +98,6 @@ func (s SegmentIndexBox) Encode(w io.Writer) error {
    return nil
 }
 
-func (s SegmentIndexBox) Size() uint32 {
-   v := s.BoxHeader.Size()
-   v += s.FullBoxHeader.Size()
-   v += 4 // reference_ID
-   v += 4 // timescale
-   if s.FullBoxHeader.Version == 0 {
-      v += 4 // earliest_presentation_time
-      v += 4 // first_offset
-   } else {
-      v += 8 // earliest_presentation_time
-      v += 8 // first_offset
-   }
-   v += 2 // reserved
-   v += 2 // reference_count
-   for _, r := range s.Reference {
-      v += r.Size()
-   }
-   return v
-}
-
 // Container: File
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -152,26 +132,12 @@ type SegmentIndexBox struct {
    Reference []Reference
 }
 
-func (s *SegmentIndexBox) Global() {
-   s.BoxHeader.BoxSize = s.Size()
-   copy(s.BoxHeader.Type[:], "sidx")
-   s.ReferenceId = 1
-   s.ReferenceCount = uint16(len(s.Reference))
-}
-
-func (Reference) Size() uint32 {
-   return 3 * 4
-}
-
 type Reference [3]uint32
 
-const referenced_size uint32 = 0xFFFFFFFF>>1
-
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & referenced_size
+func (Reference) Mask() uint32 {
+   return 0xFFFFFFFF>>1
 }
 
-func (r Reference) SetReferencedSize(v uint32) {
-   r[0] &= ^referenced_size
-   r[0] |= v
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.Mask()
 }

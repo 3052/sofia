@@ -50,4 +50,5 @@ func (s *SegmentIndexBox) Global() {
    copy(s.BoxHeader.Type[:], "sidx")
    s.ReferenceId = 1
    s.ReferenceCount = uint16(len(s.Reference))
+   // Reference []Reference
 }

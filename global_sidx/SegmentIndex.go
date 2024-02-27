@@ -2,18 +2,6 @@ package sofia
 
 import "154.pages.dev/sofia"
 
-type SegmentIndexBox struct {
-   BoxHeader sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   ReferenceId uint32
-   Timescale uint32
-   EarliestPresentationTime []byte
-   FirstOffset []byte
-   Reserved uint16
-   ReferenceCount uint16
-   Reference []Reference
-}
-
 func (s SegmentIndexBox) Size() uint32 {
    v := s.BoxHeader.Size()
    v += s.FullBoxHeader.Size()
@@ -34,13 +22,6 @@ func (s SegmentIndexBox) Size() uint32 {
    return v
 }
 
-func (s *SegmentIndexBox) Global() {
-   s.BoxHeader.BoxSize = s.Size()
-   copy(s.BoxHeader.Type[:], "sidx")
-   s.ReferenceId = 1
-   s.ReferenceCount = uint16(len(s.Reference))
-}
-
 type Reference [3]uint32
 
 func (Reference) Size() uint32 {
@@ -50,4 +31,23 @@ func (Reference) Size() uint32 {
 func (r Reference) SetReferencedSize(v uint32) {
    r[0] &= ^sofia.Reference(r).Mask()
    r[0] |= v
+}
+
+type SegmentIndexBox struct {
+   BoxHeader sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   ReferenceId uint32
+   Timescale uint32
+   EarliestPresentationTime []byte
+   FirstOffset []byte
+   Reserved uint16
+   ReferenceCount uint16
+   Reference []Reference
+}
+
+func (s *SegmentIndexBox) Global() {
+   s.BoxHeader.BoxSize = s.Size()
+   copy(s.BoxHeader.Type[:], "sidx")
+   s.ReferenceId = 1
+   s.ReferenceCount = uint16(len(s.Reference))
 }

@@ -12,6 +12,7 @@
  - timeScale: 24000
  - earliestPresentationTime: 0
  - firstOffset: 0
+ - reference[1]: type=0 size=63255 subSegmentDuration=144144 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
 [moof] size=4177
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
@@ -25,6 +26,16 @@
      - baseMediaDecodeTime: 0
     [trun] size=1748 version=0 flags=000e01
      - sampleCount: 144
+     - DataOffset: 4185
+     - sample[1]: size=1060 flags=00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=2002
+     - sample[2]: size=267 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=5005
+     - sample[3]: size=36 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=2002
+     - sample[4]: size=27 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=0
+     - sample[5]: size=15 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=1001
+     - sample[6]: size=161 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=2002
+     - sample[7]: size=251 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=2002
+     - sample[8]: size=360 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=3003
+     - sample[9]: size=17 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=1001
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 144
@@ -34,4 +45,22 @@
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
+     - sample[1]: iv=e9f9dd8cbcbf351e
+       - subSample[1]: nrBytesClear=852 nrBytesProtected=208
+     - sample[2]: iv=e9f9dd8cbcbf351f
+       - subSample[1]: nrBytesClear=11 nrBytesProtected=256
+     - sample[3]: iv=e9f9dd8cbcbf3520
+       - subSample[1]: nrBytesClear=20 nrBytesProtected=16
+     - sample[4]: iv=e9f9dd8cbcbf3521
+       - subSample[1]: nrBytesClear=11 nrBytesProtected=16
+     - sample[5]: iv=e9f9dd8cbcbf3522
+       - subSample[1]: nrBytesClear=15 nrBytesProtected=0
+     - sample[6]: iv=e9f9dd8cbcbf3523
+       - subSample[1]: nrBytesClear=33 nrBytesProtected=128
+     - sample[7]: iv=e9f9dd8cbcbf3524
+       - subSample[1]: nrBytesClear=43 nrBytesProtected=208
+     - sample[8]: iv=e9f9dd8cbcbf3525
+       - subSample[1]: nrBytesClear=24 nrBytesProtected=336
+     - sample[9]: iv=e9f9dd8cbcbf3526
+       - subSample[1]: nrBytesClear=17 nrBytesProtected=0
 [mdat] size=59078

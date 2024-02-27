@@ -1,0 +1,115 @@
+[ftyp] size=24
+ - majorBrand: dash
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: piff
+[moov] size=1449
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [pssh] size=700 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+   - data: 9c0200000100010092023c00570052004d00480045004100440045005200200078006d006c006e0073003d00220068007400740070003a002f002f0073006300680065006d00610073002e006d006900630072006f0073006f00660074002e0063006f006d002f00440052004d002f0032003000300037002f00300033002f0050006c00610079005200650061006400790048006500610064006500720022002000760065007200730069006f006e003d00220034002e0030002e0030002e00300022003e003c0044004100540041003e003c00500052004f00540045004300540049004e0046004f003e003c004b00450059004c0045004e003e00310036003c002f004b00450059004c0045004e003e003c0041004c004700490044003e004100450053004300540052003c002f0041004c004700490044003e003c002f00500052004f00540045004300540049004e0046004f003e003c004b00490044003e007700690032003400490062004c00720057006b00320070002b0047004d006600420048004a006d00550041003d003d003c002f004b00490044003e003c0043004800450043004b00530055004d003e0073004a0034003700700052002f005a0031004b0077003d003c002f0043004800450043004b00530055004d003e003c0043005500530054004f004d0041005400540052004900420055005400450053003e003c002f0043005500530054004f004d0041005400540052004900420055005400450053003e003c004c0041005f00550052004c003e00680074007400700073003a002f002f0070006c00610079002e00680075006c0075002e0063006f006d003c002f004c0041005f00550052004c003e003c002f0044004100540041003e003c002f00570052004d004800450041004400450052003e00
+  [pssh] size=62 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+   - data: 0801121021b82dc2ebb24d5aa9f8631f047266501a0468756c752a024844
+  [trak] size=531
+    [tkhd] size=104 version=1 flags=00000f
+     - trackID: 1
+     - duration: 18446744073709551615
+     - creation time: 0
+     - modification time: 0
+    [mdia] size=419
+      [mdhd] size=44 version=1 flags=000000
+       - timeScale: 10000000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "SoundHandler"
+      [minf] size=322
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=262
+          [stsd] size=186 version=0 flags=000000
+            [enca] size=170
+              [esds] size=54 version=0 flags=000000
+               - maxBitrate: 64000
+               - avgBitrate: 0
+               - decConfig: 131056e598
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: mp4a
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 21b82dc2-ebb2-4d5a-a9f8-631f04726650
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+[sidx] size=6296 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 10000000
+ - earliestPresentationTime: 0
+ - firstOffset: 0
+ - reference[1]: type=0 size=43407 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[2]: type=0 size=43204 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[3]: type=0 size=42967 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[4]: type=0 size=43180 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[5]: type=0 size=42904 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[6]: type=0 size=43081 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[7]: type=0 size=43048 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[8]: type=0 size=43105 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[9]: type=0 size=42975 subSegmentDuration=51200000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+[moof] size=2081
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=2057
+    [tfhd] size=20 version=0 flags=020020
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - defaultSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=984 version=0 flags=000305
+     - sampleCount: 120
+     - DataOffset: 2089
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=426667 size=342
+     - sample[2]: dur=426666 size=341
+     - sample[3]: dur=426667 size=341
+     - sample[4]: dur=426667 size=342
+     - sample[5]: dur=426666 size=341
+     - sample[6]: dur=426667 size=341
+     - sample[7]: dur=426667 size=342
+     - sample[8]: dur=426666 size=341
+     - sample[9]: dur=426667 size=341
+    [uuid] size=992
+     - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
+     - subType: unknown
+     - payload: 00000000000000783c1266f74c27a7733c1266f74c27a7743c1266f74c27a7753c1266f74c27a7763c1266f74c27a7773c1266f74c27a7783c1266f74c27a7793c1266f74c27a77a3c1266f74c27a77b3c1266f74c27a77c3c1266f74c27a77d3c1266f74c27a77e3c1266f74c27a77f3c1266f74c27a7803c1266f74c27a7813c1266f74c27a7823c1266f74c27a7833c1266f74c27a7843c1266f74c27a7853c1266f74c27a7863c1266f74c27a7873c1266f74c27a7883c1266f74c27a7893c1266f74c27a78a3c1266f74c27a78b3c1266f74c27a78c3c1266f74c27a78d3c1266f74c27a78e3c1266f74c27a78f3c1266f74c27a7903c1266f74c27a7913c1266f74c27a7923c1266f74c27a7933c1266f74c27a7943c1266f74c27a7953c1266f74c27a7963c1266f74c27a7973c1266f74c27a7983c1266f74c27a7993c1266f74c27a79a3c1266f74c27a79b3c1266f74c27a79c3c1266f74c27a79d3c1266f74c27a79e3c1266f74c27a79f3c1266f74c27a7a03c1266f74c27a7a13c1266f74c27a7a23c1266f74c27a7a33c1266f74c27a7a43c1266f74c27a7a53c1266f74c27a7a63c1266f74c27a7a73c1266f74c27a7a83c1266f74c27a7a93c1266f74c27a7aa3c1266f74c27a7ab3c1266f74c27a7ac3c1266f74c27a7ad3c1266f74c27a7ae3c1266f74c27a7af3c1266f74c27a7b03c1266f74c27a7b13c1266f74c27a7b23c1266f74c27a7b33c1266f74c27a7b43c1266f74c27a7b53c1266f74c27a7b63c1266f74c27a7b73c1266f74c27a7b83c1266f74c27a7b93c1266f74c27a7ba3c1266f74c27a7bb3c1266f74c27a7bc3c1266f74c27a7bd3c1266f74c27a7be3c1266f74c27a7bf3c1266f74c27a7c03c1266f74c27a7c13c1266f74c27a7c23c1266f74c27a7c33c1266f74c27a7c43c1266f74c27a7c53c1266f74c27a7c63c1266f74c27a7c73c1266f74c27a7c83c1266f74c27a7c93c1266f74c27a7ca3c1266f74c27a7cb3c1266f74c27a7cc3c1266f74c27a7cd3c1266f74c27a7ce3c1266f74c27a7cf3c1266f74c27a7d03c1266f74c27a7d13c1266f74c27a7d23c1266f74c27a7d33c1266f74c27a7d43c1266f74c27a7d53c1266f74c27a7d63c1266f74c27a7d73c1266f74c27a7d83c1266f74c27a7d93c1266f74c27a7da3c1266f74c27a7db3c1266f74c27a7dc3c1266f74c27a7dd3c1266f74c27a7de3c1266f74c27a7df3c1266f74c27a7e03c1266f74c27a7e13c1266f74c27a7e23c1266f74c27a7e33c1266f74c27a7e43c1266f74c27a7e53c1266f74c27a7e63c1266f74c27a7e73c1266f74c27a7e83c1266f74c27a7e93c1266f74c27a7ea
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 120
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=1084
+[mdat] size=41326

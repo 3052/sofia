@@ -7,6 +7,39 @@ import (
 )
 
 // 4.2.2 Object definitions
+//  aligned(8) class Box (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     BoxHeader(boxtype, extended_type);
+//     // the remaining bytes are the BoxPayload
+//  }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload []byte
+}
+
+func (b *Box) Decode(r io.Reader) error {
+   var err error
+   b.Payload, err = io.ReadAll(r)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b Box) Encode(w io.Writer) error {
+   err := b.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   if _, err := w.Write(b.Payload); err != nil {
+      return err
+   }
+   return nil
+}
+
+// 4.2.2 Object definitions
 //  aligned(8) class BoxHeader (
 //     unsigned int(32) boxtype,
 //     optional unsigned int(8)[16] extended_type
@@ -84,36 +117,13 @@ func (b BoxHeader) Size() uint32 {
 }
 
 // 4.2.2 Object definitions
-//  aligned(8) class Box (
-//     unsigned int(32) boxtype,
-//     optional unsigned int(8)[16] extended_type
-//  ) {
-//     BoxHeader(boxtype, extended_type);
-//     // the remaining bytes are the BoxPayload
+//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//     unsigned int(8) version = v;
+//     bit(24) flags = f;
 //  }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload []byte
-}
-
-func (b *Box) Decode(r io.Reader) error {
-   var err error
-   b.Payload, err = io.ReadAll(r)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b Box) Encode(w io.Writer) error {
-   err := b.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   if _, err := w.Write(b.Payload); err != nil {
-      return err
-   }
-   return nil
+type FullBoxHeader struct {
+   Version  uint8
+   RawFlags [3]byte
 }
 
 func (f *FullBoxHeader) Decode(r io.Reader) error {
@@ -128,16 +138,6 @@ func (f FullBoxHeader) Flags() uint32 {
    var b [4]byte
    copy(b[1:], f.RawFlags[:])
    return binary.BigEndian.Uint32(b[:])
-}
-
-// 4.2.2 Object definitions
-//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//     unsigned int(8) version = v;
-//     bit(24) flags = f;
-//  }
-type FullBoxHeader struct {
-   Version  uint8
-   RawFlags [3]byte
 }
 
 func (FullBoxHeader) Size() uint32 {

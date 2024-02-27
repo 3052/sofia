@@ -11,6 +11,7 @@
  - timeScale: 48000
  - earliestPresentationTime: 0
  - firstOffset: 0
+ - reference[1]: type=0 size=98193 subSegmentDuration=288768 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
 [moof] size=3561
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
@@ -25,9 +26,20 @@
      - baseMediaDecodeTime: 0
     [trun] size=1148 version=0 flags=000201
      - sampleCount: 282
+     - DataOffset: 3569
+     - sample[1]: size=335
+     - sample[2]: size=334
+     - sample[3]: size=334
+     - sample[4]: size=335
+     - sample[5]: size=334
+     - sample[6]: size=334
+     - sample[7]: size=335
+     - sample[8]: size=334
+     - sample[9]: size=334
     [sbgp] size=28 version=0 flags=000000
      - groupingType: roll
      - entryCount: 1
+     - entry[1] sampleCount=282 groupDescriptionIndex=1
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 8
      - sampleCount: 282
@@ -37,4 +49,13 @@
     [senc] size=2272 version=0 flags=000000
      - sampleCount: 282
      - perSampleIVSize: 8
+     - sample[1]: iv=0cdd5aab07e1f655
+     - sample[2]: iv=0cdd5aab07e1f656
+     - sample[3]: iv=0cdd5aab07e1f657
+     - sample[4]: iv=0cdd5aab07e1f658
+     - sample[5]: iv=0cdd5aab07e1f659
+     - sample[6]: iv=0cdd5aab07e1f65a
+     - sample[7]: iv=0cdd5aab07e1f65b
+     - sample[8]: iv=0cdd5aab07e1f65c
+     - sample[9]: iv=0cdd5aab07e1f65d
 [mdat] size=94632

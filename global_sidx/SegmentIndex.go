@@ -22,6 +22,22 @@ func (s SegmentIndexBox) Size() uint32 {
    return v
 }
 
+type Reference [3]uint32
+
+func (Reference) Size() uint32 {
+   return 3 * 4
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & sofia.Reference(r).Mask()
+}
+
+func (r Reference) SetReferencedSize(v uint32) {
+   r[0] &= ^sofia.Reference(r).Mask()
+   r[0] |= v
+}
+
 // Container: File
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
@@ -54,22 +70,6 @@ type SegmentIndexBox struct {
    Reserved uint16
    ReferenceCount uint16
    Reference []Reference
-}
-
-type Reference [3]uint32
-
-func (Reference) Size() uint32 {
-   return 3 * 4
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & sofia.Reference(r).Mask()
-}
-
-func (r Reference) SetReferencedSize(v uint32) {
-   r[0] &= ^sofia.Reference(r).Mask()
-   r[0] |= v
 }
 
 // 1. set timescale?

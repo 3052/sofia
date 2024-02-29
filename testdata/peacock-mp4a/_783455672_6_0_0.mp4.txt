@@ -1,0 +1,20 @@
+[styp] size=8+24
+[moof] size=8+4629
+  [mfhd] size=12+4
+    sequence number = 1
+  [traf] size=8+4605
+    [tfhd] size=12+4, flags=20000
+      track ID = 1
+    [tfdt] size=12+8, version=1
+      base media decode time = 0
+    [trun] size=12+2256, flags=301
+      sample count = 281
+      data offset = 4645
+    [saiz] size=12+5
+      default sample info size = 8
+      sample count = 281
+    [saio] size=12+8
+      entry_count = 1
+    [senc] size=12+2252
+      sample info count = 281
+[mdat] size=8+49881

@@ -9,7 +9,7 @@ import (
 
 var tests = []testdata{
    {
-      "testdata/mubi-mp4a/audio_eng=128000.dash",
+      "testdata/mubi-mp4a/audio_eng=268840.dash",
       "",
       "",
       "",

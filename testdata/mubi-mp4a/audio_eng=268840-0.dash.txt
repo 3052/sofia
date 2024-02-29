@@ -1,0 +1,29 @@
+[styp] size=8+20
+[free] size=8+28
+[sidx] size=12+32
+  reference_ID = 1
+  timescale = 48000
+  earliest_presentation_time = 0
+  first_offset = 0
+[moof] size=8+1273
+  [mfhd] size=12+4
+    sequence number = 1
+  [traf] size=8+1249
+    [tfhd] size=12+16, flags=2002a
+      track ID = 1
+      sample description index = 1
+      default sample duration = 1024
+      default sample flags = 2800040
+    [tfdt] size=12+8, version=1
+      base media decode time = 0
+    [trun] size=12+384, flags=201
+      sample count = 94
+      data offset = 1289
+    [saiz] size=12+5
+      default sample info size = 8
+      sample count = 94
+    [saio] size=12+8
+      entry_count = 1
+    [senc] size=12+756
+      sample info count = 94
+[mdat] size=8+68877

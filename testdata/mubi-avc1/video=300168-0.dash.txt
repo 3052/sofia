@@ -1,0 +1,36 @@
+[styp] size=28
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: msdh
+ - compatibleBrand: msix
+[free] size=36
+[sidx] size=44 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 600
+ - earliestPresentationTime: 0
+ - firstOffset: 0
+[moof] size=1309
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=1285
+    [tfhd] size=28 version=0 flags=02002a
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 1
+     - defaultSampleDuration: 25
+     - defaultSampleFlags: 010100c0 (isLeading=0 dependsOn=1 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=192)
+    [tfdt] size=20 version=1 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=408 version=1 flags=000a05
+     - sampleCount: 48
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 16
+     - sampleCount: 48
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=541
+    [senc] size=784 version=0 flags=000002
+     - sampleCount: 48
+     - perSampleIVSize: 8
+[mdat] size=66302

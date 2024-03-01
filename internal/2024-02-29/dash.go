@@ -16,6 +16,95 @@ import (
    "slices"
 )
 
+func encode_init(dst io.Writer, src io.Reader) error {
+   var f sofia.File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for _, b := range f.Movie.Boxes {
+      if b.BoxHeader.BoxType() == "pssh" {
+         copy(b.BoxHeader.Type[:], "free") // Firefox
+      }
+   }
+   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
+   if as := sd.AudioSample; as != nil {
+      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         as.Entry.BoxHeader.Type[:],
+         as.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   if vs := sd.VisualSample; vs != nil {
+      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         vs.Entry.BoxHeader.Type[:],
+         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   return f.Encode(dst)
+}
+
+func encode_segment(dst io.Writer, src io.Reader, key []byte) error {
+   var f sofia.File
+   if err := f.Decode(src); err != nil {
+      return err
+   }
+   for i, data := range f.MediaData.Data {
+      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
+      err := sample.DecryptCenc(data, key)
+      if err != nil {
+         return err
+      }
+   }
+   return f.Encode(dst)
+}
+
+type HttpStream struct {
+   Client_ID string
+   Poster widevine.Poster
+   Private_Key string
+}
+
+////////////
+
+func (h HttpStream) key(rep dash.Representation) ([]byte, error) {
+   var protect widevine.PSSH
+   data, err := rep.PSSH()
+   if err != nil {
+      key_id, err := rep.Default_KID()
+      if err != nil {
+         return nil, err
+      }
+      protect.Key_ID = key_id
+   } else {
+      err := protect.New(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   private_key, err := os.ReadFile(h.Private_Key)
+   if err != nil {
+      return nil, err
+   }
+   client_id, err := os.ReadFile(h.Client_ID)
+   if err != nil {
+      return nil, err
+   }
+   module, err := protect.CDM(private_key, client_id)
+   if err != nil {
+      return nil, err
+   }
+   license, err := module.License(h.Poster)
+   if err != nil {
+      return nil, err
+   }
+   key, ok := module.Key(license)
+   if !ok {
+      return nil, errors.New("widevine.CDM.Key")
+   }
+   return key, nil
+}
+
 func (h HttpStream) segment_template(
    ext, initialization string, rep dash.Representation,
 ) error {
@@ -69,93 +158,4 @@ func (h HttpStream) segment_template(
       }
    }
    return nil
-}
-
-func (h HttpStream) key(rep dash.Representation) ([]byte, error) {
-   var protect widevine.PSSH
-   data, err := rep.PSSH()
-   if err != nil {
-      key_id, err := rep.Default_KID()
-      if err != nil {
-         return nil, err
-      }
-      protect.Key_ID = key_id
-   } else {
-      err := protect.New(data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   private_key, err := os.ReadFile(h.Private_Key)
-   if err != nil {
-      return nil, err
-   }
-   client_id, err := os.ReadFile(h.Client_ID)
-   if err != nil {
-      return nil, err
-   }
-   module, err := protect.CDM(private_key, client_id)
-   if err != nil {
-      return nil, err
-   }
-   license, err := module.License(h.Poster)
-   if err != nil {
-      return nil, err
-   }
-   key, ok := module.Key(license)
-   if !ok {
-      return nil, errors.New("widevine.CDM.Key")
-   }
-   return key, nil
-}
-
-func encode_init(dst io.Writer, src io.Reader) error {
-   var f sofia.File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for _, b := range f.Movie.Boxes {
-      if b.BoxHeader.BoxType() == "pssh" {
-         copy(b.BoxHeader.Type[:], "free") // Firefox
-      }
-   }
-   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
-   if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         as.Entry.BoxHeader.Type[:],
-         as.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         vs.Entry.BoxHeader.Type[:],
-         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   return f.Encode(dst)
-}
-
-func encode_segment(dst io.Writer, src io.Reader, key []byte) error {
-   var f sofia.File
-   if err := f.Decode(src); err != nil {
-      return err
-   }
-   for i, data := range f.MediaData.Data {
-      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
-      err := sample.DecryptCenc(data, key)
-      if err != nil {
-         return err
-      }
-   }
-   return f.Encode(dst)
-}
-
-// wikipedia.org/wiki/Dynamic_Adaptive_Streaming_over_HTTP
-type HttpStream struct {
-   Client_ID string
-   Poster widevine.Poster
-   Private_Key string
-   base *url.URL
 }

@@ -7,34 +7,6 @@ import (
    "io"
 )
 
-type EncryptionSample struct {
-   InitializationVector uint64
-   SubsampleCount      uint16
-   Subsamples           []Subsample
-}
-
-func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
-   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.SencUseSubsamples() {
-      err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      e.Subsamples = make([]Subsample, e.SubsampleCount)
-      for i, sample := range e.Subsamples {
-         err := sample.Decode(r)
-         if err != nil {
-            return err
-         }
-         e.Subsamples[i] = sample
-      }
-   }
-   return nil
-}
-
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
 func (e EncryptionSample) DecryptCenc(sample, key []byte) error {
    block, err := aes.NewCipher(key)
@@ -59,6 +31,34 @@ func (e EncryptionSample) DecryptCenc(sample, key []byte) error {
       }
    } else {
       stream.XORKeyStream(sample, sample)
+   }
+   return nil
+}
+
+type EncryptionSample struct {
+   InitializationVector uint64
+   SubsampleCount      uint16
+   Subsamples           []Subsample
+}
+
+func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
+   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if b.SencUseSubsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      e.Subsamples = make([]Subsample, e.SubsampleCount)
+      for i, sample := range e.Subsamples {
+         err := sample.Decode(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples[i] = sample
+      }
    }
    return nil
 }

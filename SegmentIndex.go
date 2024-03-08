@@ -5,6 +5,24 @@ import (
    "io"
 )
 
+type Range struct {
+   Start uint64
+   End uint64
+}
+
+// size will always fit inside 31 bits:
+// unsigned int(31) referenced_size
+// but range-start and range-end can both exceed 32 bits, so we must use 64 bit
+func (s SegmentIndexBox) Ranges(start uint64) []Range {
+   ranges := make([]Range, s.ReferenceCount)
+   for i, ref := range s.Reference {
+      size := uint64(ref.ReferencedSize())
+      ranges[i] = Range{start, start + size - 1}
+      start += size
+   }
+   return ranges
+}
+
 func (r *Reference) Decode(src io.Reader) error {
    return binary.Read(src, binary.BigEndian, r)
 }
@@ -171,15 +189,4 @@ func (s SegmentIndexBox) Size() uint32 {
       v += r.Size()
    }
    return v
-}
-
-// return a slice so we can measure progress
-func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
-   ranges := make([][2]uint32, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := ref.ReferencedSize()
-      ranges[i] = [2]uint32{start, start + size - 1}
-      start += size
-   }
-   return ranges
 }

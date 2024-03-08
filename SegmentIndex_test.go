@@ -6,12 +6,6 @@ import (
    "testing"
 )
 
-func TestGlobal(t *testing.T) {
-   for i := 1; i <= 915; i++ {
-      fmt.Printf("seg_%v.m4s\n", i)
-   }
-}
-
 func TestByteRanges(t *testing.T) {
    media, err := os.Open("testdata/hulu-video/init.mp4")
    if err != nil {
@@ -22,7 +16,7 @@ func TestByteRanges(t *testing.T) {
    if err := f.Decode(media); err != nil {
       t.Fatal(err)
    }
-   for _, byte_range := range f.SegmentIndex.ByteRanges(0) {
+   for _, byte_range := range f.SegmentIndex.Ranges(0) {
       fmt.Println(byte_range)
    }
 }

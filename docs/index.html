@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.1.7 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.2.0 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -119,6 +119,12 @@
           </ul>
       </li>
   <li>
+      <a href="#Range">type Range</a>
+      <ul>
+          <li><a href="#Range.String">func (r Range) String() string</a></li>
+          </ul>
+      </li>
+  <li>
       <a href="#Reference">type Reference</a>
       <ul>
           <li><a href="#Reference.Decode">func (r *Reference) Decode(src io.Reader) error</a></li>
@@ -160,10 +166,11 @@
   <li>
       <a href="#SegmentIndexBox">type SegmentIndexBox</a>
       <ul>
-          <li><a href="#SegmentIndexBox.ByteRanges">func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32</a></li>
+          <li><a href="#SegmentIndexBox.Append">func (s *SegmentIndexBox) Append(size uint32)</a></li>
           <li><a href="#SegmentIndexBox.Decode">func (s *SegmentIndexBox) Decode(r io.Reader) error</a></li>
           <li><a href="#SegmentIndexBox.Encode">func (s SegmentIndexBox) Encode(w io.Writer) error</a></li>
-          <li><a href="#SegmentIndexBox.Global">func (s *SegmentIndexBox) Global()</a></li>
+          <li><a href="#SegmentIndexBox.New">func (s *SegmentIndexBox) New()</a></li>
+          <li><a href="#SegmentIndexBox.Ranges">func (s SegmentIndexBox) Ranges(start uint64) []Range</a></li>
           <li><a href="#SegmentIndexBox.Size">func (s SegmentIndexBox) Size() uint32</a></li>
           </ul>
       </li>
@@ -446,6 +453,13 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><a href="#ProtectionSchemeInfoBox"><span class="nx">ProtectionSchemeInfoBox</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="ProtectionSchemeInfoBox.Encode">func (ProtectionSchemeInfoBox) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <a href="#ProtectionSchemeInfoBox"><span class="nx">ProtectionSchemeInfoBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h3 id="Range">type Range</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">Range</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="Range.Start"><span class="nx">Start</span></span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
+	<span id="Range.End"><span class="nx">End</span></span>   <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
+<span class="p">}</span></pre>
+    <h4 id="Range.String">func (Range) String</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Range"><span class="nx">Range</span></a><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
   <h3 id="Reference">type Reference</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Reference</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
     <h4 id="Reference.Decode">func (*Reference) Decode</h4>
@@ -454,7 +468,8 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="Reference.ReferencedSize">func (Reference) ReferencedSize</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">ReferencedSize</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
-  <h4 id="Reference.SetReferencedSize">func (Reference) SetReferencedSize</h4>
+  <p>this is the size of the fragment, typically `moof` + `mdat`
+<h4 id="Reference.SetReferencedSize">func (Reference) SetReferencedSize</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">SetReferencedSize</span><span class="p">(</span><span class="nx">v</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
   <h4 id="Reference.Size">func (Reference) Size</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
@@ -579,16 +594,20 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
    }
 }
 </pre>
-<h4 id="SegmentIndexBox.ByteRanges">func (SegmentIndexBox) ByteRanges</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">ByteRanges</span><span class="p">(</span><span class="nx">start</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span> <span class="p">[][</span><span class="mi">2</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
-  <p>return a slice so we can measure progress
-<h4 id="SegmentIndexBox.Decode">func (*SegmentIndexBox) Decode</h4>
+<h4 id="SegmentIndexBox.Append">func (*SegmentIndexBox) Append</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Append</span><span class="p">(</span><span class="nx">size</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
+  <h4 id="SegmentIndexBox.Decode">func (*SegmentIndexBox) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h4 id="SegmentIndexBox.Encode">func (SegmentIndexBox) Encode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="SegmentIndexBox.Global">func (*SegmentIndexBox) Global</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Global</span><span class="p">()</span></pre>
-  <h4 id="SegmentIndexBox.Size">func (SegmentIndexBox) Size</h4>
+  <h4 id="SegmentIndexBox.New">func (*SegmentIndexBox) New</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">New</span><span class="p">()</span></pre>
+  <h4 id="SegmentIndexBox.Ranges">func (SegmentIndexBox) Ranges</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Ranges</span><span class="p">(</span><span class="nx">start</span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a><span class="p">)</span> <span class="p">[]</span><a href="#Range"><span class="nx">Range</span></a></pre>
+  <p>size will always fit inside 31 bits:
+unsigned int(31) referenced_size
+but range-start and range-end can both exceed 32 bits, so we must use 64 bit
+<h4 id="SegmentIndexBox.Size">func (SegmentIndexBox) Size</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SegmentIndexBox"><span class="nx">SegmentIndexBox</span></a><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
   <h3 id="Subsample">type Subsample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Subsample</span> <span class="kd">struct</span> <span class="p">{</span>

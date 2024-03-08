@@ -5,8 +5,6 @@ import (
    "io"
 )
 
-type Reference [3]uint32
-
 func (r *Reference) Decode(src io.Reader) error {
    return binary.Read(src, binary.BigEndian, r)
 }
@@ -18,6 +16,8 @@ func (r Reference) Encode(dst io.Writer) error {
 func (Reference) mask() uint32 {
    return 0xFFFFFFFF>>1
 }
+
+type Reference [3]uint32
 
 // this is the size of the fragment, typically `moof` + `mdat`
 func (r Reference) ReferencedSize() uint32 {
@@ -73,17 +73,6 @@ func (s *SegmentIndexBox) Append(size uint32) {
    s.Reference = append(s.Reference, r)
    s.ReferenceCount++
    s.BoxHeader.BoxSize = s.Size()
-}
-
-// return a slice so we can measure progress
-func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
-   ranges := make([][2]uint32, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := ref.ReferencedSize()
-      ranges[i] = [2]uint32{start, start + size - 1}
-      start += size
-   }
-   return ranges
 }
 
 func (s *SegmentIndexBox) Decode(r io.Reader) error {
@@ -182,4 +171,15 @@ func (s SegmentIndexBox) Size() uint32 {
       v += r.Size()
    }
    return v
+}
+
+// return a slice so we can measure progress
+func (s SegmentIndexBox) ByteRanges(start uint32) [][2]uint32 {
+   ranges := make([][2]uint32, s.ReferenceCount)
+   for i, ref := range s.Reference {
+      size := ref.ReferencedSize()
+      ranges[i] = [2]uint32{start, start + size - 1}
+      start += size
+   }
+   return ranges
 }

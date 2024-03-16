@@ -11,33 +11,29 @@ type MediaDataBox struct {
    Data [][]byte
 }
 
-func (b *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
-   b.Data = make([][]byte, t.SampleCount)
-   for i := range b.Data {
-      var (
-         data []byte
-         err error
-      )
+func (m *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
+   m.Data = make([][]byte, t.SampleCount)
+   for i := range m.Data {
+      var err error
       if size := t.Sample[i].Size; size >= 1 {
-         data = make([]byte, size)
-         _, err = io.ReadFull(r, data)
+         m.Data[i] = make([]byte, size)
+         _, err = io.ReadFull(r, m.Data[i])
       } else {
-         data, err = io.ReadAll(r)
+         m.Data[i], err = io.ReadAll(r)
       }
       if err != nil {
          return err
       }
-      b.Data[i] = data
    }
    return nil
 }
 
-func (b MediaDataBox) Encode(w io.Writer) error {
-   err := b.BoxHeader.Encode(w)
+func (m MediaDataBox) Encode(w io.Writer) error {
+   err := m.BoxHeader.Encode(w)
    if err != nil {
       return err
    }
-   for _, data := range b.Data {
+   for _, data := range m.Data {
       _, err := w.Write(data)
       if err != nil {
          return err

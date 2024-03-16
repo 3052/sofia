@@ -1,4 +1,6 @@
-# TTML (stpp)
+# timed text
+
+## TTML
 
 <https://wikipedia.org/wiki/Timed_Text_Markup_Language>
 
@@ -8,20 +10,6 @@
 - https://ffmpeg.org/ffmpeg-all.html#Subtitle-Formats
 - https://w3.org/TR/webvtt1
 - https://wikipedia.org/wiki/WebVTT
-
-## prior art
-
-go.sum 0 LOC:
-
-https://github.com/zmalltalker/ttml2vtt
-
-go.sum 2 LOC:
-
-https://github.com/wargarblgarbl/libgosubs
-
-go.sum 28 LOC:
-
-https://github.com/asticode/go-astisub
 
 ## VLC
 
@@ -64,3 +52,9 @@ https://github.com/clsid2/mpc-hc/issues/2665
 MPV is based on FFmpeg
 
 https://github.com/mpv-player/mpv/issues/7573
+
+## prior art
+
+- https://github.com/asticode/go-astisub
+- https://github.com/wargarblgarbl/libgosubs/issues/11
+- https://github.com/zmalltalker/ttml2vtt/issues/2

@@ -3,15 +3,20 @@ package text
 import (
    "154.pages.dev/sofia"
    "errors"
+   "html"
    "io"
    "encoding/xml"
    "strings"
 )
 
-type Paragraph struct {
-   Begin  string `xml:"begin,attr"`
-   End    string `xml:"end,attr"`
-   Text   string `xml:",innerxml"`
+const WebVtt = "WEBVTT"
+
+type Markup struct {
+   Body struct {
+      Div  struct {
+         P []Paragraph `xml:"p"`
+      } `xml:"div"`
+   } `xml:"body"`
 }
 
 func (m *Markup) Decode(r io.Reader) error {
@@ -26,7 +31,15 @@ func (m *Markup) Decode(r io.Reader) error {
    return xml.Unmarshal(file.MediaData.Data[0], m)
 }
 
+type Paragraph struct {
+   Begin  string `xml:"begin,attr"`
+   End    string `xml:"end,attr"`
+   Text   string `xml:",innerxml"`
+}
+
 func (p Paragraph) String() string {
+   p.Text = html.UnescapeString(p.Text)
+   p.Text = strings.ReplaceAll(p.Text, "<br />", "\n")
    var b strings.Builder
    b.WriteByte('\n')
    b.WriteString(p.Begin)
@@ -36,13 +49,3 @@ func (p Paragraph) String() string {
    b.WriteString(p.Text)
    return b.String()
 }
-
-type Markup struct {
-   Body struct {
-      Div  struct {
-         P []Paragraph `xml:"p"`
-      } `xml:"div"`
-   } `xml:"body"`
-}
-
-const WebVtt = "WEBVTT"

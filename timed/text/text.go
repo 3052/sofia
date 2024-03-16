@@ -8,6 +8,12 @@ import (
    "strings"
 )
 
+type Paragraph struct {
+   Begin  string `xml:"begin,attr"`
+   End    string `xml:"end,attr"`
+   Text   string `xml:",innerxml"`
+}
+
 func (m *Markup) Decode(r io.Reader) error {
    var file sofia.File
    err := file.Decode(r)
@@ -37,12 +43,6 @@ type Markup struct {
          P []Paragraph `xml:"p"`
       } `xml:"div"`
    } `xml:"body"`
-}
-
-type Paragraph struct {
-   Begin  string `xml:"begin,attr"`
-   End    string `xml:"end,attr"`
-   Text   string `xml:",chardata"`
 }
 
 const WebVtt = "WEBVTT"

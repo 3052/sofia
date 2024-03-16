@@ -15,8 +15,9 @@
   </head>
   <body>
     <div xml:lang="en">
-      <p begin="00:01:08.000" end="00:01:09.642" region="speaker">Sorry to interrupt your dinner.</p>
-      <p begin="00:01:09.666" end="00:01:10.000" region="speaker">Never mind, let's sit over there.</p>
+      <p begin="00:19:34.000" end="00:19:34.017" region="speaker">And Mrs. Ho says she's<br/>ready to cut her birthday cake.</p>
+      <p begin="00:19:34.041" end="00:19:35.308" region="speaker">She wants you to hurry home.</p>
+      <p begin="00:19:35.332" end="00:19:36.000" region="speaker">- Did you get me something to give her?<br/>- Yes, this.</p>
     </div>
   </body>
 </tt>

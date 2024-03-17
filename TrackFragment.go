@@ -6,17 +6,17 @@ import (
    "log/slog"
 )
 
-// Container: MovieFragmentBox
+// ISO/IEC 14496-12
 //  aligned(8) class TrackFragmentBox extends Box('traf') {
 //  }
-type TrackFragmentBox struct {
+type TrackFragment struct {
    BoxHeader BoxHeader
    Boxes  []Box
-   TrackRun   TrackRunBox
-   SampleEncryption   SampleEncryptionBox
+   TrackRun   TrackRun
+   SampleEncryption   SampleEncryption
 }
 
-func (t *TrackFragmentBox) Decode(r io.Reader) error {
+func (t *TrackFragment) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -76,12 +76,12 @@ func (t *TrackFragmentBox) Decode(r io.Reader) error {
             t.Boxes = append(t.Boxes, b)
          }
       default:
-         return errors.New("TrackFragmentBox.Decode")
+         return errors.New("TrackFragment.Decode")
       }
    }
 }
 
-func (t TrackFragmentBox) Encode(w io.Writer) error {
+func (t TrackFragment) Encode(w io.Writer) error {
    err := t.BoxHeader.Encode(w)
    if err != nil {
       return err

@@ -6,19 +6,19 @@ import (
    "log/slog"
 )
 
-// Container: Protected Sample Entry
+// ISO/IEC 14496-12
 //  aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
 //     OriginalFormatBox(fmt) original_format;
 //     SchemeTypeBox scheme_type_box; // optional
 //     SchemeInformationBox info; // optional
 //  }
-type ProtectionSchemeInfoBox struct {
+type ProtectionSchemeInfo struct {
    BoxHeader BoxHeader
    Boxes []Box
-   OriginalFormat OriginalFormatBox
+   OriginalFormat OriginalFormat
 }
 
-func (p *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
+func (p *ProtectionSchemeInfo) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -45,12 +45,12 @@ func (p *ProtectionSchemeInfoBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("ProtectionSchemeInfoBox.Decode")
+         return errors.New("ProtectionSchemeInfo.Decode")
       }
    }
 }
 
-func (p ProtectionSchemeInfoBox) Encode(w io.Writer) error {
+func (p ProtectionSchemeInfo) Encode(w io.Writer) error {
    err := p.BoxHeader.Encode(w)
    if err != nil {
       return err

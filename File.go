@@ -6,12 +6,13 @@ import (
    "log/slog"
 )
 
+// ISO/IEC 14496-12
 type File struct {
    Boxes []Box
-   MediaData *MediaDataBox
-   Movie *MovieBox
-   MovieFragment *MovieFragmentBox
-   SegmentIndex *SegmentIndexBox
+   MediaData *MediaData
+   Movie *Movie
+   MovieFragment *MovieFragment
+   SegmentIndex *SegmentIndex
 }
 
 func (f *File) Decode(r io.Reader) error {
@@ -36,25 +37,25 @@ func (f *File) Decode(r io.Reader) error {
          }
          f.Boxes = append(f.Boxes, b)
       case "mdat":
-         f.MediaData = &MediaDataBox{BoxHeader: head}
+         f.MediaData = &MediaData{BoxHeader: head}
          err := f.MediaData.Decode(r, f.MovieFragment.TrackFragment.TrackRun)
          if err != nil {
             return err
          }
       case "moof":
-         f.MovieFragment = &MovieFragmentBox{BoxHeader: head}
+         f.MovieFragment = &MovieFragment{BoxHeader: head}
          err := f.MovieFragment.Decode(r)
          if err != nil {
             return err
          }
       case "moov":
-         f.Movie = &MovieBox{BoxHeader: head}
+         f.Movie = &Movie{BoxHeader: head}
          err := f.Movie.Decode(r)
          if err != nil {
             return err
          }
       case "sidx":
-         f.SegmentIndex = &SegmentIndexBox{BoxHeader: head}
+         f.SegmentIndex = &SegmentIndex{BoxHeader: head}
          err := f.SegmentIndex.Decode(r)
          if err != nil {
             return err

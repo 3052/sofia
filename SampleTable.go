@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// Container: MediaInformationBox
+// ISO/IEC 14496-12
 //  aligned(8) class SampleTableBox extends Box('stbl') {
 //  }
-type SampleTableBox struct {
+type SampleTable struct {
    BoxHeader  BoxHeader
    Boxes []Box
-   SampleDescription SampleDescriptionBox
+   SampleDescription SampleDescription
 }
 
-func (s *SampleTableBox) Decode(r io.Reader) error {
+func (s *SampleTable) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -45,12 +45,12 @@ func (s *SampleTableBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("SampleTableBox.Decode")
+         return errors.New("SampleTable.Decode")
       }
    }
 }
 
-func (s SampleTableBox) Encode(w io.Writer) error {
+func (s SampleTable) Encode(w io.Writer) error {
    err := s.BoxHeader.Encode(w)
    if err != nil {
       return err

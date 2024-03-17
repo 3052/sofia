@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// Container: TrackBox
+// ISO/IEC 14496-12
 //  aligned(8) class MediaBox extends Box('mdia') {
 //  }
-type MediaBox struct {
+type Media struct {
    BoxHeader  BoxHeader
    Boxes []Box
-   MediaInformation MediaInformationBox
+   MediaInformation MediaInformation
 }
 
-func (m *MediaBox) Decode(r io.Reader) error {
+func (m *Media) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -42,12 +42,12 @@ func (m *MediaBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("MediaBox.Decode")
+         return errors.New("Media.Decode")
       }
    }
 }
 
-func (m MediaBox) Encode(w io.Writer) error {
+func (m Media) Encode(w io.Writer) error {
    err := m.BoxHeader.Encode(w)
    if err != nil {
       return err

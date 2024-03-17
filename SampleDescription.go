@@ -41,14 +41,14 @@ func (s *SampleDescription) Decode(r io.Reader) error {
    switch head.BoxType() {
    case "enca":
       s.AudioSample = new(AudioSampleEntry)
-      s.AudioSample.Entry.BoxHeader = head
+      s.AudioSample.SampleEntry.BoxHeader = head
       err := s.AudioSample.Decode(r)
       if err != nil {
          return err
       }
    case "encv":
       s.VisualSample = new(VisualSampleEntry)
-      s.VisualSample.Entry.BoxHeader = head
+      s.VisualSample.SampleEntry.BoxHeader = head
       err := s.VisualSample.Decode(r)
       if err != nil {
          return err

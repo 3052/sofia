@@ -12,8 +12,8 @@ import (
 type TrackFragment struct {
    BoxHeader BoxHeader
    Boxes  []Box
-   TrackRun   TrackRun
    SampleEncryption   SampleEncryption
+   TrackRun   TrackRun
 }
 
 func (t *TrackFragment) Decode(r io.Reader) error {
@@ -40,12 +40,6 @@ func (t *TrackFragment) Decode(r io.Reader) error {
             return err
          }
          t.Boxes = append(t.Boxes, b)
-      case "trun":
-         t.TrackRun.BoxHeader = head
-         err := t.TrackRun.Decode(r)
-         if err != nil {
-            return err
-         }
       case "senc":
          t.SampleEncryption.BoxHeader = head
          err := t.SampleEncryption.Decode(r)
@@ -74,6 +68,12 @@ func (t *TrackFragment) Decode(r io.Reader) error {
                return err
             }
             t.Boxes = append(t.Boxes, b)
+         }
+      case "trun":
+         t.TrackRun.BoxHeader = head
+         err := t.TrackRun.Decode(r)
+         if err != nil {
+            return err
          }
       default:
          return errors.New("TrackFragment.Decode")

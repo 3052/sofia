@@ -15,20 +15,6 @@ type Track struct {
    Media Media
 }
 
-func (t Track) Encode(w io.Writer) error {
-   err := t.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return t.Media.Encode(w)
-}
-
 func (t *Track) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -60,4 +46,18 @@ func (t *Track) Decode(r io.Reader) error {
          return errors.New("Track.Decode")
       }
    }
+}
+
+func (t Track) Encode(w io.Writer) error {
+   err := t.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return t.Media.Encode(w)
 }

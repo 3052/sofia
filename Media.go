@@ -24,9 +24,10 @@ func (m *Media) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.BoxType())
-      r := head.BoxPayload(r)
-      switch head.BoxType() {
+      box_type := head.GetType()
+      r := head.Payload(r)
+      slog.Debug("BoxHeader", "Type", box_type)
+      switch box_type {
       case "hdlr", // Roku
       "mdhd": // Roku
          b := Box{BoxHeader: head}

@@ -125,14 +125,14 @@ func (t testdata) encode_init(dst io.Writer) error {
    if as := sd.AudioSample; as != nil {
       copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
       copy(
-         as.Entry.BoxHeader.Type[:],
+         as.SampleEntry.BoxHeader.Type[:],
          as.ProtectionScheme.OriginalFormat.DataFormat[:],
       ) // Firefox
    }
    if vs := sd.VisualSample; vs != nil {
       copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
       copy(
-         vs.Entry.BoxHeader.Type[:],
+         vs.SampleEntry.BoxHeader.Type[:],
          vs.ProtectionScheme.OriginalFormat.DataFormat[:],
       ) // Firefox
    }

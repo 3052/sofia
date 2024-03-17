@@ -6,6 +6,28 @@ import (
    "log/slog"
 )
 
+// Container: MovieBox
+//  aligned(8) class TrackBox extends Box('trak') {
+//  }
+type TrackBox struct {
+   BoxHeader  BoxHeader
+   Boxes []Box
+   Media MediaBox
+}
+
+func (t TrackBox) Encode(w io.Writer) error {
+   err := t.BoxHeader.Encode(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.Encode(w)
+      if err != nil {
+         return err
+      }
+   }
+   return t.Media.Encode(w)
+}
 func (t *TrackBox) Decode(r io.Reader) error {
    for {
       var head BoxHeader
@@ -37,27 +59,4 @@ func (t *TrackBox) Decode(r io.Reader) error {
          return errors.New("TrackBox.Decode")
       }
    }
-}
-
-// Container: MovieBox
-//  aligned(8) class TrackBox extends Box('trak') {
-//  }
-type TrackBox struct {
-   BoxHeader  BoxHeader
-   Boxes []Box
-   Media MediaBox
-}
-
-func (t TrackBox) Encode(w io.Writer) error {
-   err := t.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return t.Media.Encode(w)
 }

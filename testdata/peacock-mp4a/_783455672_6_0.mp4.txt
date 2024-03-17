@@ -1,86 +1,66 @@
-[ftyp] size=8+12
-  major_brand = iso6
-  minor_version = 0
-  compatible_brand = cmfc
-[moov] size=8+1570
-  [mvhd] size=12+96
-    timescale = 1000
-    duration = 0
-    duration(ms) = 0
-  [trak] size=8+492
-    [tkhd] size=12+80, flags=7
-      enabled = 1
-      id = 1
-      duration = 0
-      width = 0.000000
-      height = 0.000000
-    [mdia] size=8+392
-      [mdhd] size=12+20
-        timescale = 48000
-        duration = 0
-        duration(ms) = 0
-        language = eng
-      [hdlr] size=12+41
-        handler_type = soun
-        handler_name = Bento4 Sound Handler
-      [minf] size=8+299
-        [smhd] size=12+4
-          balance = 0
-        [dinf] size=8+28
-          [dref] size=12+16
-            [url ] size=12+0, flags=1
-              location = [local to file]
-        [stbl] size=8+239
-          [stsd] size=12+159
-            entry_count = 1
-            [enca] size=8+147
-              data_reference_index = 1
-              channel_count = 2
-              sample_size = 16
-              sample_rate = 48000
-              [esds] size=12+27
-                [ESDescriptor] size=2+25
-                  es_id = 0
-                  stream_priority = 0
-                  [DecoderConfig] size=2+17
-                    stream_type = 5
-                    object_type = 64
-                    up_stream = 0
-                    buffer_size = 0
-                    max_bitrate = 96410
-                    avg_bitrate = 96410
-                    DecoderSpecificInfo = 11 90 
-                  [Descriptor:06] size=2+1
-              [sinf] size=8+72
-                [frma] size=8+4
-                  original_format = mp4a
-                [schm] size=12+8
-                  scheme_type = cenc
-                  scheme_version = 65536
-                [schi] size=8+32
-                  [tenc] size=12+20
-                    default_isProtected = 1
-                    default_Per_Sample_IV_Size = 8
-                    default_KID = [00 16 b5 12 b4 9f 7e c6 c1 a2 48 b7 95 71 06 e6]
-          [stts] size=12+4
-            entry_count = 0
-          [stsc] size=12+4
-            entry_count = 0
-          [stsz] size=12+8
-            sample_size = 0
-            sample_count = 0
-          [stco] size=12+4
-            entry_count = 0
-  [mvex] size=8+32
-    [trex] size=12+20
-      track id = 1
-      default sample description index = 1
-      default sample duration = 0
-      default sample size = 0
-      default sample flags = 0
-  [pssh] size=12+44
-    system_id = [ed ef 8b a9 79 d6 4a ce a3 c8 27 dc d5 1d 21 ed]
-    data_size = 24
-  [pssh] size=12+854
-    system_id = [9a 04 f0 79 98 40 42 86 ab 92 e6 5b e0 88 5f 95]
-    data_size = 834
+[ftyp] size=20
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: cmfc
+[moov] size=1578
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=500
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+    [mdia] size=400
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 48000
+       - creation time: 0
+       - modification time: 0
+       - language: eng
+      [hdlr] size=53 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "Bento4 Sound Handler"
+      [minf] size=307
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=247
+          [stsd] size=171 version=0 flags=000000
+            [enca] size=155
+              [esds] size=39 version=0 flags=000000
+               - maxBitrate: 96410
+               - avgBitrate: 96410
+               - decConfig: 1190
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: mp4a
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 0016b512-b49f-7ec6-c1a2-48b7957106e6
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=56 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+   - data: 12100016b512b49f7ec6c1a248b7957106e648e3dc959b06
+  [pssh] size=866 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+   - data: 420300000100010038033c00570052004d00480045004100440045005200200078006d006c006e0073003d00220068007400740070003a002f002f0073006300680065006d00610073002e006d006900630072006f0073006f00660074002e0063006f006d002f00440052004d002f0032003000300037002f00300033002f0050006c00610079005200650061006400790048006500610064006500720022002000760065007200730069006f006e003d00220034002e0030002e0030002e00300022003e003c0044004100540041003e003c00500052004f00540045004300540049004e0046004f003e003c004b00450059004c0045004e003e00310036003c002f004b00450059004c0045004e003e003c0041004c004700490044003e004100450053004300540052003c002f0041004c004700490044003e003c002f00500052004f00540045004300540049004e0046004f003e003c004c0041005f00550052004c003e0068007400740070003a002f002f006c00690063002e0070006500610063006f0063006b00740076002e0063006f006d002f0050006c0061007900520065006100640079004c006900630065006e007300650072002f007200690067006800740073006d0061006e0061006700650072002e00610073006d0078003c002f004c0041005f00550052004c003e003c004c00550049005f00550052004c003e0068007400740070003a002f002f006c00690063002e0070006500610063006f0063006b00740076002e0063006f006d002f0050006c0061007900520065006100640079004c006900630065006e007300650072002f007200690067006800740073006d0061006e0061006700650072002e00610073006d0078003c002f004c00550049005f00550052004c003e003c004b00490044003e00450072005500570041004a002b00300078006e00370042006f006b00690033006c00580045004700350067003d003d003c002f004b00490044003e003c0043004800450043004b00530055004d003e0044007a0054007800790052006200760030004f0045003d003c002f0043004800450043004b00530055004d003e003c002f0044004100540041003e003c002f00570052004d004800450041004400450052003e00

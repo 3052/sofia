@@ -6,61 +6,7 @@ import (
    "strconv"
 )
 
-func (r Range) String() string {
-   b := []byte("bytes=")
-   b = strconv.AppendUint(b, r.Start, 10)
-   b = append(b, '-')
-   b = strconv.AppendUint(b, r.End, 10)
-   return string(b)
-}
-
-type Range struct {
-   Start uint64
-   End uint64
-}
-
-// size will always fit inside 31 bits:
-// unsigned int(31) referenced_size
-// but range-start and range-end can both exceed 32 bits, so we must use 64 bit
-func (s SegmentIndexBox) Ranges(start uint64) []Range {
-   ranges := make([]Range, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := uint64(ref.ReferencedSize())
-      ranges[i] = Range{start, start + size - 1}
-      start += size
-   }
-   return ranges
-}
-
-func (r *Reference) Decode(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) Encode(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
-func (Reference) mask() uint32 {
-   return 0xFFFFFFFF>>1
-}
-
-type Reference [3]uint32
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
-}
-
-func (r Reference) SetReferencedSize(v uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= v
-}
-
-func (Reference) Size() uint32 {
-   return 3 * 4
-}
-
-// Container: File
+// ISO/IEC 14496-12
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //     unsigned int(32) reference_ID;
 //     unsigned int(32) timescale;
@@ -82,7 +28,7 @@ func (Reference) Size() uint32 {
 //        unsigned int(28) SAP_delta_time;
 //     }
 //  }
-type SegmentIndexBox struct {
+type SegmentIndex struct {
    BoxHeader BoxHeader
    FullBoxHeader FullBoxHeader
    ReferenceId uint32
@@ -94,7 +40,7 @@ type SegmentIndexBox struct {
    Reference []Reference
 }
 
-func (s *SegmentIndexBox) Append(size uint32) {
+func (s *SegmentIndex) Append(size uint32) {
    var r Reference
    r.SetReferencedSize(size)
    s.Reference = append(s.Reference, r)
@@ -102,7 +48,7 @@ func (s *SegmentIndexBox) Append(size uint32) {
    s.BoxHeader.BoxSize = s.Size()
 }
 
-func (s *SegmentIndexBox) Decode(r io.Reader) error {
+func (s *SegmentIndex) Decode(r io.Reader) error {
    if err := s.FullBoxHeader.Decode(r); err != nil {
       return err
    }
@@ -142,7 +88,7 @@ func (s *SegmentIndexBox) Decode(r io.Reader) error {
    return nil
 }
 
-func (s SegmentIndexBox) Encode(w io.Writer) error {
+func (s SegmentIndex) Encode(w io.Writer) error {
    if err := s.BoxHeader.Encode(w); err != nil {
       return err
    }
@@ -176,11 +122,11 @@ func (s SegmentIndexBox) Encode(w io.Writer) error {
    return nil
 }
 
-func (s *SegmentIndexBox) New() {
+func (s *SegmentIndex) New() {
    copy(s.BoxHeader.Type[:], "sidx")
 }
 
-func (s SegmentIndexBox) Size() uint32 {
+func (s SegmentIndex) Size() uint32 {
    v := s.BoxHeader.Size()
    v += s.FullBoxHeader.Size()
    v += 4 // reference_ID
@@ -198,4 +144,57 @@ func (s SegmentIndexBox) Size() uint32 {
       v += r.Size()
    }
    return v
+}
+func (r Range) String() string {
+   b := []byte("bytes=")
+   b = strconv.AppendUint(b, r.Start, 10)
+   b = append(b, '-')
+   b = strconv.AppendUint(b, r.End, 10)
+   return string(b)
+}
+
+type Range struct {
+   Start uint64
+   End uint64
+}
+
+// size will always fit inside 31 bits:
+// unsigned int(31) referenced_size
+// but range-start and range-end can both exceed 32 bits, so we must use 64 bit
+func (s SegmentIndex) Ranges(start uint64) []Range {
+   ranges := make([]Range, s.ReferenceCount)
+   for i, ref := range s.Reference {
+      size := uint64(ref.ReferencedSize())
+      ranges[i] = Range{start, start + size - 1}
+      start += size
+   }
+   return ranges
+}
+
+func (r *Reference) Decode(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) Encode(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
+}
+
+func (Reference) mask() uint32 {
+   return 0xFFFFFFFF>>1
+}
+
+type Reference [3]uint32
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
+}
+
+func (r Reference) SetReferencedSize(v uint32) {
+   r[0] &= ^r.mask()
+   r[0] |= v
+}
+
+func (Reference) Size() uint32 {
+   return 3 * 4
 }

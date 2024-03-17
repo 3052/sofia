@@ -7,7 +7,7 @@ import (
    "log/slog"
 )
 
-// Container: SampleDescriptionBox
+// ISO/IEC 14496-12
 //  class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //     const unsigned int(32)[2] reserved = 0;
 //     unsigned int(16) channelcount;
@@ -27,7 +27,7 @@ type AudioSampleEntry struct {
       SampleRate uint32
    }
    Boxes []*Box
-   ProtectionScheme ProtectionSchemeInfoBox
+   ProtectionScheme ProtectionSchemeInfo
 }
 
 func (a *AudioSampleEntry) Decode(r io.Reader) error {
@@ -86,7 +86,7 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
    return a.ProtectionScheme.Encode(w)
 }
 
-// 8.5.2 Sample description box
+// ISO/IEC 14496-12
 //  aligned(8) abstract class SampleEntry(
 //     unsigned int(32) format
 //  ) extends Box(format) {
@@ -118,7 +118,7 @@ func (s *SampleEntry) Encode(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
 }
 
-// Container: SampleDescriptionBox
+// ISO/IEC 14496-12
 //  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //     unsigned int(16) pre_defined = 0;
 //     const unsigned int(16) reserved = 0;
@@ -153,7 +153,7 @@ type VisualSampleEntry struct {
       _ int16
    }
    Boxes []*Box
-   ProtectionScheme ProtectionSchemeInfoBox
+   ProtectionScheme ProtectionSchemeInfo
 }
 
 func (v *VisualSampleEntry) Decode(r io.Reader) error {

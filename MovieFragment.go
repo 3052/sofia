@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// Container: File
+// ISO/IEC 14496-12
 //  aligned(8) class MovieFragmentBox extends Box('moof') {
 //  }
-type MovieFragmentBox struct {
+type MovieFragment struct {
    BoxHeader BoxHeader
    Boxes  []Box
-   TrackFragment TrackFragmentBox
+   TrackFragment TrackFragment
 }
 
-func (m *MovieFragmentBox) Decode(r io.Reader) error {
+func (m *MovieFragment) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -42,12 +42,12 @@ func (m *MovieFragmentBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("MovieFragmentBox.Decode")
+         return errors.New("MovieFragment.Decode")
       }
    }
 }
 
-func (m MovieFragmentBox) Encode(w io.Writer) error {
+func (m MovieFragment) Encode(w io.Writer) error {
    err := m.BoxHeader.Encode(w)
    if err != nil {
       return err

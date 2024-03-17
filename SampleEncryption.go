@@ -41,7 +41,7 @@ type EncryptionSample struct {
    Subsamples           []Subsample
 }
 
-func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
+func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryption) error {
    err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
    if err != nil {
       return err
@@ -63,7 +63,7 @@ func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryptionBox) error {
    return nil
 }
 
-func (e EncryptionSample) Encode(w io.Writer, b SampleEncryptionBox) error {
+func (e EncryptionSample) Encode(w io.Writer, b SampleEncryption) error {
    err := binary.Write(w, binary.BigEndian, e.InitializationVector)
    if err != nil {
       return err
@@ -83,7 +83,7 @@ func (e EncryptionSample) Encode(w io.Writer, b SampleEncryptionBox) error {
    return nil
 }
 
-// Container: TrackFragmentBox
+// ISO/IEC 23001-7
 //
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
@@ -103,14 +103,14 @@ func (e EncryptionSample) Encode(w io.Writer, b SampleEncryptionBox) error {
 //        }
 //     }[ sample_count ]
 //  }
-type SampleEncryptionBox struct {
+type SampleEncryption struct {
    BoxHeader     BoxHeader
    FullBoxHeader FullBoxHeader
    SampleCount  uint32
    Samples       []EncryptionSample
 }
 
-func (b *SampleEncryptionBox) Decode(r io.Reader) error {
+func (b *SampleEncryption) Decode(r io.Reader) error {
    err := b.FullBoxHeader.Decode(r)
    if err != nil {
       return err
@@ -130,7 +130,7 @@ func (b *SampleEncryptionBox) Decode(r io.Reader) error {
    return nil
 }
 
-func (b SampleEncryptionBox) Encode(w io.Writer) error {
+func (b SampleEncryption) Encode(w io.Writer) error {
    err := b.BoxHeader.Encode(w)
    if err != nil {
       return err
@@ -151,7 +151,7 @@ func (b SampleEncryptionBox) Encode(w io.Writer) error {
 }
 
 // senc_use_subsamples: flag mask is 0x000002.
-func (b SampleEncryptionBox) SencUseSubsamples() bool {
+func (b SampleEncryption) SencUseSubsamples() bool {
    return b.FullBoxHeader.Flags()&2 >= 1
 }
 

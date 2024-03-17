@@ -5,14 +5,7 @@ import (
    "io"
 )
 
-type TrackRunSample struct {
-   Duration uint32
-   Size uint32
-   Flags uint32
-   CompositionTimeOffset [4]byte
-}
-
-// Container: TrackFragmentBox
+// ISO/IEC 14496-12
 //
 // If the data-offset is present, it is relative to the base-data-offset
 // established in the track fragment header.
@@ -32,16 +25,23 @@ type TrackRunSample struct {
 //        }
 //     }[ sample_count ]
 //  }
-type TrackRunBox struct {
+type TrackRun struct {
    BoxHeader          BoxHeader
    FullBoxHeader      FullBoxHeader
    SampleCount       uint32
    DataOffset        int32
    FirstSampleFlags uint32
-   Sample            []TrackRunSample
+   Sample            []RunSample
 }
 
-func (t *TrackRunBox) Decode(r io.Reader) error {
+type RunSample struct {
+   Duration uint32
+   Size uint32
+   Flags uint32
+   CompositionTimeOffset [4]byte
+}
+
+func (t *TrackRun) Decode(r io.Reader) error {
    err := t.FullBoxHeader.Decode(r)
    if err != nil {
       return err
@@ -60,7 +60,7 @@ func (t *TrackRunBox) Decode(r io.Reader) error {
          return err
       }
    }
-   t.Sample = make([]TrackRunSample, t.SampleCount)
+   t.Sample = make([]RunSample, t.SampleCount)
    for i, sample := range t.Sample {
       err := sample.Decode(r, t)
       if err != nil {
@@ -71,7 +71,7 @@ func (t *TrackRunBox) Decode(r io.Reader) error {
    return nil
 }
 
-func (t TrackRunBox) Encode(w io.Writer) error {
+func (t TrackRun) Encode(w io.Writer) error {
    err := t.BoxHeader.Encode(w)
    if err != nil {
       return err
@@ -100,7 +100,7 @@ func (t TrackRunBox) Encode(w io.Writer) error {
    return nil
 }
 
-func (s *TrackRunSample) Decode(r io.Reader, t *TrackRunBox) error {
+func (s *RunSample) Decode(r io.Reader, t *TrackRun) error {
    if t.SampleDurationPresent() {
       err := binary.Read(r, binary.BigEndian, &s.Duration)
       if err != nil {
@@ -129,31 +129,31 @@ func (s *TrackRunSample) Decode(r io.Reader, t *TrackRunBox) error {
 }
 
 // 0x000004 first-sample-flags-present
-func (t TrackRunBox) FirstSampleFlagsPresent() bool {
+func (t TrackRun) FirstSampleFlagsPresent() bool {
    return t.FullBoxHeader.Flags()&4 >= 1
 }
 
 // 0x000800 sample-composition-time-offsets-present
-func (t TrackRunBox) SampleCompositionTimeOffsetsPresent() bool {
+func (t TrackRun) SampleCompositionTimeOffsetsPresent() bool {
    return t.FullBoxHeader.Flags()&0x800 >= 1
 }
 
 // 0x000100 sample-duration-present
-func (t TrackRunBox) SampleDurationPresent() bool {
+func (t TrackRun) SampleDurationPresent() bool {
    return t.FullBoxHeader.Flags()&0x100 >= 1
 }
 
 // 0x000400 sample-flags-present
-func (t TrackRunBox) SampleFlagsPresent() bool {
+func (t TrackRun) SampleFlagsPresent() bool {
    return t.FullBoxHeader.Flags()&0x400 >= 1
 }
 
 // 0x000200 sample-size-present
-func (t TrackRunBox) SampleSizePresent() bool {
+func (t TrackRun) SampleSizePresent() bool {
    return t.FullBoxHeader.Flags() & 0x200 >= 1
 }
 
-func (s TrackRunSample) Encode(w io.Writer, t TrackRunBox) error {
+func (s RunSample) Encode(w io.Writer, t TrackRun) error {
    if t.SampleDurationPresent() {
       err := binary.Write(w, binary.BigEndian, s.Duration)
       if err != nil {

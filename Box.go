@@ -6,7 +6,7 @@ import (
    "io"
 )
 
-// 4.2.2 Object definitions
+// ISO/IEC 14496-12
 //  aligned(8) class Box (
 //     unsigned int(32) boxtype,
 //     optional unsigned int(8)[16] extended_type
@@ -39,7 +39,7 @@ func (b Box) Encode(w io.Writer) error {
    return nil
 }
 
-// 4.2.2 Object definitions
+// ISO/IEC 14496-12
 //  aligned(8) class BoxHeader (
 //     unsigned int(32) boxtype,
 //     optional unsigned int(8)[16] extended_type
@@ -116,7 +116,7 @@ func (b BoxHeader) Size() uint32 {
    return s
 }
 
-// 4.2.2 Object definitions
+// ISO/IEC 14496-12
 //  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
 //     unsigned int(8) version = v;
 //     bit(24) flags = f;

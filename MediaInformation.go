@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// Container: MediaBox
+// ISO/IEC 14496-12
 //  aligned(8) class MediaInformationBox extends Box('minf') {
 //  }
-type MediaInformationBox struct {
+type MediaInformation struct {
    BoxHeader  BoxHeader
    Boxes []Box
-   SampleTable SampleTableBox
+   SampleTable SampleTable
 }
 
-func (m *MediaInformationBox) Decode(r io.Reader) error {
+func (m *MediaInformation) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -43,12 +43,12 @@ func (m *MediaInformationBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("MediaInformationBox.Decode")
+         return errors.New("MediaInformation.Decode")
       }
    }
 }
 
-func (m MediaInformationBox) Encode(w io.Writer) error {
+func (m MediaInformation) Encode(w io.Writer) error {
    err := m.BoxHeader.Encode(w)
    if err != nil {
       return err

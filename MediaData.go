@@ -2,16 +2,16 @@ package sofia
 
 import "io"
 
-// Container: File
+// ISO/IEC 14496-12
 //  aligned(8) class MediaDataBox extends Box('mdat') {
 //     bit(8) data[];
 //  }
-type MediaDataBox struct {
+type MediaData struct {
    BoxHeader BoxHeader
    Data [][]byte
 }
 
-func (m *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
+func (m *MediaData) Decode(r io.Reader, t TrackRun) error {
    m.Data = make([][]byte, t.SampleCount)
    for i := range m.Data {
       var err error
@@ -28,7 +28,7 @@ func (m *MediaDataBox) Decode(r io.Reader, t TrackRunBox) error {
    return nil
 }
 
-func (m MediaDataBox) Encode(w io.Writer) error {
+func (m MediaData) Encode(w io.Writer) error {
    err := m.BoxHeader.Encode(w)
    if err != nil {
       return err

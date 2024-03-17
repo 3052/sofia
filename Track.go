@@ -6,16 +6,16 @@ import (
    "log/slog"
 )
 
-// Container: MovieBox
+// ISO/IEC 14496-12
 //  aligned(8) class TrackBox extends Box('trak') {
 //  }
-type TrackBox struct {
+type Track struct {
    BoxHeader  BoxHeader
    Boxes []Box
-   Media MediaBox
+   Media Media
 }
 
-func (t TrackBox) Encode(w io.Writer) error {
+func (t Track) Encode(w io.Writer) error {
    err := t.BoxHeader.Encode(w)
    if err != nil {
       return err
@@ -28,7 +28,8 @@ func (t TrackBox) Encode(w io.Writer) error {
    }
    return t.Media.Encode(w)
 }
-func (t *TrackBox) Decode(r io.Reader) error {
+
+func (t *Track) Decode(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.Decode(r)
@@ -56,7 +57,7 @@ func (t *TrackBox) Decode(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("TrackBox.Decode")
+         return errors.New("Track.Decode")
       }
    }
 }

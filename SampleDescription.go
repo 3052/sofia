@@ -7,7 +7,7 @@ import (
    "log/slog"
 )
 
-// Container: SampleTableBox
+// ISO/IEC 14496-12
 //  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
 //     int i ;
 //     unsigned int(32) entry_count;
@@ -15,7 +15,7 @@ import (
 //        SampleEntry(); // an instance of a class derived from SampleEntry
 //     }
 //  }
-type SampleDescriptionBox struct {
+type SampleDescription struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
    EntryCount uint32
@@ -23,7 +23,7 @@ type SampleDescriptionBox struct {
    VisualSample *VisualSampleEntry
 }
 
-func (s *SampleDescriptionBox) Decode(r io.Reader) error {
+func (s *SampleDescription) Decode(r io.Reader) error {
    err := s.FullBoxHeader.Decode(r)
    if err != nil {
       return err
@@ -54,12 +54,12 @@ func (s *SampleDescriptionBox) Decode(r io.Reader) error {
          return err
       }
    default:
-      return errors.New("SampleDescriptionBox.Decode")
+      return errors.New("SampleDescription.Decode")
    }
    return nil
 }
 
-func (s SampleDescriptionBox) Encode(w io.Writer) error {
+func (s SampleDescription) Encode(w io.Writer) error {
    err := s.BoxHeader.Encode(w)
    if err != nil {
       return err

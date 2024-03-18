@@ -33,7 +33,7 @@ func (s *SampleDescription) Decode(r io.Reader) error {
 		return err
 	}
 	var head BoxHeader
-	if err := head.Decode(r); err == io.EOF {
+	if err := head.read(r); err == io.EOF {
 		return nil
 	} else if err != nil {
 		return err

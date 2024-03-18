@@ -41,7 +41,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
 	}
 	for {
 		var head BoxHeader
-		err := head.Decode(r)
+		err := head.read(r)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -53,7 +53,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
 		case "dec3", // Hulu
 			"esds": // Roku
 			b := Box{BoxHeader: head}
-			err := b.Decode(r)
+			err := b.read(r)
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
 	}
 	for {
 		var head BoxHeader
-		err := head.Decode(r)
+		err := head.read(r)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -182,7 +182,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
 			"btrt", // Mubi
 			"pasp": // Roku
 			b := Box{BoxHeader: head}
-			err := b.Decode(r)
+			err := b.read(r)
 			if err != nil {
 				return err
 			}

@@ -6,11 +6,6 @@ import (
    "io"
 )
 
-func (b BoxHeader) Payload(r io.Reader) io.Reader {
-   n := int64(b.Size) - int64(b.get_size())
-   return io.LimitReader(r, n)
-}
-
 func (f FullBoxHeader) GetFlags() uint32 {
    var b [4]byte
    copy(b[1:], f.Flags[:])
@@ -26,10 +21,6 @@ func (b Box) Encode(w io.Writer) error {
       return err
    }
    return nil
-}
-
-func (f *FullBoxHeader) Decode(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, f)
 }
 
 func (f FullBoxHeader) Encode(w io.Writer) error {
@@ -57,32 +48,6 @@ func (b BoxHeader) Encode(w io.Writer) error {
       if err != nil {
          return err
       }
-   }
-   return nil
-}
-
-func (b *BoxHeader) Decode(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
-      return err
-   }
-   if b.GetType() == "uuid" {
-      _, err := io.ReadFull(r, b.Usertype[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *Box) Decode(r io.Reader) error {
-   var err error
-   b.Payload, err = io.ReadAll(r)
-   if err != nil {
-      return err
    }
    return nil
 }
@@ -140,4 +105,41 @@ func (b BoxHeader) get_size() int {
       s += binary.Size(b.Usertype)
    }
    return s
+}
+
+///////////////////
+
+func (b BoxHeader) Payload(r io.Reader) io.Reader {
+   n := int64(b.Size) - int64(b.get_size())
+   return io.LimitReader(r, n)
+}
+
+func (f *FullBoxHeader) Decode(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, f)
+}
+
+func (b *BoxHeader) Decode(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+      return err
+   }
+   if b.GetType() == "uuid" {
+      _, err := io.ReadFull(r, b.Usertype[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (b *Box) Decode(r io.Reader) error {
+   var err error
+   b.Payload, err = io.ReadAll(r)
+   if err != nil {
+      return err
+   }
+   return nil
 }

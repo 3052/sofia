@@ -152,7 +152,7 @@ func (b SampleEncryption) Encode(w io.Writer) error {
 
 // senc_use_subsamples: flag mask is 0x000002.
 func (b SampleEncryption) SencUseSubsamples() bool {
-   return b.FullBoxHeader.Flags()&2 >= 1
+   return b.FullBoxHeader.GetFlags()&2 >= 1
 }
 
 type Subsample struct {

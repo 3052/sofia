@@ -25,9 +25,9 @@ func (t *TrackFragment) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.BoxType())
-      r := head.BoxPayload(r)
-      switch head.BoxType() {
+      slog.Debug("BoxHeader", "type", head.GetType())
+      r := head.Payload(r)
+      switch head.GetType() {
       case "saio", // Roku
       "saiz", // Roku
       "sbgp", // Roku
@@ -48,7 +48,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
          }
       case "uuid":
          decode := func() bool {
-            if head.ExtendedType() == "a2394f525a9b4f14a2446c427c648df4" {
+            if head.GetUsertype() == "a2394f525a9b4f14a2446c427c648df4" {
                if t.SampleEncryption.SampleCount == 0 {
                   return true
                }

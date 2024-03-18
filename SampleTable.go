@@ -24,9 +24,9 @@ func (s *SampleTable) Decode(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.BoxType())
-      r := head.BoxPayload(r)
-      switch head.BoxType() {
+      slog.Debug("BoxHeader", "type", head.GetType())
+      r := head.Payload(r)
+      switch head.GetType() {
       case "sgpd", // Paramount
       "stco", // Roku
       "stsc", // Roku

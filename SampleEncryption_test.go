@@ -117,7 +117,7 @@ func (t testdata) encode_init(dst io.Writer) error {
       return err
    }
    for _, b := range f.Movie.Boxes {
-      if b.BoxHeader.BoxType() == "pssh" {
+      if b.BoxHeader.GetType() == "pssh" {
          copy(b.BoxHeader.Type[:], "free") // Firefox
       }
    }

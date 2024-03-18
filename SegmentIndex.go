@@ -39,7 +39,7 @@ func (r Reference) SetReferencedSize(v uint32) {
    r[0] |= v
 }
 
-func (Reference) Size() uint32 {
+func (Reference) get_size() uint32 {
    return 3 * 4
 }
 
@@ -86,7 +86,7 @@ func (s *SegmentIndex) Append(size uint32) {
    r.SetReferencedSize(size)
    s.Reference = append(s.Reference, r)
    s.ReferenceCount++
-   s.BoxHeader.BoxSize = s.Size()
+   s.BoxHeader.Size = s.get_size()
 }
 
 func (s *SegmentIndex) Decode(r io.Reader) error {
@@ -180,9 +180,9 @@ func (s SegmentIndex) Ranges(start uint64) []Range {
    return ranges
 }
 
-func (s SegmentIndex) Size() uint32 {
-   v := s.BoxHeader.Size()
-   v += s.FullBoxHeader.Size()
+func (s SegmentIndex) get_size() uint32 {
+   v := s.BoxHeader.get_size()
+   v += s.FullBoxHeader.get_size()
    v += 4 // reference_ID
    v += 4 // timescale
    if s.FullBoxHeader.Version == 0 {
@@ -195,7 +195,7 @@ func (s SegmentIndex) Size() uint32 {
    v += 2 // reserved
    v += 2 // reference_count
    for _, r := range s.Reference {
-      v += r.Size()
+      v += r.get_size()
    }
    return v
 }

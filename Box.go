@@ -6,13 +6,9 @@ import (
    "io"
 )
 
-func (b BoxHeader) get_size() uint32 {
-   var s uint32 = 4 // size
-   s += 4 // type
-   if b.GetType() == "uuid" {
-      s += 16 // usertype
-   }
-   return s
+func (b BoxHeader) Payload(r io.Reader) io.Reader {
+   n := int64(b.Size) - int64(b.get_size())
+   return io.LimitReader(r, n)
 }
 
 func (f FullBoxHeader) GetFlags() uint32 {
@@ -44,28 +40,8 @@ func (b BoxHeader) GetUsertype() string {
    return hex.EncodeToString(b.Usertype[:])
 }
 
-// ISO/IEC 14496-12
-//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//     unsigned int(8) version = v;
-//     bit(24) flags = f;
-//  }
-type FullBoxHeader struct {
-   Version  uint8
-   Flags [3]byte
-}
-
-func (FullBoxHeader) get_size() uint32 {
-   var s uint32 = 1 // Version
-   return s + 3 // Flags
-}
-
 func (b BoxHeader) GetType() string {
    return string(b.Type[:])
-}
-
-func (b BoxHeader) Payload(r io.Reader) io.Reader {
-   n := int64(b.Size - b.get_size())
-   return io.LimitReader(r, n)
 }
 
 func (b BoxHeader) Encode(w io.Writer) error {
@@ -100,6 +76,25 @@ func (b *BoxHeader) Decode(r io.Reader) error {
       }
    }
    return nil
+}
+
+func (b *Box) Decode(r io.Reader) error {
+   var err error
+   b.Payload, err = io.ReadAll(r)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+// ISO/IEC 14496-12
+//  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//     unsigned int(8) version = v;
+//     bit(24) flags = f;
+//  }
+type FullBoxHeader struct {
+   Version uint8
+   Flags [3]byte
 }
 
 // ISO/IEC 14496-12
@@ -138,13 +133,11 @@ type BoxHeader struct {
    Usertype [16]uint8
 }
 
-///////////////////////////////////////////////
-
-func (b *Box) Decode(r io.Reader) error {
-   var err error
-   b.Payload, err = io.ReadAll(r)
-   if err != nil {
-      return err
+func (b BoxHeader) get_size() int {
+   s := binary.Size(b.Size)
+   s += binary.Size(b.Type)
+   if b.GetType() == "uuid" {
+      s += binary.Size(b.Usertype)
    }
-   return nil
+   return s
 }

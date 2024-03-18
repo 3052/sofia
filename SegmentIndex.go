@@ -6,6 +6,19 @@ import (
    "strconv"
 )
 
+func (s *SegmentIndex) Append(size uint32) {
+   var r Reference
+   r.SetReferencedSize(size)
+   s.Reference = append(s.Reference, r)
+   s.ReferenceCount++
+   s.BoxHeader.Size = uint32(s.get_size())
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
+}
+
 type Range struct {
    Start uint64
    End uint64
@@ -19,8 +32,6 @@ func (r Range) String() string {
    return string(b)
 }
 
-type Reference [3]uint32
-
 func (r *Reference) Decode(src io.Reader) error {
    return binary.Read(src, binary.BigEndian, r)
 }
@@ -29,64 +40,13 @@ func (r Reference) Encode(dst io.Writer) error {
    return binary.Write(dst, binary.BigEndian, r)
 }
 
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
-}
-
 func (r Reference) SetReferencedSize(v uint32) {
    r[0] &= ^r.mask()
    r[0] |= v
 }
 
-func (Reference) get_size() uint32 {
-   return 3 * 4
-}
-
 func (Reference) mask() uint32 {
    return 0xFFFFFFFF>>1
-}
-
-// ISO/IEC 14496-12
-//  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
-//     unsigned int(32) reference_ID;
-//     unsigned int(32) timescale;
-//     if (version==0) {
-//        unsigned int(32) earliest_presentation_time;
-//        unsigned int(32) first_offset;
-//     } else {
-//        unsigned int(64) earliest_presentation_time;
-//        unsigned int(64) first_offset;
-//     }
-//     unsigned int(16) reserved = 0;
-//     unsigned int(16) reference_count;
-//     for(i=1; i <= reference_count; i++) {
-//        bit (1) reference_type;
-//        unsigned int(31) referenced_size;
-//        unsigned int(32) subsegment_duration;
-//        bit(1) starts_with_SAP;
-//        unsigned int(3) SAP_type;
-//        unsigned int(28) SAP_delta_time;
-//     }
-//  }
-type SegmentIndex struct {
-   BoxHeader BoxHeader
-   FullBoxHeader FullBoxHeader
-   ReferenceId uint32
-   Timescale uint32
-   EarliestPresentationTime []byte
-   FirstOffset []byte
-   Reserved uint16
-   ReferenceCount uint16
-   Reference []Reference
-}
-
-func (s *SegmentIndex) Append(size uint32) {
-   var r Reference
-   r.SetReferencedSize(size)
-   s.Reference = append(s.Reference, r)
-   s.ReferenceCount++
-   s.BoxHeader.Size = s.get_size()
 }
 
 func (s *SegmentIndex) Decode(r io.Reader) error {
@@ -180,22 +140,50 @@ func (s SegmentIndex) Ranges(start uint64) []Range {
    return ranges
 }
 
-func (s SegmentIndex) get_size() uint32 {
+// ISO/IEC 14496-12
+//  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
+//     unsigned int(32) reference_ID;
+//     unsigned int(32) timescale;
+//     if (version==0) {
+//        unsigned int(32) earliest_presentation_time;
+//        unsigned int(32) first_offset;
+//     } else {
+//        unsigned int(64) earliest_presentation_time;
+//        unsigned int(64) first_offset;
+//     }
+//     unsigned int(16) reserved = 0;
+//     unsigned int(16) reference_count;
+//     for(i=1; i <= reference_count; i++) {
+//        bit (1) reference_type;
+//        unsigned int(31) referenced_size;
+//        unsigned int(32) subsegment_duration;
+//        bit(1) starts_with_SAP;
+//        unsigned int(3) SAP_type;
+//        unsigned int(28) SAP_delta_time;
+//     }
+//  }
+type SegmentIndex struct {
+   BoxHeader BoxHeader
+   FullBoxHeader FullBoxHeader
+   ReferenceId uint32
+   Timescale uint32
+   EarliestPresentationTime []byte
+   FirstOffset []byte
+   Reserved uint16
+   ReferenceCount uint16
+   Reference []Reference
+}
+
+type Reference [3]uint32
+
+func (s SegmentIndex) get_size() int {
    v := s.BoxHeader.get_size()
-   v += s.FullBoxHeader.get_size()
-   v += 4 // reference_ID
-   v += 4 // timescale
-   if s.FullBoxHeader.Version == 0 {
-      v += 4 // earliest_presentation_time
-      v += 4 // first_offset
-   } else {
-      v += 8 // earliest_presentation_time
-      v += 8 // first_offset
-   }
-   v += 2 // reserved
-   v += 2 // reference_count
-   for _, r := range s.Reference {
-      v += r.get_size()
-   }
-   return v
+   v += binary.Size(s.FullBoxHeader)
+   v += binary.Size(s.ReferenceId)
+   v += binary.Size(s.Timescale)
+   v += binary.Size(s.EarliestPresentationTime)
+   v += binary.Size(s.FirstOffset)
+   v += binary.Size(s.Reserved)
+   v += binary.Size(s.ReferenceCount)
+   return v + binary.Size(s.Reference)
 }

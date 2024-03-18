@@ -18,7 +18,7 @@ type File struct {
 func (f *File) Decode(r io.Reader) error {
 	for {
 		var head BoxHeader
-		err := head.Decode(r)
+		err := head.read(r)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -32,7 +32,7 @@ func (f *File) Decode(r io.Reader) error {
 			"ftyp", // Roku
 			"styp": // Roku
 			b := Box{BoxHeader: head}
-			err := b.Decode(r)
+			err := b.read(r)
 			if err != nil {
 				return err
 			}

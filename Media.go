@@ -19,7 +19,7 @@ type Media struct {
 func (m *Media) Decode(r io.Reader) error {
 	for {
 		var head BoxHeader
-		err := head.Decode(r)
+		err := head.read(r)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -32,7 +32,7 @@ func (m *Media) Decode(r io.Reader) error {
 		case "hdlr", // Roku
 			"mdhd": // Roku
 			b := Box{BoxHeader: head}
-			err := b.Decode(r)
+			err := b.read(r)
 			if err != nil {
 				return err
 			}

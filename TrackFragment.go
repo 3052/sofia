@@ -20,7 +20,7 @@ type TrackFragment struct {
 func (t *TrackFragment) Decode(r io.Reader) error {
 	for {
 		var head BoxHeader
-		err := head.Decode(r)
+		err := head.read(r)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -36,7 +36,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 			"tfdt", // Roku
 			"tfhd": // Roku
 			b := Box{BoxHeader: head}
-			err := b.Decode(r)
+			err := b.read(r)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 				}
 			} else {
 				b := Box{BoxHeader: head}
-				err := b.Decode(r)
+				err := b.read(r)
 				if err != nil {
 					return err
 				}

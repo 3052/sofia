@@ -110,13 +110,13 @@ func (b BoxHeader) get_size() int {
 	return s
 }
 
-///////////////////
-
 func (f *FullBoxHeader) read(r io.Reader) error {
 	return binary.Read(r, binary.BigEndian, f)
 }
 
-func (b BoxHeader) Payload(r io.Reader) io.Reader {
+///////////////////
+
+func (b BoxHeader) payload(r io.Reader) io.Reader {
 	n := int64(b.Size) - int64(b.get_size())
 	return io.LimitReader(r, n)
 }

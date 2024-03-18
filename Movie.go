@@ -1,66 +1,67 @@
 package sofia
 
 import (
-   "errors"
-   "io"
-   "log/slog"
+	"errors"
+	"io"
+	"log/slog"
 )
 
 // ISO/IEC 14496-12
-//  aligned(8) class MovieBox extends Box('moov') {
-//  }
+//
+//	aligned(8) class MovieBox extends Box('moov') {
+//	}
 type Movie struct {
-   BoxHeader BoxHeader
-   Boxes []*Box
-   Track Track
+	BoxHeader BoxHeader
+	Boxes     []*Box
+	Track     Track
 }
 
 func (m *Movie) Decode(r io.Reader) error {
-   for {
-      var head BoxHeader
-      err := head.Decode(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      box_type := head.GetType()
-      r := head.Payload(r)
-      slog.Debug("BoxHeader", "Type", box_type)
-      switch box_type {
-      case "iods", // Roku
-      "meta", // Paramount
-      "mvex", // Roku
-      "mvhd", // Roku
-      "pssh": // Roku
-         b := Box{BoxHeader: head}
-         err := b.Decode(r)
-         if err != nil {
-            return err
-         }
-         m.Boxes = append(m.Boxes, &b)
-      case "trak":
-         m.Track.BoxHeader = head
-         err := m.Track.Decode(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("Movie.Decode")
-      }
-   }
+	for {
+		var head BoxHeader
+		err := head.Decode(r)
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		box_type := head.GetType()
+		r := head.payload(r)
+		slog.Debug("BoxHeader", "Type", box_type)
+		switch box_type {
+		case "iods", // Roku
+			"meta", // Paramount
+			"mvex", // Roku
+			"mvhd", // Roku
+			"pssh": // Roku
+			b := Box{BoxHeader: head}
+			err := b.Decode(r)
+			if err != nil {
+				return err
+			}
+			m.Boxes = append(m.Boxes, &b)
+		case "trak":
+			m.Track.BoxHeader = head
+			err := m.Track.Decode(r)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("Movie.Decode")
+		}
+	}
 }
 
 func (m Movie) Encode(w io.Writer) error {
-   err := m.BoxHeader.Encode(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range m.Boxes {
-      err := b.Encode(w)
-      if err != nil {
-         return err
-      }
-   }
-   return m.Track.Encode(w)
+	err := m.BoxHeader.Encode(w)
+	if err != nil {
+		return err
+	}
+	for _, b := range m.Boxes {
+		err := b.Encode(w)
+		if err != nil {
+			return err
+		}
+	}
+	return m.Track.Encode(w)
 }

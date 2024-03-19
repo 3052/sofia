@@ -42,7 +42,7 @@ func (p *ProtectionSchemeInfo) Decode(r io.Reader) error {
 			p.Boxes = append(p.Boxes, b)
 		case "frma":
 			p.OriginalFormat.BoxHeader = head
-			err := p.OriginalFormat.Decode(r)
+			err := p.OriginalFormat.read(r)
 			if err != nil {
 				return err
 			}

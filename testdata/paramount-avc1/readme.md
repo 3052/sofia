@@ -1,6 +1,6 @@
 # paramount
 
 ~~~
-paramount -b KtQCLnOCgoQiTRF_uGCbqesqmz7SjwRm -d -v debug -vb 147465
-* key:d98277ff6d7406ec398b49bbd52937d4
+> paramount -b xzUce3_6ljEEGyIu9rCpndUPhDgfZF1X -i 2 -v debug
+msg=hex key=efa0258cafde6102f513f031d0632290
 ~~~

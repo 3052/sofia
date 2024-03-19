@@ -7,7 +7,7 @@ import (
 )
 
 func TestByteRanges(t *testing.T) {
-   media, err := os.Open("testdata/hulu-video/init.mp4")
+   media, err := os.Open("testdata/hulu-avc1/init.mp4")
    if err != nil {
       t.Fatal(err)
    }

@@ -6,12 +6,12 @@ import (
    "testing"
 )
 
-func TestTrun(t *testing.T) {
+func TestTrackRun(t *testing.T) {
    h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
       Level: slog.LevelDebug,
    })
    slog.SetDefault(slog.New(h))
-   seg, err := os.Open("testdata/paramount-video/seg_1303.m4s")
+   seg, err := os.Open("testdata/paramount-avc1/seg_1.m4s")
    if err != nil {
       t.Fatal(err)
    }

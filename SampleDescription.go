@@ -44,7 +44,7 @@ func (s *SampleDescription) read(r io.Reader) error {
 	case "enca":
 		s.AudioSample = new(AudioSampleEntry)
 		s.AudioSample.SampleEntry.BoxHeader = head
-		err := s.AudioSample.Decode(r)
+		err := s.AudioSample.read(r)
 		if err != nil {
 			return err
 		}

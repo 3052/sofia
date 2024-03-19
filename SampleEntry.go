@@ -40,8 +40,6 @@ func (s *SampleEntry) write(w io.Writer) error {
 	return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
 }
 
-//////////
-
 func (v *VisualSampleEntry) read(r io.Reader) error {
 	err := v.SampleEntry.read(r)
 	if err != nil {
@@ -107,7 +105,7 @@ type AudioSampleEntry struct {
 	ProtectionScheme ProtectionSchemeInfo
 }
 
-func (a *AudioSampleEntry) Decode(r io.Reader) error {
+func (a *AudioSampleEntry) read(r io.Reader) error {
 	err := a.SampleEntry.read(r)
 	if err != nil {
 		return err

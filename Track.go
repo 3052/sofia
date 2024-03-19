@@ -39,7 +39,7 @@ func (t *Track) Decode(r io.Reader) error {
 			t.Boxes = append(t.Boxes, b)
 		case "mdia":
 			t.Media.BoxHeader = head
-			err := t.Media.Decode(r)
+			err := t.Media.read(r)
 			if err != nil {
 				return err
 			}
@@ -60,5 +60,5 @@ func (t Track) Encode(w io.Writer) error {
 			return err
 		}
 	}
-	return t.Media.Encode(w)
+	return t.Media.write(w)
 }

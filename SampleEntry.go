@@ -7,8 +7,41 @@ import (
 	"log/slog"
 )
 
+// ISO/IEC 14496-12
+//
+//	aligned(8) abstract class SampleEntry(
+//	   unsigned int(32) format
+//	) extends Box(format) {
+//	   const unsigned int(8)[6] reserved = 0;
+//	   unsigned int(16) data_reference_index;
+//	}
+type SampleEntry struct {
+	BoxHeader          BoxHeader
+	Reserved           [6]uint8
+	DataReferenceIndex uint16
+}
+
+func (s *SampleEntry) read(r io.Reader) error {
+	_, err := io.ReadFull(r, s.Reserved[:])
+	if err != nil {
+		return err
+	}
+	return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
+}
+
+func (s *SampleEntry) write(w io.Writer) error {
+	err := s.BoxHeader.write(w)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(s.Reserved[:]); err != nil {
+		return err
+	}
+	return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
+}
+
 func (v *VisualSampleEntry) Decode(r io.Reader) error {
-	err := v.SampleEntry.Decode(r)
+	err := v.SampleEntry.read(r)
 	if err != nil {
 		return err
 	}
@@ -38,7 +71,7 @@ func (v *VisualSampleEntry) Decode(r io.Reader) error {
 			v.Boxes = append(v.Boxes, &b)
 		case "sinf":
 			v.ProtectionScheme.BoxHeader = head
-			err := v.ProtectionScheme.Decode(r)
+			err := v.ProtectionScheme.read(r)
 			if err != nil {
 				return err
 			}
@@ -73,7 +106,7 @@ type AudioSampleEntry struct {
 }
 
 func (a *AudioSampleEntry) Decode(r io.Reader) error {
-	err := a.SampleEntry.Decode(r)
+	err := a.SampleEntry.read(r)
 	if err != nil {
 		return err
 	}
@@ -101,7 +134,7 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
 			a.Boxes = append(a.Boxes, &b)
 		case "sinf":
 			a.ProtectionScheme.BoxHeader = head
-			err := a.ProtectionScheme.Decode(r)
+			err := a.ProtectionScheme.read(r)
 			if err != nil {
 				return err
 			}
@@ -111,8 +144,8 @@ func (a *AudioSampleEntry) Decode(r io.Reader) error {
 	}
 }
 
-func (a AudioSampleEntry) Encode(w io.Writer) error {
-	err := a.SampleEntry.Encode(w)
+func (a AudioSampleEntry) write(w io.Writer) error {
+	err := a.SampleEntry.write(w)
 	if err != nil {
 		return err
 	}
@@ -126,39 +159,6 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
 		}
 	}
 	return a.ProtectionScheme.write(w)
-}
-
-// ISO/IEC 14496-12
-//
-//	aligned(8) abstract class SampleEntry(
-//	   unsigned int(32) format
-//	) extends Box(format) {
-//	   const unsigned int(8)[6] reserved = 0;
-//	   unsigned int(16) data_reference_index;
-//	}
-type SampleEntry struct {
-	BoxHeader          BoxHeader
-	Reserved           [6]uint8
-	DataReferenceIndex uint16
-}
-
-func (s *SampleEntry) Decode(r io.Reader) error {
-	_, err := io.ReadFull(r, s.Reserved[:])
-	if err != nil {
-		return err
-	}
-	return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
-}
-
-func (s *SampleEntry) Encode(w io.Writer) error {
-	err := s.BoxHeader.write(w)
-	if err != nil {
-		return err
-	}
-	if _, err := w.Write(s.Reserved[:]); err != nil {
-		return err
-	}
-	return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
 }
 
 // ISO/IEC 14496-12
@@ -201,7 +201,7 @@ type VisualSampleEntry struct {
 }
 
 func (v VisualSampleEntry) Encode(w io.Writer) error {
-	err := v.SampleEntry.Encode(w)
+	err := v.SampleEntry.write(w)
 	if err != nil {
 		return err
 	}

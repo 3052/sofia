@@ -19,7 +19,7 @@ type ProtectionSchemeInfo struct {
 	OriginalFormat OriginalFormat
 }
 
-func (p *ProtectionSchemeInfo) Decode(r io.Reader) error {
+func (p *ProtectionSchemeInfo) read(r io.Reader) error {
 	for {
 		var head BoxHeader
 		err := head.read(r)

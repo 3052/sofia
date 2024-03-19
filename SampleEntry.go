@@ -40,7 +40,9 @@ func (s *SampleEntry) write(w io.Writer) error {
 	return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
 }
 
-func (v *VisualSampleEntry) Decode(r io.Reader) error {
+//////////
+
+func (v *VisualSampleEntry) read(r io.Reader) error {
 	err := v.SampleEntry.read(r)
 	if err != nil {
 		return err
@@ -200,7 +202,7 @@ type VisualSampleEntry struct {
 	ProtectionScheme ProtectionSchemeInfo
 }
 
-func (v VisualSampleEntry) Encode(w io.Writer) error {
+func (v VisualSampleEntry) write(w io.Writer) error {
 	err := v.SampleEntry.write(w)
 	if err != nil {
 		return err

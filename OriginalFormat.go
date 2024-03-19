@@ -15,7 +15,9 @@ type OriginalFormat struct {
 	DataFormat [4]uint8
 }
 
-func (b *OriginalFormat) Decode(r io.Reader) error {
+///////////
+
+func (b *OriginalFormat) read(r io.Reader) error {
 	_, err := io.ReadFull(r, b.DataFormat[:])
 	if err != nil {
 		return err

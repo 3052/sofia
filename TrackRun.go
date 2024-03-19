@@ -122,8 +122,6 @@ func (s RunSample) write(w io.Writer, t TrackRun) error {
 	return nil
 }
 
-///////////////
-
 func (t *TrackRun) read(r io.Reader) error {
 	err := t.FullBoxHeader.read(r)
 	if err != nil {

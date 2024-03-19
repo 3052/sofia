@@ -16,7 +16,7 @@ type MovieFragment struct {
 	TrackFragment TrackFragment
 }
 
-func (m *MovieFragment) Decode(r io.Reader) error {
+func (m *MovieFragment) read(r io.Reader) error {
 	for {
 		var head BoxHeader
 		err := head.read(r)
@@ -39,7 +39,7 @@ func (m *MovieFragment) Decode(r io.Reader) error {
 			m.Boxes = append(m.Boxes, b)
 		case "traf":
 			m.TrackFragment.BoxHeader = head
-			err := m.TrackFragment.Decode(r)
+			err := m.TrackFragment.read(r)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func (m *MovieFragment) Decode(r io.Reader) error {
 	}
 }
 
-func (m MovieFragment) Encode(w io.Writer) error {
+func (m MovieFragment) write(w io.Writer) error {
 	err := m.BoxHeader.write(w)
 	if err != nil {
 		return err
@@ -60,5 +60,5 @@ func (m MovieFragment) Encode(w io.Writer) error {
 			return err
 		}
 	}
-	return m.TrackFragment.Encode(w)
+	return m.TrackFragment.write(w)
 }

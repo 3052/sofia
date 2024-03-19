@@ -24,7 +24,7 @@ type SampleDescription struct {
 	VisualSample  *VisualSampleEntry
 }
 
-func (s *SampleDescription) Decode(r io.Reader) error {
+func (s *SampleDescription) read(r io.Reader) error {
 	err := s.FullBoxHeader.read(r)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (s *SampleDescription) Decode(r io.Reader) error {
 	case "encv":
 		s.VisualSample = new(VisualSampleEntry)
 		s.VisualSample.SampleEntry.BoxHeader = head
-		err := s.VisualSample.Decode(r)
+		err := s.VisualSample.read(r)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func (s *SampleDescription) Decode(r io.Reader) error {
 	return nil
 }
 
-func (s SampleDescription) Encode(w io.Writer) error {
+func (s SampleDescription) write(w io.Writer) error {
 	err := s.BoxHeader.write(w)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s SampleDescription) Encode(w io.Writer) error {
 		}
 	}
 	if s.VisualSample != nil {
-		err := s.VisualSample.Encode(w)
+		err := s.VisualSample.write(w)
 		if err != nil {
 			return err
 		}

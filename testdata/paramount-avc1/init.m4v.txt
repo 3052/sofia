@@ -7,51 +7,54 @@
  - compatibleBrand: dash
  - compatibleBrand: avc1
  - compatibleBrand: cmfc
-[moov] size=1866
+[moov] size=1885
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 24000
    - duration: 0
-   - creation time: 2023-12-08T19:38:18Z
-   - modification time: 2023-12-08T19:38:18Z
+   - creation time: 2024-03-09T21:29:00Z
+   - modification time: 2024-03-09T21:29:00Z
   [meta] size=148 version=0 flags=000000
     [hdlr] size=32 version=0 flags=000000
      - handlerType: ID32
      - handlerName: ""
     [ID32] size=104
      - not implemented or unknown box
-  [trak] size=598
+  [trak] size=617
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
-     - creation time: 2023-12-08T19:38:18Z
-     - modification time: 2023-12-08T19:38:18Z
-     - Width: 416.0, Height: 234.0
-    [mdia] size=462
+     - creation time: 2024-03-09T21:29:00Z
+     - modification time: 2024-03-09T21:29:00Z
+     - Width: 1280.0, Height: 720.0
+    [mdia] size=481
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 24000
-       - creation time: 2023-12-08T19:38:18Z
-       - modification time: 2023-12-08T19:38:18Z
+       - creation time: 2024-03-09T21:29:00Z
+       - modification time: 2024-03-09T21:29:00Z
        - language: eng
       [hdlr] size=45 version=0 flags=000000
        - handlerType: vide
        - handlerName: "VideoHandler"
-      [minf] size=377
+      [minf] size=396
         [dinf] size=36
           [dref] size=28 version=0 flags=000000
             [url ] size=12
              - location: ""
-        [stbl] size=313
-          [stsd] size=237 version=0 flags=000000
-            [encv] size=221
-             - width: 416
-             - height: 234
+        [stbl] size=332
+          [stsd] size=256 version=0 flags=000000
+            [encv] size=240
+             - width: 1280
+             - height: 720
              - compressorName: "AVC Coding"
               [avcC] size=55
                - AVCProfileIndication: 100
                - profileCompatibility: 00
                - AVCLevelIndication: 40
-               - SPS: 67640028acd981a1ff93016a040402800001f480005dc0078c18cd
+               - SPS: 67640028acd9805005bb016a020202800001f480005dc0078c18cd
                - PPS: 68e97b2c8b
+              [colr] size=19
+               - colorType: nclx
+               - ColorPrimaries: 1, TransferCharacteristics: 1, MatrixCoefficients: 1, FullRange: false
               [sinf] size=80
                 [frma] size=12
                  - dataFormat: avc1
@@ -62,7 +65,7 @@
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 2ae3928e-7686-4505-aa84-99db218b0288
+                   - defaultKID: 7b110d80-4aa8-4ec6-97b0-6e1ae2d69a19
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000
@@ -73,7 +76,7 @@
       - entry[1]: segmentDuration=0 mediaTime=2002, mediaRateInteger=1 mediaRateFraction=0
   [mvex] size=56
     [mehd] size=16 version=0 flags=000000
-     - fragmentDuration: 55230175
+     - fragmentDuration: 188196008
     [trex] size=32 version=0 flags=000000
      - trackID: 1
      - defaultSampleDescriptionIndex: 1

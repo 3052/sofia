@@ -9,16 +9,10 @@ import (
 
 var tests = []testdata{
    {
-      "testdata/mubi-mp4a/audio_eng=268840.dash",
-      "",
-      "",
-      "",
-   },
-   {
-      "testdata/mubi-avc1/video=300168.dash",
-      "",
-      "",
-      "",
+      "testdata/paramount-avc1/init.m4v",
+      "testdata/paramount-avc1/seg_1.m4s",
+      "efa0258cafde6102f513f031d0632290",
+      "paramount-avc1.mp4",
    },
    {
       "testdata/amc-avc1/init.m4f",
@@ -63,12 +57,6 @@ var tests = []testdata{
       "nbc-mp4a.mp4",
    },
    {
-      "testdata/paramount-avc1/init.m4v",
-      "testdata/paramount-avc1/seg_1.m4s",
-      "d98277ff6d7406ec398b49bbd52937d4",
-      "paramount-avc1.mp4",
-   },
-   {
       "testdata/paramount-mp4a/init.m4v",
       "testdata/paramount-mp4a/seg_1.m4s",
       "d98277ff6d7406ec398b49bbd52937d4",
@@ -86,20 +74,32 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
+   {
+      "testdata/mubi-avc1/video=300168.dash",
+      "testdata/mubi-avc1/video=300168-0.dash",
+      "2556f746e8db3ee7f66fc22f5a28752a",
+      "mubi-avc1.mp4",
+   },
+   {
+      "testdata/mubi-mp4a/audio_eng=268840.dash",
+      "testdata/mubi-mp4a/audio_eng=268840-0.dash",
+      "2556f746e8db3ee7f66fc22f5a28752a",
+      "mubi-mp4a.mp4",
+   },
 }
 
 func TestSampleEncryption(t *testing.T) {
    for _, test := range tests {
       func() {
-         dst, err := os.Create(test.out)
+         file, err := os.Create(test.out)
          if err != nil {
             t.Fatal(err)
          }
-         defer dst.Close()
-         if err := test.encode_init(dst); err != nil {
+         defer file.Close()
+         if err := test.encode_init(file); err != nil {
             t.Fatal(err)
          }
-         if err := test.encode_segment(dst); err != nil {
+         if err := test.encode_segment(file); err != nil {
             t.Fatal(err)
          }
       }()

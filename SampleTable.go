@@ -57,7 +57,7 @@ func (s SampleTable) Encode(w io.Writer) error {
 		return err
 	}
 	for _, b := range s.Boxes {
-		err := b.Encode(w)
+		err := b.write(w)
 		if err != nil {
 			return err
 		}

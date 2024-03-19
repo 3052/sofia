@@ -120,7 +120,7 @@ func (a AudioSampleEntry) Encode(w io.Writer) error {
 		return err
 	}
 	for _, b := range a.Boxes {
-		err := b.Encode(w)
+		err := b.write(w)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func (v VisualSampleEntry) Encode(w io.Writer) error {
 		return err
 	}
 	for _, b := range v.Boxes {
-		err := b.Encode(w)
+		err := b.write(w)
 		if err != nil {
 			return err
 		}

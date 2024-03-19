@@ -118,8 +118,6 @@ func (f FullBoxHeader) write(w io.Writer) error {
 	return binary.Write(w, binary.BigEndian, f)
 }
 
-///////////////
-
 func (b BoxHeader) write(w io.Writer) error {
 	err := binary.Write(w, binary.BigEndian, b.Size)
 	if err != nil {
@@ -137,7 +135,9 @@ func (b BoxHeader) write(w io.Writer) error {
 	return nil
 }
 
-func (b Box) Encode(w io.Writer) error {
+///////////////
+
+func (b Box) write(w io.Writer) error {
 	err := b.BoxHeader.write(w)
 	if err != nil {
 		return err

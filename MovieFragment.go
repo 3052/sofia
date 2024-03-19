@@ -55,7 +55,7 @@ func (m MovieFragment) Encode(w io.Writer) error {
 		return err
 	}
 	for _, b := range m.Boxes {
-		err := b.Encode(w)
+		err := b.write(w)
 		if err != nil {
 			return err
 		}

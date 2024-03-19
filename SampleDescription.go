@@ -62,7 +62,7 @@ func (s *SampleDescription) Decode(r io.Reader) error {
 }
 
 func (s SampleDescription) Encode(w io.Writer) error {
-	err := s.BoxHeader.Encode(w)
+	err := s.BoxHeader.write(w)
 	if err != nil {
 		return err
 	}

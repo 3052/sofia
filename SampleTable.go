@@ -52,7 +52,7 @@ func (s *SampleTable) Decode(r io.Reader) error {
 }
 
 func (s SampleTable) Encode(w io.Writer) error {
-	err := s.BoxHeader.Encode(w)
+	err := s.BoxHeader.write(w)
 	if err != nil {
 		return err
 	}

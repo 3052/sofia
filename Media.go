@@ -16,7 +16,7 @@ type Media struct {
    MediaInformation MediaInformation
 }
 
-func (m Media) Encode(w io.Writer) error {
+func (m Media) write(w io.Writer) error {
    err := m.BoxHeader.write(w)
    if err != nil {
       return err
@@ -27,10 +27,10 @@ func (m Media) Encode(w io.Writer) error {
          return err
       }
    }
-   return m.MediaInformation.Encode(w)
+   return m.MediaInformation.write(w)
 }
 
-func (m *Media) Decode(r io.Reader) error {
+func (m *Media) read(r io.Reader) error {
    for {
       var head BoxHeader
       err := head.read(r)
@@ -53,7 +53,7 @@ func (m *Media) Decode(r io.Reader) error {
          m.Boxes = append(m.Boxes, b)
       case "minf":
          m.MediaInformation.BoxHeader = head
-         err := m.MediaInformation.Decode(r)
+         err := m.MediaInformation.read(r)
          if err != nil {
             return err
          }

@@ -49,7 +49,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 			}
 		case "uuid":
 			decode := func() bool {
-				if head.GetUsertype() == "a2394f525a9b4f14a2446c427c648df4" {
+				if head.get_usertype() == "a2394f525a9b4f14a2446c427c648df4" {
 					if t.SampleEncryption.SampleCount == 0 {
 						return true
 					}

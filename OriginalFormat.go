@@ -23,8 +23,6 @@ func (b *OriginalFormat) read(r io.Reader) error {
 	return nil
 }
 
-///////////
-
 func (b OriginalFormat) write(w io.Writer) error {
 	err := b.BoxHeader.write(w)
 	if err != nil {

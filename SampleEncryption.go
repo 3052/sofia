@@ -128,8 +128,6 @@ func (e EncryptionSample) write(w io.Writer, b SampleEncryption) error {
 	return nil
 }
 
-////////////////
-
 func (b *SampleEncryption) read(r io.Reader) error {
 	err := b.FullBoxHeader.read(r)
 	if err != nil {

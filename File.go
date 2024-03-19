@@ -57,7 +57,7 @@ func (f *File) Decode(r io.Reader) error {
 			}
 		case "sidx":
 			f.SegmentIndex = &SegmentIndex{BoxHeader: head}
-			err := f.SegmentIndex.Decode(r)
+			err := f.SegmentIndex.read(r)
 			if err != nil {
 				return err
 			}
@@ -82,7 +82,7 @@ func (f File) Encode(w io.Writer) error {
 		}
 	}
 	if f.SegmentIndex != nil { // sidx
-		err := f.SegmentIndex.Encode(w) // this might be optional
+		err := f.SegmentIndex.write(w) // this might be optional
 		if err != nil {
 			return err
 		}

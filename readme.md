@@ -13,7 +13,7 @@ library for reading and writing MP4
 ## prior art
 
 1. https://github.com/mozilla/mp4parse-rust/issues/415
-2. https://github.com/Eyevinn/mp4ff/issues/298
+2. https://github.com/Eyevinn/mp4ff/issues/311
 3. https://github.com/alfg/mp4-rust/issues/132
 4. https://github.com/yapingcat/gomedia/issues/113
 5. https://github.com/alfg/mp4/issues/27

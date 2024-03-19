@@ -16,7 +16,7 @@ type Track struct {
 	Media     Media
 }
 
-func (t *Track) Decode(r io.Reader) error {
+func (t *Track) read(r io.Reader) error {
 	for {
 		var head BoxHeader
 		err := head.read(r)
@@ -49,7 +49,7 @@ func (t *Track) Decode(r io.Reader) error {
 	}
 }
 
-func (t Track) Encode(w io.Writer) error {
+func (t Track) write(w io.Writer) error {
 	err := t.BoxHeader.write(w)
 	if err != nil {
 		return err

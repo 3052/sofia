@@ -52,7 +52,7 @@ func (p *ProtectionSchemeInfo) Decode(r io.Reader) error {
 	}
 }
 
-func (p ProtectionSchemeInfo) Encode(w io.Writer) error {
+func (p ProtectionSchemeInfo) write(w io.Writer) error {
 	err := p.BoxHeader.write(w)
 	if err != nil {
 		return err
@@ -63,5 +63,5 @@ func (p ProtectionSchemeInfo) Encode(w io.Writer) error {
 			return err
 		}
 	}
-	return p.OriginalFormat.Encode(w)
+	return p.OriginalFormat.write(w)
 }

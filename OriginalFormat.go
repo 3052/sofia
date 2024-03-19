@@ -15,8 +15,6 @@ type OriginalFormat struct {
 	DataFormat [4]uint8
 }
 
-///////////
-
 func (b *OriginalFormat) read(r io.Reader) error {
 	_, err := io.ReadFull(r, b.DataFormat[:])
 	if err != nil {
@@ -25,7 +23,9 @@ func (b *OriginalFormat) read(r io.Reader) error {
 	return nil
 }
 
-func (b OriginalFormat) Encode(w io.Writer) error {
+///////////
+
+func (b OriginalFormat) write(w io.Writer) error {
 	err := b.BoxHeader.write(w)
 	if err != nil {
 		return err

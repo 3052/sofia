@@ -131,7 +131,7 @@ func (b *SampleEncryption) Decode(r io.Reader) error {
 }
 
 func (b SampleEncryption) Encode(w io.Writer) error {
-	err := b.BoxHeader.Encode(w)
+	err := b.BoxHeader.write(w)
 	if err != nil {
 		return err
 	}

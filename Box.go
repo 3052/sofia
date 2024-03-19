@@ -114,24 +114,13 @@ func (b BoxHeader) get_usertype() string {
 	return hex.EncodeToString(b.Usertype[:])
 }
 
-///////////////
-
 func (f FullBoxHeader) write(w io.Writer) error {
 	return binary.Write(w, binary.BigEndian, f)
 }
 
-func (b Box) Encode(w io.Writer) error {
-	err := b.BoxHeader.Encode(w)
-	if err != nil {
-		return err
-	}
-	if _, err := w.Write(b.Payload); err != nil {
-		return err
-	}
-	return nil
-}
+///////////////
 
-func (b BoxHeader) Encode(w io.Writer) error {
+func (b BoxHeader) write(w io.Writer) error {
 	err := binary.Write(w, binary.BigEndian, b.Size)
 	if err != nil {
 		return err
@@ -144,6 +133,17 @@ func (b BoxHeader) Encode(w io.Writer) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (b Box) Encode(w io.Writer) error {
+	err := b.BoxHeader.write(w)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(b.Payload); err != nil {
+		return err
 	}
 	return nil
 }

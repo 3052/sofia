@@ -102,7 +102,7 @@ func (s *SegmentIndex) Decode(r io.Reader) error {
 }
 
 func (s SegmentIndex) Encode(w io.Writer) error {
-	if err := s.BoxHeader.Encode(w); err != nil {
+	if err := s.BoxHeader.write(w); err != nil {
 		return err
 	}
 	if err := s.FullBoxHeader.write(w); err != nil {

@@ -83,7 +83,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 }
 
 func (t TrackFragment) Encode(w io.Writer) error {
-	err := t.BoxHeader.Encode(w)
+	err := t.BoxHeader.write(w)
 	if err != nil {
 		return err
 	}

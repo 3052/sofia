@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.2.3 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.2.4 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -24,21 +24,15 @@
       <a href="#AudioSampleEntry">type AudioSampleEntry</a>
       <ul>
           <li><a href="#AudioSampleEntry.Decode">func (a *AudioSampleEntry) Decode(r io.Reader) error</a></li>
-          <li><a href="#AudioSampleEntry.Encode">func (a AudioSampleEntry) Encode(w io.Writer) error</a></li>
           </ul>
       </li>
   <li>
       <a href="#Box">type Box</a>
-      <ul>
-          <li><a href="#Box.Encode">func (b Box) Encode(w io.Writer) error</a></li>
-          </ul>
       </li>
   <li>
       <a href="#BoxHeader">type BoxHeader</a>
       <ul>
-          <li><a href="#BoxHeader.Encode">func (b BoxHeader) Encode(w io.Writer) error</a></li>
           <li><a href="#BoxHeader.GetType">func (b BoxHeader) GetType() string</a></li>
-          <li><a href="#BoxHeader.GetUsertype">func (b BoxHeader) GetUsertype() string</a></li>
           </ul>
       </li>
   <li>
@@ -58,10 +52,6 @@
       </li>
   <li>
       <a href="#FullBoxHeader">type FullBoxHeader</a>
-      <ul>
-          <li><a href="#FullBoxHeader.Encode">func (f FullBoxHeader) Encode(w io.Writer) error</a></li>
-          <li><a href="#FullBoxHeader.GetFlags">func (f FullBoxHeader) GetFlags() uint32</a></li>
-          </ul>
       </li>
   <li>
       <a href="#Media">type Media</a>
@@ -100,17 +90,9 @@
       </li>
   <li>
       <a href="#OriginalFormat">type OriginalFormat</a>
-      <ul>
-          <li><a href="#OriginalFormat.Decode">func (b *OriginalFormat) Decode(r io.Reader) error</a></li>
-          <li><a href="#OriginalFormat.Encode">func (b OriginalFormat) Encode(w io.Writer) error</a></li>
-          </ul>
       </li>
   <li>
       <a href="#ProtectionSchemeInfo">type ProtectionSchemeInfo</a>
-      <ul>
-          <li><a href="#ProtectionSchemeInfo.Decode">func (p *ProtectionSchemeInfo) Decode(r io.Reader) error</a></li>
-          <li><a href="#ProtectionSchemeInfo.Encode">func (p ProtectionSchemeInfo) Encode(w io.Writer) error</a></li>
-          </ul>
       </li>
   <li>
       <a href="#ProtectionSystemSpecificHeader">type ProtectionSystemSpecificHeader</a>
@@ -154,10 +136,6 @@
       </li>
   <li>
       <a href="#SampleEntry">type SampleEntry</a>
-      <ul>
-          <li><a href="#SampleEntry.Decode">func (s *SampleEntry) Decode(r io.Reader) error</a></li>
-          <li><a href="#SampleEntry.Encode">func (s *SampleEntry) Encode(w io.Writer) error</a></li>
-          </ul>
       </li>
   <li>
       <a href="#SampleTable">type SampleTable</a>
@@ -243,8 +221,6 @@
 </pre>
 <h4 id="AudioSampleEntry.Decode">func (*AudioSampleEntry) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><a href="#AudioSampleEntry"><span class="nx">AudioSampleEntry</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="AudioSampleEntry.Encode">func (AudioSampleEntry) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <a href="#AudioSampleEntry"><span class="nx">AudioSampleEntry</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h3 id="Box">type Box</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
@@ -259,9 +235,7 @@
    // the remaining bytes are the BoxPayload
 }
 </pre>
-<h4 id="Box.Encode">func (Box) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h3 id="BoxHeader">type BoxHeader</h3>
+<h3 id="BoxHeader">type BoxHeader</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">BoxHeader</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="BoxHeader.Size"><span class="nx">Size</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 	<span class="c1">// Type is used outside this module, so we cannot wrap it with Size:
@@ -285,12 +259,8 @@
    }
 }
 </pre>
-<h4 id="BoxHeader.Encode">func (BoxHeader) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="BoxHeader.GetType">func (BoxHeader) GetType</h4>
+<h4 id="BoxHeader.GetType">func (BoxHeader) GetType</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">GetType</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
-  <h4 id="BoxHeader.GetUsertype">func (BoxHeader) GetUsertype</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#BoxHeader"><span class="nx">BoxHeader</span></a><span class="p">)</span> <span class="nf">GetUsertype</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
   <h3 id="EncryptionSample">type EncryptionSample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">EncryptionSample</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="EncryptionSample.InitializationVector"><span class="nx">InitializationVector</span></span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
@@ -329,11 +299,7 @@
    bit(24) flags = f;
 }
 </pre>
-<h4 id="FullBoxHeader.Encode">func (FullBoxHeader) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="FullBoxHeader.GetFlags">func (FullBoxHeader) GetFlags</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a><span class="p">)</span> <span class="nf">GetFlags</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
-  <h3 id="Media">type Media</h3>
+<h3 id="Media">type Media</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Media</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="Media.BoxHeader"><span class="nx">BoxHeader</span></span>        <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="Media.Boxes"><span class="nx">Boxes</span></span>            <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>
@@ -416,11 +382,7 @@
    // and complete track information)
 }
 </pre>
-<h4 id="OriginalFormat.Decode">func (*OriginalFormat) Decode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#OriginalFormat"><span class="nx">OriginalFormat</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="OriginalFormat.Encode">func (OriginalFormat) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#OriginalFormat"><span class="nx">OriginalFormat</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h3 id="ProtectionSchemeInfo">type ProtectionSchemeInfo</h3>
+<h3 id="ProtectionSchemeInfo">type ProtectionSchemeInfo</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">ProtectionSchemeInfo</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="ProtectionSchemeInfo.BoxHeader"><span class="nx">BoxHeader</span></span>      <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="ProtectionSchemeInfo.Boxes"><span class="nx">Boxes</span></span>          <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>
@@ -433,11 +395,7 @@
    SchemeInformationBox info; // optional
 }
 </pre>
-<h4 id="ProtectionSchemeInfo.Decode">func (*ProtectionSchemeInfo) Decode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><a href="#ProtectionSchemeInfo"><span class="nx">ProtectionSchemeInfo</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="ProtectionSchemeInfo.Encode">func (ProtectionSchemeInfo) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <a href="#ProtectionSchemeInfo"><span class="nx">ProtectionSchemeInfo</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h3 id="ProtectionSystemSpecificHeader">type ProtectionSystemSpecificHeader</h3>
+<h3 id="ProtectionSystemSpecificHeader">type ProtectionSystemSpecificHeader</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">ProtectionSystemSpecificHeader</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="ProtectionSystemSpecificHeader.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="ProtectionSystemSpecificHeader.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
@@ -557,11 +515,7 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
    unsigned int(16) data_reference_index;
 }
 </pre>
-<h4 id="SampleEntry.Decode">func (*SampleEntry) Decode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="SampleEntry.Encode">func (*SampleEntry) Encode</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Encode</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h3 id="SampleTable">type SampleTable</h3>
+<h3 id="SampleTable">type SampleTable</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleTable</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="SampleTable.BoxHeader"><span class="nx">BoxHeader</span></span>         <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="SampleTable.Boxes"><span class="nx">Boxes</span></span>             <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>

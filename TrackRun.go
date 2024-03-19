@@ -158,25 +158,25 @@ func (t TrackRun) Encode(w io.Writer) error {
 
 // 0x000004 first-sample-flags-present
 func (t TrackRun) FirstSampleFlagsPresent() bool {
-	return t.FullBoxHeader.GetFlags()&4 >= 1
+	return t.FullBoxHeader.get_flags()&4 >= 1
 }
 
 // 0x000800 sample-composition-time-offsets-present
 func (t TrackRun) SampleCompositionTimeOffsetsPresent() bool {
-	return t.FullBoxHeader.GetFlags()&0x800 >= 1
+	return t.FullBoxHeader.get_flags()&0x800 >= 1
 }
 
 // 0x000100 sample-duration-present
 func (t TrackRun) SampleDurationPresent() bool {
-	return t.FullBoxHeader.GetFlags()&0x100 >= 1
+	return t.FullBoxHeader.get_flags()&0x100 >= 1
 }
 
 // 0x000400 sample-flags-present
 func (t TrackRun) SampleFlagsPresent() bool {
-	return t.FullBoxHeader.GetFlags()&0x400 >= 1
+	return t.FullBoxHeader.get_flags()&0x400 >= 1
 }
 
 // 0x000200 sample-size-present
 func (t TrackRun) SampleSizePresent() bool {
-	return t.FullBoxHeader.GetFlags()&0x200 >= 1
+	return t.FullBoxHeader.get_flags()&0x200 >= 1
 }

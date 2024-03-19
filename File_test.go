@@ -13,8 +13,8 @@ func TestFile(t *testing.T) {
             t.Fatal(err)
          }
          defer src.Close()
-         var f File
-         if err := f.Decode(src); err != nil {
+         var dst File
+         if err := dst.Decode(src); err != nil {
             t.Fatal(err)
          }
       }()

@@ -16,7 +16,7 @@ type Movie struct {
 	Track     Track
 }
 
-func (m *Movie) Decode(r io.Reader) error {
+func (m *Movie) read(r io.Reader) error {
 	for {
 		var head BoxHeader
 		err := head.read(r)
@@ -42,7 +42,7 @@ func (m *Movie) Decode(r io.Reader) error {
 			m.Boxes = append(m.Boxes, &b)
 		case "trak":
 			m.Track.BoxHeader = head
-			err := m.Track.Decode(r)
+			err := m.Track.read(r)
 			if err != nil {
 				return err
 			}
@@ -52,7 +52,7 @@ func (m *Movie) Decode(r io.Reader) error {
 	}
 }
 
-func (m Movie) Encode(w io.Writer) error {
+func (m Movie) write(w io.Writer) error {
 	err := m.BoxHeader.write(w)
 	if err != nil {
 		return err
@@ -63,5 +63,5 @@ func (m Movie) Encode(w io.Writer) error {
 			return err
 		}
 	}
-	return m.Track.Encode(w)
+	return m.Track.write(w)
 }

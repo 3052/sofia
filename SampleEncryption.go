@@ -13,28 +13,6 @@ type EncryptionSample struct {
 	Subsamples           []Subsample
 }
 
-func (e *EncryptionSample) Decode(r io.Reader, b *SampleEncryption) error {
-	err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
-	if err != nil {
-		return err
-	}
-	if b.SencUseSubsamples() {
-		err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
-		if err != nil {
-			return err
-		}
-		e.Subsamples = make([]Subsample, e.SubsampleCount)
-		for i, sample := range e.Subsamples {
-			err := sample.Decode(r)
-			if err != nil {
-				return err
-			}
-			e.Subsamples[i] = sample
-		}
-	}
-	return nil
-}
-
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
 func (e EncryptionSample) DecryptCenc(sample, key []byte) error {
 	block, err := aes.NewCipher(key)
@@ -59,26 +37,6 @@ func (e EncryptionSample) DecryptCenc(sample, key []byte) error {
 		}
 	} else {
 		stream.XORKeyStream(sample, sample)
-	}
-	return nil
-}
-
-func (e EncryptionSample) Encode(w io.Writer, b SampleEncryption) error {
-	err := binary.Write(w, binary.BigEndian, e.InitializationVector)
-	if err != nil {
-		return err
-	}
-	if b.SencUseSubsamples() {
-		err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
-		if err != nil {
-			return err
-		}
-		for _, sample := range e.Subsamples {
-			err := sample.Encode(w)
-			if err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
@@ -110,7 +68,69 @@ type SampleEncryption struct {
 	Samples       []EncryptionSample
 }
 
-func (b *SampleEncryption) Decode(r io.Reader) error {
+type Subsample struct {
+	BytesOfClearData     uint16
+	BytesOfProtectedData uint32
+}
+
+// senc_use_subsamples: flag mask is 0x000002.
+func (b SampleEncryption) senc_use_subsamples() bool {
+	return b.FullBoxHeader.get_flags()&2 >= 1
+}
+
+func (s *Subsample) read(r io.Reader) error {
+	return binary.Read(r, binary.BigEndian, s)
+}
+
+func (s Subsample) write(w io.Writer) error {
+	return binary.Write(w, binary.BigEndian, s)
+}
+
+func (e *EncryptionSample) read(r io.Reader, b *SampleEncryption) error {
+	err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
+	if err != nil {
+		return err
+	}
+	if b.senc_use_subsamples() {
+		err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
+		if err != nil {
+			return err
+		}
+		e.Subsamples = make([]Subsample, e.SubsampleCount)
+		for i, sample := range e.Subsamples {
+			err := sample.read(r)
+			if err != nil {
+				return err
+			}
+			e.Subsamples[i] = sample
+		}
+	}
+	return nil
+}
+
+func (e EncryptionSample) write(w io.Writer, b SampleEncryption) error {
+	err := binary.Write(w, binary.BigEndian, e.InitializationVector)
+	if err != nil {
+		return err
+	}
+	if b.senc_use_subsamples() {
+		err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
+		if err != nil {
+			return err
+		}
+		for _, sample := range e.Subsamples {
+			err := sample.write(w)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+////////////////
+
+func (b *SampleEncryption) read(r io.Reader) error {
 	err := b.FullBoxHeader.read(r)
 	if err != nil {
 		return err
@@ -121,7 +141,7 @@ func (b *SampleEncryption) Decode(r io.Reader) error {
 	}
 	b.Samples = make([]EncryptionSample, b.SampleCount)
 	for i, sample := range b.Samples {
-		err := sample.Decode(r, b)
+		err := sample.read(r, b)
 		if err != nil {
 			return err
 		}
@@ -130,7 +150,7 @@ func (b *SampleEncryption) Decode(r io.Reader) error {
 	return nil
 }
 
-func (b SampleEncryption) Encode(w io.Writer) error {
+func (b SampleEncryption) write(w io.Writer) error {
 	err := b.BoxHeader.write(w)
 	if err != nil {
 		return err
@@ -142,28 +162,10 @@ func (b SampleEncryption) Encode(w io.Writer) error {
 		return err
 	}
 	for _, sample := range b.Samples {
-		err := sample.Encode(w, b)
+		err := sample.write(w, b)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// senc_use_subsamples: flag mask is 0x000002.
-func (b SampleEncryption) SencUseSubsamples() bool {
-	return b.FullBoxHeader.get_flags()&2 >= 1
-}
-
-type Subsample struct {
-	BytesOfClearData     uint16
-	BytesOfProtectedData uint32
-}
-
-func (s *Subsample) Decode(r io.Reader) error {
-	return binary.Read(r, binary.BigEndian, s)
-}
-
-func (s Subsample) Encode(w io.Writer) error {
-	return binary.Write(w, binary.BigEndian, s)
 }

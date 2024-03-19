@@ -43,7 +43,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 			t.Boxes = append(t.Boxes, b)
 		case "senc":
 			t.SampleEncryption.BoxHeader = head
-			err := t.SampleEncryption.Decode(r)
+			err := t.SampleEncryption.read(r)
 			if err != nil {
 				return err
 			}
@@ -58,7 +58,7 @@ func (t *TrackFragment) Decode(r io.Reader) error {
 			}
 			if decode() {
 				t.SampleEncryption.BoxHeader = head
-				err := t.SampleEncryption.Decode(r)
+				err := t.SampleEncryption.read(r)
 				if err != nil {
 					return err
 				}
@@ -96,5 +96,5 @@ func (t TrackFragment) Encode(w io.Writer) error {
 	if err := t.TrackRun.Encode(w); err != nil {
 		return err
 	}
-	return t.SampleEncryption.Encode(w)
+	return t.SampleEncryption.write(w)
 }

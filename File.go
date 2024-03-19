@@ -45,7 +45,7 @@ func (f *File) Decode(r io.Reader) error {
 			}
 		case "moof":
 			f.MovieFragment = &MovieFragment{BoxHeader: head}
-			err := f.MovieFragment.Decode(r)
+			err := f.MovieFragment.read(r)
 			if err != nil {
 				return err
 			}
@@ -88,7 +88,7 @@ func (f File) Encode(w io.Writer) error {
 		}
 	}
 	if f.MovieFragment != nil { // moof
-		err := f.MovieFragment.Encode(w)
+		err := f.MovieFragment.write(w)
 		if err != nil {
 			return err
 		}

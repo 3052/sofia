@@ -66,8 +66,6 @@ func (t TrackRun) sample_size_present() bool {
 	return t.FullBoxHeader.get_flags()&0x200 >= 1
 }
 
-///////////////
-
 func (s *RunSample) read(r io.Reader, t *TrackRun) error {
 	if t.sample_duration_present() {
 		err := binary.Read(r, binary.BigEndian, &s.Duration)
@@ -124,7 +122,9 @@ func (s RunSample) write(w io.Writer, t TrackRun) error {
 	return nil
 }
 
-func (t *TrackRun) Decode(r io.Reader) error {
+///////////////
+
+func (t *TrackRun) read(r io.Reader) error {
 	err := t.FullBoxHeader.read(r)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func (t *TrackRun) Decode(r io.Reader) error {
 	return nil
 }
 
-func (t TrackRun) Encode(w io.Writer) error {
+func (t TrackRun) write(w io.Writer) error {
 	err := t.BoxHeader.write(w)
 	if err != nil {
 		return err

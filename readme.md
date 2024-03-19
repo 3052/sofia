@@ -21,7 +21,6 @@ library for reading and writing MP4
 7. https://github.com/garden4hu/fmp4parser-go/issues/4
 8. https://github.com/eswarantg/mp4box/issues/3
 9. https://github.com/miquels/mp4/issues/2
-10. https://github.com/oikomi/gomp4/issues/2
 
 > the normal place to put the encryption information in the segments is in a
 > `senc` box, and this is not the case in this file, but they seem to be placed

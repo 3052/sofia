@@ -132,7 +132,7 @@ func (t TrackRun) Encode(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := t.FullBoxHeader.Encode(w); err != nil {
+	if err := t.FullBoxHeader.write(w); err != nil {
 		return err
 	}
 	if err := binary.Write(w, binary.BigEndian, t.SampleCount); err != nil {

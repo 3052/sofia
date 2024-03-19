@@ -110,10 +110,14 @@ type BoxHeader struct {
 	Usertype [16]uint8
 }
 
-///////////////
-
 func (b BoxHeader) get_usertype() string {
 	return hex.EncodeToString(b.Usertype[:])
+}
+
+///////////////
+
+func (f FullBoxHeader) write(w io.Writer) error {
+	return binary.Write(w, binary.BigEndian, f)
 }
 
 func (b Box) Encode(w io.Writer) error {
@@ -125,10 +129,6 @@ func (b Box) Encode(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (f FullBoxHeader) Encode(w io.Writer) error {
-	return binary.Write(w, binary.BigEndian, f)
 }
 
 func (b BoxHeader) Encode(w io.Writer) error {

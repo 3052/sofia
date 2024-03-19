@@ -135,7 +135,7 @@ func (b SampleEncryption) Encode(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := b.FullBoxHeader.Encode(w); err != nil {
+	if err := b.FullBoxHeader.write(w); err != nil {
 		return err
 	}
 	if err := binary.Write(w, binary.BigEndian, b.SampleCount); err != nil {

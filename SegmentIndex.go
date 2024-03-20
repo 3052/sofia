@@ -6,6 +6,19 @@ import (
    "strconv"
 )
 
+// size will always fit inside 31 bits, but range-start and range-end can both
+// exceed 32 bits, so we must use 64 bit. we need the length for progress
+// meter, so cannot use a channel
+func (s SegmentIndex) Ranges(start uint64) []Range {
+   ranges := make([]Range, s.ReferenceCount)
+   for i, ref := range s.Reference {
+      size := uint64(ref.referenced_size())
+      ranges[i] = Range{start, start + size - 1}
+      start += size
+   }
+   return ranges
+}
+
 func (s SegmentIndex) get_size() int {
    v, _ := s.BoxHeader.get_size()
    v += binary.Size(s.FullBoxHeader)
@@ -100,19 +113,6 @@ func (r Reference) set_referenced_size(v uint32) {
 
 func (s *SegmentIndex) New() {
    copy(s.BoxHeader.Type[:], "sidx")
-}
-
-// size will always fit inside 31 bits:
-// unsigned int(31) referenced_size
-// but range-start and range-end can both exceed 32 bits, so we must use 64 bit
-func (s SegmentIndex) Ranges(start uint64) []Range {
-   ranges := make([]Range, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := uint64(ref.referenced_size())
-      ranges[i] = Range{start, start + size - 1}
-      start += size
-   }
-   return ranges
 }
 
 func (s *SegmentIndex) read(r io.Reader) error {

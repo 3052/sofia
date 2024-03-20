@@ -6,10 +6,6 @@ import (
    "io"
 )
 
-func (f *FullBoxHeader) read(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, f)
-}
-
 func (b BoxHeader) payload(r io.Reader) io.Reader {
    _, n := b.get_size()
    return io.LimitReader(r, int64(n))
@@ -38,31 +34,8 @@ type Box struct {
    Payload   []byte
 }
 
-func (b *BoxHeader) read(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
-      return err
-   }
-   if b.GetType() == "uuid" {
-      _, err := io.ReadFull(r, b.Usertype[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *Box) read(r io.Reader) error {
-   _, size := b.BoxHeader.get_size()
-   b.Payload = make([]byte, size)
-   _, err := io.ReadFull(r, b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
+func (f *FullBoxHeader) read(r io.Reader) error {
+   return binary.Read(r, binary.BigEndian, f)
 }
 
 // ISO/IEC 14496-12
@@ -141,6 +114,33 @@ func (b Box) write(w io.Writer) error {
       return err
    }
    if _, err := w.Write(b.Payload); err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b *BoxHeader) read(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+      return err
+   }
+   if b.GetType() == "uuid" {
+      _, err := io.ReadFull(r, b.Usertype[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (b *Box) read(r io.Reader) error {
+   _, size := b.BoxHeader.get_size()
+   b.Payload = make([]byte, size)
+   _, err := io.ReadFull(r, b.Payload)
+   if err != nil {
       return err
    }
    return nil

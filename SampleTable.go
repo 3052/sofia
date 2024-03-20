@@ -16,41 +16,6 @@ type SampleTable struct {
    SampleDescription SampleDescription
 }
 
-func (s *SampleTable) read(r io.Reader) error {
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
-      case "sgpd", // Paramount
-         "stco", // Roku
-         "stsc", // Roku
-         "stsz", // Roku
-         "stts": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         s.Boxes = append(s.Boxes, b)
-      case "stsd":
-         s.SampleDescription.BoxHeader = head
-         err := s.SampleDescription.read(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("SampleTable.Decode")
-      }
-   }
-}
-
 func (s SampleTable) write(w io.Writer) error {
    err := s.BoxHeader.write(w)
    if err != nil {
@@ -63,4 +28,41 @@ func (s SampleTable) write(w io.Writer) error {
       }
    }
    return s.SampleDescription.write(w)
+}
+
+func (s *SampleTable) read(r io.Reader) error {
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      slog.Debug("BoxHeader", "type", head.GetType())
+      ///////////////////////////////////////////////////////////////////////////
+      r := head.payload(r)
+      switch head.GetType() {
+      case "stsd":
+         s.SampleDescription.BoxHeader = head
+         err := s.SampleDescription.read(r)
+         if err != nil {
+            return err
+         }
+      ///////////////////////////////////////////////////////////////////////////
+      case "sgpd", // Paramount
+         "stco", // Roku
+         "stsc", // Roku
+         "stsz", // Roku
+         "stts": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         s.Boxes = append(s.Boxes, b)
+      default:
+         return errors.New("SampleTable.Decode")
+      }
+   }
 }

@@ -40,9 +40,17 @@ func (m *Media) read(r io.Reader) error {
          return err
       }
       box_type := head.GetType()
-      r := head.payload(r)
       slog.Debug("BoxHeader", "Type", box_type)
+      ///////////////////////////////////////////////////////////////////////////
+      r := head.payload(r)
       switch box_type {
+      case "minf":
+         m.MediaInformation.BoxHeader = head
+         err := m.MediaInformation.read(r)
+         if err != nil {
+            return err
+         }
+      ///////////////////////////////////////////////////////////////////////////
       case "hdlr", // Roku
          "mdhd": // Roku
          b := Box{BoxHeader: head}
@@ -51,12 +59,6 @@ func (m *Media) read(r io.Reader) error {
             return err
          }
          m.Boxes = append(m.Boxes, b)
-      case "minf":
-         m.MediaInformation.BoxHeader = head
-         err := m.MediaInformation.read(r)
-         if err != nil {
-            return err
-         }
       default:
          return errors.New("Media.Decode")
       }

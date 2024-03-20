@@ -24,43 +24,6 @@ type SampleDescription struct {
    VisualSample  *VisualSampleEntry
 }
 
-func (s *SampleDescription) read(r io.Reader) error {
-   err := s.FullBoxHeader.read(r)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &s.EntryCount); err != nil {
-      return err
-   }
-   var head BoxHeader
-   if err := head.read(r); err == io.EOF {
-      return nil
-   } else if err != nil {
-      return err
-   }
-   box_type := head.GetType()
-   slog.Debug("BoxHeader", "Type", box_type)
-   switch box_type {
-   case "enca":
-      s.AudioSample = new(AudioSampleEntry)
-      s.AudioSample.SampleEntry.BoxHeader = head
-      err := s.AudioSample.read(r)
-      if err != nil {
-         return err
-      }
-   case "encv":
-      s.VisualSample = new(VisualSampleEntry)
-      s.VisualSample.SampleEntry.BoxHeader = head
-      err := s.VisualSample.read(r)
-      if err != nil {
-         return err
-      }
-   default:
-      return errors.New("SampleDescription.Decode")
-   }
-   return nil
-}
-
 func (s SampleDescription) write(w io.Writer) error {
    err := s.BoxHeader.write(w)
    if err != nil {
@@ -83,6 +46,45 @@ func (s SampleDescription) write(w io.Writer) error {
       if err != nil {
          return err
       }
+   }
+   return nil
+}
+
+func (s *SampleDescription) read(r io.Reader) error {
+   err := s.FullBoxHeader.read(r)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &s.EntryCount); err != nil {
+      return err
+   }
+   var head BoxHeader
+   if err := head.read(r); err == io.EOF {
+      return nil
+   } else if err != nil {
+      return err
+   }
+   box_type := head.GetType()
+   slog.Debug("BoxHeader", "Type", box_type)
+   //////////////////////////////////////////////////////////////////////////////
+   switch box_type {
+   case "enca":
+      s.AudioSample = new(AudioSampleEntry)
+      s.AudioSample.SampleEntry.BoxHeader = head
+      err := s.AudioSample.read(r)
+      if err != nil {
+         return err
+      }
+   case "encv":
+      s.VisualSample = new(VisualSampleEntry)
+      s.VisualSample.SampleEntry.BoxHeader = head
+      err := s.VisualSample.read(r)
+      if err != nil {
+         return err
+      }
+   //////////////////////////////////////////////////////////////////////////////
+   default:
+      return errors.New("SampleDescription.Decode")
    }
    return nil
 }

@@ -64,86 +64,6 @@ type AudioSampleEntry struct {
    ProtectionScheme ProtectionSchemeInfo
 }
 
-func (v *VisualSampleEntry) read(r io.Reader) error {
-   err := v.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
-      case "avcC", // Roku
-         "btrt", // Mubi
-         "colr", // Paramount
-         "pasp": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         v.Boxes = append(v.Boxes, &b)
-      case "sinf":
-         v.ProtectionScheme.BoxHeader = head
-         err := v.ProtectionScheme.read(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("VisualSampleEntry.Decode")
-      }
-   }
-}
-
-func (a *AudioSampleEntry) read(r io.Reader) error {
-   err := a.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
-      case "dec3", // Hulu
-         "esds": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         a.Boxes = append(a.Boxes, &b)
-      case "sinf":
-         a.ProtectionScheme.BoxHeader = head
-         err := a.ProtectionScheme.read(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("AudioSampleEntry.Decode")
-      }
-   }
-}
-
 func (a AudioSampleEntry) write(w io.Writer) error {
    err := a.SampleEntry.write(w)
    if err != nil {
@@ -215,4 +135,88 @@ func (v VisualSampleEntry) write(w io.Writer) error {
       }
    }
    return v.ProtectionScheme.write(w)
+}
+
+////////////
+
+func (v *VisualSampleEntry) read(r io.Reader) error {
+   err := v.SampleEntry.read(r)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      slog.Debug("BoxHeader", "type", head.GetType())
+      ///////////////////////////////////////////////////////////////////////////
+      r := head.payload(r)
+      switch head.GetType() {
+      case "sinf":
+         v.ProtectionScheme.BoxHeader = head
+         err := v.ProtectionScheme.read(r)
+         if err != nil {
+            return err
+         }
+      ///////////////////////////////////////////////////////////////////////////
+      case "avcC", // Roku
+         "btrt", // Mubi
+         "colr", // Paramount
+         "pasp": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         v.Boxes = append(v.Boxes, &b)
+      default:
+         return errors.New("VisualSampleEntry.read")
+      }
+   }
+}
+
+func (a *AudioSampleEntry) read(r io.Reader) error {
+   err := a.SampleEntry.read(r)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      slog.Debug("BoxHeader", "type", head.GetType())
+      r := head.payload(r)
+      switch head.GetType() {
+      case "dec3", // Hulu
+         "esds": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         a.Boxes = append(a.Boxes, &b)
+      case "sinf":
+         a.ProtectionScheme.BoxHeader = head
+         err := a.ProtectionScheme.read(r)
+         if err != nil {
+            return err
+         }
+      default:
+         return errors.New("AudioSampleEntry.read")
+      }
+   }
 }

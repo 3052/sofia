@@ -77,7 +77,7 @@ func (t *TrackFragment) read(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("TrackFragment.Decode")
+         return errors.New("TrackFragment.read")
       }
    }
 }

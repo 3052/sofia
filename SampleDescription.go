@@ -84,7 +84,7 @@ func (s *SampleDescription) read(r io.Reader) error {
       }
    //////////////////////////////////////////////////////////////////////////////
    default:
-      return errors.New("SampleDescription.Decode")
+      return errors.New("SampleDescription.read")
    }
    return nil
 }

@@ -60,7 +60,7 @@ func (m *Media) read(r io.Reader) error {
          }
          m.Boxes = append(m.Boxes, b)
       default:
-         return errors.New("Media.Decode")
+         return errors.New("Media.read")
       }
    }
 }

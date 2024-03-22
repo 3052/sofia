@@ -47,7 +47,7 @@ func (m *Movie) read(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("Movie.Decode")
+         return errors.New("Movie.read")
       }
    }
 }

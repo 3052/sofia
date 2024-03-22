@@ -62,7 +62,7 @@ func (s *SampleTable) read(r io.Reader) error {
          }
          s.Boxes = append(s.Boxes, b)
       default:
-         return errors.New("SampleTable.Decode")
+         return errors.New("SampleTable.read")
       }
    }
 }

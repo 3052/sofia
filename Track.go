@@ -44,7 +44,7 @@ func (t *Track) read(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("Track.Decode")
+         return errors.New("Track.read")
       }
    }
 }

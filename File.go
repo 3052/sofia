@@ -97,7 +97,7 @@ func (f *File) Read(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("File.Decode")
+         return errors.New("File.Read")
       }
    }
 }

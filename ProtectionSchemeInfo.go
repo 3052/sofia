@@ -19,39 +19,6 @@ type ProtectionSchemeInfo struct {
    OriginalFormat OriginalFormat
 }
 
-func (p *ProtectionSchemeInfo) read(r io.Reader) error {
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      box_type := head.GetType()
-      r := head.payload(r)
-      slog.Debug("BoxHeader", "Type", box_type)
-      switch box_type {
-      case "schi", // Roku
-         "schm": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         p.Boxes = append(p.Boxes, b)
-      case "frma":
-         p.OriginalFormat.BoxHeader = head
-         err := p.OriginalFormat.read(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("ProtectionSchemeInfo.Decode")
-      }
-   }
-}
-
 func (p ProtectionSchemeInfo) write(w io.Writer) error {
    err := p.BoxHeader.write(w)
    if err != nil {
@@ -64,4 +31,37 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
       }
    }
    return p.OriginalFormat.write(w)
+}
+
+func (p *ProtectionSchemeInfo) read(r io.Reader, n int64) error {
+   r = io.LimitReader(r, n)
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "Type", box_type)
+      switch box_type {
+      case "frma":
+         p.OriginalFormat.BoxHeader = head
+         err := p.OriginalFormat.read(r)
+         if err != nil {
+            return err
+         }
+      case "schi", // Roku
+         "schm": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         p.Boxes = append(p.Boxes, b)
+      default:
+         return errors.New("ProtectionSchemeInfo.read")
+      }
+   }
 }

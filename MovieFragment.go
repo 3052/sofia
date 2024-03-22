@@ -44,7 +44,7 @@ func (m *MovieFragment) read(r io.Reader) error {
             return err
          }
       default:
-         return errors.New("MovieFragment.Decode")
+         return errors.New("MovieFragment.read")
       }
    }
 }

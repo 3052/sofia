@@ -33,10 +33,10 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
             return err
          }
       case "sgpd", // Paramount
-         "stco", // Roku
-         "stsc", // Roku
-         "stsz", // Roku
-         "stts": // Roku
+      "stco", // Roku
+      "stsc", // Roku
+      "stsz", // Roku
+      "stts": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

@@ -34,8 +34,8 @@ func (t *Track) read(r io.Reader, size int64) error {
             return err
          }
       case "edts", // Paramount
-         "tkhd", // Roku
-         "udta": // Mubi
+      "tkhd", // Roku
+      "udta": // Mubi
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

@@ -56,7 +56,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
             return err
          }
       case "dec3", // Hulu
-         "esds": // Roku
+      "esds": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {
@@ -184,9 +184,9 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
             return err
          }
       case "avcC", // Roku
-         "btrt", // Mubi
-         "colr", // Paramount
-         "pasp": // Roku
+      "btrt", // Mubi
+      "colr", // Paramount
+      "pasp": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

@@ -16,20 +16,6 @@ type SampleTable struct {
    SampleDescription SampleDescription
 }
 
-func (s SampleTable) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range s.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return s.SampleDescription.write(w)
-}
-
 func (s *SampleTable) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -64,4 +50,18 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
          return errors.New("SampleTable.read")
       }
    }
+}
+
+func (s SampleTable) write(w io.Writer) error {
+   err := s.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range s.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return s.SampleDescription.write(w)
 }

@@ -16,6 +16,20 @@ type MovieFragment struct {
    TrackFragment TrackFragment
 }
 
+func (m MovieFragment) write(w io.Writer) error {
+   err := m.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range m.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return m.TrackFragment.write(w)
+}
+
 func (m *MovieFragment) read(r io.Reader) error {
    for {
       var head BoxHeader
@@ -47,18 +61,4 @@ func (m *MovieFragment) read(r io.Reader) error {
          return errors.New("MovieFragment.read")
       }
    }
-}
-
-func (m MovieFragment) write(w io.Writer) error {
-   err := m.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range m.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return m.TrackFragment.write(w)
 }

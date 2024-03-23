@@ -51,8 +51,8 @@ func (f *File) Read(r io.Reader) error {
             return err
          }
       case "free", // Mubi
-         "ftyp", // Roku
-         "styp": // Roku
+      "ftyp", // Roku
+      "styp": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

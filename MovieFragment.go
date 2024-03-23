@@ -34,7 +34,7 @@ func (m *MovieFragment) read(r io.Reader, size int64) error {
             return err
          }
       case "mfhd", // Roku
-         "pssh": // Roku
+      "pssh": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

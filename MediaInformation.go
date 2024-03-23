@@ -34,8 +34,8 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
             return err
          }
       case "dinf", // Roku
-         "smhd", // Roku
-         "vmhd": // Roku
+      "smhd", // Roku
+      "vmhd": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

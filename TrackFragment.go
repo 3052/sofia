@@ -63,11 +63,11 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
             return err
          }
       case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt", // Roku
-         "tfhd": // Roku
+      "saiz", // Roku
+      "sbgp", // Roku
+      "sgpd", // Roku
+      "tfdt", // Roku
+      "tfhd": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {

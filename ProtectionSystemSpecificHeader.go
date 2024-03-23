@@ -1,6 +1,9 @@
 package sofia
 
-import "io"
+import (
+   "encoding/binary"
+   "io"
+)
 
 // ISO/IEC 23001-7
 //  aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
@@ -27,6 +30,36 @@ type ProtectionSystemSpecificHeader struct {
 func (p *ProtectionSystemSpecificHeader) read(r io.Reader) error {
    err := p.FullBoxHeader.read(r)
    if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, p.SystemId[:]); err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &p.DataSize); err != nil {
+      return err
+   }
+   p.Data = make([]uint8, p.DataSize)
+   if _, err := io.ReadFull(r, p.Data); err != nil {
+      return err
+   }
+   return nil
+}
+
+func (p ProtectionSystemSpecificHeader) write(w io.Writer) error {
+   err := p.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   if err := p.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if _, err := w.Write(p.SystemId[:]); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, p.DataSize); err != nil {
+      return err
+   }
+   if _, err := w.Write(p.Data); err != nil {
       return err
    }
    return nil

@@ -33,8 +33,8 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
    return p.OriginalFormat.write(w)
 }
 
-func (p *ProtectionSchemeInfo) read(r io.Reader, n int64) error {
-   r = io.LimitReader(r, n)
+func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)

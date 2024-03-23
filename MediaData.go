@@ -2,43 +2,32 @@ package sofia
 
 import "io"
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class MediaDataBox extends Box('mdat') {
-//      bit(8) data[];
-//   }
-type MediaData struct {
-   BoxHeader BoxHeader
-   Data      [][]byte
-}
-
-func (m *MediaData) read(r io.Reader, t TrackRun) error {
-   m.Data = make([][]byte, t.SampleCount)
-   for i := range m.Data {
-      var err error
-      if size := t.Sample[i].Size; size >= 1 {
-         m.Data[i] = make([]byte, size)
-         _, err = io.ReadFull(r, m.Data[i])
-      } else {
-         m.Data[i], err = io.ReadAll(r)
-      }
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (m MediaData) write(w io.Writer) error {
-   err := m.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, data := range m.Data {
-      _, err := w.Write(data)
-      if err != nil {
-         return err
+   return m.Box.write(w)
+}
+
+func (m *MediaData) read(r io.Reader) error {
+   return m.Box.read(r)
+}
+
+// ISO/IEC 14496-12
+//  aligned(8) class MediaDataBox extends Box('mdat') {
+//     bit(8) data[];
+//  }
+type MediaData struct {
+   Box Box
+}
+
+func (m MediaData) Data(run TrackRun) [][]byte {
+   split := make([][]byte, run.SampleCount)
+   for i := range split {
+      if j := run.Sample[i].Size; j >= 1 {
+         split[i] = m.Box.Payload[:j]
+         m.Box.Payload = m.Box.Payload[j:]
+      } else {
+         split[i] = m.Box.Payload
+         m.Box.Payload = nil
       }
    }
-   return nil
+   return split
 }

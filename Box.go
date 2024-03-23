@@ -7,6 +7,47 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
+//   aligned(8) class Box (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+func (b *Box) read(r io.Reader) error {
+   _, size := b.BoxHeader.get_size()
+   b.Payload = make([]byte, size)
+   _, err := io.ReadFull(r, b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b *BoxHeader) read(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+      return err
+   }
+   if b.GetType() == "uuid" {
+      _, err := io.ReadFull(r, b.Usertype[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+// ISO/IEC 14496-12
 //  aligned(8) class BoxHeader (
 //     unsigned int(32) boxtype,
 //     optional unsigned int(8)[16] extended_type
@@ -36,20 +77,6 @@ func (b BoxHeader) get_size() (int, int64) {
       s += binary.Size(b.Usertype)
    }
    return s, int64(b.Size) - int64(s)
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
 }
 
 func (f *FullBoxHeader) read(r io.Reader) error {
@@ -110,33 +137,6 @@ func (b Box) write(w io.Writer) error {
       return err
    }
    if _, err := w.Write(b.Payload); err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b *BoxHeader) read(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
-      return err
-   }
-   if b.GetType() == "uuid" {
-      _, err := io.ReadFull(r, b.Usertype[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *Box) read(r io.Reader) error {
-   _, size := b.BoxHeader.get_size()
-   b.Payload = make([]byte, size)
-   _, err := io.ReadFull(r, b.Payload)
-   if err != nil {
       return err
    }
    return nil

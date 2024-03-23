@@ -30,7 +30,8 @@ func (m MovieFragment) write(w io.Writer) error {
    return m.TrackFragment.write(w)
 }
 
-func (m *MovieFragment) read(r io.Reader) error {
+func (m *MovieFragment) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -41,15 +42,14 @@ func (m *MovieFragment) read(r io.Reader) error {
       }
       box_type := head.GetType()
       slog.Debug("BoxHeader", "Type", box_type)
-      ///////////////////////////////////////////////////////////////////////////
       switch box_type {
       case "traf":
+         _, size := head.get_size()
          m.TrackFragment.BoxHeader = head
-         err := m.TrackFragment.read(r)
+         err := m.TrackFragment.read(r, size)
          if err != nil {
             return err
          }
-      ///////////////////////////////////////////////////////////////////////////
       case "mfhd", // Roku
          "pssh": // Roku
          b := Box{BoxHeader: head}

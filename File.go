@@ -61,21 +61,20 @@ func (f *File) Read(r io.Reader) error {
       }
       box_type := head.GetType()
       slog.Debug("BoxHeader", "Type", box_type)
-      ///////////////////////////////////////////////////////////////////////////
-      switch box_type {
+      switch _, size := head.get_size(); box_type {
+      case "mdat":
+         f.MediaData = new(MediaData)
+         f.MediaData.Box.BoxHeader = head
+         err := f.MediaData.read(r)
+         if err != nil {
+            return err
+         }
       case "moof":
          f.MovieFragment = &MovieFragment{BoxHeader: head}
-         err := f.MovieFragment.read(r)
+         err := f.MovieFragment.read(r, size)
          if err != nil {
             return err
          }
-      case "mdat":
-         f.MediaData = &MediaData{BoxHeader: head}
-         err := f.MediaData.read(r, f.MovieFragment.TrackFragment.TrackRun)
-         if err != nil {
-            return err
-         }
-      ///////////////////////////////////////////////////////////////////////////
       case "sidx":
          f.SegmentIndex = &SegmentIndex{BoxHeader: head}
          err := f.SegmentIndex.read(r)
@@ -83,7 +82,6 @@ func (f *File) Read(r io.Reader) error {
             return err
          }
       case "moov":
-         _, size := head.get_size()
          f.Movie = &Movie{BoxHeader: head}
          err := f.Movie.read(r, size)
          if err != nil {

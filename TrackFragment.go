@@ -34,7 +34,8 @@ func (t TrackFragment) write(w io.Writer) error {
    return t.SampleEncryption.write(w)
 }
 
-func (t *TrackFragment) read(r io.Reader) error {
+func (t *TrackFragment) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -45,14 +46,7 @@ func (t *TrackFragment) read(r io.Reader) error {
       }
       box_type := head.GetType()
       slog.Debug("BoxHeader", "type", box_type)
-      ///////////////////////////////////////////////////////////////////////////
       switch box_type {
-      case "senc":
-         t.SampleEncryption.BoxHeader = head
-         err := t.SampleEncryption.read(r)
-         if err != nil {
-            return err
-         }
       case "uuid":
          decode := func() bool {
             if head.get_usertype() == "a2394f525a9b4f14a2446c427c648df4" {
@@ -76,7 +70,12 @@ func (t *TrackFragment) read(r io.Reader) error {
             }
             t.Boxes = append(t.Boxes, b)
          }
-      ///////////////////////////////////////////////////////////////////////////
+      case "senc":
+         t.SampleEncryption.BoxHeader = head
+         err := t.SampleEncryption.read(r)
+         if err != nil {
+            return err
+         }
       case "trun":
          t.TrackRun.BoxHeader = head
          err := t.TrackRun.read(r)

@@ -38,7 +38,7 @@ func (s *SampleDescription) read(r io.Reader) error {
       return err
    }
    _, size := head.get_size()
-   switch head.GetType() {
+   switch head.debug() {
    case "enca":
       s.AudioSample = new(AudioSampleEntry)
       s.AudioSample.SampleEntry.BoxHeader = head

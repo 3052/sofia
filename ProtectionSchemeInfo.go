@@ -28,7 +28,7 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      switch head.GetType() {
+      switch head.debug() {
       case "frma":
          p.OriginalFormat.BoxHeader = head
          err := p.OriginalFormat.read(r)

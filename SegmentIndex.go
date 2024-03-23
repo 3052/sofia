@@ -6,6 +6,18 @@ import (
    "strconv"
 )
 
+func (s SegmentIndex) get_size() int {
+   v, _ := s.BoxHeader.get_size()
+   v += binary.Size(s.FullBoxHeader)
+   v += binary.Size(s.ReferenceId)
+   v += binary.Size(s.Timescale)
+   v += binary.Size(s.EarliestPresentationTime)
+   v += binary.Size(s.FirstOffset)
+   v += binary.Size(s.Reserved)
+   v += binary.Size(s.ReferenceCount)
+   return v + binary.Size(s.Reference)
+}
+
 // size will always fit inside 31 bits, but range-start and range-end can both
 // exceed 32 bits, so we must use 64 bit. we need the length for progress
 // meter, so cannot use a channel
@@ -17,18 +29,6 @@ func (s SegmentIndex) Ranges(start uint64) []Range {
       start += size
    }
    return ranges
-}
-
-func (s SegmentIndex) get_size() int {
-   v, _ := s.BoxHeader.get_size()
-   v += binary.Size(s.FullBoxHeader)
-   v += binary.Size(s.ReferenceId)
-   v += binary.Size(s.Timescale)
-   v += binary.Size(s.EarliestPresentationTime)
-   v += binary.Size(s.FirstOffset)
-   v += binary.Size(s.Reserved)
-   v += binary.Size(s.ReferenceCount)
-   return v + binary.Size(s.Reference)
 }
 
 type Range struct {

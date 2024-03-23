@@ -30,7 +30,8 @@ func (s SampleTable) write(w io.Writer) error {
    return s.SampleDescription.write(w)
 }
 
-func (s *SampleTable) read(r io.Reader) error {
+func (s *SampleTable) read(r io.Reader, n int64) error {
+   r = io.LimitReader(r, n)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -39,17 +40,15 @@ func (s *SampleTable) read(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      ///////////////////////////////////////////////////////////////////////////
-      r := head.payload(r)
-      switch head.GetType() {
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "type", box_type)
+      switch box_type {
       case "stsd":
          s.SampleDescription.BoxHeader = head
          err := s.SampleDescription.read(r)
          if err != nil {
             return err
          }
-      ///////////////////////////////////////////////////////////////////////////
       case "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku

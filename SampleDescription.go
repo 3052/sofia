@@ -66,23 +66,21 @@ func (s *SampleDescription) read(r io.Reader) error {
    }
    box_type := head.GetType()
    slog.Debug("BoxHeader", "Type", box_type)
-   //////////////////////////////////////////////////////////////////////////////
-   switch box_type {
+   switch _, size := head.get_size(); box_type {
    case "enca":
       s.AudioSample = new(AudioSampleEntry)
       s.AudioSample.SampleEntry.BoxHeader = head
-      err := s.AudioSample.read(r)
+      err := s.AudioSample.read(r, size)
       if err != nil {
          return err
       }
    case "encv":
       s.VisualSample = new(VisualSampleEntry)
       s.VisualSample.SampleEntry.BoxHeader = head
-      err := s.VisualSample.read(r)
+      err := s.VisualSample.read(r, size)
       if err != nil {
          return err
       }
-   //////////////////////////////////////////////////////////////////////////////
    default:
       return errors.New("SampleDescription.read")
    }

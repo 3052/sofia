@@ -137,9 +137,7 @@ func (v VisualSampleEntry) write(w io.Writer) error {
    return v.ProtectionScheme.write(w)
 }
 
-////////////
-
-func (v *VisualSampleEntry) read(r io.Reader) error {
+func (v *VisualSampleEntry) read(r io.Reader, n int64) error {
    err := v.SampleEntry.read(r)
    if err != nil {
       return err
@@ -147,6 +145,7 @@ func (v *VisualSampleEntry) read(r io.Reader) error {
    if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
       return err
    }
+   r = io.LimitReader(r, n)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -155,17 +154,16 @@ func (v *VisualSampleEntry) read(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      ///////////////////////////////////////////////////////////////////////////
-      r := head.payload(r)
-      switch head.GetType() {
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "type", box_type)
+      switch box_type {
       case "sinf":
+         _, size := head.get_size()
          v.ProtectionScheme.BoxHeader = head
-         err := v.ProtectionScheme.read(r)
+         err := v.ProtectionScheme.read(r, size)
          if err != nil {
             return err
          }
-      ///////////////////////////////////////////////////////////////////////////
       case "avcC", // Roku
          "btrt", // Mubi
          "colr", // Paramount
@@ -182,7 +180,7 @@ func (v *VisualSampleEntry) read(r io.Reader) error {
    }
 }
 
-func (a *AudioSampleEntry) read(r io.Reader) error {
+func (a *AudioSampleEntry) read(r io.Reader, n int64) error {
    err := a.SampleEntry.read(r)
    if err != nil {
       return err
@@ -190,6 +188,7 @@ func (a *AudioSampleEntry) read(r io.Reader) error {
    if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
       return err
    }
+   r = io.LimitReader(r, n)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -198,9 +197,16 @@ func (a *AudioSampleEntry) read(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "type", box_type)
+      switch box_type {
+      case "sinf":
+         _, size := head.get_size()
+         a.ProtectionScheme.BoxHeader = head
+         err := a.ProtectionScheme.read(r, size)
+         if err != nil {
+            return err
+         }
       case "dec3", // Hulu
          "esds": // Roku
          b := Box{BoxHeader: head}
@@ -209,12 +215,6 @@ func (a *AudioSampleEntry) read(r io.Reader) error {
             return err
          }
          a.Boxes = append(a.Boxes, &b)
-      case "sinf":
-         a.ProtectionScheme.BoxHeader = head
-         err := a.ProtectionScheme.read(r)
-         if err != nil {
-            return err
-         }
       default:
          return errors.New("AudioSampleEntry.read")
       }

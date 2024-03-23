@@ -16,20 +16,6 @@ type Track struct {
    Media     Media
 }
 
-func (t Track) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return t.Media.write(w)
-}
-
 func (t *Track) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -63,4 +49,18 @@ func (t *Track) read(r io.Reader, size int64) error {
          return errors.New("Track.read")
       }
    }
+}
+
+func (t Track) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return t.Media.write(w)
 }

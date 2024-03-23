@@ -6,31 +6,6 @@ import (
    "strconv"
 )
 
-func (s SegmentIndex) get_size() int {
-   v, _ := s.BoxHeader.get_size()
-   v += binary.Size(s.FullBoxHeader)
-   v += binary.Size(s.ReferenceId)
-   v += binary.Size(s.Timescale)
-   v += binary.Size(s.EarliestPresentationTime)
-   v += binary.Size(s.FirstOffset)
-   v += binary.Size(s.Reserved)
-   v += binary.Size(s.ReferenceCount)
-   return v + binary.Size(s.Reference)
-}
-
-// size will always fit inside 31 bits, but range-start and range-end can both
-// exceed 32 bits, so we must use 64 bit. we need the length for progress
-// meter, so cannot use a channel
-func (s SegmentIndex) Ranges(start uint64) []Range {
-   ranges := make([]Range, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := uint64(ref.referenced_size())
-      ranges[i] = Range{start, start + size - 1}
-      start += size
-   }
-   return ranges
-}
-
 type Range struct {
    Start uint64
    End   uint64
@@ -44,8 +19,28 @@ func (r Range) String() string {
    return string(b)
 }
 
+type Reference [3]uint32
+
 func (Reference) mask() uint32 {
    return 0xFFFFFFFF >> 1
+}
+
+func (r *Reference) read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) referenced_size() uint32 {
+   return r[0] & r.mask()
+}
+
+func (r Reference) set_referenced_size(v uint32) {
+   r[0] &= ^r.mask()
+   r[0] |= v
+}
+
+func (r Reference) write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
 }
 
 // ISO/IEC 14496-12
@@ -83,16 +78,6 @@ type SegmentIndex struct {
    Reference                []Reference
 }
 
-type Reference [3]uint32
-
-func (r *Reference) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) write(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
 func (s *SegmentIndex) Append(size uint32) {
    var r Reference
    r.set_referenced_size(size)
@@ -101,52 +86,33 @@ func (s *SegmentIndex) Append(size uint32) {
    s.BoxHeader.Size = uint32(s.get_size())
 }
 
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) referenced_size() uint32 {
-   return r[0] & r.mask()
-}
-
-func (r Reference) set_referenced_size(v uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= v
-}
-
 func (s *SegmentIndex) New() {
    copy(s.BoxHeader.Type[:], "sidx")
 }
 
-func (s SegmentIndex) write(w io.Writer) error {
-   if err := s.BoxHeader.write(w); err != nil {
-      return err
+// size will always fit inside 31 bits, but range-start and range-end can both
+// exceed 32 bits, so we must use 64 bit. we need the length for progress
+// meter, so cannot use a channel
+func (s SegmentIndex) Ranges(start uint64) []Range {
+   ranges := make([]Range, s.ReferenceCount)
+   for i, ref := range s.Reference {
+      size := uint64(ref.referenced_size())
+      ranges[i] = Range{start, start + size - 1}
+      start += size
    }
-   if err := s.FullBoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.FirstOffset); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
-      return err
-   }
-   for _, ref := range s.Reference {
-      err := ref.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
+   return ranges
+}
+
+func (s SegmentIndex) get_size() int {
+   v, _ := s.BoxHeader.get_size()
+   v += binary.Size(s.FullBoxHeader)
+   v += binary.Size(s.ReferenceId)
+   v += binary.Size(s.Timescale)
+   v += binary.Size(s.EarliestPresentationTime)
+   v += binary.Size(s.FirstOffset)
+   v += binary.Size(s.Reserved)
+   v += binary.Size(s.ReferenceCount)
+   return v + binary.Size(s.Reference)
 }
 
 func (s *SegmentIndex) read(r io.Reader) error {
@@ -185,6 +151,40 @@ func (s *SegmentIndex) read(r io.Reader) error {
          return err
       }
       s.Reference[i] = ref
+   }
+   return nil
+}
+
+func (s SegmentIndex) write(w io.Writer) error {
+   if err := s.BoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.FirstOffset); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
+      return err
+   }
+   for _, ref := range s.Reference {
+      err := ref.write(w)
+      if err != nil {
+         return err
+      }
    }
    return nil
 }

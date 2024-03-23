@@ -4,8 +4,48 @@ import (
    "encoding/binary"
    "errors"
    "io"
-   "log/slog"
 )
+
+func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
+   err := v.SampleEntry.read(r)
+   if err != nil {
+      return err
+   }
+   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+      return err
+   }
+   r = io.LimitReader(r, size)
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      switch head.GetType() {
+      case "sinf":
+         _, size := head.get_size()
+         v.ProtectionScheme.BoxHeader = head
+         err := v.ProtectionScheme.read(r, size)
+         if err != nil {
+            return err
+         }
+      case "avcC", // Roku
+         "btrt", // Mubi
+         "colr", // Paramount
+         "pasp": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         v.Boxes = append(v.Boxes, &b)
+      default:
+         return errors.New("VisualSampleEntry.read")
+      }
+   }
+}
 
 // ISO/IEC 14496-12
 //
@@ -48,9 +88,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      box_type := head.GetType()
-      slog.Debug("BoxHeader", "type", box_type)
-      switch box_type {
+      switch head.GetType() {
       case "sinf":
          _, size := head.get_size()
          a.ProtectionScheme.BoxHeader = head
@@ -159,49 +197,6 @@ type VisualSampleEntry struct {
    }
    Boxes            []*Box
    ProtectionScheme ProtectionSchemeInfo
-}
-
-func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
-   err := v.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
-      return err
-   }
-   r = io.LimitReader(r, size)
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      box_type := head.GetType()
-      slog.Debug("BoxHeader", "type", box_type)
-      switch box_type {
-      case "sinf":
-         _, size := head.get_size()
-         v.ProtectionScheme.BoxHeader = head
-         err := v.ProtectionScheme.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "avcC", // Roku
-         "btrt", // Mubi
-         "colr", // Paramount
-         "pasp": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         v.Boxes = append(v.Boxes, &b)
-      default:
-         return errors.New("VisualSampleEntry.read")
-      }
-   }
 }
 
 func (v VisualSampleEntry) write(w io.Writer) error {

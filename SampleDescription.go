@@ -4,7 +4,6 @@ import (
    "encoding/binary"
    "errors"
    "io"
-   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -38,9 +37,8 @@ func (s *SampleDescription) read(r io.Reader) error {
    } else if err != nil {
       return err
    }
-   box_type := head.GetType()
-   slog.Debug("BoxHeader", "Type", box_type)
-   switch _, size := head.get_size(); box_type {
+   _, size := head.get_size()
+   switch head.GetType() {
    case "enca":
       s.AudioSample = new(AudioSampleEntry)
       s.AudioSample.SampleEntry.BoxHeader = head

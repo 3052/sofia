@@ -3,7 +3,6 @@ package sofia
 import (
    "errors"
    "io"
-   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -26,9 +25,7 @@ func (m *Media) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      box_type := head.GetType()
-      slog.Debug("BoxHeader", "Type", box_type)
-      switch box_type {
+      switch head.GetType() {
       case "minf":
          _, size := head.get_size()
          m.MediaInformation.BoxHeader = head

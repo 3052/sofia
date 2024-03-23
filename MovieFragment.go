@@ -40,9 +40,16 @@ func (m *MovieFragment) read(r io.Reader) error {
          return err
       }
       box_type := head.GetType()
-      r := head.payload(r)
       slog.Debug("BoxHeader", "Type", box_type)
+      ///////////////////////////////////////////////////////////////////////////
       switch box_type {
+      case "traf":
+         m.TrackFragment.BoxHeader = head
+         err := m.TrackFragment.read(r)
+         if err != nil {
+            return err
+         }
+      ///////////////////////////////////////////////////////////////////////////
       case "mfhd", // Roku
          "pssh": // Roku
          b := Box{BoxHeader: head}
@@ -51,12 +58,6 @@ func (m *MovieFragment) read(r io.Reader) error {
             return err
          }
          m.Boxes = append(m.Boxes, b)
-      case "traf":
-         m.TrackFragment.BoxHeader = head
-         err := m.TrackFragment.read(r)
-         if err != nil {
-            return err
-         }
       default:
          return errors.New("MovieFragment.read")
       }

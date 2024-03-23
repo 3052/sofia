@@ -17,6 +17,23 @@ type TrackFragment struct {
    TrackRun         TrackRun
 }
 
+func (t TrackFragment) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if err := t.TrackRun.write(w); err != nil {
+      return err
+   }
+   return t.SampleEncryption.write(w)
+}
+
 func (t *TrackFragment) read(r io.Reader) error {
    for {
       var head BoxHeader
@@ -26,21 +43,10 @@ func (t *TrackFragment) read(r io.Reader) error {
       } else if err != nil {
          return err
       }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
-      case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt", // Roku
-         "tfhd": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         t.Boxes = append(t.Boxes, b)
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "type", box_type)
+      ///////////////////////////////////////////////////////////////////////////
+      switch box_type {
       case "senc":
          t.SampleEncryption.BoxHeader = head
          err := t.SampleEncryption.read(r)
@@ -70,31 +76,27 @@ func (t *TrackFragment) read(r io.Reader) error {
             }
             t.Boxes = append(t.Boxes, b)
          }
+      ///////////////////////////////////////////////////////////////////////////
       case "trun":
          t.TrackRun.BoxHeader = head
          err := t.TrackRun.read(r)
          if err != nil {
             return err
          }
+      case "saio", // Roku
+         "saiz", // Roku
+         "sbgp", // Roku
+         "sgpd", // Roku
+         "tfdt", // Roku
+         "tfhd": // Roku
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         t.Boxes = append(t.Boxes, b)
       default:
          return errors.New("TrackFragment.read")
       }
    }
-}
-
-func (t TrackFragment) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if err := t.TrackRun.write(w); err != nil {
-      return err
-   }
-   return t.SampleEncryption.write(w)
 }

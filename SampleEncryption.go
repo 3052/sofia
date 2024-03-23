@@ -86,6 +86,46 @@ func (s Subsample) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, s)
 }
 
+func (e EncryptionSample) write(w io.Writer, b SampleEncryption) error {
+   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if b.senc_use_subsamples() {
+      err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      for _, sample := range e.Subsamples {
+         err := sample.write(w)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return nil
+}
+
+func (b SampleEncryption) write(w io.Writer) error {
+   err := b.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   if err := b.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, b.SampleCount); err != nil {
+      return err
+   }
+   for _, sample := range b.Samples {
+      err := sample.write(w, b)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (e *EncryptionSample) read(r io.Reader, b *SampleEncryption) error {
    err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
    if err != nil {
@@ -108,26 +148,6 @@ func (e *EncryptionSample) read(r io.Reader, b *SampleEncryption) error {
    return nil
 }
 
-func (e EncryptionSample) write(w io.Writer, b SampleEncryption) error {
-   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.senc_use_subsamples() {
-      err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      for _, sample := range e.Subsamples {
-         err := sample.write(w)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return nil
-}
-
 func (b *SampleEncryption) read(r io.Reader) error {
    err := b.FullBoxHeader.read(r)
    if err != nil {
@@ -144,26 +164,6 @@ func (b *SampleEncryption) read(r io.Reader) error {
          return err
       }
       b.Samples[i] = sample
-   }
-   return nil
-}
-
-func (b SampleEncryption) write(w io.Writer) error {
-   err := b.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   if err := b.FullBoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, b.SampleCount); err != nil {
-      return err
-   }
-   for _, sample := range b.Samples {
-      err := sample.write(w, b)
-      if err != nil {
-         return err
-      }
    }
    return nil
 }

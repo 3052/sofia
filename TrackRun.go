@@ -66,34 +66,6 @@ func (t TrackRun) sample_size_present() bool {
    return t.FullBoxHeader.get_flags()&0x200 >= 1
 }
 
-func (s *RunSample) read(r io.Reader, t *TrackRun) error {
-   if t.sample_duration_present() {
-      err := binary.Read(r, binary.BigEndian, &s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   if t.sample_size_present() {
-      err := binary.Read(r, binary.BigEndian, &s.Size)
-      if err != nil {
-         return err
-      }
-   }
-   if t.sample_flags_present() {
-      err := binary.Read(r, binary.BigEndian, &s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if t.sample_composition_time_offsets_present() {
-      _, err := io.ReadFull(r, s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (s RunSample) write(w io.Writer, t TrackRun) error {
    if t.sample_duration_present() {
       err := binary.Write(w, binary.BigEndian, s.Duration)
@@ -115,6 +87,63 @@ func (s RunSample) write(w io.Writer, t TrackRun) error {
    }
    if t.sample_composition_time_offsets_present() {
       _, err := w.Write(s.CompositionTimeOffset[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (t TrackRun) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   if err := t.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, t.SampleCount); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, t.DataOffset); err != nil {
+      return err
+   }
+   if t.first_sample_flags_present() {
+      err := binary.Write(w, binary.BigEndian, t.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   for _, sample := range t.Sample {
+      err := sample.write(w, t)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (s *RunSample) read(r io.Reader, t *TrackRun) error {
+   if t.sample_duration_present() {
+      err := binary.Read(r, binary.BigEndian, &s.Duration)
+      if err != nil {
+         return err
+      }
+   }
+   if t.sample_size_present() {
+      err := binary.Read(r, binary.BigEndian, &s.Size)
+      if err != nil {
+         return err
+      }
+   }
+   if t.sample_flags_present() {
+      err := binary.Read(r, binary.BigEndian, &s.Flags)
+      if err != nil {
+         return err
+      }
+   }
+   if t.sample_composition_time_offsets_present() {
+      _, err := io.ReadFull(r, s.CompositionTimeOffset[:])
       if err != nil {
          return err
       }
@@ -148,35 +177,6 @@ func (t *TrackRun) read(r io.Reader) error {
          return err
       }
       t.Sample[i] = sample
-   }
-   return nil
-}
-
-func (t TrackRun) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   if err := t.FullBoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, t.SampleCount); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, t.DataOffset); err != nil {
-      return err
-   }
-   if t.first_sample_flags_present() {
-      err := binary.Write(w, binary.BigEndian, t.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   for _, sample := range t.Sample {
-      err := sample.write(w, t)
-      if err != nil {
-         return err
-      }
    }
    return nil
 }

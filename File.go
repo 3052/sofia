@@ -15,41 +15,6 @@ type File struct {
    SegmentIndex  *SegmentIndex
 }
 
-func (f File) Write(w io.Writer) error {
-   // KEEP THESE IN ORDER
-   for _, value := range f.Boxes {
-      err := value.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Movie != nil { // moov
-      err := f.Movie.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.write(w) // this might be optional
-      if err != nil {
-         return err
-      }
-   }
-   if f.MovieFragment != nil { // moof
-      err := f.MovieFragment.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.MediaData != nil { // mdat
-      err := f.MediaData.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (f *File) Read(r io.Reader) error {
    for {
       var head BoxHeader
@@ -100,4 +65,39 @@ func (f *File) Read(r io.Reader) error {
          return errors.New("File.Read")
       }
    }
+}
+
+func (f File) Write(w io.Writer) error {
+   // KEEP THESE IN ORDER
+   for _, value := range f.Boxes {
+      err := value.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Movie != nil { // moov
+      err := f.Movie.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.SegmentIndex != nil { // sidx
+      err := f.SegmentIndex.write(w) // this might be optional
+      if err != nil {
+         return err
+      }
+   }
+   if f.MovieFragment != nil { // moof
+      err := f.MovieFragment.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if f.MediaData != nil { // mdat
+      err := f.MediaData.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

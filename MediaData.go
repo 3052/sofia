@@ -2,14 +2,6 @@ package sofia
 
 import "io"
 
-func (m MediaData) write(w io.Writer) error {
-   return m.Box.write(w)
-}
-
-func (m *MediaData) read(r io.Reader) error {
-   return m.Box.read(r)
-}
-
 // ISO/IEC 14496-12
 //  aligned(8) class MediaDataBox extends Box('mdat') {
 //     bit(8) data[];
@@ -30,4 +22,12 @@ func (m MediaData) Data(run TrackRun) [][]byte {
       }
    }
    return split
+}
+
+func (m *MediaData) read(r io.Reader) error {
+   return m.Box.read(r)
+}
+
+func (m MediaData) write(w io.Writer) error {
+   return m.Box.write(w)
 }

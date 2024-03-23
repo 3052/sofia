@@ -16,20 +16,6 @@ type MediaInformation struct {
    SampleTable SampleTable
 }
 
-func (m MediaInformation) write(w io.Writer) error {
-   err := m.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range m.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return m.SampleTable.write(w)
-}
-
 func (m *MediaInformation) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -63,4 +49,18 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
          return errors.New("MediaInformation.read")
       }
    }
+}
+
+func (m MediaInformation) write(w io.Writer) error {
+   err := m.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range m.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return m.SampleTable.write(w)
 }

@@ -5,26 +5,26 @@ import (
    "io"
 )
 
-func (s RunSample) write(w io.Writer, t TrackRun) error {
-   if t.sample_duration_present() {
+func (s RunSample) write(w io.Writer, run TrackRun) error {
+   if run.sample_duration_present() {
       err := binary.Write(w, binary.BigEndian, s.Duration)
       if err != nil {
          return err
       }
    }
-   if t.sample_size_present() {
+   if run.sample_size_present() {
       err := binary.Write(w, binary.BigEndian, s.Size)
       if err != nil {
          return err
       }
    }
-   if t.sample_flags_present() {
+   if run.sample_flags_present() {
       err := binary.Write(w, binary.BigEndian, s.Flags)
       if err != nil {
          return err
       }
    }
-   if t.sample_composition_time_offsets_present() {
+   if run.sample_composition_time_offsets_present() {
       _, err := w.Write(s.CompositionTimeOffset[:])
       if err != nil {
          return err

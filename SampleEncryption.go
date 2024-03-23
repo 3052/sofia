@@ -7,6 +7,47 @@ import (
    "io"
 )
 
+func (e *EncryptionSample) read(r io.Reader, box *SampleEncryption) error {
+   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if box.senc_use_subsamples() {
+      err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      e.Subsamples = make([]Subsample, e.SubsampleCount)
+      for i, sample := range e.Subsamples {
+         err := sample.read(r)
+         if err != nil {
+            return err
+         }
+         e.Subsamples[i] = sample
+      }
+   }
+   return nil
+}
+
+func (b *SampleEncryption) read(r io.Reader) error {
+   err := b.FullBoxHeader.read(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   b.Samples = make([]EncryptionSample, b.SampleCount)
+   for i, sample := range b.Samples {
+      err := sample.read(r, b)
+      if err != nil {
+         return err
+      }
+      b.Samples[i] = sample
+   }
+   return nil
+}
 type EncryptionSample struct {
    InitializationVector uint64
    SubsampleCount       uint16
@@ -86,12 +127,12 @@ func (s Subsample) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, s)
 }
 
-func (e EncryptionSample) write(w io.Writer, b SampleEncryption) error {
+func (e EncryptionSample) write(w io.Writer, box SampleEncryption) error {
    err := binary.Write(w, binary.BigEndian, e.InitializationVector)
    if err != nil {
       return err
    }
-   if b.senc_use_subsamples() {
+   if box.senc_use_subsamples() {
       err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
       if err != nil {
          return err
@@ -126,44 +167,3 @@ func (b SampleEncryption) write(w io.Writer) error {
    return nil
 }
 
-func (e *EncryptionSample) read(r io.Reader, b *SampleEncryption) error {
-   err := binary.Read(r, binary.BigEndian, &e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if b.senc_use_subsamples() {
-      err := binary.Read(r, binary.BigEndian, &e.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      e.Subsamples = make([]Subsample, e.SubsampleCount)
-      for i, sample := range e.Subsamples {
-         err := sample.read(r)
-         if err != nil {
-            return err
-         }
-         e.Subsamples[i] = sample
-      }
-   }
-   return nil
-}
-
-func (b *SampleEncryption) read(r io.Reader) error {
-   err := b.FullBoxHeader.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   b.Samples = make([]EncryptionSample, b.SampleCount)
-   for i, sample := range b.Samples {
-      err := sample.read(r, b)
-      if err != nil {
-         return err
-      }
-      b.Samples[i] = sample
-   }
-   return nil
-}

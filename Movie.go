@@ -16,20 +16,6 @@ type Movie struct {
    Track     Track
 }
 
-func (m Movie) write(w io.Writer) error {
-   err := m.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range m.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return m.Track.write(w)
-}
-
 func (m *Movie) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -65,4 +51,18 @@ func (m *Movie) read(r io.Reader, size int64) error {
          return errors.New("Movie.read")
       }
    }
+}
+
+func (m Movie) write(w io.Writer) error {
+   err := m.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range m.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return m.Track.write(w)
 }

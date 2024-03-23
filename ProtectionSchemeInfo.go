@@ -19,20 +19,6 @@ type ProtectionSchemeInfo struct {
    OriginalFormat OriginalFormat
 }
 
-func (p ProtectionSchemeInfo) write(w io.Writer) error {
-   err := p.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range p.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return p.OriginalFormat.write(w)
-}
-
 func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -64,4 +50,18 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
          return errors.New("ProtectionSchemeInfo.read")
       }
    }
+}
+
+func (p ProtectionSchemeInfo) write(w io.Writer) error {
+   err := p.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range p.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return p.OriginalFormat.write(w)
 }

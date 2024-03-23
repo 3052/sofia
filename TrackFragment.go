@@ -17,23 +17,6 @@ type TrackFragment struct {
    TrackRun         TrackRun
 }
 
-func (t TrackFragment) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if err := t.TrackRun.write(w); err != nil {
-      return err
-   }
-   return t.SampleEncryption.write(w)
-}
-
 func (t *TrackFragment) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -98,4 +81,21 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
          return errors.New("TrackFragment.read")
       }
    }
+}
+
+func (t TrackFragment) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if err := t.TrackRun.write(w); err != nil {
+      return err
+   }
+   return t.SampleEncryption.write(w)
 }

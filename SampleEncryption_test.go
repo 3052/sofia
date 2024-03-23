@@ -7,6 +7,37 @@ import (
    "testing"
 )
 
+func (t testdata) encode_segment(dst io.Writer) error {
+   src, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var f File
+   if err := f.Read(src); err != nil {
+      return err
+   }
+   key, err := hex.DecodeString(t.key)
+   if err != nil {
+      return err
+   }
+   for i, data := range f.MediaData.Data {
+      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
+      err := sample.DecryptCenc(data, key)
+      if err != nil {
+         return err
+      }
+   }
+   return f.Write(dst)
+}
+
+type testdata struct {
+   init    string
+   segment string
+   key     string
+   out     string
+}
+
 var tests = []testdata{
    {
       "testdata/paramount-avc1/init.m4v",
@@ -139,33 +170,3 @@ func (t testdata) encode_init(dst io.Writer) error {
    return f.Write(dst)
 }
 
-func (t testdata) encode_segment(dst io.Writer) error {
-   src, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Read(src); err != nil {
-      return err
-   }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   for i, data := range f.MediaData.Data {
-      sample := f.MovieFragment.TrackFragment.SampleEncryption.Samples[i]
-      err := sample.DecryptCenc(data, key)
-      if err != nil {
-         return err
-      }
-   }
-   return f.Write(dst)
-}
-
-type testdata struct {
-   init    string
-   segment string
-   key     string
-   out     string
-}

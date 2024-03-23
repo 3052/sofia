@@ -108,30 +108,6 @@ func TestSampleEncryption(t *testing.T) {
    }
 }
 
-func (t testdata) encode_segment(dst io.Writer) error {
-   src, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   if err := value.Read(src); err != nil {
-      return err
-   }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   fragment := value.MovieFragment.TrackFragment
-   for i, data := range value.MediaData.Data(fragment.TrackRun) {
-      err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
-      if err != nil {
-         return err
-      }
-   }
-   return value.Write(dst)
-}
-
 type testdata struct {
    init    string
    segment string
@@ -170,4 +146,28 @@ func (t testdata) encode_init(dst io.Writer) error {
       ) // Firefox
    }
    return f.Write(dst)
+}
+
+func (t testdata) encode_segment(dst io.Writer) error {
+   src, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var value File
+   if err := value.Read(src); err != nil {
+      return err
+   }
+   key, err := hex.DecodeString(t.key)
+   if err != nil {
+      return err
+   }
+   fragment := value.MovieFragment.TrackFragment
+   for i, data := range value.MediaData.Data(fragment.TrackRun) {
+      err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
+      if err != nil {
+         return err
+      }
+   }
+   return value.Write(dst)
 }

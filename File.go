@@ -5,15 +5,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-type File struct {
-   Boxes         []Box
-   MediaData     *MediaData
-   Movie         *Movie
-   MovieFragment *MovieFragment
-   SegmentIndex  *SegmentIndex
-}
-
 func (f *File) Read(r io.Reader) error {
    for {
       var head BoxHeader
@@ -24,7 +15,7 @@ func (f *File) Read(r io.Reader) error {
          return err
       }
       _, size := head.get_size()
-      switch head.GetType() {
+      switch head.debug() {
       case "mdat":
          f.MediaData = new(MediaData)
          f.MediaData.Box.BoxHeader = head
@@ -98,4 +89,13 @@ func (f File) Write(w io.Writer) error {
       }
    }
    return nil
+}
+
+// ISO/IEC 14496-12
+type File struct {
+   Boxes         []Box
+   MediaData     *MediaData
+   Movie         *Movie
+   MovieFragment *MovieFragment
+   SegmentIndex  *SegmentIndex
 }

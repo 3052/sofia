@@ -25,7 +25,7 @@ func (m *Media) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      switch head.GetType() {
+      switch head.debug() {
       case "minf":
          _, size := head.get_size()
          m.MediaInformation.BoxHeader = head

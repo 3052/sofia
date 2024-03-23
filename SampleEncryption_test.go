@@ -10,12 +10,6 @@ import (
 
 var tests = []testdata{
    {
-      "testdata/paramount-avc1/init.m4v",
-      "testdata/paramount-avc1/seg_1.m4s",
-      "efa0258cafde6102f513f031d0632290",
-      "paramount-avc1.mp4",
-   },
-   {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
       "c58d3308ed18d43776a78232f552dbe0",
@@ -46,6 +40,18 @@ var tests = []testdata{
       "hulu-mp4a.mp4",
    },
    {
+      "testdata/mubi-avc1/video=300168.dash",
+      "testdata/mubi-avc1/video=300168-0.dash",
+      "2556f746e8db3ee7f66fc22f5a28752a",
+      "mubi-avc1.mp4",
+   },
+   {
+      "testdata/mubi-mp4a/audio_eng=268840.dash",
+      "testdata/mubi-mp4a/audio_eng=268840-0.dash",
+      "2556f746e8db3ee7f66fc22f5a28752a",
+      "mubi-mp4a.mp4",
+   },
+   {
       "testdata/nbc-avc1/_227156876_5.mp4",
       "testdata/nbc-avc1/_227156876_5_0.mp4",
       "3e2e8ccff89d0a72598a347feab5e7c8",
@@ -56,6 +62,12 @@ var tests = []testdata{
       "testdata/nbc-mp4a/_227156876_6_1_0.mp4",
       "3e2e8ccff89d0a72598a347feab5e7c8",
       "nbc-mp4a.mp4",
+   },
+   {
+      "testdata/paramount-avc1/init.m4v",
+      "testdata/paramount-avc1/seg_1.m4s",
+      "efa0258cafde6102f513f031d0632290",
+      "paramount-avc1.mp4",
    },
    {
       "testdata/paramount-mp4a/init.m4v",
@@ -74,18 +86,6 @@ var tests = []testdata{
       "testdata/roku-mp4a/index_audio_2_0_1.mp4",
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
-   },
-   {
-      "testdata/mubi-avc1/video=300168.dash",
-      "testdata/mubi-avc1/video=300168-0.dash",
-      "2556f746e8db3ee7f66fc22f5a28752a",
-      "mubi-avc1.mp4",
-   },
-   {
-      "testdata/mubi-mp4a/audio_eng=268840.dash",
-      "testdata/mubi-mp4a/audio_eng=268840-0.dash",
-      "2556f746e8db3ee7f66fc22f5a28752a",
-      "mubi-mp4a.mp4",
    },
 }
 

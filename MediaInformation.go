@@ -25,7 +25,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      switch head.GetType() {
+      switch head.debug() {
       case "stbl":
          _, size := head.get_size()
          m.SampleTable.BoxHeader = head

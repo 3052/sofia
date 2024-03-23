@@ -25,7 +25,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      switch head.GetType() {
+      switch head.debug() {
       case "stsd":
          s.SampleDescription.BoxHeader = head
          err := s.SampleDescription.read(r)

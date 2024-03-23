@@ -26,7 +26,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      switch head.GetType() {
+      switch head.debug() {
       case "uuid":
          decode := func() bool {
             if head.get_usertype() == "a2394f525a9b4f14a2446c427c648df4" {

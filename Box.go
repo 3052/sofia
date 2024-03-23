@@ -7,8 +7,13 @@ import (
    "log/slog"
 )
 
+func (b BoxHeader) debug() string {
+   box_type := b.GetType()
+   slog.Debug("BoxHeader", "type", box_type, "size", b.Size)
+   return box_type
+}
+
 func (b BoxHeader) GetType() string {
-   slog.Debug("BoxHeader", "size", b.Size, "type", b.Type)
    return string(b.Type[:])
 }
 
@@ -33,20 +38,6 @@ type BoxHeader struct {
    // Type is used outside this module, so we cannot wrap it with Size:
    Type     [4]uint8
    Usertype [16]uint8
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
 }
 
 func (b *Box) read(r io.Reader) error {
@@ -117,17 +108,6 @@ func (b BoxHeader) write(w io.Writer) error {
    return nil
 }
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
 func (f FullBoxHeader) get_flags() uint32 {
    var b [4]byte
    copy(b[1:], f.Flags[:])
@@ -140,4 +120,29 @@ func (f *FullBoxHeader) read(r io.Reader) error {
 
 func (f FullBoxHeader) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class Box (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
 }

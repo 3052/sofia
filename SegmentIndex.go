@@ -115,6 +115,40 @@ func (s *SegmentIndex) New() {
    copy(s.BoxHeader.Type[:], "sidx")
 }
 
+func (s SegmentIndex) write(w io.Writer) error {
+   if err := s.BoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
+      return err
+   }
+   if _, err := w.Write(s.FirstOffset); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
+      return err
+   }
+   for _, ref := range s.Reference {
+      err := ref.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (s *SegmentIndex) read(r io.Reader) error {
    if err := s.FullBoxHeader.read(r); err != nil {
       return err
@@ -151,40 +185,6 @@ func (s *SegmentIndex) read(r io.Reader) error {
          return err
       }
       s.Reference[i] = ref
-   }
-   return nil
-}
-
-func (s SegmentIndex) write(w io.Writer) error {
-   if err := s.BoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := s.FullBoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
-      return err
-   }
-   if _, err := w.Write(s.FirstOffset); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
-      return err
-   }
-   for _, ref := range s.Reference {
-      err := ref.write(w)
-      if err != nil {
-         return err
-      }
    }
    return nil
 }

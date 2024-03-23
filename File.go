@@ -15,8 +15,8 @@ type File struct {
    SegmentIndex  *SegmentIndex
 }
 
-// KEEP THESE IN ORDER
 func (f File) Write(w io.Writer) error {
+   // KEEP THESE IN ORDER
    for _, value := range f.Boxes {
       err := value.write(w)
       if err != nil {
@@ -60,9 +60,35 @@ func (f *File) Read(r io.Reader) error {
          return err
       }
       box_type := head.GetType()
-      r := head.payload(r)
       slog.Debug("BoxHeader", "Type", box_type)
+      ///////////////////////////////////////////////////////////////////////////
       switch box_type {
+      case "moof":
+         f.MovieFragment = &MovieFragment{BoxHeader: head}
+         err := f.MovieFragment.read(r)
+         if err != nil {
+            return err
+         }
+      case "mdat":
+         f.MediaData = &MediaData{BoxHeader: head}
+         err := f.MediaData.read(r, f.MovieFragment.TrackFragment.TrackRun)
+         if err != nil {
+            return err
+         }
+      ///////////////////////////////////////////////////////////////////////////
+      case "sidx":
+         f.SegmentIndex = &SegmentIndex{BoxHeader: head}
+         err := f.SegmentIndex.read(r)
+         if err != nil {
+            return err
+         }
+      case "moov":
+         _, size := head.get_size()
+         f.Movie = &Movie{BoxHeader: head}
+         err := f.Movie.read(r, size)
+         if err != nil {
+            return err
+         }
       case "free", // Mubi
          "ftyp", // Roku
          "styp": // Roku
@@ -72,30 +98,6 @@ func (f *File) Read(r io.Reader) error {
             return err
          }
          f.Boxes = append(f.Boxes, b)
-      case "mdat":
-         f.MediaData = &MediaData{BoxHeader: head}
-         err := f.MediaData.read(r, f.MovieFragment.TrackFragment.TrackRun)
-         if err != nil {
-            return err
-         }
-      case "moof":
-         f.MovieFragment = &MovieFragment{BoxHeader: head}
-         err := f.MovieFragment.read(r)
-         if err != nil {
-            return err
-         }
-      case "moov":
-         f.Movie = &Movie{BoxHeader: head}
-         err := f.Movie.read(r)
-         if err != nil {
-            return err
-         }
-      case "sidx":
-         f.SegmentIndex = &SegmentIndex{BoxHeader: head}
-         err := f.SegmentIndex.read(r)
-         if err != nil {
-            return err
-         }
       default:
          return errors.New("File.Read")
       }

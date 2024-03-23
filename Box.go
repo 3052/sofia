@@ -6,21 +6,22 @@ import (
    "io"
 )
 
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
+// ISO/IEC 14496-12
+//  aligned(8) class BoxHeader (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     unsigned int(32) size;
+//     unsigned int(32) type = boxtype;
+//     if (size==1) {
+//        unsigned int(64) largesize;
+//     } else if (size==0) {
+//        // box extends to end of file
+//     }
+//     if (boxtype=='uuid') {
+//        unsigned int(8)[16] usertype = extended_type;
+//     }
+//  }
 type BoxHeader struct {
    Size uint32
    // Type is used outside this module, so we cannot wrap it with Size:
@@ -35,11 +36,6 @@ func (b BoxHeader) get_size() (int, int64) {
       s += binary.Size(b.Usertype)
    }
    return s, int64(b.Size) - int64(s)
-}
-
-func (b BoxHeader) payload(r io.Reader) io.Reader {
-   _, n := b.get_size()
-   return io.LimitReader(r, int64(n))
 }
 
 // ISO/IEC 14496-12

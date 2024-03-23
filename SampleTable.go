@@ -30,8 +30,8 @@ func (s SampleTable) write(w io.Writer) error {
    return s.SampleDescription.write(w)
 }
 
-func (s *SampleTable) read(r io.Reader, n int64) error {
-   r = io.LimitReader(r, n)
+func (s *SampleTable) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)

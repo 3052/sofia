@@ -123,26 +123,26 @@ func (t TrackRun) write(w io.Writer) error {
    return nil
 }
 
-func (s *RunSample) read(r io.Reader, t *TrackRun) error {
-   if t.sample_duration_present() {
+func (s *RunSample) read(r io.Reader, run *TrackRun) error {
+   if run.sample_duration_present() {
       err := binary.Read(r, binary.BigEndian, &s.Duration)
       if err != nil {
          return err
       }
    }
-   if t.sample_size_present() {
+   if run.sample_size_present() {
       err := binary.Read(r, binary.BigEndian, &s.Size)
       if err != nil {
          return err
       }
    }
-   if t.sample_flags_present() {
+   if run.sample_flags_present() {
       err := binary.Read(r, binary.BigEndian, &s.Flags)
       if err != nil {
          return err
       }
    }
-   if t.sample_composition_time_offsets_present() {
+   if run.sample_composition_time_offsets_present() {
       _, err := io.ReadFull(r, s.CompositionTimeOffset[:])
       if err != nil {
          return err

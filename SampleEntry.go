@@ -137,7 +137,7 @@ func (v VisualSampleEntry) write(w io.Writer) error {
    return v.ProtectionScheme.write(w)
 }
 
-func (v *VisualSampleEntry) read(r io.Reader, n int64) error {
+func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
    err := v.SampleEntry.read(r)
    if err != nil {
       return err
@@ -145,7 +145,7 @@ func (v *VisualSampleEntry) read(r io.Reader, n int64) error {
    if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
       return err
    }
-   r = io.LimitReader(r, n)
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -180,7 +180,7 @@ func (v *VisualSampleEntry) read(r io.Reader, n int64) error {
    }
 }
 
-func (a *AudioSampleEntry) read(r io.Reader, n int64) error {
+func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
    err := a.SampleEntry.read(r)
    if err != nil {
       return err
@@ -188,7 +188,7 @@ func (a *AudioSampleEntry) read(r io.Reader, n int64) error {
    if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
       return err
    }
-   r = io.LimitReader(r, n)
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)

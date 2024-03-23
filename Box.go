@@ -4,7 +4,36 @@ import (
    "encoding/binary"
    "encoding/hex"
    "io"
+   "log/slog"
 )
+
+func (b BoxHeader) GetType() string {
+   slog.Debug("BoxHeader", "size", b.Size, "type", b.Type)
+   return string(b.Type[:])
+}
+
+// ISO/IEC 14496-12
+//  aligned(8) class BoxHeader (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     unsigned int(32) size;
+//     unsigned int(32) type = boxtype;
+//     if (size==1) {
+//        unsigned int(64) largesize;
+//     } else if (size==0) {
+//        // box extends to end of file
+//     }
+//     if (boxtype=='uuid') {
+//        unsigned int(8)[16] usertype = extended_type;
+//     }
+//  }
+type BoxHeader struct {
+   Size uint32
+   // Type is used outside this module, so we cannot wrap it with Size:
+   Type     [4]uint8
+   Usertype [16]uint8
+}
 
 // ISO/IEC 14496-12
 //
@@ -39,33 +68,6 @@ func (b Box) write(w io.Writer) error {
       return err
    }
    return nil
-}
-
-// ISO/IEC 14496-12
-//  aligned(8) class BoxHeader (
-//     unsigned int(32) boxtype,
-//     optional unsigned int(8)[16] extended_type
-//  ) {
-//     unsigned int(32) size;
-//     unsigned int(32) type = boxtype;
-//     if (size==1) {
-//        unsigned int(64) largesize;
-//     } else if (size==0) {
-//        // box extends to end of file
-//     }
-//     if (boxtype=='uuid') {
-//        unsigned int(8)[16] usertype = extended_type;
-//     }
-//  }
-type BoxHeader struct {
-   Size uint32
-   // Type is used outside this module, so we cannot wrap it with Size:
-   Type     [4]uint8
-   Usertype [16]uint8
-}
-
-func (b BoxHeader) GetType() string {
-   return string(b.Type[:])
 }
 
 func (b BoxHeader) get_size() (int, int64) {

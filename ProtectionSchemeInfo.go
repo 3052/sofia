@@ -3,7 +3,6 @@ package sofia
 import (
    "errors"
    "io"
-   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -29,9 +28,7 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      box_type := head.GetType()
-      slog.Debug("BoxHeader", "Type", box_type)
-      switch box_type {
+      switch head.GetType() {
       case "frma":
          p.OriginalFormat.BoxHeader = head
          err := p.OriginalFormat.read(r)

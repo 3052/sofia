@@ -3,7 +3,6 @@ package sofia
 import (
    "errors"
    "io"
-   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -26,9 +25,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
       } else if err != nil {
          return err
       }
-      box_type := head.GetType()
-      slog.Debug("BoxHeader", "type", box_type)
-      switch box_type {
+      switch head.GetType() {
       case "trak":
          _, size := head.get_size()
          m.Track.BoxHeader = head

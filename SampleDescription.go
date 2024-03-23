@@ -24,32 +24,6 @@ type SampleDescription struct {
    VisualSample  *VisualSampleEntry
 }
 
-func (s SampleDescription) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   if err := s.FullBoxHeader.write(w); err != nil {
-      return err
-   }
-   if err := binary.Write(w, binary.BigEndian, s.EntryCount); err != nil {
-      return err
-   }
-   if s.AudioSample != nil {
-      err := s.AudioSample.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if s.VisualSample != nil {
-      err := s.VisualSample.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (s *SampleDescription) read(r io.Reader) error {
    err := s.FullBoxHeader.read(r)
    if err != nil {
@@ -83,6 +57,32 @@ func (s *SampleDescription) read(r io.Reader) error {
       }
    default:
       return errors.New("SampleDescription.read")
+   }
+   return nil
+}
+
+func (s SampleDescription) write(w io.Writer) error {
+   err := s.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   if err := s.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, s.EntryCount); err != nil {
+      return err
+   }
+   if s.AudioSample != nil {
+      err := s.AudioSample.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if s.VisualSample != nil {
+      err := s.VisualSample.write(w)
+      if err != nil {
+         return err
+      }
    }
    return nil
 }

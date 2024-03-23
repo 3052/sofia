@@ -30,7 +30,8 @@ func (m Media) write(w io.Writer) error {
    return m.MediaInformation.write(w)
 }
 
-func (m *Media) read(r io.Reader) error {
+func (m *Media) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -41,16 +42,14 @@ func (m *Media) read(r io.Reader) error {
       }
       box_type := head.GetType()
       slog.Debug("BoxHeader", "Type", box_type)
-      ///////////////////////////////////////////////////////////////////////////
-      r := head.payload(r)
       switch box_type {
       case "minf":
+         _, size := head.get_size()
          m.MediaInformation.BoxHeader = head
-         err := m.MediaInformation.read(r)
+         err := m.MediaInformation.read(r, size)
          if err != nil {
             return err
          }
-      ///////////////////////////////////////////////////////////////////////////
       case "hdlr", // Roku
          "mdhd": // Roku
          b := Box{BoxHeader: head}

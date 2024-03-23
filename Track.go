@@ -16,39 +16,6 @@ type Track struct {
    Media     Media
 }
 
-func (t *Track) read(r io.Reader) error {
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      slog.Debug("BoxHeader", "type", head.GetType())
-      r := head.payload(r)
-      switch head.GetType() {
-      case "edts", // Paramount
-         "tkhd", // Roku
-         "udta": // Mubi
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         t.Boxes = append(t.Boxes, b)
-      case "mdia":
-         t.Media.BoxHeader = head
-         err := t.Media.read(r)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("Track.read")
-      }
-   }
-}
-
 func (t Track) write(w io.Writer) error {
    err := t.BoxHeader.write(w)
    if err != nil {
@@ -61,4 +28,39 @@ func (t Track) write(w io.Writer) error {
       }
    }
    return t.Media.write(w)
+}
+
+func (t *Track) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      box_type := head.GetType()
+      slog.Debug("BoxHeader", "type", box_type)
+      switch box_type {
+      case "mdia":
+         _, size := head.get_size()
+         t.Media.BoxHeader = head
+         err := t.Media.read(r, size)
+         if err != nil {
+            return err
+         }
+      case "edts", // Paramount
+         "tkhd", // Roku
+         "udta": // Mubi
+         b := Box{BoxHeader: head}
+         err := b.read(r)
+         if err != nil {
+            return err
+         }
+         t.Boxes = append(t.Boxes, b)
+      default:
+         return errors.New("Track.read")
+      }
+   }
 }

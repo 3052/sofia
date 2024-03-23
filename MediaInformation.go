@@ -30,7 +30,8 @@ func (m MediaInformation) write(w io.Writer) error {
    return m.SampleTable.write(w)
 }
 
-func (m *MediaInformation) read(r io.Reader) error {
+func (m *MediaInformation) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
    for {
       var head BoxHeader
       err := head.read(r)
@@ -41,16 +42,14 @@ func (m *MediaInformation) read(r io.Reader) error {
       }
       box_type := head.GetType()
       slog.Debug("BoxHeader", "Type", box_type)
-      ///////////////////////////////////////////////////////////////////////////
-      r := head.payload(r)
       switch box_type {
       case "stbl":
+         _, size := head.get_size()
          m.SampleTable.BoxHeader = head
-         err := m.SampleTable.read(r)
+         err := m.SampleTable.read(r, size)
          if err != nil {
             return err
          }
-      ///////////////////////////////////////////////////////////////////////////
       case "dinf", // Roku
          "smhd", // Roku
          "vmhd": // Roku

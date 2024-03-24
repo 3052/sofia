@@ -22,7 +22,7 @@ import (
 type ProtectionSystemSpecificHeader struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
-   SystemId [16]uint8
+   SystemId UUID
    DataSize uint32
    Data []uint8
 }

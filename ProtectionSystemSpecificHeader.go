@@ -1,9 +1,19 @@
 package sofia
 
 import (
+   "encoding/base64"
    "encoding/binary"
+   "encoding/hex"
    "io"
 )
+
+func (p ProtectionSystemSpecificHeader) String() string {
+   b := []byte("SystemID = ")
+   b = hex.AppendEncode(b, p.SystemId[:])
+   b = append(b, "\nData = "...)
+   b = base64.StdEncoding.AppendEncode(b, p.Data)
+   return string(b)
+}
 
 // ISO/IEC 23001-7
 //  aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
@@ -22,7 +32,7 @@ import (
 type ProtectionSystemSpecificHeader struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
-   SystemId UUID
+   SystemId [16]uint8
    DataSize uint32
    Data []uint8
 }

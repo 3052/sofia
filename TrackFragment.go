@@ -29,7 +29,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
       switch head.debug() {
       case "uuid":
          decode := func() bool {
-            if head.get_usertype() == "a2394f525a9b4f14a2446c427c648df4" {
+            if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
                if t.SampleEncryption.SampleCount == 0 {
                   return true
                }

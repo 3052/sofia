@@ -8,6 +8,37 @@ import (
    "testing"
 )
 
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var value File
+   if err := value.Read(src); err != nil {
+      return err
+   }
+   for _, protect := range value.Movie.Protection {
+      copy(protect.BoxHeader.Type[:], "free") // Firefox
+   }
+   sd := &value.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
+   if as := sd.AudioSample; as != nil {
+      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         as.SampleEntry.BoxHeader.Type[:],
+         as.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   if vs := sd.VisualSample; vs != nil {
+      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
+      copy(
+         vs.SampleEntry.BoxHeader.Type[:],
+         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
+      ) // Firefox
+   }
+   return value.Write(dst)
+}
+
 var tests = []testdata{
    {
       "testdata/amc-avc1/init.m4f",
@@ -113,39 +144,6 @@ type testdata struct {
    segment string
    key     string
    out     string
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var f File
-   if err := f.Read(src); err != nil {
-      return err
-   }
-   for _, b := range f.Movie.Boxes {
-      if b.BoxHeader.GetType() == "pssh" {
-         copy(b.BoxHeader.Type[:], "free") // Firefox
-      }
-   }
-   sd := &f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
-   if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         as.SampleEntry.BoxHeader.Type[:],
-         as.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         vs.SampleEntry.BoxHeader.Type[:],
-         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   return f.Write(dst)
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {

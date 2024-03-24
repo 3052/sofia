@@ -20,18 +20,19 @@ func (m *Movie) read(r io.Reader, size int64) error {
       "meta", // Paramount
       "mvex", // Roku
       "mvhd": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         value := Box{BoxHeader: head}
+         err := value.read(r)
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, &b)
+         m.Boxes = append(m.Boxes, &value)
       case "pssh":
-         m.Protection.BoxHeader = head
-         err := m.Protection.read(r)
+         value := ProtectionSystemSpecificHeader{BoxHeader: head}
+         err := value.read(r)
          if err != nil {
             return err
          }
+         m.Protection = append(m.Protection, value)
       case "trak":
          _, size := head.get_size()
          m.Track.BoxHeader = head
@@ -51,7 +52,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
 type Movie struct {
    BoxHeader BoxHeader
    Boxes     []*Box
-   Protection ProtectionSystemSpecificHeader
+   Protection []ProtectionSystemSpecificHeader
    Track     Track
 }
 
@@ -60,14 +61,17 @@ func (m Movie) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range m.Boxes {
-      err := b.write(w)
+   for _, value := range m.Boxes {
+      err := value.write(w)
       if err != nil {
          return err
       }
    }
-   if err := m.Protection.write(w); err != nil {
-      return err
+   for _, value := range m.Protection {
+      err := value.write(w)
+      if err != nil {
+         return err
+      }
    }
    return m.Track.write(w)
 }

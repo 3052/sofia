@@ -7,6 +7,23 @@ import (
    "log/slog"
 )
 
+func (b *BoxHeader) read(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+      return err
+   }
+   if b.Type.String() == "uuid" {
+      _, err := io.ReadFull(r, b.UserType[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class Box (
@@ -60,17 +77,12 @@ func (b Box) write(w io.Writer) error {
 //  }
 type BoxHeader struct {
    Size uint32
-   // Type is used outside this module, so we cannot wrap it with Size:
-   Type     [4]uint8
-   Usertype [16]uint8
-}
-
-func (b BoxHeader) GetType() string {
-   return string(b.Type[:])
+   Type Type
+   UserType UUID
 }
 
 func (b BoxHeader) debug() string {
-   box_type := b.GetType()
+   box_type := b.Type.String()
    slog.Debug("BoxHeader", "type", box_type, "size", b.Size)
    return box_type
 }
@@ -78,31 +90,10 @@ func (b BoxHeader) debug() string {
 func (b BoxHeader) get_size() (int, int64) {
    s := binary.Size(b.Size)
    s += binary.Size(b.Type)
-   if b.GetType() == "uuid" {
-      s += binary.Size(b.Usertype)
+   if b.Type.String() == "uuid" {
+      s += binary.Size(b.UserType)
    }
    return s, int64(b.Size) - int64(s)
-}
-
-func (b BoxHeader) get_usertype() string {
-   return hex.EncodeToString(b.Usertype[:])
-}
-
-func (b *BoxHeader) read(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
-      return err
-   }
-   if b.GetType() == "uuid" {
-      _, err := io.ReadFull(r, b.Usertype[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }
 
 func (b BoxHeader) write(w io.Writer) error {
@@ -113,8 +104,8 @@ func (b BoxHeader) write(w io.Writer) error {
    if _, err := w.Write(b.Type[:]); err != nil {
       return err
    }
-   if b.GetType() == "uuid" {
-      _, err := w.Write(b.Usertype[:])
+   if b.Type.String() == "uuid" {
+      _, err := w.Write(b.UserType[:])
       if err != nil {
          return err
       }
@@ -145,4 +136,16 @@ func (f *FullBoxHeader) read(r io.Reader) error {
 
 func (f FullBoxHeader) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
+}
+
+type Type [4]uint8
+
+func (t Type) String() string {
+   return string(t[:])
+}
+
+type UUID [16]uint8
+
+func (u UUID) String() string {
+   return hex.EncodeToString(u[:])
 }

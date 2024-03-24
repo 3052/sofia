@@ -152,20 +152,20 @@ func (t testdata) encode_segment(dst io.Writer) error {
       return err
    }
    defer src.Close()
-   var value File
-   if err := value.Read(src); err != nil {
+   var file File
+   if err := file.Read(src); err != nil {
       return err
    }
    key, err := hex.DecodeString(t.key)
    if err != nil {
       return err
    }
-   fragment := value.MovieFragment.TrackFragment
-   for i, data := range value.MediaData.Data(fragment.TrackRun) {
+   fragment := file.MovieFragment.TrackFragment
+   for i, data := range file.MediaData.Data(fragment.TrackRun) {
       err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
       if err != nil {
          return err
       }
    }
-   return value.Write(dst)
+   return file.Write(dst)
 }

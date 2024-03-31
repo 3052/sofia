@@ -1,0 +1,71 @@
+[ftyp] size=32
+ - majorBrand: mp42
+ - minorVersion: 1
+ - compatibleBrand: isom
+ - compatibleBrand: mp42
+ - compatibleBrand: mp41
+ - compatibleBrand: iso6
+[moov] size=1467
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 2477000
+   - creation time: 0
+   - modification time: 0
+  [trak] size=569
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 2477000
+     - creation time: 0
+     - modification time: 0
+     - Width: 416.0, Height: 234.0
+    [mdia] size=469
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 25000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=55 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "Bitmovin Video Handler"
+      [minf] size=374
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=310
+          [stsd] size=234 version=0 flags=000000
+            [encv] size=218
+             - width: 416
+             - height: 234
+             - compressorName: "h264"
+              [avcC] size=52
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 13
+               - SPS: 6764000dacb40d0ffc9350202014000003000400000300ca3c50aa80
+               - PPS: 68cf32c8b0
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 0b5c271e-61c2-44a8-ab81-e8363a66aa35
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 1000
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=742 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)

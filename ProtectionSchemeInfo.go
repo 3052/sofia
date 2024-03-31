@@ -16,6 +16,7 @@ type ProtectionSchemeInfo struct {
    BoxHeader      BoxHeader
    Boxes          []Box
    OriginalFormat OriginalFormat
+   SchemeInformation SchemeInformation
 }
 
 func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
@@ -35,8 +36,13 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
          if err != nil {
             return err
          }
-      case "schi", // Roku
-      "schm": // Roku
+      case "schi":
+         p.SchemeInformation.Box.BoxHeader = head
+         err := p.SchemeInformation.read(r)
+         if err != nil {
+            return err
+         }
+      case "schm": // Roku
          b := Box{BoxHeader: head}
          err := b.read(r)
          if err != nil {
@@ -60,5 +66,8 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
          return err
       }
    }
-   return p.OriginalFormat.write(w)
+   if err := p.OriginalFormat.write(w); err != nil {
+      return err
+   }
+   return p.SchemeInformation.write(w)
 }

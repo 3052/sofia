@@ -8,6 +8,25 @@ import (
    "testing"
 )
 
+func TestSampleEncryption(t *testing.T) {
+   slog.SetLogLoggerLevel(slog.LevelDebug)
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         if err := test.encode_init(file); err != nil {
+            t.Fatal(err)
+         }
+         if err := test.encode_segment(file); err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
 var tests = []testdata{
    {
       "testdata/amc-avc1/init.m4f",
@@ -87,25 +106,6 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
-}
-
-func TestSampleEncryption(t *testing.T) {
-   slog.SetLogLoggerLevel(slog.LevelDebug)
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         if err := test.encode_init(file); err != nil {
-            t.Fatal(err)
-         }
-         if err := test.encode_segment(file); err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
 }
 
 type testdata struct {

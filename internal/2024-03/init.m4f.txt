@@ -1,0 +1,6 @@
+[sinf] size=80 DONE
+   [schi] size=40 DONE
+      [tenc] size=32 version=0 flags=000000
+      - defaultIsProtected: 1
+      - defaultPerSampleIVSize: 8
+      - defaultKID: bc791d3b-444f-4aca-83de-23f37aea4f78

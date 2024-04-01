@@ -2,6 +2,7 @@ package sofia
 
 import (
    "encoding/hex"
+   "fmt"
    "io"
    "log/slog"
    "os"
@@ -116,6 +117,7 @@ type testdata struct {
 }
 
 func (t testdata) encode_init(dst io.Writer) error {
+   fmt.Println(t.init)
    src, err := os.Open(t.init)
    if err != nil {
       return err
@@ -147,6 +149,7 @@ func (t testdata) encode_init(dst io.Writer) error {
 }
 
 func (t testdata) encode_segment(dst io.Writer) error {
+   fmt.Println(t.segment)
    src, err := os.Open(t.segment)
    if err != nil {
       return err

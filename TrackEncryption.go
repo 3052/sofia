@@ -31,13 +31,15 @@ type TrackEncryption struct {
       DefaultIsProtected uint8
       DefaultPerSampleIvSize uint8
    }
-   
-   DefaultKid [16]uint8
+   DefaultKid UUID
 }
 
 func (t *TrackEncryption) read(r io.Reader) error {
-   err := t.FullBoxHeader.read(r)
+   err := t.BoxHeader.read(r)
    if err != nil {
+      return err
+   }
+   if err := t.FullBoxHeader.read(r); err != nil {
       return err
    }
    if err := binary.Read(r, binary.BigEndian, &t.Extends); err != nil {
@@ -49,6 +51,19 @@ func (t *TrackEncryption) read(r io.Reader) error {
    return nil
 }
 
-func (TrackEncryption) write(io.Writer) error {
+func (t TrackEncryption) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   if err := t.FullBoxHeader.write(w); err != nil {
+      return err
+   }
+   if err := binary.Write(w, binary.BigEndian, t.Extends); err != nil {
+      return err
+   }
+   if _, err := w.Write(t.DefaultKid[:]); err != nil {
+      return err
+   }
    return nil
 }

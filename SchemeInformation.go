@@ -7,13 +7,18 @@ import "io"
 //     Box scheme_specific_data[];
 //  }
 type SchemeInformation struct {
-   Box Box
+   BoxHeader BoxHeader
+   TrackEncryption TrackEncryption
 }
 
 func (s *SchemeInformation) read(r io.Reader) error {
-   return s.Box.read(r)
+   return s.TrackEncryption.read(r)
 }
 
 func (s SchemeInformation) write(w io.Writer) error {
-   return s.Box.write(w)
+   err := s.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   return s.TrackEncryption.write(w)
 }

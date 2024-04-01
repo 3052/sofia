@@ -80,7 +80,7 @@ func (f File) Write(w io.Writer) error {
       }
    }
    if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.write(w) // this might be optional
+      err := f.SegmentIndex.write(w)
       if err != nil {
          return err
       }

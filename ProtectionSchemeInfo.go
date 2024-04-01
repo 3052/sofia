@@ -6,12 +6,11 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
-//      OriginalFormatBox(fmt) original_format;
-//      SchemeTypeBox scheme_type_box; // optional
-//      SchemeInformationBox info; // optional
-//   }
+//  aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
+//     OriginalFormatBox(fmt) original_format;
+//     SchemeTypeBox scheme_type_box; // optional
+//     SchemeInformationBox info; // optional
+//  }
 type ProtectionSchemeInfo struct {
    BoxHeader      BoxHeader
    Boxes          []Box
@@ -37,7 +36,7 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
             return err
          }
       case "schi":
-         p.SchemeInformation.Box.BoxHeader = head
+         p.SchemeInformation.BoxHeader = head
          err := p.SchemeInformation.read(r)
          if err != nil {
             return err

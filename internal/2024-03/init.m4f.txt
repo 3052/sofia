@@ -1,5 +1,5 @@
-[sinf] size=80 DONE
-   [schi] size=40 DONE
+[sinf] size=80
+   [schi] size=40
       [tenc] size=32 version=0 flags=000000
       - defaultIsProtected: 1
       - defaultPerSampleIVSize: 8

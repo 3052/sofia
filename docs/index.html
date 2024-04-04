@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.2.9 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.3.0 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -103,6 +103,9 @@
       <a href="#SampleTable">type SampleTable</a>
       </li>
   <li>
+      <a href="#SchemeInformation">type SchemeInformation</a>
+      </li>
+  <li>
       <a href="#SegmentIndex">type SegmentIndex</a>
       <ul>
           <li><a href="#SegmentIndex.Append">func (s *SegmentIndex) Append(size uint32)</a></li>
@@ -115,6 +118,9 @@
       </li>
   <li>
       <a href="#Track">type Track</a>
+      </li>
+  <li>
+      <a href="#TrackEncryption">type TrackEncryption</a>
       </li>
   <li>
       <a href="#TrackFragment">type TrackFragment</a>
@@ -302,9 +308,10 @@
 </pre>
 <h3 id="ProtectionSchemeInfo">type ProtectionSchemeInfo</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">ProtectionSchemeInfo</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="ProtectionSchemeInfo.BoxHeader"><span class="nx">BoxHeader</span></span>      <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="ProtectionSchemeInfo.Boxes"><span class="nx">Boxes</span></span>          <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>
-	<span id="ProtectionSchemeInfo.OriginalFormat"><span class="nx">OriginalFormat</span></span> <a href="#OriginalFormat"><span class="nx">OriginalFormat</span></a>
+	<span id="ProtectionSchemeInfo.BoxHeader"><span class="nx">BoxHeader</span></span>         <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="ProtectionSchemeInfo.Boxes"><span class="nx">Boxes</span></span>             <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>
+	<span id="ProtectionSchemeInfo.OriginalFormat"><span class="nx">OriginalFormat</span></span>    <a href="#OriginalFormat"><span class="nx">OriginalFormat</span></a>
+	<span id="ProtectionSchemeInfo.SchemeInformation"><span class="nx">SchemeInformation</span></span> <a href="#SchemeInformation"><span class="nx">SchemeInformation</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box(&apos;sinf&apos;) {
@@ -421,6 +428,16 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 <pre>aligned(8) class SampleTableBox extends Box(&apos;stbl&apos;) {
 }
 </pre>
+<h3 id="SchemeInformation">type SchemeInformation</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">SchemeInformation</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="SchemeInformation.BoxHeader"><span class="nx">BoxHeader</span></span>       <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="SchemeInformation.TrackEncryption"><span class="nx">TrackEncryption</span></span> <a href="#TrackEncryption"><span class="nx">TrackEncryption</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 14496-12
+<pre>aligned(8) class SchemeInformationBox extends Box(&apos;schi&apos;) {
+   Box scheme_specific_data[];
+}
+</pre>
 <h3 id="SegmentIndex">type SegmentIndex</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SegmentIndex</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="SegmentIndex.BoxHeader"><span class="nx">BoxHeader</span></span>                <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
@@ -478,6 +495,35 @@ meter, so cannot use a channel
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class TrackBox extends Box(&apos;trak&apos;) {
+}
+</pre>
+<h3 id="TrackEncryption">type TrackEncryption</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">TrackEncryption</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="TrackEncryption.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="TrackEncryption.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
+	<span id="TrackEncryption.Extends"><span class="nx">Extends</span></span>       <span class="kd">struct</span> <span class="p">{</span>
+		<span id="TrackEncryption.DefaultIsProtected"><span class="nx">DefaultIsProtected</span></span>     <a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
+		<span id="TrackEncryption.DefaultPerSampleIvSize"><span class="nx">DefaultPerSampleIvSize</span></span> <a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
+		<span class="c1">// contains filtered or unexported fields
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span id="TrackEncryption.DefaultKid"><span class="nx">DefaultKid</span></span> <a href="#UUID"><span class="nx">UUID</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 23001-7
+<pre>aligned(8) class TrackEncryptionBox extends FullBox(&apos;tenc&apos;, version, flags=0) {
+   unsigned int(8) reserved = 0;
+   if (version==0) {
+      unsigned int(8) reserved = 0;
+   } else { // version is 1 or greater
+      unsigned int(4) default_crypt_byte_block;
+      unsigned int(4) default_skip_byte_block;
+   }
+   unsigned int(8) default_isProtected;
+   unsigned int(8) default_Per_Sample_IV_Size;
+   unsigned int(8)[16] default_KID;
+   if (default_isProtected ==1 &amp;&amp; default_Per_Sample_IV_Size == 0) {
+      unsigned int(8) default_constant_IV_size;
+      unsigned int(8)[default_constant_IV_size] default_constant_IV;
+   }
 }
 </pre>
 <h3 id="TrackFragment">type TrackFragment</h3>

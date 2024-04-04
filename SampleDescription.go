@@ -6,6 +6,13 @@ import (
    "io"
 )
 
+func (s SampleDescription) Protection() ProtectionSchemeInfo {
+   if v := s.AudioSample; v != nil {
+      return v.ProtectionScheme
+   }
+   return s.VisualSample.ProtectionScheme
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {

@@ -23,8 +23,7 @@ func TestTrackEncryption(t *testing.T) {
       MediaInformation.
       SampleTable.
       SampleDescription.
-      VisualSample.
-      ProtectionScheme.
+      Protection().
       SchemeInformation.
       TrackEncryption
    fmt.Printf("%+v\n", encryption)

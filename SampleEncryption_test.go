@@ -127,24 +127,23 @@ func (t testdata) encode_init(dst io.Writer) error {
    if err := value.Read(src); err != nil {
       return err
    }
-   for _, protect := range value.Movie.Protection {
-      copy(protect.BoxHeader.Type[:], "free") // Firefox
+   for _, b := range value.Movie.Boxes {
+      if b.BoxHeader.Type.String() == "pssh" { // moov
+         copy(b.BoxHeader.Type[:], "free") // Firefox
+      }
    }
-   sd := &value.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription
-   if as := sd.AudioSample; as != nil {
-      copy(as.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         as.SampleEntry.BoxHeader.Type[:],
-         as.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
-   if vs := sd.VisualSample; vs != nil {
-      copy(vs.ProtectionScheme.BoxHeader.Type[:], "free") // Firefox
-      copy(
-         vs.SampleEntry.BoxHeader.Type[:],
-         vs.ProtectionScheme.OriginalFormat.DataFormat[:],
-      ) // Firefox
-   }
+   sample, protect := value.
+      Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription.
+      SampleEntry()
+   // Firefox enca encv sinf
+   copy(protect.BoxHeader.Type[:], "free")
+   // Firefox stsd enca encv
+   copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
    return value.Write(dst)
 }
 

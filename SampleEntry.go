@@ -120,24 +120,23 @@ func (s *SampleEntry) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
-//   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0;
-//      unsigned int(32)[3] pre_defined = 0;
-//      unsigned int(16) width;
-//      unsigned int(16) height;
-//      template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
-//      template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
-//      const unsigned int(32) reserved = 0;
-//      template unsigned int(16) frame_count = 1;
-//      uint(8)[32] compressorname;
-//      template unsigned int(16) depth = 0x0018;
-//      int(16) pre_defined = -1;
-//      // other boxes from derived specifications
-//      CleanApertureBox clap; // optional
-//      PixelAspectRatioBox pasp; // optional
-//   }
+//  class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
+//     unsigned int(16) pre_defined = 0;
+//     const unsigned int(16) reserved = 0;
+//     unsigned int(32)[3] pre_defined = 0;
+//     unsigned int(16) width;
+//     unsigned int(16) height;
+//     template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
+//     template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
+//     const unsigned int(32) reserved = 0;
+//     template unsigned int(16) frame_count = 1;
+//     uint(8)[32] compressorname;
+//     template unsigned int(16) depth = 0x0018;
+//     int(16) pre_defined = -1;
+//     // other boxes from derived specifications
+//     CleanApertureBox clap; // optional
+//     PixelAspectRatioBox pasp; // optional
+//  }
 type VisualSampleEntry struct {
    SampleEntry SampleEntry
    Extends     struct {

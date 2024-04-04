@@ -16,16 +16,13 @@ func TestTrackEncryption(t *testing.T) {
    if err := dst.Read(src); err != nil {
       t.Fatal(err)
    }
-   encryption := dst.
+   _, protect := dst.
       Movie.
       Track.
       Media.
       MediaInformation.
       SampleTable.
       SampleDescription.
-      VisualSample.
-      ProtectionScheme.
-      SchemeInformation.
-      TrackEncryption
-   fmt.Printf("%+v\n", encryption)
+      SampleEntry()
+   fmt.Printf("%+v\n", protect.SchemeInformation.TrackEncryption)
 }

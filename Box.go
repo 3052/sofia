@@ -7,23 +7,6 @@ import (
    "log/slog"
 )
 
-func (b *BoxHeader) read(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
-   if err != nil {
-      return err
-   }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
-      return err
-   }
-   if b.Type.String() == "uuid" {
-      _, err := io.ReadFull(r, b.UserType[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 14496-12
 //
 //   aligned(8) class Box (
@@ -94,6 +77,23 @@ func (b BoxHeader) get_size() (int, int64) {
       s += binary.Size(b.UserType)
    }
    return s, int64(b.Size) - int64(s)
+}
+
+func (b *BoxHeader) read(r io.Reader) error {
+   err := binary.Read(r, binary.BigEndian, &b.Size)
+   if err != nil {
+      return err
+   }
+   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+      return err
+   }
+   if b.Type.String() == "uuid" {
+      _, err := io.ReadFull(r, b.UserType[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }
 
 func (b BoxHeader) write(w io.Writer) error {

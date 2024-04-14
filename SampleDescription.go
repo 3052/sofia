@@ -6,16 +6,6 @@ import (
    "io"
 )
 
-func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   return nil, nil
-}
-
 // ISO/IEC 14496-12
 //
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
@@ -31,6 +21,16 @@ type SampleDescription struct {
    EntryCount    uint32
    AudioSample   *AudioSampleEntry
    VisualSample  *VisualSampleEntry
+}
+
+func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
+   }
+   return nil, nil
 }
 
 func (s *SampleDescription) read(r io.Reader) error {

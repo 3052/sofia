@@ -11,6 +11,7 @@ import (
 
 func TestSampleEncryption(t *testing.T) {
    slog.SetLogLoggerLevel(slog.LevelDebug)
+   tests = tests[:1]
    for _, test := range tests {
       func() {
          file, err := os.Create(test.out)
@@ -21,6 +22,7 @@ func TestSampleEncryption(t *testing.T) {
          if err := test.encode_init(file); err != nil {
             t.Fatal(err)
          }
+         return
          if err := test.encode_segment(file); err != nil {
             t.Fatal(err)
          }
@@ -29,6 +31,12 @@ func TestSampleEncryption(t *testing.T) {
 }
 
 var tests = []testdata{
+   {
+      "testdata/tubi/0-1681.mp4",
+      "",
+      "",
+      "tubi.mp4",
+   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",

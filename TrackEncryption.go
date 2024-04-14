@@ -39,13 +39,16 @@ func (t *TrackEncryption) read(r io.Reader) error {
    if err != nil {
       return err
    }
-   if err := t.FullBoxHeader.read(r); err != nil {
+   err = t.FullBoxHeader.read(r)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &t.Extends); err != nil {
+   err = binary.Read(r, binary.BigEndian, &t.Extends)
+   if err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, t.DefaultKid[:]); err != nil {
+   _, err = io.ReadFull(r, t.DefaultKid[:])
+   if err != nil {
       return err
    }
    return nil
@@ -56,13 +59,16 @@ func (t TrackEncryption) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := t.FullBoxHeader.write(w); err != nil {
+   err = t.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, t.Extends); err != nil {
+   err = binary.Write(w, binary.BigEndian, t.Extends)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(t.DefaultKid[:]); err != nil {
+   _, err = w.Write(t.DefaultKid[:])
+   if err != nil {
       return err
    }
    return nil

@@ -5,6 +5,24 @@ import (
    "io"
 )
 
+func (t TrackFragment) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, b := range t.Boxes {
+      err := b.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   err = t.TrackRun.write(w)
+   if err != nil {
+      return err
+   }
+   return t.SampleEncryption.write(w)
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class TrackFragmentBox extends Box('traf') {
@@ -80,19 +98,3 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
    }
 }
 
-func (t TrackFragment) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, b := range t.Boxes {
-      err := b.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if err := t.TrackRun.write(w); err != nil {
-      return err
-   }
-   return t.SampleEncryption.write(w)
-}

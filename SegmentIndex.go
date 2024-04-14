@@ -3,69 +3,30 @@ package sofia
 import (
    "encoding/binary"
    "io"
-   "strconv"
 )
 
-type Range struct {
-   Start uint64
-   End   uint64
-}
-
-func (r Range) String() string {
-   b := []byte("bytes=")
-   b = strconv.AppendUint(b, r.Start, 10)
-   b = append(b, '-')
-   b = strconv.AppendUint(b, r.End, 10)
-   return string(b)
-}
-
-type Reference [3]uint32
-
-func (Reference) mask() uint32 {
-   return 0xFFFFFFFF >> 1
-}
-
-func (r *Reference) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) referenced_size() uint32 {
-   return r[0] & r.mask()
-}
-
-func (r Reference) set_referenced_size(v uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= v
-}
-
-func (r Reference) write(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
-}
-
 // ISO/IEC 14496-12
-//
-//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
-//      unsigned int(32) reference_ID;
-//      unsigned int(32) timescale;
-//      if (version==0) {
-//         unsigned int(32) earliest_presentation_time;
-//         unsigned int(32) first_offset;
-//      } else {
-//         unsigned int(64) earliest_presentation_time;
-//         unsigned int(64) first_offset;
-//      }
-//      unsigned int(16) reserved = 0;
-//      unsigned int(16) reference_count;
-//      for(i=1; i <= reference_count; i++) {
-//         bit (1) reference_type;
-//         unsigned int(31) referenced_size;
-//         unsigned int(32) subsegment_duration;
-//         bit(1) starts_with_SAP;
-//         unsigned int(3) SAP_type;
-//         unsigned int(28) SAP_delta_time;
-//      }
-//   }
+//  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
+//     unsigned int(32) reference_ID;
+//     unsigned int(32) timescale;
+//     if (version==0) {
+//        unsigned int(32) earliest_presentation_time;
+//        unsigned int(32) first_offset;
+//     } else {
+//        unsigned int(64) earliest_presentation_time;
+//        unsigned int(64) first_offset;
+//     }
+//     unsigned int(16) reserved = 0;
+//     unsigned int(16) reference_count;
+//     for(i=1; i <= reference_count; i++) {
+//        bit (1) reference_type;
+//        unsigned int(31) referenced_size;
+//        unsigned int(32) subsegment_duration;
+//        bit(1) starts_with_SAP;
+//        unsigned int(3) SAP_type;
+//        unsigned int(28) SAP_delta_time;
+//     }
+//  }
 type SegmentIndex struct {
    BoxHeader                BoxHeader
    FullBoxHeader            FullBoxHeader
@@ -78,6 +39,30 @@ type SegmentIndex struct {
    Reference                []Reference
 }
 
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
+}
+
+type Reference [3]uint32
+
+func (Reference) mask() uint32 {
+   return 0xFFFFFFFF >> 1
+}
+
+func (r *Reference) read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) set_referenced_size(v uint32) {
+   r[0] &= ^r.mask()
+   r[0] |= v
+}
+
+func (r Reference) write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
+}
+
 func (s *SegmentIndex) Append(size uint32) {
    var r Reference
    r.set_referenced_size(size)
@@ -88,19 +73,6 @@ func (s *SegmentIndex) Append(size uint32) {
 
 func (s *SegmentIndex) New() {
    copy(s.BoxHeader.Type[:], "sidx")
-}
-
-// size will always fit inside 31 bits, but range-start and range-end can both
-// exceed 32 bits, so we must use 64 bit. we need the length for progress
-// meter, so cannot use a channel
-func (s SegmentIndex) Ranges(start uint64) []Range {
-   ranges := make([]Range, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      size := uint64(ref.referenced_size())
-      ranges[i] = Range{start, start + size - 1}
-      start += size
-   }
-   return ranges
 }
 
 func (s SegmentIndex) get_size() int {
@@ -116,13 +88,16 @@ func (s SegmentIndex) get_size() int {
 }
 
 func (s *SegmentIndex) read(r io.Reader) error {
-   if err := s.FullBoxHeader.read(r); err != nil {
+   err := s.FullBoxHeader.read(r)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.ReferenceId); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.ReferenceId)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Timescale); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.Timescale)
+   if err != nil {
       return err
    }
    if s.FullBoxHeader.Version == 0 {
@@ -132,16 +107,20 @@ func (s *SegmentIndex) read(r io.Reader) error {
       s.EarliestPresentationTime = make([]byte, 8)
       s.FirstOffset = make([]byte, 8)
    }
-   if _, err := io.ReadFull(r, s.EarliestPresentationTime); err != nil {
+   _, err = io.ReadFull(r, s.EarliestPresentationTime)
+   if err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, s.FirstOffset); err != nil {
+   _, err = io.ReadFull(r, s.FirstOffset)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Reserved); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.Reserved)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.ReferenceCount); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.ReferenceCount)
+   if err != nil {
       return err
    }
    s.Reference = make([]Reference, s.ReferenceCount)
@@ -156,28 +135,36 @@ func (s *SegmentIndex) read(r io.Reader) error {
 }
 
 func (s SegmentIndex) write(w io.Writer) error {
-   if err := s.BoxHeader.write(w); err != nil {
+   err := s.BoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := s.FullBoxHeader.write(w); err != nil {
+   err = s.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.ReferenceId)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.Timescale)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
+   _, err = w.Write(s.EarliestPresentationTime)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(s.FirstOffset); err != nil {
+   _, err = w.Write(s.FirstOffset)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.Reserved)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.ReferenceCount)
+   if err != nil {
       return err
    }
    for _, ref := range s.Reference {

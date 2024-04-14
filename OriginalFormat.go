@@ -27,7 +27,8 @@ func (b OriginalFormat) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if _, err := w.Write(b.DataFormat[:]); err != nil {
+   _, err = w.Write(b.DataFormat[:])
+   if err != nil {
       return err
    }
    return nil

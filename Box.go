@@ -8,14 +8,13 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class Box (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
+//  aligned(8) class Box (
+//     unsigned int(32) boxtype,
+//     optional unsigned int(8)[16] extended_type
+//  ) {
+//     BoxHeader(boxtype, extended_type);
+//     // the remaining bytes are the BoxPayload
+//  }
 type Box struct {
    BoxHeader BoxHeader
    Payload   []byte
@@ -36,7 +35,8 @@ func (b Box) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if _, err := w.Write(b.Payload); err != nil {
+   _, err = w.Write(b.Payload)
+   if err != nil {
       return err
    }
    return nil
@@ -84,7 +84,8 @@ func (b *BoxHeader) read(r io.Reader) error {
    if err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, b.Type[:]); err != nil {
+   _, err = io.ReadFull(r, b.Type[:])
+   if err != nil {
       return err
    }
    if b.Type.String() == "uuid" {
@@ -101,7 +102,8 @@ func (b BoxHeader) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if _, err := w.Write(b.Type[:]); err != nil {
+   _, err = w.Write(b.Type[:])
+   if err != nil {
       return err
    }
    if b.Type.String() == "uuid" {

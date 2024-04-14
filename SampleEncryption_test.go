@@ -9,34 +9,7 @@ import (
    "testing"
 )
 
-func TestSampleEncryption(t *testing.T) {
-   slog.SetLogLoggerLevel(slog.LevelDebug)
-   tests = tests[:1]
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         if err := test.encode_init(file); err != nil {
-            t.Fatal(err)
-         }
-         return
-         if err := test.encode_segment(file); err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
-}
-
 var tests = []testdata{
-   {
-      "testdata/tubi/0-30057.mp4",
-      "",
-      "",
-      "tubi.mp4",
-   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
@@ -115,6 +88,33 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
+   {
+      "testdata/tubi/0-30057.mp4",
+      "",
+      "",
+      "tubi.mp4",
+   },
+}
+
+func TestSampleEncryption(t *testing.T) {
+   slog.SetLogLoggerLevel(slog.LevelDebug)
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
 }
 
 type testdata struct {
@@ -132,7 +132,8 @@ func (t testdata) encode_init(dst io.Writer) error {
    }
    defer src.Close()
    var value File
-   if err := value.Read(src); err != nil {
+   err = value.Read(src)
+   if err != nil {
       return err
    }
    for _, b := range value.Movie.Boxes {
@@ -163,7 +164,8 @@ func (t testdata) encode_segment(dst io.Writer) error {
    }
    defer src.Close()
    var file File
-   if err := file.Read(src); err != nil {
+   err = file.Read(src)
+   if err != nil {
       return err
    }
    key, err := hex.DecodeString(t.key)

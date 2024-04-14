@@ -32,7 +32,7 @@ func TestSampleEncryption(t *testing.T) {
 
 var tests = []testdata{
    {
-      "testdata/tubi/0-1681.mp4",
+      "testdata/tubi/0-30057.mp4",
       "",
       "",
       "tubi.mp4",

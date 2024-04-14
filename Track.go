@@ -6,9 +6,8 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class TrackBox extends Box('trak') {
-//   }
+//  aligned(8) class TrackBox extends Box('trak') {
+//  }
 type Track struct {
    BoxHeader BoxHeader
    Boxes     []Box
@@ -19,8 +18,7 @@ func (t *Track) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
+      if err := head.read(r); err == io.EOF {
          return nil
       } else if err != nil {
          return err

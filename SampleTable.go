@@ -6,9 +6,8 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class SampleTableBox extends Box('stbl') {
-//   }
+//  aligned(8) class SampleTableBox extends Box('stbl') {
+//  }
 type SampleTable struct {
    BoxHeader         BoxHeader
    Boxes             []Box
@@ -27,8 +26,9 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
       }
       switch head.debug() {
       case "stsd":
+         _, size := head.get_size()
          s.SampleDescription.BoxHeader = head
-         err := s.SampleDescription.read(r)
+         err := s.SampleDescription.read(r, size)
          if err != nil {
             return err
          }

@@ -65,7 +65,8 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
          return err
       }
    }
-   if err := p.OriginalFormat.write(w); err != nil {
+   err = p.OriginalFormat.write(w)
+   if err != nil {
       return err
    }
    return p.SchemeInformation.write(w)

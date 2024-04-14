@@ -29,12 +29,14 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.EntryCount); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
+   if err != nil {
       return err
    }
    for {
       var head BoxHeader
-      if err := head.read(r); err == io.EOF {
+      err := head.read(r)
+      if err == io.EOF {
          return nil
       } else if err != nil {
          return err
@@ -43,7 +45,8 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
       switch head.debug() {
       case "avc1": // Tubi
          b := Box{BoxHeader: head}
-         if err := b.read(r); err != nil {
+         err := b.read(r)
+         if err != nil {
             return err
          }
          s.Boxes = append(s.Boxes, b)
@@ -82,10 +85,12 @@ func (s SampleDescription) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := s.FullBoxHeader.write(w); err != nil {
+   err = s.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.EntryCount); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.EntryCount)
+   if err != nil {
       return err
    }
    if s.AudioSample != nil {

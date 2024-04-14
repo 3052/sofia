@@ -116,13 +116,16 @@ func (s SegmentIndex) get_size() int {
 }
 
 func (s *SegmentIndex) read(r io.Reader) error {
-   if err := s.FullBoxHeader.read(r); err != nil {
+   err := s.FullBoxHeader.read(r)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.ReferenceId); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.ReferenceId)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Timescale); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.Timescale)
+   if err != nil {
       return err
    }
    if s.FullBoxHeader.Version == 0 {
@@ -132,16 +135,20 @@ func (s *SegmentIndex) read(r io.Reader) error {
       s.EarliestPresentationTime = make([]byte, 8)
       s.FirstOffset = make([]byte, 8)
    }
-   if _, err := io.ReadFull(r, s.EarliestPresentationTime); err != nil {
+   _, err = io.ReadFull(r, s.EarliestPresentationTime)
+   if err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, s.FirstOffset); err != nil {
+   _, err = io.ReadFull(r, s.FirstOffset)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.Reserved); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.Reserved)
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &s.ReferenceCount); err != nil {
+   err = binary.Read(r, binary.BigEndian, &s.ReferenceCount)
+   if err != nil {
       return err
    }
    s.Reference = make([]Reference, s.ReferenceCount)
@@ -156,28 +163,36 @@ func (s *SegmentIndex) read(r io.Reader) error {
 }
 
 func (s SegmentIndex) write(w io.Writer) error {
-   if err := s.BoxHeader.write(w); err != nil {
+   err := s.BoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := s.FullBoxHeader.write(w); err != nil {
+   err = s.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceId); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.ReferenceId)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Timescale); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.Timescale)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(s.EarliestPresentationTime); err != nil {
+   _, err = w.Write(s.EarliestPresentationTime)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(s.FirstOffset); err != nil {
+   _, err = w.Write(s.FirstOffset)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.Reserved); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.Reserved)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, s.ReferenceCount); err != nil {
+   err = binary.Write(w, binary.BigEndian, s.ReferenceCount)
+   if err != nil {
       return err
    }
    for _, ref := range s.Reference {

@@ -140,10 +140,12 @@ func (b SampleEncryption) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := b.FullBoxHeader.write(w); err != nil {
+   err = b.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, b.SampleCount); err != nil {
+   err = binary.Write(w, binary.BigEndian, b.SampleCount)
+   if err != nil {
       return err
    }
    for _, sample := range b.Samples {

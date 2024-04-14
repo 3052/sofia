@@ -18,7 +18,8 @@ func (t *Track) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head BoxHeader
-      if err := head.read(r); err == io.EOF {
+      err := head.read(r)
+      if err == io.EOF {
          return nil
       } else if err != nil {
          return err

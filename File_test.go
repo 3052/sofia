@@ -14,7 +14,8 @@ func TestFile(t *testing.T) {
          }
          defer src.Close()
          var dst File
-         if err := dst.Read(src); err != nil {
+         err = dst.Read(src)
+         if err != nil {
             t.Fatal(err)
          }
       }()

@@ -16,8 +16,9 @@ func TestTrackRun(t *testing.T) {
       t.Fatal(err)
    }
    defer seg.Close()
-   var f File
-   if err := f.Read(seg); err != nil {
+   var value File
+   err = value.Read(seg)
+   if err != nil {
       t.Fatal(err)
    }
 }

@@ -12,11 +12,12 @@ func TestByteRanges(t *testing.T) {
       t.Fatal(err)
    }
    defer media.Close()
-   var f File
-   if err := f.Read(media); err != nil {
+   var value File
+   err = value.Read(media)
+   if err != nil {
       t.Fatal(err)
    }
-   for _, byte_range := range f.SegmentIndex.Ranges(0) {
-      fmt.Println(byte_range)
+   for _, each := range value.SegmentIndex.Reference {
+      fmt.Println(each.ReferencedSize())
    }
 }

@@ -7,15 +7,14 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
-//      const unsigned int(32)[2] reserved = 0;
-//      unsigned int(16) channelcount;
-//      template unsigned int(16) samplesize = 16;
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0 ;
-//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
-//   }
+//  class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
+//     const unsigned int(32)[2] reserved = 0;
+//     unsigned int(16) channelcount;
+//     template unsigned int(16) samplesize = 16;
+//     unsigned int(16) pre_defined = 0;
+//     const unsigned int(16) reserved = 0 ;
+//     template unsigned int(32) samplerate = { default samplerate of media}<<16;
+//  }
 type AudioSampleEntry struct {
    SampleEntry SampleEntry
    Extends     struct {
@@ -36,7 +35,8 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &a.Extends); err != nil {
+   err = binary.Read(r, binary.BigEndian, &a.Extends)
+   if err != nil {
       return err
    }
    for {
@@ -74,7 +74,8 @@ func (a AudioSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, a.Extends); err != nil {
+   err = binary.Write(w, binary.BigEndian, a.Extends)
+   if err != nil {
       return err
    }
    for _, b := range a.Boxes {
@@ -113,7 +114,8 @@ func (s *SampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if _, err := w.Write(s.Reserved[:]); err != nil {
+   _, err = w.Write(s.Reserved[:])
+   if err != nil {
       return err
    }
    return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
@@ -163,7 +165,8 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
    if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &v.Extends); err != nil {
+   err = binary.Read(r, binary.BigEndian, &v.Extends)
+   if err != nil {
       return err
    }
    for {
@@ -203,7 +206,8 @@ func (v VisualSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, v.Extends); err != nil {
+   err = binary.Write(w, binary.BigEndian, v.Extends)
+   if err != nil {
       return err
    }
    for _, b := range v.Boxes {

@@ -17,11 +17,20 @@ func TestOriginalFormat(t *testing.T) {
       t.Fatal(err)
    }
    defer media.Close()
-   var f File
-   if err := f.Read(media); err != nil {
+   var value File
+   err = value.Read(media)
+   if err != nil {
       t.Fatal(err)
    }
-   format := f.Movie.Track.Media.MediaInformation.SampleTable.SampleDescription.
-      AudioSample.ProtectionScheme.OriginalFormat
+   format := value.
+      Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription.
+      AudioSample.
+      ProtectionScheme.
+      OriginalFormat
    fmt.Printf("%q\n", format.DataFormat)
 }

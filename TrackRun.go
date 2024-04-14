@@ -157,13 +157,16 @@ func (t TrackRun) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := t.FullBoxHeader.write(w); err != nil {
+   err = t.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, t.SampleCount); err != nil {
+   err = binary.Write(w, binary.BigEndian, t.SampleCount)
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, t.DataOffset); err != nil {
+   err = binary.Write(w, binary.BigEndian, t.DataOffset)
+   if err != nil {
       return err
    }
    if t.first_sample_flags_present() {

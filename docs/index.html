@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.3.5 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.3.6 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -71,6 +71,9 @@
       </li>
   <li>
       <a href="#Reference">type Reference</a>
+      <ul>
+          <li><a href="#Reference.ReferencedSize">func (r Reference) ReferencedSize() uint32</a></li>
+          </ul>
       </li>
   <li>
       <a href="#RunSample">type RunSample</a>
@@ -101,13 +104,6 @@
           </ul>
       </li>
   <li>
-      <a href="#Slice">type Slice</a>
-      <ul>
-          <li><a href="#Slice.Add">func (s *Slice) Add(r Reference)</a></li>
-          <li><a href="#Slice.String">func (s Slice) String() string</a></li>
-          </ul>
-      </li>
-  <li>
       <a href="#Subsample">type Subsample</a>
       </li>
   <li>
@@ -125,6 +121,7 @@
   <li>
       <a href="#Type">type Type</a>
       <ul>
+          <li><a href="#Type.MarshalText">func (t Type) MarshalText() ([]byte, error)</a></li>
           <li><a href="#Type.String">func (t Type) String() string</a></li>
           </ul>
       </li>
@@ -312,7 +309,10 @@
 </pre>
 <h3 id="Reference">type Reference</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Reference</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
-    <h3 id="RunSample">type RunSample</h3>
+    <h4 id="Reference.ReferencedSize">func (Reference) ReferencedSize</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">ReferencedSize</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
+  <p>this is the size of the fragment, typically `moof` + `mdat`
+<h3 id="RunSample">type RunSample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">RunSample</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="RunSample.Duration"><span class="nx">Duration</span></span>              <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 	<span id="RunSample.Size"><span class="nx">Size</span></span>                  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
@@ -438,15 +438,6 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndex"><span class="nx">SegmentIndex</span></a><span class="p">)</span> <span class="nf">Append</span><span class="p">(</span><span class="nx">size</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
   <h4 id="SegmentIndex.New">func (*SegmentIndex) New</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SegmentIndex"><span class="nx">SegmentIndex</span></a><span class="p">)</span> <span class="nf">New</span><span class="p">()</span></pre>
-  <h3 id="Slice">type Slice</h3>
-    <pre class="chroma"><span class="kd">type</span> <span class="nx">Slice</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="Slice.Start"><span class="nx">Start</span></span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
-	<span id="Slice.End"><span class="nx">End</span></span>   <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
-<span class="p">}</span></pre>
-    <h4 id="Slice.Add">func (*Slice) Add</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#Slice"><span class="nx">Slice</span></a><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span></pre>
-  <h4 id="Slice.String">func (Slice) String</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#Slice"><span class="nx">Slice</span></a><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
   <h3 id="Subsample">type Subsample</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Subsample</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="Subsample.BytesOfClearData"><span class="nx">BytesOfClearData</span></span>     <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
@@ -495,7 +486,7 @@ senc_use_subsamples is set, UseSubSampleEncryption is set to 1
     <pre class="chroma"><span class="kd">type</span> <span class="nx">TrackFragment</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="TrackFragment.BoxHeader"><span class="nx">BoxHeader</span></span>        <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="TrackFragment.Boxes"><span class="nx">Boxes</span></span>            <span class="p">[]</span><a href="#Box"><span class="nx">Box</span></a>
-	<span id="TrackFragment.SampleEncryption"><span class="nx">SampleEncryption</span></span> <a href="#SampleEncryption"><span class="nx">SampleEncryption</span></a>
+	<span id="TrackFragment.SampleEncryption"><span class="nx">SampleEncryption</span></span> <span class="o">*</span><a href="#SampleEncryption"><span class="nx">SampleEncryption</span></a>
 	<span id="TrackFragment.TrackRun"><span class="nx">TrackRun</span></span>         <a href="#TrackRun"><span class="nx">TrackRun</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
@@ -532,7 +523,9 @@ established in the track fragment header.
 </pre>
 <h3 id="Type">type Type</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Type</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a></pre>
-    <h4 id="Type.String">func (Type) String</h4>
+    <h4 id="Type.MarshalText">func (Type) MarshalText</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#Type"><span class="nx">Type</span></a><span class="p">)</span> <span class="nf">MarshalText</span><span class="p">()</span> <span class="p">([]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
+  <h4 id="Type.String">func (Type) String</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#Type"><span class="nx">Type</span></a><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
   <h3 id="UUID">type UUID</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">UUID</span> <span class="p">[</span><span class="mi">16</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a></pre>

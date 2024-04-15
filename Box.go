@@ -146,6 +146,10 @@ func (t Type) String() string {
    return string(t[:])
 }
 
+func (t Type) MarshalText() ([]byte, error) {
+   return t[:], nil
+}
+
 type UUID [16]uint8
 
 func (u UUID) String() string {

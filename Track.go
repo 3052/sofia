@@ -52,8 +52,8 @@ func (t Track) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range t.Boxes {
-      err := b.write(w)
+   for _, each := range t.Boxes {
+      err := each.write(w)
       if err != nil {
          return err
       }

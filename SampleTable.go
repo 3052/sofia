@@ -54,8 +54,8 @@ func (s SampleTable) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range s.Boxes {
-      err := b.write(w)
+   for _, each := range s.Boxes {
+      err := each.write(w)
       if err != nil {
          return err
       }

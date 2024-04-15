@@ -9,33 +9,67 @@ import (
    "testing"
 )
 
-func (t testdata) encode_segment(dst io.Writer) error {
-   fmt.Println(t.segment)
-   src, err := os.Open(t.segment)
+func (t testdata) encode_init(out io.Writer) error {
+   fmt.Println(t.init)
+   in, err := os.Open(t.init)
    if err != nil {
       return err
    }
-   defer src.Close()
-   var file File
-   err = file.Read(src)
+   defer in.Close()
+   var value File
+   err = value.Read(in)
    if err != nil {
       return err
    }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   fragment := file.MovieFragment.TrackFragment
-   for i, data := range file.MediaData.Data(fragment.TrackRun) {
-      err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
-      if err != nil {
-         return err
+   for _, each := range value.Movie.Boxes {
+      if each.BoxHeader.Type.String() == "pssh" { // moov
+         copy(each.BoxHeader.Type[:], "free") // Firefox
       }
    }
-   return file.Write(dst)
+   sample, protect := value.
+      Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription.
+      SampleEntry()
+   // Firefox enca encv sinf
+   copy(protect.BoxHeader.Type[:], "free")
+   // Firefox stsd enca encv
+   copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
+   return value.Write(out)
+}
+
+func TestSampleEncryption(t *testing.T) {
+   slog.SetLogLoggerLevel(slog.LevelDebug)
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+      break
+   }
 }
 
 var tests = []testdata{
+   {
+      "testdata/tubi-avc1/0-30057.mp4",
+      "testdata/tubi-avc1/30058-111481.mp4",
+      "",
+      "tubi-avc1.mp4",
+   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
@@ -114,33 +148,34 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
-   {
-      "testdata/tubi/0-30057.mp4",
-      "",
-      "",
-      "tubi.mp4",
-   },
 }
 
-func TestSampleEncryption(t *testing.T) {
-   slog.SetLogLoggerLevel(slog.LevelDebug)
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         err = test.encode_init(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
+func (t testdata) encode_segment(write io.Writer) error {
+   fmt.Println(t.segment)
+   read, err := os.Open(t.segment)
+   if err != nil {
+      return err
    }
+   defer read.Close()
+   var file File
+   err = file.Read(read)
+   if err != nil {
+      return err
+   }
+   if v := file.MovieFragment.TrackFragment.SampleEncryption; v != nil {
+      key, err := hex.DecodeString(t.key)
+      if err != nil {
+         return err
+      }
+      run := file.MovieFragment.TrackFragment.TrackRun
+      for i, data := range file.MediaData.Data(run) {
+         err := v.Samples[i].DecryptCenc(data, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return file.Write(write)
 }
 
 type testdata struct {
@@ -148,36 +183,4 @@ type testdata struct {
    segment string
    key     string
    out     string
-}
-
-func (t testdata) encode_init(dst io.Writer) error {
-   fmt.Println(t.init)
-   src, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   err = value.Read(src)
-   if err != nil {
-      return err
-   }
-   for _, b := range value.Movie.Boxes {
-      if b.BoxHeader.Type.String() == "pssh" { // moov
-         copy(b.BoxHeader.Type[:], "free") // Firefox
-      }
-   }
-   sample, protect := value.
-      Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription.
-      SampleEntry()
-   // Firefox enca encv sinf
-   copy(protect.BoxHeader.Type[:], "free")
-   // Firefox stsd enca encv
-   copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-   return value.Write(dst)
 }

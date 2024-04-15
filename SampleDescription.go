@@ -6,23 +6,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//     int i ;
-//     unsigned int(32) entry_count;
-//     for (i = 1 ; i <= entry_count ; i++){
-//        SampleEntry(); // an instance of a class derived from SampleEntry
-//     }
-//  }
-type SampleDescription struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   EntryCount    uint32
-   Boxes []Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
-}
-
 func (s *SampleDescription) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    err := s.FullBoxHeader.read(r)
@@ -70,14 +53,21 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
    }
 }
 
-func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   return nil, nil
+// ISO/IEC 14496-12
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescription struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   EntryCount    uint32
+   Boxes []Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
 }
 
 func (s SampleDescription) write(w io.Writer) error {
@@ -92,6 +82,12 @@ func (s SampleDescription) write(w io.Writer) error {
    err = binary.Write(w, binary.BigEndian, s.EntryCount)
    if err != nil {
       return err
+   }
+   for _, each := range s.Boxes {
+      err := each.write(w)
+      if err != nil {
+         return err
+      }
    }
    if s.AudioSample != nil {
       err := s.AudioSample.write(w)
@@ -108,3 +104,12 @@ func (s SampleDescription) write(w io.Writer) error {
    return nil
 }
 
+func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
+   }
+   return nil, nil
+}

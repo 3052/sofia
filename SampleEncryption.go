@@ -88,21 +88,21 @@ func (e EncryptionSample) write(w io.Writer, box SampleEncryption) error {
 // if the version of the SampleEncryptionBox is 0 and the flag
 // senc_use_subsamples is set, UseSubSampleEncryption is set to 1
 //
-//   aligned(8) class SampleEncryptionBox extends FullBox(
-//      'senc', version, flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
+//  aligned(8) class SampleEncryptionBox extends FullBox(
+//     'senc', version, flags
+//  ) {
+//     unsigned int(32) sample_count;
+//     {
+//        unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//        if (UseSubSampleEncryption) {
+//           unsigned int(16) subsample_count;
+//           {
+//              unsigned int(16) BytesOfClearData;
+//              unsigned int(32) BytesOfProtectedData;
+//           } [subsample_count ]
+//        }
+//     }[ sample_count ]
+//  }
 type SampleEncryption struct {
    BoxHeader     BoxHeader
    FullBoxHeader FullBoxHeader

@@ -3,7 +3,31 @@ package sofia
 import (
    "encoding/binary"
    "io"
+   "strconv"
 )
+
+type Slice struct {
+   Start uint64
+   End uint64
+}
+
+func (s *Slice) Add(r Reference) {
+   s.Start = s.End
+   s.End += uint64(r.referenced_size())
+}
+
+func (s Slice) String() string {
+   b := []byte("bytes=")
+   b = strconv.AppendUint(b, s.Start, 10)
+   b = append(b, '-')
+   b = strconv.AppendUint(b, s.End-1, 10)
+   return string(b)
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) referenced_size() uint32 {
+   return r[0] & r.mask()
+}
 
 // ISO/IEC 14496-12
 //  aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
@@ -37,11 +61,6 @@ type SegmentIndex struct {
    Reserved                 uint16
    ReferenceCount           uint16
    Reference                []Reference
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
 }
 
 type Reference [3]uint32
@@ -124,12 +143,12 @@ func (s *SegmentIndex) read(r io.Reader) error {
       return err
    }
    s.Reference = make([]Reference, s.ReferenceCount)
-   for i, ref := range s.Reference {
-      err := ref.read(r)
+   for i, value := range s.Reference {
+      err := value.read(r)
       if err != nil {
          return err
       }
-      s.Reference[i] = ref
+      s.Reference[i] = value
    }
    return nil
 }
@@ -167,8 +186,8 @@ func (s SegmentIndex) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, ref := range s.Reference {
-      err := ref.write(w)
+   for _, value := range s.Reference {
+      err := value.write(w)
       if err != nil {
          return err
       }

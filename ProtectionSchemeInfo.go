@@ -59,8 +59,8 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range p.Boxes {
-      err := b.write(w)
+   for _, each := range p.Boxes {
+      err := each.write(w)
       if err != nil {
          return err
       }

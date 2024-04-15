@@ -18,6 +18,6 @@ func TestByteRanges(t *testing.T) {
       t.Fatal(err)
    }
    for _, each := range value.SegmentIndex.Reference {
-      fmt.Println(each.referenced_size())
+      fmt.Println(each.ReferencedSize())
    }
 }

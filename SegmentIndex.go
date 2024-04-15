@@ -3,29 +3,10 @@ package sofia
 import (
    "encoding/binary"
    "io"
-   "strconv"
 )
 
-type Slice struct {
-   Start uint64
-   End uint64
-}
-
-func (s Slice) String() string {
-   b := []byte("bytes=")
-   b = strconv.AppendUint(b, s.Start, 10)
-   b = append(b, '-')
-   b = strconv.AppendUint(b, s.End-1, 10)
-   return string(b)
-}
-
-func (s *Slice) Add(r Reference) {
-   s.Start = s.End
-   s.End += uint64(r.referenced_size())
-}
-
 // this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) referenced_size() uint32 {
+func (r Reference) ReferencedSize() uint32 {
    return r[0] & r.mask()
 }
 

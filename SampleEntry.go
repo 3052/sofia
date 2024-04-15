@@ -78,8 +78,8 @@ func (a AudioSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range a.Boxes {
-      err := b.write(w)
+   for _, each := range a.Boxes {
+      err := each.write(w)
       if err != nil {
          return err
       }
@@ -210,8 +210,8 @@ func (v VisualSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, b := range v.Boxes {
-      err := b.write(w)
+   for _, each := range v.Boxes {
+      err := each.write(w)
       if err != nil {
          return err
       }

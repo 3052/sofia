@@ -11,17 +11,17 @@ type Slice struct {
    End uint64
 }
 
-func (s *Slice) Add(r Reference) {
-   s.Start = s.End
-   s.End += uint64(r.referenced_size())
-}
-
 func (s Slice) String() string {
    b := []byte("bytes=")
    b = strconv.AppendUint(b, s.Start, 10)
    b = append(b, '-')
    b = strconv.AppendUint(b, s.End-1, 10)
    return string(b)
+}
+
+func (s *Slice) Add(r Reference) {
+   s.Start = s.End
+   s.End += uint64(r.referenced_size())
 }
 
 // this is the size of the fragment, typically `moof` + `mdat`

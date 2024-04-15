@@ -16,21 +16,19 @@ func (t TrackFragment) write(w io.Writer) error {
          return err
       }
    }
-   err = t.TrackRun.write(w)
-   if err != nil {
-      return err
+   if t.SampleEncryption != nil {
+      t.SampleEncryption.write(w)
    }
-   return t.SampleEncryption.write(w)
+   return t.TrackRun.write(w)
 }
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
+//  aligned(8) class TrackFragmentBox extends Box('traf') {
+//  }
 type TrackFragment struct {
    BoxHeader        BoxHeader
    Boxes            []Box
-   SampleEncryption SampleEncryption
+   SampleEncryption *SampleEncryption
    TrackRun         TrackRun
 }
 
@@ -45,35 +43,6 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
          return err
       }
       switch head.debug() {
-      case "uuid":
-         decode := func() bool {
-            if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-               if t.SampleEncryption.SampleCount == 0 {
-                  return true
-               }
-            }
-            return false
-         }
-         if decode() {
-            t.SampleEncryption.BoxHeader = head
-            err := t.SampleEncryption.read(r)
-            if err != nil {
-               return err
-            }
-         } else {
-            b := Box{BoxHeader: head}
-            err := b.read(r)
-            if err != nil {
-               return err
-            }
-            t.Boxes = append(t.Boxes, b)
-         }
-      case "senc":
-         t.SampleEncryption.BoxHeader = head
-         err := t.SampleEncryption.read(r)
-         if err != nil {
-            return err
-         }
       case "trun":
          t.TrackRun.BoxHeader = head
          err := t.TrackRun.read(r)
@@ -92,9 +61,37 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
             return err
          }
          t.Boxes = append(t.Boxes, b)
+      case "senc":
+         t.SampleEncryption = &SampleEncryption{BoxHeader: head}
+         err := t.SampleEncryption.read(r)
+         if err != nil {
+            return err
+         }
+      case "uuid":
+         decode := func() bool {
+            if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+               if t.SampleEncryption == nil {
+                  return true
+               }
+            }
+            return false
+         }
+         if decode() {
+            t.SampleEncryption = &SampleEncryption{BoxHeader: head}
+            err := t.SampleEncryption.read(r)
+            if err != nil {
+               return err
+            }
+         } else {
+            b := Box{BoxHeader: head}
+            err := b.read(r)
+            if err != nil {
+               return err
+            }
+            t.Boxes = append(t.Boxes, b)
+         }
       default:
          return errors.New("TrackFragment.read")
       }
    }
 }
-

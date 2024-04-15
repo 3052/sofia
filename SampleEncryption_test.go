@@ -9,6 +9,32 @@ import (
    "testing"
 )
 
+func (t testdata) encode_segment(dst io.Writer) error {
+   fmt.Println(t.segment)
+   src, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var file File
+   err = file.Read(src)
+   if err != nil {
+      return err
+   }
+   key, err := hex.DecodeString(t.key)
+   if err != nil {
+      return err
+   }
+   fragment := file.MovieFragment.TrackFragment
+   for i, data := range file.MediaData.Data(fragment.TrackRun) {
+      err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
+      if err != nil {
+         return err
+      }
+   }
+   return file.Write(dst)
+}
+
 var tests = []testdata{
    {
       "testdata/amc-avc1/init.m4f",
@@ -154,30 +180,4 @@ func (t testdata) encode_init(dst io.Writer) error {
    // Firefox stsd enca encv
    copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
    return value.Write(dst)
-}
-
-func (t testdata) encode_segment(dst io.Writer) error {
-   fmt.Println(t.segment)
-   src, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var file File
-   err = file.Read(src)
-   if err != nil {
-      return err
-   }
-   key, err := hex.DecodeString(t.key)
-   if err != nil {
-      return err
-   }
-   fragment := file.MovieFragment.TrackFragment
-   for i, data := range file.MediaData.Data(fragment.TrackRun) {
-      err := fragment.SampleEncryption.Samples[i].DecryptCenc(data, key)
-      if err != nil {
-         return err
-      }
-   }
-   return file.Write(dst)
 }

@@ -9,6 +9,34 @@ import (
    "testing"
 )
 
+func (t testdata) encode_segment(write io.Writer) error {
+   fmt.Println(t.segment)
+   read, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer read.Close()
+   var file File
+   err = file.Read(read)
+   if err != nil {
+      return err
+   }
+   if v := file.MovieFragment.TrackFragment.SampleEncryption; v != nil {
+      key, err := hex.DecodeString(t.key)
+      if err != nil {
+         return err
+      }
+      run := file.MovieFragment.TrackFragment.TrackRun
+      for i, data := range file.MediaData.Data(run) {
+         err := v.Samples[i].DecryptCenc(data, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return file.Write(write)
+}
+
 func (t testdata) encode_init(out io.Writer) error {
    fmt.Println(t.init)
    in, err := os.Open(t.init)
@@ -59,17 +87,10 @@ func TestSampleEncryption(t *testing.T) {
             t.Fatal(err)
          }
       }()
-      break
    }
 }
 
 var tests = []testdata{
-   {
-      "testdata/tubi-avc1/0-30057.mp4",
-      "testdata/tubi-avc1/30058-111481.mp4",
-      "",
-      "tubi-avc1.mp4",
-   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
@@ -148,34 +169,12 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
-}
-
-func (t testdata) encode_segment(write io.Writer) error {
-   fmt.Println(t.segment)
-   read, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer read.Close()
-   var file File
-   err = file.Read(read)
-   if err != nil {
-      return err
-   }
-   if v := file.MovieFragment.TrackFragment.SampleEncryption; v != nil {
-      key, err := hex.DecodeString(t.key)
-      if err != nil {
-         return err
-      }
-      run := file.MovieFragment.TrackFragment.TrackRun
-      for i, data := range file.MediaData.Data(run) {
-         err := v.Samples[i].DecryptCenc(data, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return file.Write(write)
+   {
+      "testdata/tubi-avc1/0-30057.mp4",
+      "testdata/tubi-avc1/30058-111481.mp4",
+      "",
+      "tubi-avc1.mp4",
+   },
 }
 
 type testdata struct {

@@ -1,0 +1,87 @@
+[ftyp] size=36
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: cmfc
+[moov] size=1512
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 44100
+   - duration: 0
+   - creation time: 2023-07-11T15:12:22Z
+   - modification time: 2023-07-11T15:12:22Z
+  [meta] size=141 version=0 flags=000000
+    [hdlr] size=32 version=0 flags=000000
+     - handlerType: ID32
+     - handlerName: ""
+    [ID32] size=97
+     - not implemented or unknown box
+  [trak] size=593
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2023-07-11T15:12:22Z
+     - modification time: 2023-07-11T15:12:22Z
+    [mdia] size=493
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 44100
+       - creation time: 2023-07-11T15:12:22Z
+       - modification time: 2023-07-11T15:12:22Z
+       - language: eng
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "SoundHandler"
+      [minf] size=408
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=348
+          [stsd] size=246 version=0 flags=000000
+            [enca] size=155
+              [esds] size=39 version=0 flags=000000
+               - maxBitrate: 125588
+               - avgBitrate: 125588
+               - decConfig: 1210
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: mp4a
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 75d1cece-f458-4683-b7f8-abb03bcb1b41
+            [mp4a] size=75
+              [esds] size=39 version=0 flags=000000
+               - maxBitrate: 125588
+               - avgBitrate: 125588
+               - decConfig: 1210
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+          [sgpd] size=26 version=1 flags=000000
+             groupingType: roll
+           - defaultLength: 2
+           - entryCount: 1
+           - GroupingType "roll" size=2
+           -  * rollDistance: -1
+        [smhd] size=16 version=0 flags=000000
+  [mvex] size=56
+    [mehd] size=16 version=0 flags=000000
+     - fragmentDuration: 347615232
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 1024
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=550 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [pssh] size=56 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)

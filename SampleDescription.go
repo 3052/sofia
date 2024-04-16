@@ -6,68 +6,14 @@ import (
    "io"
 )
 
-func (s *SampleDescription) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := s.FullBoxHeader.read(r)
-   if err != nil {
-      return err
+func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
    }
-   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
-   if err != nil {
-      return err
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, &v.ProtectionScheme
    }
-   for {
-      var head BoxHeader
-      err := head.read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      _, size := head.get_size()
-      switch head.debug() {
-      case "avc1": // Tubi
-         b := Box{BoxHeader: head}
-         err := b.read(r)
-         if err != nil {
-            return err
-         }
-         s.Boxes = append(s.Boxes, b)
-      case "enca":
-         s.AudioSample = new(AudioSampleEntry)
-         s.AudioSample.SampleEntry.BoxHeader = head
-         err := s.AudioSample.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "encv":
-         s.VisualSample = new(VisualSampleEntry)
-         s.VisualSample.SampleEntry.BoxHeader = head
-         err := s.VisualSample.read(r, size)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("SampleDescription.read")
-      }
-   }
-}
-
-// ISO/IEC 14496-12
-//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//     int i ;
-//     unsigned int(32) entry_count;
-//     for (i = 1 ; i <= entry_count ; i++){
-//        SampleEntry(); // an instance of a class derived from SampleEntry
-//     }
-//  }
-type SampleDescription struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   EntryCount    uint32
-   Boxes []Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
+   return nil, nil
 }
 
 func (s SampleDescription) write(w io.Writer) error {
@@ -104,12 +50,67 @@ func (s SampleDescription) write(w io.Writer) error {
    return nil
 }
 
-func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
+// ISO/IEC 14496-12
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescription struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   EntryCount    uint32
+   Boxes []Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
+}
+
+func (s *SampleDescription) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
+   err := s.FullBoxHeader.read(r)
+   if err != nil {
+      return err
    }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
+   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
+   if err != nil {
+      return err
    }
-   return nil, nil
+   for {
+      var head BoxHeader
+      err := head.read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      _, size := head.get_size()
+      switch head.debug() {
+      case "avc1", // Tubi
+      "mp4a": // Tubi
+         object := Box{BoxHeader: head}
+         err := object.read(r)
+         if err != nil {
+            return err
+         }
+         s.Boxes = append(s.Boxes, object)
+      case "enca":
+         s.AudioSample = new(AudioSampleEntry)
+         s.AudioSample.SampleEntry.BoxHeader = head
+         err := s.AudioSample.read(r, size)
+         if err != nil {
+            return err
+         }
+      case "encv":
+         s.VisualSample = new(VisualSampleEntry)
+         s.VisualSample.SampleEntry.BoxHeader = head
+         err := s.VisualSample.read(r, size)
+         if err != nil {
+            return err
+         }
+      default:
+         return errors.New("SampleDescription.read")
+      }
+   }
 }

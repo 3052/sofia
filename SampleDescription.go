@@ -6,6 +6,23 @@ import (
    "io"
 )
 
+// ISO/IEC 14496-12
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescription struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   EntryCount    uint32
+   Boxes []Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
+}
+
 func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
    if v := s.AudioSample; v != nil {
       return &v.SampleEntry, &v.ProtectionScheme
@@ -48,23 +65,6 @@ func (s SampleDescription) write(w io.Writer) error {
       }
    }
    return nil
-}
-
-// ISO/IEC 14496-12
-//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//     int i ;
-//     unsigned int(32) entry_count;
-//     for (i = 1 ; i <= entry_count ; i++){
-//        SampleEntry(); // an instance of a class derived from SampleEntry
-//     }
-//  }
-type SampleDescription struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   EntryCount    uint32
-   Boxes []Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
 }
 
 func (s *SampleDescription) read(r io.Reader, size int64) error {

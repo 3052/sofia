@@ -35,12 +35,12 @@ func (m *Media) read(r io.Reader, size int64) error {
          }
       case "hdlr", // Roku
       "mdhd": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         m.Boxes = append(m.Boxes, b)
+         m.Boxes = append(m.Boxes, object)
       default:
          return errors.New("Media.read")
       }
@@ -52,8 +52,8 @@ func (m Media) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range m.Boxes {
-      err := each.write(w)
+   for _, object := range m.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }

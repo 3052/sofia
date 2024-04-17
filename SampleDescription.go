@@ -6,33 +6,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//     int i ;
-//     unsigned int(32) entry_count;
-//     for (i = 1 ; i <= entry_count ; i++){
-//        SampleEntry(); // an instance of a class derived from SampleEntry
-//     }
-//  }
-type SampleDescription struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   EntryCount    uint32
-   Boxes []Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
-}
-
-func (s SampleDescription) SampleEntry() (*SampleEntry, *ProtectionSchemeInfo) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, &v.ProtectionScheme
-   }
-   return nil, nil
-}
-
 func (s SampleDescription) write(w io.Writer) error {
    err := s.BoxHeader.write(w)
    if err != nil {
@@ -113,4 +86,47 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
          return errors.New("SampleDescription.read")
       }
    }
+}
+
+// stsd
+//   enca
+//   encv
+func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   return nil, false
+}
+
+// enca
+// encv
+//   sinf
+func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
+   if v := s.AudioSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   return nil, false
+}
+
+// ISO/IEC 14496-12
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescription struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   EntryCount    uint32
+   Boxes []Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
 }

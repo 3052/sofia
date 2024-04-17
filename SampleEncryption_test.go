@@ -9,64 +9,38 @@ import (
    "testing"
 )
 
-func (t testdata) encode_segment(write io.Writer) error {
-   fmt.Println(t.segment)
-   read, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer read.Close()
-   var file File
-   err = file.Read(read)
-   if err != nil {
-      return err
-   }
-   if v := file.MovieFragment.TrackFragment.SampleEncryption; v != nil {
-      key, err := hex.DecodeString(t.key)
-      if err != nil {
-         return err
-      }
-      run := file.MovieFragment.TrackFragment.TrackRun
-      for i, data := range file.MediaData.Data(run) {
-         err := v.Samples[i].DecryptCenc(data, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return file.Write(write)
-}
-
 func (t testdata) encode_init(out io.Writer) error {
-   fmt.Println(t.init)
    in, err := os.Open(t.init)
    if err != nil {
       return err
    }
    defer in.Close()
-   var value File
-   err = value.Read(in)
+   var boxes File
+   err = boxes.Read(in)
    if err != nil {
       return err
    }
-   for _, each := range value.Movie.Boxes {
-      if each.BoxHeader.Type.String() == "pssh" { // moov
-         copy(each.BoxHeader.Type[:], "free") // Firefox
+   for _, object := range boxes.Movie.Boxes {
+      if object.BoxHeader.Type.String() == "pssh" { // moov
+         copy(object.BoxHeader.Type[:], "free") // Firefox
       }
    }
-   sample, protect := value.
+   description := boxes.
       Movie.
       Track.
       Media.
       MediaInformation.
       SampleTable.
-      SampleDescription.
-      SampleEntry()
-   // Firefox enca encv sinf
-   copy(protect.BoxHeader.Type[:], "free")
-   // Firefox stsd enca encv
-   copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-   return value.Write(out)
+      SampleDescription
+   if protect, ok := description.Protection(); ok {
+      // Firefox
+      copy(protect.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
+      }
+   }
+   return boxes.Write(out)
 }
 
 func TestSampleEncryption(t *testing.T) {
@@ -182,4 +156,31 @@ type testdata struct {
    segment string
    key     string
    out     string
+}
+func (t testdata) encode_segment(write io.Writer) error {
+   fmt.Println(t.segment)
+   read, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer read.Close()
+   var file File
+   err = file.Read(read)
+   if err != nil {
+      return err
+   }
+   if v := file.MovieFragment.TrackFragment.SampleEncryption; v != nil {
+      key, err := hex.DecodeString(t.key)
+      if err != nil {
+         return err
+      }
+      run := file.MovieFragment.TrackFragment.TrackRun
+      for i, data := range file.MediaData.Data(run) {
+         err := v.Samples[i].DecryptCenc(data, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return file.Write(write)
 }

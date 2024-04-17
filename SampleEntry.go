@@ -88,13 +88,12 @@ func (a AudioSampleEntry) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
+//  aligned(8) abstract class SampleEntry(
+//     unsigned int(32) format
+//  ) extends Box(format) {
+//     const unsigned int(8)[6] reserved = 0;
+//     unsigned int(16) data_reference_index;
+//  }
 type SampleEntry struct {
    BoxHeader          BoxHeader
    Reserved           [6]uint8

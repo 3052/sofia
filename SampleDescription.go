@@ -19,8 +19,8 @@ func (s SampleDescription) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range s.Boxes {
-      err := each.write(w)
+   for _, object := range s.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }

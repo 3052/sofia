@@ -53,12 +53,12 @@ func (f *File) Read(r io.Reader) error {
       case "free", // Mubi
       "ftyp", // Roku
       "styp": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         f.Boxes = append(f.Boxes, b)
+         f.Boxes = append(f.Boxes, object)
       default:
          return errors.New("File.Read")
       }

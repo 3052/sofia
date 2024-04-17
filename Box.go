@@ -127,9 +127,9 @@ type FullBoxHeader struct {
 }
 
 func (f FullBoxHeader) get_flags() uint32 {
-   var b [4]byte
-   copy(b[1:], f.Flags[:])
-   return binary.BigEndian.Uint32(b[:])
+   var flag [4]byte
+   copy(flag[1:], f.Flags[:])
+   return binary.BigEndian.Uint32(flag[:])
 }
 
 func (f *FullBoxHeader) read(r io.Reader) error {

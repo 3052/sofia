@@ -37,12 +37,12 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
       "stsc", // Roku
       "stsz", // Roku
       "stts": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         s.Boxes = append(s.Boxes, b)
+         s.Boxes = append(s.Boxes, object)
       default:
          return errors.New("SampleTable.read")
       }
@@ -54,8 +54,8 @@ func (s SampleTable) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range s.Boxes {
-      err := each.write(w)
+   for _, object := range s.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }

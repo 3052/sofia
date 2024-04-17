@@ -35,12 +35,12 @@ func (t *Track) read(r io.Reader, size int64) error {
       case "edts", // Paramount
       "tkhd", // Roku
       "udta": // Mubi
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         t.Boxes = append(t.Boxes, b)
+         t.Boxes = append(t.Boxes, object)
       default:
          return errors.New("Track.read")
       }
@@ -52,8 +52,8 @@ func (t Track) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range t.Boxes {
-      err := each.write(w)
+   for _, object := range t.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }

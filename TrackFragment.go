@@ -10,8 +10,8 @@ func (t TrackFragment) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range t.Boxes {
-      err := each.write(w)
+   for _, object := range t.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }
@@ -55,12 +55,12 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
       "sgpd", // Roku
       "tfdt", // Roku
       "tfhd": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         t.Boxes = append(t.Boxes, b)
+         t.Boxes = append(t.Boxes, object)
       case "senc":
          t.SampleEncryption = &SampleEncryption{BoxHeader: head}
          err := t.SampleEncryption.read(r)
@@ -83,12 +83,12 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
                return err
             }
          } else {
-            b := Box{BoxHeader: head}
-            err := b.read(r)
+            object := Box{BoxHeader: head}
+            err := object.read(r)
             if err != nil {
                return err
             }
-            t.Boxes = append(t.Boxes, b)
+            t.Boxes = append(t.Boxes, object)
          }
       default:
          return errors.New("TrackFragment.read")

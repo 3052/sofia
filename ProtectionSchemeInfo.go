@@ -42,12 +42,12 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
             return err
          }
       case "schm": // Roku
-         b := Box{BoxHeader: head}
-         err := b.read(r)
+         object := Box{BoxHeader: head}
+         err := object.read(r)
          if err != nil {
             return err
          }
-         p.Boxes = append(p.Boxes, b)
+         p.Boxes = append(p.Boxes, object)
       default:
          return errors.New("ProtectionSchemeInfo.read")
       }
@@ -59,8 +59,8 @@ func (p ProtectionSchemeInfo) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, each := range p.Boxes {
-      err := each.write(w)
+   for _, object := range p.Boxes {
+      err := object.write(w)
       if err != nil {
          return err
       }

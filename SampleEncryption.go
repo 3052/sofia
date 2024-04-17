@@ -110,46 +110,46 @@ type SampleEncryption struct {
    Samples       []EncryptionSample
 }
 
-func (b *SampleEncryption) read(r io.Reader) error {
-   err := b.FullBoxHeader.read(r)
+func (s *SampleEncryption) read(r io.Reader) error {
+   err := s.FullBoxHeader.read(r)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &b.SampleCount)
+   err = binary.Read(r, binary.BigEndian, &s.SampleCount)
    if err != nil {
       return err
    }
-   b.Samples = make([]EncryptionSample, b.SampleCount)
-   for i, sample := range b.Samples {
-      err := sample.read(r, b)
+   s.Samples = make([]EncryptionSample, s.SampleCount)
+   for i, sample := range s.Samples {
+      err := sample.read(r, s)
       if err != nil {
          return err
       }
-      b.Samples[i] = sample
+      s.Samples[i] = sample
    }
    return nil
 }
 
 // senc_use_subsamples: flag mask is 0x000002.
-func (b SampleEncryption) senc_use_subsamples() bool {
-   return b.FullBoxHeader.get_flags()&2 >= 1
+func (s SampleEncryption) senc_use_subsamples() bool {
+   return s.FullBoxHeader.get_flags()&2 >= 1
 }
 
-func (b SampleEncryption) write(w io.Writer) error {
-   err := b.BoxHeader.write(w)
+func (s SampleEncryption) write(w io.Writer) error {
+   err := s.BoxHeader.write(w)
    if err != nil {
       return err
    }
-   err = b.FullBoxHeader.write(w)
+   err = s.FullBoxHeader.write(w)
    if err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, b.SampleCount)
+   err = binary.Write(w, binary.BigEndian, s.SampleCount)
    if err != nil {
       return err
    }
-   for _, sample := range b.Samples {
-      err := sample.write(w, b)
+   for _, sample := range s.Samples {
+      err := sample.write(w, s)
       if err != nil {
          return err
       }

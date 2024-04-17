@@ -14,20 +14,20 @@ type OriginalFormat struct {
    DataFormat [4]uint8
 }
 
-func (b *OriginalFormat) read(r io.Reader) error {
-   _, err := io.ReadFull(r, b.DataFormat[:])
+func (o *OriginalFormat) read(r io.Reader) error {
+   _, err := io.ReadFull(r, o.DataFormat[:])
    if err != nil {
       return err
    }
    return nil
 }
 
-func (b OriginalFormat) write(w io.Writer) error {
-   err := b.BoxHeader.write(w)
+func (o OriginalFormat) write(w io.Writer) error {
+   err := o.BoxHeader.write(w)
    if err != nil {
       return err
    }
-   _, err = w.Write(b.DataFormat[:])
+   _, err = w.Write(o.DataFormat[:])
    if err != nil {
       return err
    }

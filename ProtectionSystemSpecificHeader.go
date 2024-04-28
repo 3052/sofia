@@ -32,14 +32,17 @@ func (p *ProtectionSystemSpecificHeader) read(r io.Reader) error {
    if err != nil {
       return err
    }
-   if _, err := io.ReadFull(r, p.SystemId[:]); err != nil {
+   _, err = io.ReadFull(r, p.SystemId[:])
+   if err != nil {
       return err
    }
-   if err := binary.Read(r, binary.BigEndian, &p.DataSize); err != nil {
+   err = binary.Read(r, binary.BigEndian, &p.DataSize)
+   if err != nil {
       return err
    }
    p.Data = make([]uint8, p.DataSize)
-   if _, err := io.ReadFull(r, p.Data); err != nil {
+   _, err = io.ReadFull(r, p.Data)
+   if err != nil {
       return err
    }
    return nil
@@ -50,16 +53,20 @@ func (p ProtectionSystemSpecificHeader) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   if err := p.FullBoxHeader.write(w); err != nil {
+   err = p.FullBoxHeader.write(w)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(p.SystemId[:]); err != nil {
+   _, err = w.Write(p.SystemId[:])
+   if err != nil {
       return err
    }
-   if err := binary.Write(w, binary.BigEndian, p.DataSize); err != nil {
+   err = binary.Write(w, binary.BigEndian, p.DataSize)
+   if err != nil {
       return err
    }
-   if _, err := w.Write(p.Data); err != nil {
+   _, err = w.Write(p.Data)
+   if err != nil {
       return err
    }
    return nil

@@ -4,47 +4,11 @@ import (
    "encoding/hex"
    "fmt"
    "io"
-   "log/slog"
    "os"
    "testing"
 )
 
-func (t testdata) encode_init(out io.Writer) error {
-   in, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer in.Close()
-   var boxes File
-   err = boxes.Read(in)
-   if err != nil {
-      return err
-   }
-   for _, object := range boxes.Movie.Boxes {
-      if object.BoxHeader.Type.String() == "pssh" { // moov
-         copy(object.BoxHeader.Type[:], "free") // Firefox
-      }
-   }
-   description := boxes.
-      Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   if protect, ok := description.Protection(); ok {
-      // Firefox
-      copy(protect.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-      }
-   }
-   return boxes.Write(out)
-}
-
 func TestSampleEncryption(t *testing.T) {
-   slog.SetLogLoggerLevel(slog.LevelDebug)
    for _, test := range tests {
       func() {
          file, err := os.Create(test.out)
@@ -62,6 +26,38 @@ func TestSampleEncryption(t *testing.T) {
          }
       }()
    }
+}
+
+func (t testdata) encode_init(out io.Writer) error {
+   in, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer in.Close()
+   var boxes File
+   err = boxes.Read(in)
+   if err != nil {
+      return err
+   }
+   for _, protect := range boxes.Movie.Protection {
+      copy(protect.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := boxes.
+      Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription
+   if protect, ok := description.Protection(); ok {
+      // Firefox
+      copy(protect.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
+      }
+   }
+   return boxes.Write(out)
 }
 
 var tests = []testdata{

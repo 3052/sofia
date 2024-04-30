@@ -5,6 +5,13 @@ import (
    "io"
 )
 
+func (f File) GetMovie() (*Movie, bool) {
+   if v := f.Movie; v != nil {
+      return v, true
+   }
+   return nil, false
+}
+
 // ISO/IEC 14496-12
 type File struct {
    Boxes         []Box

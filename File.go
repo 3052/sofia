@@ -5,6 +5,13 @@ import (
    "io"
 )
 
+func (f File) SampleDecription() (*SampleDescription, bool) {
+   if v := f.Movie; v != nil {
+      return &v.Track.Media.MediaInformation.SampleTable.SampleDescription, true
+   }
+   return nil, false
+}
+
 // ISO/IEC 14496-12
 type File struct {
    Boxes         []Box

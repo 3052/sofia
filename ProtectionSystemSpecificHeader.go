@@ -5,6 +5,11 @@ import (
    "io"
 )
 
+// dashif.org/identifiers/content_protection
+func (p ProtectionSystemSpecificHeader) Widevine() bool {
+   return p.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
+}
+
 // ISO/IEC 23001-7
 //  aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
 //     'pssh', version, flags=0,

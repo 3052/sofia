@@ -6,9 +6,8 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class MediaInformationBox extends Box('minf') {
-//   }
+//  aligned(8) class MediaInformationBox extends Box('minf') {
+//  }
 type MediaInformation struct {
    BoxHeader   BoxHeader
    Boxes       []Box

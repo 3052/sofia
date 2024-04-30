@@ -14,7 +14,7 @@
   <body>
     <nav>
         154.pages.dev/sofia<span class="navbar-right">
-          v1.3.9 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.4.1 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
@@ -39,6 +39,7 @@
       <a href="#File">type File</a>
       <ul>
           <li><a href="#File.Read">func (f *File) Read(r io.Reader) error</a></li>
+          <li><a href="#File.SampleDecription">func (f File) SampleDecription() (*SampleDescription, bool)</a></li>
           <li><a href="#File.Write">func (f File) Write(w io.Writer) error</a></li>
           </ul>
       </li>
@@ -59,9 +60,6 @@
       </li>
   <li>
       <a href="#Movie">type Movie</a>
-      <ul>
-          <li><a href="#Movie.Widevine">func (m Movie) Widevine() ([]uint8, bool)</a></li>
-          </ul>
       </li>
   <li>
       <a href="#MovieFragment">type MovieFragment</a>
@@ -74,6 +72,9 @@
       </li>
   <li>
       <a href="#ProtectionSystemSpecificHeader">type ProtectionSystemSpecificHeader</a>
+      <ul>
+          <li><a href="#ProtectionSystemSpecificHeader.Widevine">func (p ProtectionSystemSpecificHeader) Widevine() bool</a></li>
+          </ul>
       </li>
   <li>
       <a href="#Reference">type Reference</a>
@@ -223,6 +224,8 @@
     <p>ISO/IEC 14496-12
 <h4 id="File.Read">func (*File) Read</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="File.SampleDecription">func (File) SampleDecription</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">SampleDecription</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><a href="#SampleDescription"><span class="nx">SampleDescription</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
   <h4 id="File.Write">func (File) Write</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h3 id="FullBoxHeader">type FullBoxHeader</h3>
@@ -278,9 +281,6 @@
 <pre>aligned(8) class MovieBox extends Box(&apos;moov&apos;) {
 }
 </pre>
-<h4 id="Movie.Widevine">func (Movie) Widevine</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <a href="#Movie"><span class="nx">Movie</span></a><span class="p">)</span> <span class="nf">Widevine</span><span class="p">()</span> <span class="p">([]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
-  <p>dashif.org/identifiers/content_protection
 <h3 id="MovieFragment">type MovieFragment</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">MovieFragment</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="MovieFragment.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
@@ -341,6 +341,9 @@
    unsigned int(8)[DataSize] Data;
 }
 </pre>
+<h4 id="ProtectionSystemSpecificHeader.Widevine">func (ProtectionSystemSpecificHeader) Widevine</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <a href="#ProtectionSystemSpecificHeader"><span class="nx">ProtectionSystemSpecificHeader</span></a><span class="p">)</span> <span class="nf">Widevine</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <p>dashif.org/identifiers/content_protection
 <h3 id="Reference">type Reference</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Reference</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
     <h4 id="Reference.ReferencedSize">func (Reference) ReferencedSize</h4>
@@ -373,17 +376,9 @@
 </pre>
 <h4 id="SampleDescription.Protection">func (SampleDescription) Protection</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SampleDescription"><span class="nx">SampleDescription</span></a><span class="p">)</span> <span class="nf">Protection</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><a href="#ProtectionSchemeInfo"><span class="nx">ProtectionSchemeInfo</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
-  <p>enca
-encv
-<pre>sinf
-</pre>
-<h4 id="SampleDescription.SampleEntry">func (SampleDescription) SampleEntry</h4>
+  <h4 id="SampleDescription.SampleEntry">func (SampleDescription) SampleEntry</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SampleDescription"><span class="nx">SampleDescription</span></a><span class="p">)</span> <span class="nf">SampleEntry</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
-  <p>stsd
-<pre>enca
-encv
-</pre>
-<h3 id="SampleEncryption">type SampleEncryption</h3>
+  <h3 id="SampleEncryption">type SampleEncryption</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleEncryption</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="SampleEncryption.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href="#BoxHeader"><span class="nx">BoxHeader</span></a>
 	<span id="SampleEncryption.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href="#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>

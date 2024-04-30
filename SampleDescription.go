@@ -6,6 +6,26 @@ import (
    "io"
 )
 
+func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   return nil, false
+}
+
+func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
+   if v := s.AudioSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   if v := s.VisualSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   return nil, false
+}
+
 func (s SampleDescription) write(w io.Writer) error {
    err := s.BoxHeader.write(w)
    if err != nil {
@@ -86,32 +106,6 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
          return errors.New("SampleDescription.read")
       }
    }
-}
-
-// stsd
-//   enca
-//   encv
-func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   return nil, false
-}
-
-// enca
-// encv
-//   sinf
-func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
-   if v := s.AudioSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   return nil, false
 }
 
 // ISO/IEC 14496-12

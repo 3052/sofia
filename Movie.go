@@ -5,16 +5,6 @@ import (
    "io"
 )
 
-// dashif.org/identifiers/content_protection
-func (m Movie) Widevine() ([]uint8, bool) {
-   for _, protect := range m.Protection {
-      if protect.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed" {
-         return protect.Data, true
-      }
-   }
-   return nil, false
-}
-
 // ISO/IEC 14496-12
 //  aligned(8) class MovieBox extends Box('moov') {
 //  }

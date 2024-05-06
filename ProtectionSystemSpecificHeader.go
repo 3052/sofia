@@ -28,6 +28,8 @@ type ProtectionSystemSpecificHeader struct {
    BoxHeader  BoxHeader
    FullBoxHeader FullBoxHeader
    SystemId UUID
+   KidCount uint32
+   KID []UUID
    DataSize uint32
    Data []uint8
 }
@@ -40,6 +42,17 @@ func (p *ProtectionSystemSpecificHeader) read(r io.Reader) error {
    _, err = io.ReadFull(r, p.SystemId[:])
    if err != nil {
       return err
+   }
+   if p.FullBoxHeader.Version > 0 {
+      err := binary.Read(r, binary.BigEndian, &p.KidCount)
+      if err != nil {
+         return err
+      }
+      p.KID = make([]UUID, p.KidCount)
+      err = binary.Read(r, binary.BigEndian, p.KID)
+      if err != nil {
+         return err
+      }
    }
    err = binary.Read(r, binary.BigEndian, &p.DataSize)
    if err != nil {
@@ -65,6 +78,16 @@ func (p ProtectionSystemSpecificHeader) write(w io.Writer) error {
    _, err = w.Write(p.SystemId[:])
    if err != nil {
       return err
+   }
+   if p.FullBoxHeader.Version > 0 {
+      err := binary.Write(w, binary.BigEndian, p.KidCount)
+      if err != nil {
+         return err
+      }
+      err = binary.Write(w, binary.BigEndian, p.KID)
+      if err != nil {
+         return err
+      }
    }
    err = binary.Write(w, binary.BigEndian, p.DataSize)
    if err != nil {

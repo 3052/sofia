@@ -6,9 +6,8 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class MovieFragmentBox extends Box('moof') {
-//   }
+//  aligned(8) class MovieFragmentBox extends Box('moof') {
+//  }
 type MovieFragment struct {
    BoxHeader     BoxHeader
    Boxes         []Box

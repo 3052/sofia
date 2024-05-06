@@ -6,9 +6,8 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
-//   aligned(8) class MediaBox extends Box('mdia') {
-//   }
+//  aligned(8) class MediaBox extends Box('mdia') {
+//  }
 type Media struct {
    BoxHeader        BoxHeader
    Boxes            []Box

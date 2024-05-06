@@ -1,0 +1,77 @@
+[ftyp] size=28
+ - majorBrand: dash
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: mp41
+ - compatibleBrand: avc1
+[moov] size=1883
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 10000000
+   - duration: 0
+   - creation time: 1970-01-02T00:00:00Z
+   - modification time: 1970-01-02T00:00:00Z
+  [mvex] size=60
+    [mehd] size=20 version=1 flags=000000
+     - fragmentDuration: 71700000000
+    [trex] size=32 version=0 flags=000000
+     - trackID: 7
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 416667
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)
+  [trak] size=560
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 7
+     - duration: 0
+     - creation time: 1970-01-02T00:00:00Z
+     - modification time: 1970-01-02T00:00:00Z
+     - Width: 384.0, Height: 216.0
+    [mdia] size=460
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 10000000
+       - creation time: 1970-01-02T00:00:00Z
+       - modification time: 1970-01-02T00:00:00Z
+       - language: und
+      [hdlr] size=38 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "Video"
+      [minf] size=382
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=318
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stsd] size=242 version=0 flags=000000
+            [encv] size=226
+             - width: 384
+             - height: 216
+             - compressorName: ""
+              [avcC] size=60
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 13
+               - SPS: 2764000dac7214181df9701100000300010000030030e42005570002ab9af7b80f84422cb0
+               - PPS: 28fbef2c
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 7b95b2a4-38c8-335f-b85b-be1c7faac723
+  [pssh] size=992 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [pssh] size=103 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [pssh] size=52 version=1 flags=000000
+   - systemID: 1077efec-c0b2-4d02-ace3-3c1e52e2fb4b (W3C Common PSSH box)
+   - KID[1]=7b95b2a4-38c8-335f-b85b-be1c7faac723

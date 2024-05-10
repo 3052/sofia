@@ -1,13 +1,12 @@
 package sofia
 
 import (
-   "fmt"
    "os"
    "testing"
 )
 
 func TestFile(t *testing.T) {
-   from, err := os.Open("testdata/draken/init.mp4")
+   from, err := os.Open("testdata/joyn/video_eng=351000.dash")
    if err != nil {
       t.Fatal(err)
    }
@@ -17,5 +16,4 @@ func TestFile(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   fmt.Printf("%+v\n", to.Movie.Protection)
 }

@@ -1,0 +1,62 @@
+[ftyp] size=24
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: dash
+[free] size=40
+[moov] size=674
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=518
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+     - Width: 320.0, Height: 180.0
+    [mdia] size=418
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 600
+       - creation time: 0
+       - modification time: 0
+       - language: eng
+      [hdlr] size=50 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "USP Video Handler"
+      [minf] size=328
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=264
+          [stsd] size=172 version=0 flags=000000
+            [avc1] size=156
+             - width: 320
+             - height: 180
+             - compressorName: ""
+              [avcC] size=50
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 41
+               - SPS: 67640029acd941419f9f011000000300100000030328f1831960
+               - PPS: 68ebecb22c
+              [btrt] size=20
+               - bufferSizeDB: 0
+               - maxBitrate: 0
+               - AvgBitrate: 110000
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+          [stss] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)

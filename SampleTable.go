@@ -35,6 +35,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
       case "sgpd", // Paramount
       "stco", // Roku
       "stsc", // Roku
+      "stss", // CineMember
       "stsz", // Roku
       "stts": // Roku
          object := Box{BoxHeader: head}

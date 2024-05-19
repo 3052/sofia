@@ -6,14 +6,21 @@ import (
    "io"
 )
 
-func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
-   if v := s.AudioSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   return nil, false
+// ISO/IEC 14496-12
+//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//     int i ;
+//     unsigned int(32) entry_count;
+//     for (i = 1 ; i <= entry_count ; i++){
+//        SampleEntry(); // an instance of a class derived from SampleEntry
+//     }
+//  }
+type SampleDescription struct {
+   BoxHeader     BoxHeader
+   FullBoxHeader FullBoxHeader
+   EntryCount    uint32
+   Boxes []Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
 }
 
 func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
@@ -26,38 +33,14 @@ func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
    return nil, false
 }
 
-func (s SampleDescription) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
-   if err != nil {
-      return err
+func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
+   if v := s.AudioSample; v != nil {
+      return &v.SampleEntry, true
    }
-   err = s.FullBoxHeader.write(w)
-   if err != nil {
-      return err
+   if v := s.VisualSample; v != nil {
+      return &v.SampleEntry, true
    }
-   err = binary.Write(w, binary.BigEndian, s.EntryCount)
-   if err != nil {
-      return err
-   }
-   for _, object := range s.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if s.AudioSample != nil {
-      err := s.AudioSample.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if s.VisualSample != nil {
-      err := s.VisualSample.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
+   return nil, false
 }
 
 func (s *SampleDescription) read(r io.Reader, size int64) error {
@@ -108,19 +91,36 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
    }
 }
 
-// ISO/IEC 14496-12
-//  aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//     int i ;
-//     unsigned int(32) entry_count;
-//     for (i = 1 ; i <= entry_count ; i++){
-//        SampleEntry(); // an instance of a class derived from SampleEntry
-//     }
-//  }
-type SampleDescription struct {
-   BoxHeader     BoxHeader
-   FullBoxHeader FullBoxHeader
-   EntryCount    uint32
-   Boxes []Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
+func (s SampleDescription) write(w io.Writer) error {
+   err := s.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   err = s.FullBoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, s.EntryCount)
+   if err != nil {
+      return err
+   }
+   for _, object := range s.Boxes {
+      err := object.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if s.AudioSample != nil {
+      err := s.AudioSample.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if s.VisualSample != nil {
+      err := s.VisualSample.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

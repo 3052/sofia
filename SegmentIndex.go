@@ -5,9 +5,28 @@ import (
    "io"
 )
 
+type Reference [3]uint32
+
 // this is the size of the fragment, typically `moof` + `mdat`
 func (r Reference) ReferencedSize() uint32 {
    return r[0] & r.mask()
+}
+
+func (Reference) mask() uint32 {
+   return 0xFFFFFFFF >> 1
+}
+
+func (r *Reference) read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, r)
+}
+
+func (r Reference) set_referenced_size(v uint32) {
+   r[0] &= ^r.mask()
+   r[0] |= v
+}
+
+func (r Reference) write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, r)
 }
 
 // ISO/IEC 14496-12
@@ -42,25 +61,6 @@ type SegmentIndex struct {
    Reserved                 uint16
    ReferenceCount           uint16
    Reference                []Reference
-}
-
-type Reference [3]uint32
-
-func (Reference) mask() uint32 {
-   return 0xFFFFFFFF >> 1
-}
-
-func (r *Reference) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, r)
-}
-
-func (r Reference) set_referenced_size(v uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= v
-}
-
-func (r Reference) write(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, r)
 }
 
 func (s *SegmentIndex) Append(size uint32) {

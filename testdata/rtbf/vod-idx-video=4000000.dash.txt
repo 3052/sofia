@@ -1,0 +1,68 @@
+[ftyp] size=24
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: dash
+[free] size=40
+[moov] size=735
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=579
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+     - Width: 1920.0, Height: 1080.0
+    [tref] size=20
+      [tmcd] size=12
+       - not implemented or unknown box
+    [mdia] size=410
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 600
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=50 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "USP Video Handler"
+      [minf] size=320
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=256
+          [stsd] size=180 version=0 flags=000000
+            [avc1] size=164
+             - width: 1920
+             - height: 1080
+             - compressorName: "AVC Coding"
+              [avcC] size=58
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 42
+               - SPS: 6764002aac2b403c0113f2e022000007d000030d41c0000016e3600001e84817797050
+               - PPS: 68ee3cb0
+              [btrt] size=20
+               - bufferSizeDB: 0
+               - maxBitrate: 10826640
+               - AvgBitrate: 4000000
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+    [udta] size=49
+      [kind] size=41 version=0 flags=000000
+       - schemeURI: urn:mpeg:dash:role:2011
+       - value: main
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)

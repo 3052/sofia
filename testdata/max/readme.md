@@ -9,6 +9,9 @@ type = audio/mp4
 lang = en-US
 period = 1 2 3 4 5 6
 id = a2
+
+> max -a play.max.com/video/watch/b3b1410a-0c85-457b-bcc7-e13299bea2a8/1623fe4c-ef6e-4dd1-a10c-4a181f5f6579 -i a2
+2024/06/29 18:18:26 INFO CDM id=0100225aa511cf63a4b8f5746b9925dd key=a7fdadf3c854e0781508b884b89ee70a
 ~~~
 
 result:

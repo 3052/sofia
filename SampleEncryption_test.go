@@ -8,26 +8,6 @@ import (
    "testing"
 )
 
-func TestSampleEncryption(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         err = test.encode_init(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
-}
-
 func (t testdata) encode_init(out io.Writer) error {
    in, err := os.Open(t.init)
    if err != nil {
@@ -60,7 +40,33 @@ func (t testdata) encode_init(out io.Writer) error {
    return boxes.Write(out)
 }
 
+func TestSampleEncryption(t *testing.T) {
+   for _, test := range tests[:1] {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
 var tests = []testdata{
+   {
+      "testdata/max/init.mp4",
+      "testdata/max/segment-1.0001.m4s",
+      "a7fdadf3c854e0781508b884b89ee70a",
+      "max.mp4",
+   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",

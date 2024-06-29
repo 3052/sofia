@@ -8,6 +8,26 @@ import (
    "testing"
 )
 
+func TestSampleEncryption(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
 func (t testdata) encode_init(out io.Writer) error {
    in, err := os.Open(t.init)
    if err != nil {
@@ -38,26 +58,6 @@ func (t testdata) encode_init(out io.Writer) error {
       }
    }
    return boxes.Write(out)
-}
-
-func TestSampleEncryption(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         err = test.encode_init(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
 }
 
 var tests = []testdata{
@@ -153,6 +153,7 @@ type testdata struct {
    key     string
    out     string
 }
+
 func (t testdata) encode_segment(write io.Writer) error {
    fmt.Println(t.segment)
    read, err := os.Open(t.segment)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestFile(t *testing.T) {
-   in, err := os.Open("testdata/rtbf/vod-idx-video=4000000.dash")
+   in, err := os.Open("testdata/max-ec-3/init.mp4")
    if err != nil {
       t.Fatal(err)
    }

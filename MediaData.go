@@ -13,13 +13,9 @@ type MediaData struct {
 func (m MediaData) Data(run TrackRun) [][]byte {
    split := make([][]byte, run.SampleCount)
    for i := range split {
-      if j := run.Sample[i].Size; j >= 1 {
-         split[i] = m.Box.Payload[:j]
-         m.Box.Payload = m.Box.Payload[j:]
-      } else {
-         split[i] = m.Box.Payload
-         m.Box.Payload = nil
-      }
+      size := run.Sample[i].get_sample_size()
+      split[i] = m.Box.Payload[:size]
+      m.Box.Payload = m.Box.Payload[size:]
    }
    return split
 }

@@ -64,7 +64,8 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
       _, size := head.get_size()
       switch head.debug() {
       case "avc1", // Tubi
-         "mp4a": // Tubi
+      "ec-3", // Max
+      "mp4a": // Tubi
          object := Box{BoxHeader: head}
          err := object.read(r)
          if err != nil {

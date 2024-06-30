@@ -1,29 +1,36 @@
-[styp] size=8+20
-[free] size=8+28
-[sidx] size=12+32
-  reference_ID = 1
-  timescale = 48000
-  earliest_presentation_time = 0
-  first_offset = 0
-[moof] size=8+1273
-  [mfhd] size=12+4
-    sequence number = 1
-  [traf] size=8+1249
-    [tfhd] size=12+16, flags=2002a
-      track ID = 1
-      sample description index = 1
-      default sample duration = 1024
-      default sample flags = 2800040
-    [tfdt] size=12+8, version=1
-      base media decode time = 0
-    [trun] size=12+384, flags=201
-      sample count = 94
-      data offset = 1289
-    [saiz] size=12+5
-      default sample info size = 8
-      sample count = 94
-    [saio] size=12+8
-      entry_count = 1
-    [senc] size=12+756
-      sample info count = 94
-[mdat] size=8+68877
+[styp] size=28
+ - majorBrand: iso6
+ - minorVersion: 0
+ - compatibleBrand: iso6
+ - compatibleBrand: msdh
+ - compatibleBrand: msix
+[free] size=36
+[sidx] size=44 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 48000
+ - earliestPresentationTime: 0
+ - firstOffset: 0
+[moof] size=1281
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=1257
+    [tfhd] size=28 version=0 flags=02002a
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 1
+     - defaultSampleDuration: 1024
+     - defaultSampleFlags: 02800040 (isLeading=0 dependsOn=2 isDependedOn=2 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=64)
+    [tfdt] size=20 version=1 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=396 version=0 flags=000201
+     - sampleCount: 94
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 94
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=529
+    [senc] size=768 version=0 flags=000000
+     - sampleCount: 94
+     - perSampleIVSize: 8
+[mdat] size=68885

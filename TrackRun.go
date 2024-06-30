@@ -10,6 +10,9 @@ import (
 // If the data-offset is present, it is relative to the base-data-offset
 // established in the track fragment header.
 //
+// sample-size-present: each sample has its own size, otherwise the default is
+// used.
+//
 //   aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
 //      unsigned int(32) sample_count;
 //      signed int(32) data_offset; // 0x000001, assume present

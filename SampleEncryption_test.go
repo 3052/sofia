@@ -4,113 +4,16 @@ import (
    "encoding/hex"
    "fmt"
    "io"
-   "log/slog"
    "os"
    "testing"
 )
-
-func TestSampleEncryption(t *testing.T) {
-   for _, test := range tests[:2] {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         err = test.encode_init(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
-}
-
-func (t testdata) encode_segment(write io.Writer) error {
-   fmt.Println(t.segment)
-   read, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer read.Close()
-   var f File
-   err = f.Read(read)
-   if err != nil {
-      return err
-   }
-   // TEST BEGIN
-   copy(
-      f.MovieFragment.TrackFragment.SampleEncryption.BoxHeader.Type[:], "free",
-   )
-   for _, b := range f.MovieFragment.TrackFragment.Boxes {
-      switch b.BoxHeader.Type.String() {
-      case
-      "saio",
-      "saiz":
-         copy(b.BoxHeader.Type[:], "free")
-      }
-   }
-   // TEST END
-   if v := f.MovieFragment.TrackFragment.SampleEncryption; v != nil {
-      key, err := hex.DecodeString(t.key)
-      if err != nil {
-         return err
-      }
-      run := f.MovieFragment.TrackFragment.TrackRun
-      for i, data := range f.MediaData.Data(run) {
-         slog.Info("length", "data", len(data))
-         err := v.Samples[i].DecryptCenc(data, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return f.Write(write)
-}
-
-func (t testdata) encode_init(out io.Writer) error {
-   in, err := os.Open(t.init)
-   if err != nil {
-      return err
-   }
-   defer in.Close()
-   var f File
-   err = f.Read(in)
-   if err != nil {
-      return err
-   }
-   // TEST BEGIN
-   copy(f.SegmentIndex.BoxHeader.Type[:], "free")
-   // TEST END
-   for _, protect := range f.Movie.Protection {
-      copy(protect.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := f.Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   if protect, ok := description.Protection(); ok {
-      // Firefox
-      copy(protect.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-      }
-   }
-   return f.Write(out)
-}
 
 var tests = []testdata{
    {
       "testdata/max-ec-3/init.mp4",
       "testdata/max-ec-3/segment-1.0001.m4s",
       "a7fdadf3c854e0781508b884b89ee70a",
-      "max.mp4",
+      "max-ec-3.mp4",
    },
    {
       "testdata/hulu-ec-3/init.mp4",
@@ -204,3 +107,82 @@ type testdata struct {
    key     string
    out     string
 }
+func TestSampleEncryption(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
+func (t testdata) encode_segment(write io.Writer) error {
+   fmt.Println(t.segment)
+   read, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer read.Close()
+   var f File
+   err = f.Read(read)
+   if err != nil {
+      return err
+   }
+   if v := f.MovieFragment.TrackFragment.SampleEncryption; v != nil {
+      key, err := hex.DecodeString(t.key)
+      if err != nil {
+         return err
+      }
+      run := f.MovieFragment.TrackFragment.TrackRun
+      for i, data := range f.MediaData.Data(run) {
+         err := v.Samples[i].DecryptCenc(data, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return f.Write(write)
+}
+
+func (t testdata) encode_init(out io.Writer) error {
+   in, err := os.Open(t.init)
+   if err != nil {
+      return err
+   }
+   defer in.Close()
+   var f File
+   err = f.Read(in)
+   if err != nil {
+      return err
+   }
+   for _, protect := range f.Movie.Protection {
+      copy(protect.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := f.Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription
+   if protect, ok := description.Protection(); ok {
+      // Firefox
+      copy(protect.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
+      }
+   }
+   return f.Write(out)
+}
+

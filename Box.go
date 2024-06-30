@@ -7,8 +7,13 @@ import (
    "log/slog"
 )
 
+func (b BoxHeader) debug() string {
+   box_type := b.Type.String()
+   slog.Debug("BoxHeader", "type", box_type, "size", b.Size)
+   return box_type
+}
+
 // ISO/IEC 14496-12
-//
 //   aligned(8) class Box (
 //      unsigned int(32) boxtype,
 //      optional unsigned int(8)[16] extended_type
@@ -64,12 +69,6 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType UUID
-}
-
-func (b BoxHeader) debug() string {
-   box_type := b.Type.String()
-   slog.Debug("BoxHeader", "type", box_type, "size", b.Size)
-   return box_type
 }
 
 func (b BoxHeader) get_size() (int, int64) {

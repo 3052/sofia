@@ -5,6 +5,16 @@ import (
    "io"
 )
 
+// ISO/IEC 14496-12
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type TrackFragment struct {
+   BoxHeader        BoxHeader
+   Boxes            []*Box
+   SampleEncryption *SampleEncryption
+   TrackRun         TrackRun
+}
+
 func (t TrackFragment) write(w io.Writer) error {
    err := t.BoxHeader.write(w)
    if err != nil {
@@ -20,17 +30,6 @@ func (t TrackFragment) write(w io.Writer) error {
       t.SampleEncryption.write(w)
    }
    return t.TrackRun.write(w)
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type TrackFragment struct {
-   BoxHeader        BoxHeader
-   Boxes            []Box
-   SampleEncryption *SampleEncryption
-   TrackRun         TrackRun
 }
 
 func (t *TrackFragment) read(r io.Reader, size int64) error {
@@ -61,7 +60,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
          if err != nil {
             return err
          }
-         t.Boxes = append(t.Boxes, object)
+         t.Boxes = append(t.Boxes, &object)
       case "senc":
          t.SampleEncryption = &SampleEncryption{BoxHeader: head}
          err := t.SampleEncryption.read(r)
@@ -89,7 +88,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            t.Boxes = append(t.Boxes, object)
+            t.Boxes = append(t.Boxes, &object)
          }
       default:
          return errors.New("TrackFragment.read")

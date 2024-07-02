@@ -107,6 +107,7 @@ type testdata struct {
    key     string
    out     string
 }
+
 func TestSampleEncryption(t *testing.T) {
    for _, test := range tests {
       func() {

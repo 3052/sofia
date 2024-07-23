@@ -117,7 +117,6 @@ func (b BoxHeader) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
 //      unsigned int(8) version = v;
 //      bit(24) flags = f;

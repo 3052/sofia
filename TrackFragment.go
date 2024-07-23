@@ -5,33 +5,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type TrackFragment struct {
-   BoxHeader        BoxHeader
-   Boxes            []*Box
-   SampleEncryption *SampleEncryption
-   TrackRun         TrackRun
-}
-
-func (t TrackFragment) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   for _, object := range t.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if t.SampleEncryption != nil {
-      t.SampleEncryption.write(w)
-   }
-   return t.TrackRun.write(w)
-}
-
 func (t *TrackFragment) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
@@ -94,4 +67,31 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
          return errors.New("TrackFragment.read")
       }
    }
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type TrackFragment struct {
+   BoxHeader        BoxHeader
+   Boxes            []*Box
+   SampleEncryption *SampleEncryption
+   TrackRun         TrackRun
+}
+
+func (t TrackFragment) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   for _, object := range t.Boxes {
+      err := object.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   if t.SampleEncryption != nil {
+      t.SampleEncryption.write(w)
+   }
+   return t.TrackRun.write(w)
 }

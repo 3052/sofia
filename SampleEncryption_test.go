@@ -8,6 +8,34 @@ import (
    "testing"
 )
 
+func (t testdata) encode_segment(write io.Writer) error {
+   fmt.Println(t.segment)
+   read, err := os.Open(t.segment)
+   if err != nil {
+      return err
+   }
+   defer read.Close()
+   var f File
+   err = f.Read(read)
+   if err != nil {
+      return err
+   }
+   track := f.MovieFragment.TrackFragment
+   if encrypt := track.SampleEncryption; encrypt != nil {
+      key, err := hex.DecodeString(t.key)
+      if err != nil {
+         return err
+      }
+      for i, data := range f.MediaData.Data(track) {
+         err := encrypt.Samples[i].DecryptCenc(data, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return f.Write(write)
+}
+
 func TestSampleEncryption(t *testing.T) {
    for _, test := range tests {
       func() {
@@ -116,34 +144,6 @@ type testdata struct {
    out     string
 }
 
-func (t testdata) encode_segment(write io.Writer) error {
-   fmt.Println(t.segment)
-   read, err := os.Open(t.segment)
-   if err != nil {
-      return err
-   }
-   defer read.Close()
-   var f File
-   err = f.Read(read)
-   if err != nil {
-      return err
-   }
-   if v := f.MovieFragment.TrackFragment.SampleEncryption; v != nil {
-      key, err := hex.DecodeString(t.key)
-      if err != nil {
-         return err
-      }
-      run := f.MovieFragment.TrackFragment.TrackRun
-      for i, data := range f.MediaData.Data(run) {
-         err := v.Samples[i].DecryptCenc(data, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return f.Write(write)
-}
-
 func (t testdata) encode_init(out io.Writer) error {
    in, err := os.Open(t.init)
    if err != nil {
@@ -174,4 +174,3 @@ func (t testdata) encode_init(out io.Writer) error {
    }
    return f.Write(out)
 }
-

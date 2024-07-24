@@ -16,24 +16,6 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
          return err
       }
       switch head.debug() {
-      case "trun":
-         t.TrackRun.BoxHeader = head
-         err := t.TrackRun.read(r)
-         if err != nil {
-            return err
-         }
-      case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt", // Roku
-         "tfhd": // Roku
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
-         }
-         t.Boxes = append(t.Boxes, &object)
       case "senc":
          t.SampleEncryption = &SampleEncryption{BoxHeader: head}
          err := t.SampleEncryption.read(r)
@@ -63,6 +45,29 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
             }
             t.Boxes = append(t.Boxes, &object)
          }
+      case "saio", // Roku
+         "saiz", // Roku
+         "sbgp", // Roku
+         "sgpd", // Roku
+         "tfdt": // Roku
+         object := Box{BoxHeader: head}
+         err := object.read(r)
+         if err != nil {
+            return err
+         }
+         t.Boxes = append(t.Boxes, &object)
+      case "tfhd":
+         t.FragmentHeader.BoxHeader = head
+         err := t.FragmentHeader.read(r)
+         if err != nil {
+            return err
+         }
+      case "trun":
+         t.TrackRun.BoxHeader = head
+         err := t.TrackRun.read(r)
+         if err != nil {
+            return err
+         }
       default:
          return errors.New("TrackFragment.read")
       }
@@ -75,6 +80,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
 type TrackFragment struct {
    BoxHeader        BoxHeader
    Boxes            []*Box
+   FragmentHeader TrackFragmentHeader
    SampleEncryption *SampleEncryption
    TrackRun         TrackRun
 }
@@ -89,6 +95,10 @@ func (t TrackFragment) write(w io.Writer) error {
       if err != nil {
          return err
       }
+   }
+   err = t.FragmentHeader.write(w)
+   if err != nil {
+      return err
    }
    if t.SampleEncryption != nil {
       t.SampleEncryption.write(w)

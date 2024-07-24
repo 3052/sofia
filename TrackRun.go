@@ -67,14 +67,6 @@ func (t *TrackRun) read(r io.Reader) error {
    return nil
 }
 
-func (r RunSample) get_sample_size() uint32 {
-   if r.SampleSize >= 1 {
-      return r.SampleSize
-   }
-   // defaultSampleSize, currently only used by Max
-   return 1024
-}
-
 type RunSample struct {
    Duration              uint32
    SampleSize                  uint32

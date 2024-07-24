@@ -2,10 +2,13 @@ package sofia
 
 import "io"
 
-func (m MediaData) Data(run TrackRun, header TrackFragmentHeader) [][]byte {
-   split := make([][]byte, run.SampleCount)
+func (m MediaData) Data(track TrackFragment) [][]byte {
+   split := make([][]byte, track.TrackRun.SampleCount)
    for i := range split {
-      size := max(run.Sample[i].SampleSize, header.DefaultSampleSize)
+      size := max(
+         track.TrackRun.Sample[i].SampleSize,
+         track.FragmentHeader.DefaultSampleSize,
+      )
       split[i] = m.Box.Payload[:size]
       m.Box.Payload = m.Box.Payload[size:]
    }

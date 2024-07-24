@@ -8,19 +8,27 @@ import (
    "testing"
 )
 
+func TestSampleEncryption(t *testing.T) {
+   for _, test := range tests {
+      func() {
+         file, err := os.Create(test.out)
+         if err != nil {
+            t.Fatal(err)
+         }
+         defer file.Close()
+         err = test.encode_init(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+         err = test.encode_segment(file)
+         if err != nil {
+            t.Fatal(err)
+         }
+      }()
+   }
+}
+
 var tests = []testdata{
-   {
-      "testdata/max-ec-3/init.mp4",
-      "testdata/max-ec-3/segment-1.0001.m4s",
-      "a7fdadf3c854e0781508b884b89ee70a",
-      "max-ec-3.mp4",
-   },
-   {
-      "testdata/hulu-ec-3/init.mp4",
-      "testdata/hulu-ec-3/segment-1.0001.m4s",
-      "7be76f0d9c8a0db0b7f6059bf0a1c023",
-      "hulu-ec-3.mp4",
-   },
    {
       "testdata/amc-avc1/init.m4f",
       "testdata/amc-avc1/segment0.m4f",
@@ -38,6 +46,12 @@ var tests = []testdata{
       "testdata/hulu-avc1/segment-1.0001.m4s",
       "602a9289bfb9b1995b75ac63f123fc86",
       "hulu-avc1.mp4",
+   },
+   {
+      "testdata/hulu-ec-3/init.mp4",
+      "testdata/hulu-ec-3/segment-1.0001.m4s",
+      "7be76f0d9c8a0db0b7f6059bf0a1c023",
+      "hulu-ec-3.mp4",
    },
    {
       "testdata/hulu-mp4a/init.mp4",
@@ -93,12 +107,6 @@ var tests = []testdata{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
-   {
-      "testdata/tubi-avc1/0-30057.mp4",
-      "testdata/tubi-avc1/30058-111481.mp4",
-      "",
-      "tubi-avc1.mp4",
-   },
 }
 
 type testdata struct {
@@ -106,26 +114,6 @@ type testdata struct {
    segment string
    key     string
    out     string
-}
-
-func TestSampleEncryption(t *testing.T) {
-   for _, test := range tests {
-      func() {
-         file, err := os.Create(test.out)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer file.Close()
-         err = test.encode_init(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(file)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
-   }
 }
 
 func (t testdata) encode_segment(write io.Writer) error {

@@ -5,6 +5,36 @@ import (
    "io"
 )
 
+func (t *TrackRun) read(r io.Reader) error {
+   err := t.FullBoxHeader.read(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &t.SampleCount)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &t.DataOffset)
+   if err != nil {
+      return err
+   }
+   if t.first_sample_flags_present() {
+      err := binary.Read(r, binary.BigEndian, &t.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   t.Sample = make([]RunSample, t.SampleCount)
+   for i, sample := range t.Sample {
+      err := sample.read(r, t)
+      if err != nil {
+         return err
+      }
+      t.Sample[i] = sample
+   }
+   return nil
+}
+
 func (r RunSample) get_sample_size() uint32 {
    if r.SampleSize >= 1 {
       return r.SampleSize
@@ -22,7 +52,7 @@ type RunSample struct {
 
 // 0x000004 first-sample-flags-present
 func (t TrackRun) first_sample_flags_present() bool {
-   return t.FullBoxHeader.get_flags()&4 >= 1
+   return t.FullBoxHeader.get_flags() & 0x4 >= 1
 }
 
 // 0x000100 sample-duration-present
@@ -129,36 +159,6 @@ func (s RunSample) write(w io.Writer, run TrackRun) error {
       if err != nil {
          return err
       }
-   }
-   return nil
-}
-
-func (t *TrackRun) read(r io.Reader) error {
-   err := t.FullBoxHeader.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &t.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &t.DataOffset)
-   if err != nil {
-      return err
-   }
-   if t.first_sample_flags_present() {
-      err := binary.Read(r, binary.BigEndian, &t.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   t.Sample = make([]RunSample, t.SampleCount)
-   for i, sample := range t.Sample {
-      err := sample.read(r, t)
-      if err != nil {
-         return err
-      }
-      t.Sample[i] = sample
    }
    return nil
 }

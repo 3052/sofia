@@ -5,6 +5,38 @@ import (
    "io"
 )
 
+func (t TrackRun) write(w io.Writer) error {
+   err := t.BoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   err = t.FullBoxHeader.write(w)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, t.SampleCount)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, t.DataOffset)
+   if err != nil {
+      return err
+   }
+   if t.first_sample_flags_present() {
+      err := binary.Write(w, binary.BigEndian, t.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   for _, sample := range t.Sample {
+      err := sample.write(w, t)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (t *TrackRun) read(r io.Reader) error {
    err := t.FullBoxHeader.read(r)
    if err != nil {
@@ -156,38 +188,6 @@ func (s RunSample) write(w io.Writer, run TrackRun) error {
    }
    if run.sample_composition_time_offsets_present() {
       _, err := w.Write(s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (t TrackRun) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   err = t.FullBoxHeader.write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, t.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, t.DataOffset)
-   if err != nil {
-      return err
-   }
-   if t.first_sample_flags_present() {
-      err := binary.Write(w, binary.BigEndian, t.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   for _, sample := range t.Sample {
-      err := sample.write(w, t)
       if err != nil {
          return err
       }

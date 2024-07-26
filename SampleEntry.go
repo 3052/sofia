@@ -190,6 +190,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
       case "avcC", // Roku
          "btrt", // Mubi
          "colr", // Paramount
+         "hvcC", // HULU
          "pasp": // Roku
          object := Box{BoxHeader: head}
          err := object.read(r)

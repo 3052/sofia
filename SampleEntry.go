@@ -6,8 +6,68 @@ import (
    "io"
 )
 
+func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
+   err := v.SampleEntry.read(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &v.Extends)
+   if err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Read(r)
+      if err == io.EOF {
+         return nil
+      } else if err != nil {
+         return err
+      }
+      switch head.debug() {
+      case "sinf":
+         _, size := head.get_size()
+         v.ProtectionScheme.BoxHeader = head
+         err := v.ProtectionScheme.read(r, size)
+         if err != nil {
+            return err
+         }
+      case "avcC", // Roku
+         "btrt", // Mubi
+         "colr", // Paramount
+         "hvcC", // Hulu
+         "pasp": // Roku
+         object := Box{BoxHeader: head}
+         err := object.read(r)
+         if err != nil {
+            return err
+         }
+         v.Boxes = append(v.Boxes, &object)
+      default:
+         return errors.New("VisualSampleEntry.read")
+      }
+   }
+}
+
+func (v VisualSampleEntry) write(w io.Writer) error {
+   err := v.SampleEntry.write(w)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, v.Extends)
+   if err != nil {
+      return err
+   }
+   for _, object := range v.Boxes {
+      err := object.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return v.ProtectionScheme.write(w)
+}
+
 // ISO/IEC 14496-12
-//
 //   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //      const unsigned int(32)[2] reserved = 0;
 //      unsigned int(16) channelcount;
@@ -89,7 +149,6 @@ func (a AudioSampleEntry) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) abstract class SampleEntry(
 //      unsigned int(32) format
 //   ) extends Box(format) {
@@ -123,7 +182,6 @@ func (s *SampleEntry) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
 //   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //      unsigned int(16) pre_defined = 0;
 //      const unsigned int(16) reserved = 0;
@@ -159,64 +217,4 @@ type VisualSampleEntry struct {
    }
    Boxes            []*Box
    ProtectionScheme ProtectionSchemeInfo
-}
-
-func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := v.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &v.Extends)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      switch head.debug() {
-      case "sinf":
-         _, size := head.get_size()
-         v.ProtectionScheme.BoxHeader = head
-         err := v.ProtectionScheme.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "avcC", // Roku
-         "btrt", // Mubi
-         "colr", // Paramount
-         "pasp": // Roku
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
-         }
-         v.Boxes = append(v.Boxes, &object)
-      default:
-         return errors.New("VisualSampleEntry.read")
-      }
-   }
-}
-
-func (v VisualSampleEntry) write(w io.Writer) error {
-   err := v.SampleEntry.write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, v.Extends)
-   if err != nil {
-      return err
-   }
-   for _, object := range v.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return v.ProtectionScheme.write(w)
 }

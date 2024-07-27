@@ -17,7 +17,7 @@ func TestByteRanges(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   for _, object := range value.SegmentIndex.Reference {
-      fmt.Println(object.ReferencedSize())
+   for _, data := range value.SegmentIndex.Reference {
+      fmt.Println(data.ReferencedSize())
    }
 }

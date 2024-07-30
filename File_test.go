@@ -7,8 +7,8 @@ import (
 )
 
 func TestFile(t *testing.T) {
-   //testdata\hulu-hev1\segment-1.0001.m4s
-   in, err := os.Open("testdata/hulu-hev1/init.mp4")
+   //testdata\max-hvc1\segment-1.0001.m4s
+   in, err := os.Open("testdata/max-hvc1/init.mp4")
    if err != nil {
       t.Fatal(err)
    }

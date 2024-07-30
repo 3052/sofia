@@ -33,10 +33,13 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
             return err
          }
       case "avcC", // Roku
-         "btrt", // Mubi
-         "colr", // Paramount
-         "hvcC", // Hulu
-         "pasp": // Roku
+      "btrt", // Mubi
+      "clli", // Max
+      "colr", // Paramount
+      "dvvC", // Max
+      "hvcC", // Hulu
+      "mdcv", // Max
+      "pasp": // Roku
          object := Box{BoxHeader: head}
          err := object.read(r)
          if err != nil {

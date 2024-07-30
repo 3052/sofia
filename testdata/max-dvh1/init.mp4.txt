@@ -1,0 +1,93 @@
+[ftyp] size=40
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: dvh1
+ - compatibleBrand: cmfc
+[moov] size=823
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 24000
+   - duration: 0
+   - creation time: 2023-10-21T23:41:51Z
+   - modification time: 2023-10-21T23:41:51Z
+  [trak] size=667
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2023-10-21T23:41:51Z
+     - modification time: 2023-10-21T23:41:51Z
+     - Width: 448.0, Height: 252.0
+    [mdia] size=567
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 24000
+       - creation time: 2023-10-21T23:41:51Z
+       - modification time: 2023-10-21T23:41:51Z
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "VideoHandler"
+      [minf] size=482
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=418
+          [stsd] size=342 version=0 flags=000000
+            [encv] size=326
+             - width: 448
+             - height: 252
+             - compressorName: "DOVI Coding"
+              [hvcC] size=128
+               - GeneralProfileSpace: 0
+               - GeneralTierFlag: false
+               - GeneralProfileIDC: 2
+               - GeneralProfileCompatibilityFlags: 20000000
+               - GeneralConstraintIndicatorFlags: 900000000000
+               - GeneralLevelIDC: 60
+               - MinSpatialSegmentationIDC: 0
+               - ParallellismType: 3
+               - ChromaFormatIDC: 1
+               - BitDepthLuma: 10
+               - BitDepthChroma: 10
+               - AvgFrameRate/256: 0
+               - ConstantFrameRate: 0
+               - NumTemporalLayers: 1
+               - temporalIDNested: 1
+                 - VPS_32 complete: 1
+                  40010c01ffff02200000030090000003000003003c959809
+                 - SPS_33 complete: 1
+                  42010102200000030090000003000003003ca00e080407db65959a4932bc05b02000007d20000bb80c15a28bc0061a800c3510
+                 - PPS_34 complete: 1
+                  4401c172b66240
+              [dvcC] size=32
+               - not implemented or unknown box
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: dvh1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 01032b5a-e0d4-037e-e6e6-76a507080133
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 1001
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+[sidx] size=11072 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 24000
+ - earliestPresentationTime: 0
+ - firstOffset: 0

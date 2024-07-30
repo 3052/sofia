@@ -36,6 +36,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
       "btrt", // Mubi
       "clli", // Max
       "colr", // Paramount
+      "dvcC", // Max
       "dvvC", // Max
       "hvcC", // Hulu
       "mdcv", // Max

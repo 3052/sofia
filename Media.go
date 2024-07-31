@@ -19,29 +19,31 @@ func (m *Media) read(r io.Reader, size int64) error {
    for {
       var head BoxHeader
       err := head.Read(r)
-      if err == io.EOF {
+      switch err {
+      case nil:
+         switch head.debug() {
+         case "minf":
+            _, size := head.get_size()
+            m.MediaInformation.BoxHeader = head
+            err := m.MediaInformation.read(r, size)
+            if err != nil {
+               return err
+            }
+         case "hdlr", // Roku
+            "mdhd": // Roku
+            object := Box{BoxHeader: head}
+            err := object.read(r)
+            if err != nil {
+               return err
+            }
+            m.Boxes = append(m.Boxes, object)
+         default:
+            return errors.New("Media.read")
+         }
+      case io.EOF:
          return nil
-      } else if err != nil {
-         return err
-      }
-      switch head.debug() {
-      case "minf":
-         _, size := head.get_size()
-         m.MediaInformation.BoxHeader = head
-         err := m.MediaInformation.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "hdlr", // Roku
-         "mdhd": // Roku
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
-         }
-         m.Boxes = append(m.Boxes, object)
       default:
-         return errors.New("Media.read")
+         return err
       }
    }
 }

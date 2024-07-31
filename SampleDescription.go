@@ -6,6 +6,57 @@ import (
    "io"
 )
 
+func (s *SampleDescription) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
+   err := s.FullBoxHeader.read(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
+   if err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Read(r)
+      switch err {
+      case nil:
+         _, size := head.get_size()
+         switch head.debug() {
+         case "avc1", // Tubi
+         "ec-3", // Max
+         "mp4a": // Tubi
+            object := Box{BoxHeader: head}
+            err := object.read(r)
+            if err != nil {
+               return err
+            }
+            s.Boxes = append(s.Boxes, object)
+         case "enca":
+            s.AudioSample = new(AudioSampleEntry)
+            s.AudioSample.SampleEntry.BoxHeader = head
+            err := s.AudioSample.read(r, size)
+            if err != nil {
+               return err
+            }
+         case "encv":
+            s.VisualSample = new(VisualSampleEntry)
+            s.VisualSample.SampleEntry.BoxHeader = head
+            err := s.VisualSample.read(r, size)
+            if err != nil {
+               return err
+            }
+         default:
+            return errors.New("SampleDescription.read")
+         }
+      case io.EOF:
+         return nil
+      default:
+         return err
+      }
+   }
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
 //      int i ;
@@ -41,55 +92,6 @@ func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
       return &v.SampleEntry, true
    }
    return nil, false
-}
-
-func (s *SampleDescription) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := s.FullBoxHeader.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      _, size := head.get_size()
-      switch head.debug() {
-      case "avc1", // Tubi
-      "ec-3", // Max
-      "mp4a": // Tubi
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
-         }
-         s.Boxes = append(s.Boxes, object)
-      case "enca":
-         s.AudioSample = new(AudioSampleEntry)
-         s.AudioSample.SampleEntry.BoxHeader = head
-         err := s.AudioSample.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "encv":
-         s.VisualSample = new(VisualSampleEntry)
-         s.VisualSample.SampleEntry.BoxHeader = head
-         err := s.VisualSample.read(r, size)
-         if err != nil {
-            return err
-         }
-      default:
-         return errors.New("SampleDescription.read")
-      }
-   }
 }
 
 func (s SampleDescription) write(w io.Writer) error {

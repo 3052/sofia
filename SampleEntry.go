@@ -6,94 +6,6 @@ import (
    "io"
 )
 
-func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := v.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &v.Extends)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      switch head.debug() {
-      case "sinf":
-         _, size := head.get_size()
-         v.ProtectionScheme.BoxHeader = head
-         err := v.ProtectionScheme.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "avcC", // Roku
-      "btrt", // Mubi
-      "clli", // Max
-      "colr", // Paramount
-      "dvcC", // Max
-      "dvvC", // Max
-      "hvcC", // Hulu
-      "mdcv", // Max
-      "pasp": // Roku
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
-         }
-         v.Boxes = append(v.Boxes, &object)
-      default:
-         return errors.New("VisualSampleEntry.read")
-      }
-   }
-}
-
-func (v VisualSampleEntry) write(w io.Writer) error {
-   err := v.SampleEntry.write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, v.Extends)
-   if err != nil {
-      return err
-   }
-   for _, object := range v.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return v.ProtectionScheme.write(w)
-}
-
-// ISO/IEC 14496-12
-//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
-//      const unsigned int(32)[2] reserved = 0;
-//      unsigned int(16) channelcount;
-//      template unsigned int(16) samplesize = 16;
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0 ;
-//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
-//   }
-type AudioSampleEntry struct {
-   SampleEntry SampleEntry
-   Extends     struct {
-      _            [2]uint32
-      ChannelCount uint16
-      SampleSize   uint16
-      PreDefined   uint16
-      _            uint16
-      SampleRate   uint32
-   }
-   Boxes            []*Box
-   ProtectionScheme ProtectionSchemeInfo
-}
-
 func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    err := a.SampleEntry.read(r)
@@ -107,29 +19,31 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
    for {
       var head BoxHeader
       err := head.Read(r)
-      if err == io.EOF {
-         return nil
-      } else if err != nil {
-         return err
-      }
-      switch head.debug() {
-      case "sinf":
-         _, size := head.get_size()
-         a.ProtectionScheme.BoxHeader = head
-         err := a.ProtectionScheme.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "dec3", // Hulu
+      switch err {
+      case nil:
+         switch head.debug() {
+         case "sinf":
+            _, size := head.get_size()
+            a.ProtectionScheme.BoxHeader = head
+            err := a.ProtectionScheme.read(r, size)
+            if err != nil {
+               return err
+            }
+         case "dec3", // Hulu
          "esds": // Roku
-         object := Box{BoxHeader: head}
-         err := object.read(r)
-         if err != nil {
-            return err
+            object := Box{BoxHeader: head}
+            err := object.read(r)
+            if err != nil {
+               return err
+            }
+            a.Boxes = append(a.Boxes, &object)
+         default:
+            return errors.New("AudioSampleEntry.read")
          }
-         a.Boxes = append(a.Boxes, &object)
+      case io.EOF:
+         return nil
       default:
-         return errors.New("AudioSampleEntry.read")
+         return err
       }
    }
 }
@@ -218,6 +132,95 @@ type VisualSampleEntry struct {
       CompressorName  [32]uint8
       Depth           uint16
       _               int16
+   }
+   Boxes            []*Box
+   ProtectionScheme ProtectionSchemeInfo
+}
+func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
+   r = io.LimitReader(r, size)
+   err := v.SampleEntry.read(r)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(r, binary.BigEndian, &v.Extends)
+   if err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Read(r)
+      switch err {
+      case nil:
+         switch head.debug() {
+         case "sinf":
+            _, size := head.get_size()
+            v.ProtectionScheme.BoxHeader = head
+            err := v.ProtectionScheme.read(r, size)
+            if err != nil {
+               return err
+            }
+         case "avcC", // Roku
+         "btrt", // Mubi
+         "clli", // Max
+         "colr", // Paramount
+         "dvcC", // Max
+         "dvvC", // Max
+         "hvcC", // Hulu
+         "mdcv", // Max
+         "pasp": // Roku
+            object := Box{BoxHeader: head}
+            err := object.read(r)
+            if err != nil {
+               return err
+            }
+            v.Boxes = append(v.Boxes, &object)
+         default:
+            return errors.New("VisualSampleEntry.read")
+         }
+      case io.EOF:
+         return nil
+      default:
+         return err
+      }
+   }
+}
+
+func (v VisualSampleEntry) write(w io.Writer) error {
+   err := v.SampleEntry.write(w)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(w, binary.BigEndian, v.Extends)
+   if err != nil {
+      return err
+   }
+   for _, object := range v.Boxes {
+      err := object.write(w)
+      if err != nil {
+         return err
+      }
+   }
+   return v.ProtectionScheme.write(w)
+}
+
+// ISO/IEC 14496-12
+//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
+//      const unsigned int(32)[2] reserved = 0;
+//      unsigned int(16) channelcount;
+//      template unsigned int(16) samplesize = 16;
+//      unsigned int(16) pre_defined = 0;
+//      const unsigned int(16) reserved = 0 ;
+//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
+//   }
+type AudioSampleEntry struct {
+   SampleEntry SampleEntry
+   Extends     struct {
+      _            [2]uint32
+      ChannelCount uint16
+      SampleSize   uint16
+      PreDefined   uint16
+      _            uint16
+      SampleRate   uint32
    }
    Boxes            []*Box
    ProtectionScheme ProtectionSchemeInfo

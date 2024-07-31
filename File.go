@@ -15,8 +15,8 @@ type File struct {
 }
 
 func (f File) GetMovie() (*Movie, bool) {
-   if v := f.Movie; v != nil {
-      return v, true
+   if f.Movie != nil {
+      return f.Movie, true
    }
    return nil, false
 }

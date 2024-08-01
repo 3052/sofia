@@ -4,14 +4,8 @@ import (
    "encoding/binary"
    "encoding/hex"
    "io"
-   "log/slog"
+   "strconv"
 )
-
-func (b BoxHeader) debug() string {
-   box_type := b.Type.String()
-   slog.Debug("BoxHeader", "type", box_type, "size", b.Size)
-   return box_type
-}
 
 // ISO/IEC 14496-12
 //   aligned(8) class Box (
@@ -140,18 +134,27 @@ func (f FullBoxHeader) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
 }
 
-type Type [4]uint8
+type UUID [16]uint8
+
+func (u UUID) String() string {
+   return hex.EncodeToString(u[:])
+}
 
 func (t Type) String() string {
    return string(t[:])
 }
 
-func (t Type) MarshalText() ([]byte, error) {
-   return t[:], nil
+type Type [4]uint8
+
+type box_error struct {
+   box_type Type
+   container Type
 }
 
-type UUID [16]uint8
-
-func (u UUID) String() string {
-   return hex.EncodeToString(u[:])
+func (b box_error) Error() string {
+   c := []byte("container:")
+   c = strconv.AppendQuote(c, b.container.String())
+   c = append(c, " box type:"...)
+   c = strconv.AppendQuote(c, b.box_type.String())
+   return string(c)
 }

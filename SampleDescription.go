@@ -2,7 +2,6 @@ package sofia
 
 import (
    "encoding/binary"
-   "errors"
    "io"
 )
 
@@ -22,7 +21,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
       switch err {
       case nil:
          _, size := head.get_size()
-         switch head.debug() {
+         switch head.Type.String() {
          case "avc1", // Tubi
          "ec-3", // Max
          "mp4a": // Tubi
@@ -47,7 +46,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
                return err
             }
          default:
-            return errors.New("SampleDescription.read")
+            return box_error{s.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil

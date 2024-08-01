@@ -1,18 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "io"
-)
-
-// ISO/IEC 14496-12
-//   aligned(8) class MediaBox extends Box('mdia') {
-//   }
-type Media struct {
-   BoxHeader        BoxHeader
-   Boxes            []Box
-   MediaInformation MediaInformation
-}
+import "io"
 
 func (m *Media) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
@@ -21,7 +9,7 @@ func (m *Media) read(r io.Reader, size int64) error {
       err := head.Read(r)
       switch err {
       case nil:
-         switch head.debug() {
+         switch head.Type.String() {
          case "minf":
             _, size := head.get_size()
             m.MediaInformation.BoxHeader = head
@@ -38,7 +26,7 @@ func (m *Media) read(r io.Reader, size int64) error {
             }
             m.Boxes = append(m.Boxes, object)
          default:
-            return errors.New("Media.read")
+            return box_error{m.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -46,6 +34,15 @@ func (m *Media) read(r io.Reader, size int64) error {
          return err
       }
    }
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MediaBox extends Box('mdia') {
+//   }
+type Media struct {
+   BoxHeader        BoxHeader
+   Boxes            []Box
+   MediaInformation MediaInformation
 }
 
 func (m Media) write(w io.Writer) error {
@@ -61,3 +58,4 @@ func (m Media) write(w io.Writer) error {
    }
    return m.MediaInformation.write(w)
 }
+

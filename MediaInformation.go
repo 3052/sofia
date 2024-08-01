@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "io"
-)
+import "io"
 
 func (m *MediaInformation) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
@@ -12,7 +9,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
       err := head.Read(r)
       switch err {
       case nil:
-         switch head.debug() {
+         switch head.Type.String() {
          case "stbl":
             _, size := head.get_size()
             m.SampleTable.BoxHeader = head
@@ -30,7 +27,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
             }
             m.Boxes = append(m.Boxes, object)
          default:
-            return errors.New("MediaInformation.read")
+            return box_error{m.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil

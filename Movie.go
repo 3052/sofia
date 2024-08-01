@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "io"
-)
+import "io"
 
 func (m *Movie) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
@@ -12,7 +9,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
       err := head.Read(r)
       switch err {
       case nil:
-         switch head.debug() {
+         switch head.Type.String() {
          case "iods", // Roku
          "meta", // Paramount
          "mvex", // Roku
@@ -38,7 +35,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
                return err
             }
          default:
-            return errors.New("Movie.read")
+            return box_error{m.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil

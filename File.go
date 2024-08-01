@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "io"
-)
+import "io"
 
 func (f *File) Read(r io.Reader) error {
    for {
@@ -12,7 +9,7 @@ func (f *File) Read(r io.Reader) error {
       switch err {
       case nil:
          _, size := head.get_size()
-         switch head.debug() {
+         switch head.Type.String() {
          case "mdat":
             f.MediaData = new(MediaData)
             f.MediaData.Box.BoxHeader = head
@@ -39,8 +36,8 @@ func (f *File) Read(r io.Reader) error {
                return err
             }
          case "free", // Mubi
-            "ftyp", // Roku
-            "styp": // Roku
+         "ftyp", // Roku
+         "styp": // Roku
             object := Box{BoxHeader: head}
             err := object.read(r)
             if err != nil {
@@ -48,7 +45,9 @@ func (f *File) Read(r io.Reader) error {
             }
             f.Boxes = append(f.Boxes, object)
          default:
-            return errors.New("File.Read")
+            var container Type
+            copy(container[:], "File")
+            return box_error{container, head.Type}
          }
       case io.EOF:
          return nil

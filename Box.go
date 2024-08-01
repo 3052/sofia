@@ -147,8 +147,8 @@ func (t Type) String() string {
 type Type [4]uint8
 
 type box_error struct {
-   box_type Type
    container Type
+   box_type Type
 }
 
 func (b box_error) Error() string {

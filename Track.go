@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "io"
-)
+import "io"
 
 // ISO/IEC 14496-12
 //   aligned(8) class TrackBox extends Box('trak') {
@@ -19,31 +16,33 @@ func (t *Track) read(r io.Reader, size int64) error {
    for {
       var head BoxHeader
       err := head.Read(r)
-      if err == io.EOF {
+      switch err {
+      case nil:
+         switch head.Type.String() {
+         case "mdia":
+            _, size := head.get_size()
+            t.Media.BoxHeader = head
+            err := t.Media.read(r, size)
+            if err != nil {
+               return err
+            }
+         case "edts", // Paramount
+         "tkhd", // Roku
+         "tref", // RTBF
+         "udta": // Mubi
+            data := Box{BoxHeader: head}
+            err := data.read(r)
+            if err != nil {
+               return err
+            }
+            t.Boxes = append(t.Boxes, data)
+         default:
+            return box_error{t.BoxHeader.Type, head.Type}
+         }
+      case io.EOF:
          return nil
-      } else if err != nil {
-         return err
-      }
-      switch head.debug() {
-      case "mdia":
-         _, size := head.get_size()
-         t.Media.BoxHeader = head
-         err := t.Media.read(r, size)
-         if err != nil {
-            return err
-         }
-      case "edts", // Paramount
-      "tkhd", // Roku
-      "tref", // RTBF
-      "udta": // Mubi
-         data := Box{BoxHeader: head}
-         err := data.read(r)
-         if err != nil {
-            return err
-         }
-         t.Boxes = append(t.Boxes, data)
       default:
-         return errors.New("Track.read")
+         return err
       }
    }
 }

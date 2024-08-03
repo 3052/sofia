@@ -30,7 +30,7 @@ func (b *Box) read(r io.Reader) error {
    return nil
 }
 
-func (b Box) write(w io.Writer) error {
+func (b *Box) write(w io.Writer) error {
    err := b.BoxHeader.write(w)
    if err != nil {
       return err

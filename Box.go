@@ -43,7 +43,6 @@ func (b *Box) write(w io.Writer) error {
 }
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class BoxHeader (
 //      unsigned int(32) boxtype,
 //      optional unsigned int(8)[16] extended_type
@@ -65,13 +64,13 @@ type BoxHeader struct {
    UserType UUID
 }
 
-func (b BoxHeader) get_size() (int, int64) {
-   s := binary.Size(b.Size)
-   s += binary.Size(b.Type)
+func (b *BoxHeader) get_size() (int, int64) {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
    if b.Type.String() == "uuid" {
-      s += binary.Size(b.UserType)
+      size += binary.Size(b.UserType)
    }
-   return s, int64(b.Size) - int64(s)
+   return size, int64(b.Size) - int64(size)
 }
 
 func (b *BoxHeader) Read(r io.Reader) error {

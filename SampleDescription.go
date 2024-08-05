@@ -32,14 +32,14 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
             }
             s.Boxes = append(s.Boxes, object)
          case "enca":
-            s.AudioSample = new(AudioSampleEntry)
+            s.AudioSample = &AudioSampleEntry{}
             s.AudioSample.SampleEntry.BoxHeader = head
             err := s.AudioSample.read(r, size)
             if err != nil {
                return err
             }
          case "encv":
-            s.VisualSample = new(VisualSampleEntry)
+            s.VisualSample = &VisualSampleEntry{}
             s.VisualSample.SampleEntry.BoxHeader = head
             err := s.VisualSample.read(r, size)
             if err != nil {

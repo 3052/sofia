@@ -91,7 +91,7 @@ func (b *BoxHeader) Read(r io.Reader) error {
    return nil
 }
 
-func (b BoxHeader) write(w io.Writer) error {
+func (b *BoxHeader) write(w io.Writer) error {
    err := binary.Write(w, binary.BigEndian, b.Size)
    if err != nil {
       return err

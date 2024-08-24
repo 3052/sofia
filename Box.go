@@ -119,7 +119,7 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-func (f FullBoxHeader) get_flags() uint32 {
+func (f *FullBoxHeader) get_flags() uint32 {
    var flag [4]byte
    copy(flag[1:], f.Flags[:])
    return binary.BigEndian.Uint32(flag[:])

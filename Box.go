@@ -129,7 +129,7 @@ func (f *FullBoxHeader) read(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, f)
 }
 
-func (f FullBoxHeader) write(w io.Writer) error {
+func (f *FullBoxHeader) write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
 }
 

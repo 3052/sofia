@@ -66,7 +66,7 @@ type File struct {
    SegmentIndex  *SegmentIndex
 }
 
-func (f File) GetMovie() (*Movie, bool) {
+func (f *File) GetMovie() (*Movie, bool) {
    if f.Movie != nil {
       return f.Movie, true
    }

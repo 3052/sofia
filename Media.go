@@ -45,7 +45,7 @@ type Media struct {
    MediaInformation MediaInformation
 }
 
-func (m Media) write(w io.Writer) error {
+func (m *Media) write(w io.Writer) error {
    err := m.BoxHeader.write(w)
    if err != nil {
       return err
@@ -58,4 +58,3 @@ func (m Media) write(w io.Writer) error {
    }
    return m.MediaInformation.write(w)
 }
-

@@ -73,7 +73,7 @@ func (f *File) GetMovie() (*Movie, bool) {
    return nil, false
 }
 
-func (f File) Write(w io.Writer) error {
+func (f *File) Write(w io.Writer) error {
    // KEEP THESE IN ORDER
    for _, value := range f.Boxes {
       err := value.write(w)

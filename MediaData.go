@@ -27,6 +27,6 @@ func (m *MediaData) read(r io.Reader) error {
    return m.Box.read(r)
 }
 
-func (m MediaData) write(w io.Writer) error {
+func (m *MediaData) write(w io.Writer) error {
    return m.Box.write(w)
 }

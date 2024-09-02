@@ -46,7 +46,7 @@ type MediaInformation struct {
    SampleTable SampleTable
 }
 
-func (m MediaInformation) write(w io.Writer) error {
+func (m *MediaInformation) write(w io.Writer) error {
    err := m.BoxHeader.write(w)
    if err != nil {
       return err

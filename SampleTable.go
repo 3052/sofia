@@ -1,13 +1,16 @@
 package sofia
 
-import "io"
+import (
+   "154.pages.dev/sofia/box"
+   "io"
+)
 
 // ISO/IEC 14496-12
 //   aligned(8) class SampleTableBox extends Box('stbl') {
 //   }
 type SampleTable struct {
    BoxHeader         BoxHeader
-   Boxes             []Box
+   Boxes             []box.Box
    SampleDescription SampleDescription
 }
 
@@ -32,7 +35,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
          "stss", // CineMember
          "stsz", // Roku
          "stts": // Roku
-            object := Box{BoxHeader: head}
+            object := box.Box{BoxHeader: head}
             err := object.read(r)
             if err != nil {
                return err

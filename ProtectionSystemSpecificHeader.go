@@ -1,6 +1,7 @@
 package sofia
 
 import (
+   "154.pages.dev/sofia/box"
    "encoding/binary"
    "io"
 )
@@ -25,11 +26,11 @@ func (p ProtectionSystemSpecificHeader) Widevine() bool {
 //      unsigned int(8)[DataSize] Data;
 //   }
 type ProtectionSystemSpecificHeader struct {
-   BoxHeader     BoxHeader
+   BoxHeader     box.Header
    FullBoxHeader FullBoxHeader
-   SystemId      UUID
+   SystemId      box.UUID
    KidCount      uint32
-   KID           []UUID
+   KID           []box.UUID
    DataSize      uint32
    Data          []uint8
 }
@@ -48,7 +49,7 @@ func (p *ProtectionSystemSpecificHeader) Read(r io.Reader) error {
       if err != nil {
          return err
       }
-      p.KID = make([]UUID, p.KidCount)
+      p.KID = make([]box.UUID, p.KidCount)
       err = binary.Read(r, binary.BigEndian, p.KID)
       if err != nil {
          return err

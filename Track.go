@@ -1,20 +1,23 @@
 package sofia
 
-import "io"
+import (
+   "154.pages.dev/sofia/box"
+   "io"
+)
 
 // ISO/IEC 14496-12
 //   aligned(8) class TrackBox extends Box('trak') {
 //   }
 type Track struct {
-   BoxHeader BoxHeader
-   Boxes     []Box
+   BoxHeader box.Header
+   Boxes     []box.Box
    Media     Media
 }
 
 func (t *Track) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
-      var head BoxHeader
+      var head box.Header
       err := head.Read(r)
       switch err {
       case nil:
@@ -30,7 +33,7 @@ func (t *Track) read(r io.Reader, size int64) error {
          "tkhd", // Roku
          "tref", // RTBF
          "udta": // Mubi
-            data := Box{BoxHeader: head}
+            data := box.Box{BoxHeader: head}
             err := data.read(r)
             if err != nil {
                return err

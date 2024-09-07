@@ -1,13 +1,16 @@
 package sofia
 
-import "io"
+import (
+   "154.pages.dev/sofia/box"
+   "io"
+)
 
 // ISO/IEC 14496-12
 //  aligned(8) class MediaDataBox extends Box('mdat') {
 //     bit(8) data[];
 //  }
 type MediaData struct {
-   Box Box
+   Box box.Box
 }
 
 func (m *MediaData) Data(track TrackFragment) [][]byte {

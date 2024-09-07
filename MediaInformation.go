@@ -1,6 +1,9 @@
 package sofia
 
-import "io"
+import (
+   "154.pages.dev/sofia/box"
+   "io"
+)
 
 func (m *MediaInformation) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
@@ -20,7 +23,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
          case "dinf", // Roku
             "smhd", // Roku
             "vmhd": // Roku
-            object := Box{BoxHeader: head}
+            object := box.Box{BoxHeader: head}
             err := object.read(r)
             if err != nil {
                return err
@@ -42,7 +45,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
 //   }
 type MediaInformation struct {
    BoxHeader   BoxHeader
-   Boxes       []Box
+   Boxes       []box.Box
    SampleTable SampleTable
 }
 

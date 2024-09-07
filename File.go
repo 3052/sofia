@@ -1,6 +1,9 @@
 package sofia
 
-import "io"
+import (
+   "154.pages.dev/sofia/box"
+   "io"
+)
 
 func (f *File) Read(r io.Reader) error {
    for {
@@ -38,7 +41,7 @@ func (f *File) Read(r io.Reader) error {
          case "free", // Mubi
          "ftyp", // Roku
          "styp": // Roku
-            object := Box{BoxHeader: head}
+            object := box.Box{BoxHeader: head}
             err := object.read(r)
             if err != nil {
                return err
@@ -59,7 +62,7 @@ func (f *File) Read(r io.Reader) error {
 
 // ISO/IEC 14496-12
 type File struct {
-   Boxes         []Box
+   Boxes         []box.Box
    MediaData     *MediaData
    Movie         *Movie
    MovieFragment *MovieFragment

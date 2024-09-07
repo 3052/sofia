@@ -1,4 +1,4 @@
-package sofia
+package box
 
 import (
    "encoding/binary"
@@ -16,7 +16,7 @@ import (
 //      // the remaining bytes are the BoxPayload
 //   }
 type Box struct {
-   BoxHeader BoxHeader
+   BoxHeader Header
    Payload   []byte
 }
 
@@ -58,13 +58,13 @@ func (b *Box) write(w io.Writer) error {
 //         unsigned int(8)[16] usertype = extended_type;
 //      }
 //   }
-type BoxHeader struct {
+type Header struct {
    Size     uint32
    Type     Type
    UserType UUID
 }
 
-func (b *BoxHeader) get_size() (int, int64) {
+func (b *Header) get_size() (int, int64) {
    size := binary.Size(b.Size)
    size += binary.Size(b.Type)
    if b.Type.String() == "uuid" {
@@ -73,7 +73,7 @@ func (b *BoxHeader) get_size() (int, int64) {
    return size, int64(b.Size) - int64(size)
 }
 
-func (b *BoxHeader) Read(r io.Reader) error {
+func (b *Header) Read(r io.Reader) error {
    err := binary.Read(r, binary.BigEndian, &b.Size)
    if err != nil {
       return err
@@ -91,7 +91,7 @@ func (b *BoxHeader) Read(r io.Reader) error {
    return nil
 }
 
-func (b *BoxHeader) write(w io.Writer) error {
+func (b *Header) write(w io.Writer) error {
    err := binary.Write(w, binary.BigEndian, b.Size)
    if err != nil {
       return err

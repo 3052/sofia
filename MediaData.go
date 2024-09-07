@@ -28,9 +28,9 @@ func (m *MediaData) Data(track TrackFragment) [][]byte {
 }
 
 func (m *MediaData) read(r io.Reader) error {
-	return m.Box.read(r)
+	return m.Box.Read(r)
 }
 
 func (m *MediaData) write(w io.Writer) error {
-	return m.Box.write(w)
+	return m.Box.Write(w)
 }

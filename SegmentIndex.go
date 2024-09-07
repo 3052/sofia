@@ -70,15 +70,15 @@ func (s *SegmentIndex) Append(size uint32) {
 	r.set_referenced_size(size)
 	s.Reference = append(s.Reference, r)
 	s.ReferenceCount++
-	s.BoxHeader.Size = uint32(s.get_size())
+	s.BoxHeader.Size = uint32(s.GetSize())
 }
 
 func (s *SegmentIndex) New() {
 	copy(s.BoxHeader.Type[:], "sidx")
 }
 
-func (s SegmentIndex) get_size() int {
-	v, _ := s.BoxHeader.get_size()
+func (s SegmentIndex) GetSize() int {
+	v, _ := s.BoxHeader.GetSize()
 	v += binary.Size(s.FullBoxHeader)
 	v += binary.Size(s.ReferenceId)
 	v += binary.Size(s.Timescale)

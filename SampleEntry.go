@@ -23,7 +23,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "sinf":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				v.ProtectionScheme.BoxHeader = head
 				err := v.ProtectionScheme.read(r, size)
 				if err != nil {
@@ -114,7 +114,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "sinf":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				a.ProtectionScheme.BoxHeader = head
 				err := a.ProtectionScheme.read(r, size)
 				if err != nil {

@@ -14,7 +14,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "stbl":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				m.SampleTable.BoxHeader = head
 				err := m.SampleTable.read(r, size)
 				if err != nil {
@@ -23,12 +23,12 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
 			case "dinf", // Roku
 				"smhd", // Roku
 				"vmhd": // Roku
-				object := box.Box{BoxHeader: head}
-				err := object.read(r)
+				value := box.Box{BoxHeader: head}
+				err := value.Read(r)
 				if err != nil {
 					return err
 				}
-				m.Boxes = append(m.Boxes, object)
+				m.Boxes = append(m.Boxes, value)
 			default:
 				return box.Error{m.BoxHeader.Type, head.Type}
 			}
@@ -51,12 +51,12 @@ type MediaInformation struct {
 }
 
 func (m *MediaInformation) write(w io.Writer) error {
-	err := m.BoxHeader.write(w)
+	err := m.BoxHeader.Write(w)
 	if err != nil {
 		return err
 	}
-	for _, object := range m.Boxes {
-		err := object.write(w)
+	for _, value := range m.Boxes {
+		err := value.Write(w)
 		if err != nil {
 			return err
 		}

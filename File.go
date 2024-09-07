@@ -11,7 +11,7 @@ func (f *File) Read(r io.Reader) error {
 		err := head.Read(r)
 		switch err {
 		case nil:
-			_, size := head.get_size()
+			_, size := head.GetSize()
 			switch head.Type.String() {
 			case "mdat":
 				f.MediaData = &MediaData{}

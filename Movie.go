@@ -31,7 +31,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
 				}
 				m.Protection = append(m.Protection, protect)
 			case "trak":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				m.Track.BoxHeader = head
 				err := m.Track.read(r, size)
 				if err != nil {

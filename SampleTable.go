@@ -24,7 +24,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "stsd":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				s.SampleDescription.BoxHeader = head
 				err := s.SampleDescription.read(r, size)
 				if err != nil {

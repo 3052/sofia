@@ -21,7 +21,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 		err := head.Read(r)
 		switch err {
 		case nil:
-			_, size := head.get_size()
+			_, size := head.GetSize()
 			switch head.Type.String() {
 			case "avc1", // Tubi
 				"ec-3", // Max

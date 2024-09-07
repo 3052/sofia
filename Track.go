@@ -24,7 +24,7 @@ func (t *Track) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "mdia":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				t.Media.BoxHeader = head
 				err := t.Media.read(r, size)
 				if err != nil {

@@ -14,7 +14,7 @@ func (m *MovieFragment) read(r io.Reader, size int64) error {
 		case nil:
 			switch head.Type.String() {
 			case "traf":
-				_, size := head.get_size()
+				_, size := head.GetSize()
 				m.TrackFragment.BoxHeader = head
 				err := m.TrackFragment.read(r, size)
 				if err != nil {

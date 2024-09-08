@@ -6,6 +6,7 @@ import (
 )
 
 var media_data_tests = []string{
+   "testdata/criterion-avc1/sid=1.mp4",
    "testdata/max-ec-3/segment-1024.m4s",
    "testdata/max-ec-3/segment-512.m4s",
 }
@@ -18,12 +19,12 @@ func TestMediaData(t *testing.T) {
             t.Fatal(err)
          }
          defer read.Close()
-         var f File
-         err = f.Read(read)
+         var value File
+         err = value.Read(read)
          if err != nil {
             t.Fatal(err)
          }
-         f.MediaData.Data(f.MovieFragment.TrackFragment)
+         value.MediaData.Data(value.MovieFragment.TrackFragment)
       }()
    }
 }

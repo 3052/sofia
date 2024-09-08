@@ -2,27 +2,28 @@ package sofia
 
 import "io"
 
-func (m *Movie) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (m *Movie) read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "iods", // Roku
          "meta", // Paramount
          "mvex", // Roku
-         "mvhd": // Roku
+         "mvhd", // Roku
+         "udta": // Criterion
             object := Box{BoxHeader: head}
-            err := object.read(r)
+            err := object.read(src)
             if err != nil {
                return err
             }
             m.Boxes = append(m.Boxes, &object)
          case "pssh":
             protect := ProtectionSystemSpecificHeader{BoxHeader: head}
-            err := protect.Read(r)
+            err := protect.Read(src)
             if err != nil {
                return err
             }
@@ -30,7 +31,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
          case "trak":
             _, size := head.get_size()
             m.Track.BoxHeader = head
-            err := m.Track.read(r, size)
+            err := m.Track.read(src, size)
             if err != nil {
                return err
             }

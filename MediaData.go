@@ -5,10 +5,10 @@ import "io"
 func (m MediaData) Data(track TrackFragment) [][]byte {
    split := make([][]byte, track.TrackRun.SampleCount)
    for i := range split {
-      size := max(
-         track.TrackRun.Sample[i].SampleSize,
-         track.FragmentHeader.DefaultSampleSize,
-      )
+      size := track.TrackRun.Sample[i].SampleSize
+      if size == 0 {
+         size = track.FragmentHeader.DefaultSampleSize
+      }
       split[i] = m.Box.Payload[:size]
       m.Box.Payload = m.Box.Payload[size:]
    }

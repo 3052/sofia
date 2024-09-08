@@ -20,7 +20,7 @@ type Box struct {
    SchemeInformation schi.Box
 }
 
-func (b *Box) read(r io.Reader, size int64) error {
+func (b *Box) Read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -58,7 +58,7 @@ func (b *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (b Box) write(w io.Writer) error {
+func (b Box) Write(w io.Writer) error {
    err := b.BoxHeader.Write(w)
    if err != nil {
       return err

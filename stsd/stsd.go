@@ -7,33 +7,6 @@ import (
    "io"
 )
 
-func (b Box) Protection() (*sinf.Box, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   return nil, false
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//      int i ;
-//      unsigned int(32) entry_count;
-//      for (i = 1 ; i <= entry_count ; i++){
-//         SampleEntry(); // an instance of a class derived from SampleEntry
-//      }
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   EntryCount    uint32
-   Boxes         []sofia.Box
-   AudioSample   *AudioSampleEntry
-   VisualSample  *VisualSampleEntry
-}
-
 func (b *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    err := b.FullBoxHeader.Read(r)
@@ -51,15 +24,6 @@ func (b *Box) read(r io.Reader, size int64) error {
       case nil:
          _, size := head.GetSize()
          switch head.Type.String() {
-         case "avc1", // Tubi
-            "ec-3", // Max
-            "mp4a": // Tubi
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
-            if err != nil {
-               return err
-            }
-            b.Boxes = append(b.Boxes, value)
          case "enca":
             b.AudioSample = &AudioSampleEntry{}
             b.AudioSample.SampleEntry.BoxHeader = head
@@ -74,6 +38,15 @@ func (b *Box) read(r io.Reader, size int64) error {
             if err != nil {
                return err
             }
+         case "avc1", // Tubi
+            "ec-3", // Max
+            "mp4a": // Tubi
+            value := sofia.Box{BoxHeader: head}
+            err := value.Read(r)
+            if err != nil {
+               return err
+            }
+            b.Boxes = append(b.Boxes, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -127,4 +100,30 @@ func (b Box) write(w io.Writer) error {
       }
    }
    return nil
+}
+func (b Box) Protection() (*sinf.Box, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   return nil, false
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//      int i ;
+//      unsigned int(32) entry_count;
+//      for (i = 1 ; i <= entry_count ; i++){
+//         SampleEntry(); // an instance of a class derived from SampleEntry
+//      }
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   EntryCount    uint32
+   Boxes         []sofia.Box
+   AudioSample   *AudioSampleEntry
+   VisualSample  *VisualSampleEntry
 }

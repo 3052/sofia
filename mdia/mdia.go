@@ -2,6 +2,7 @@ package file
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/minf"
    "io"
 )
 
@@ -11,7 +12,7 @@ import (
 type Box struct {
    BoxHeader        sofia.BoxHeader
    Boxes            []sofia.Box
-   MediaInformation MediaInformation
+   MediaInformation minf.Box
 }
 
 func (m *Box) read(r io.Reader, size int64) error {

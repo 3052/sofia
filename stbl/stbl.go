@@ -1,4 +1,4 @@
-package file
+package stbl
 
 import (
    "154.pages.dev/sofia"
@@ -6,16 +6,15 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class SampleTableBox extends Box('stbl') {
 //   }
-type SampleTable struct {
+type Box struct {
    BoxHeader         sofia.BoxHeader
    Boxes             []sofia.Box
    SampleDescription SampleDescription
 }
 
-func (s *SampleTable) read(r io.Reader, size int64) error {
+func (s *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -53,7 +52,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
    }
 }
 
-func (s SampleTable) write(w io.Writer) error {
+func (s Box) write(w io.Writer) error {
    err := s.BoxHeader.Write(w)
    if err != nil {
       return err

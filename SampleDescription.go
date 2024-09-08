@@ -27,7 +27,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
             "ec-3", // Max
             "mp4a": // Tubi
             value := box.Box{BoxHeader: head}
-            err := value.read(r)
+            err := value.Read(r)
             if err != nil {
                return err
             }

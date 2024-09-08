@@ -137,7 +137,7 @@ func (s *SegmentIndex) read(r io.Reader) error {
 }
 
 func (s SegmentIndex) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
+   err := s.BoxHeader.Write(w)
    if err != nil {
       return err
    }

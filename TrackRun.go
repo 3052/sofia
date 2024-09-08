@@ -7,7 +7,7 @@ import (
 )
 
 func (t TrackRun) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
+   err := t.BoxHeader.Write(w)
    if err != nil {
       return err
    }

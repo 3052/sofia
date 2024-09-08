@@ -1,4 +1,4 @@
-package file
+package mdat
 
 import (
    "154.pages.dev/sofia"
@@ -6,31 +6,30 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class MediaDataBox extends Box('mdat') {
 //      bit(8) data[];
 //   }
-type MediaData struct {
+type Box struct {
    Box sofia.Box
 }
 
-func (m *MediaData) Data(track TrackFragment) [][]byte {
+func (b *Box) Data(track TrackFragment) [][]byte {
    split := make([][]byte, track.TrackRun.SampleCount)
    for i := range split {
       size := max(
          track.TrackRun.Sample[i].SampleSize,
          track.FragmentHeader.DefaultSampleSize,
       )
-      split[i] = m.Box.Payload[:size]
-      m.Box.Payload = m.Box.Payload[size:]
+      split[i] = b.Box.Payload[:size]
+      b.Box.Payload = b.Box.Payload[size:]
    }
    return split
 }
 
-func (m *MediaData) read(r io.Reader) error {
-   return m.Box.Read(r)
+func (b *Box) read(src io.Reader) error {
+   return b.Box.Read(src)
 }
 
-func (m *MediaData) write(w io.Writer) error {
-   return m.Box.Write(w)
+func (b *Box) write(dst io.Writer) error {
+   return b.Box.Write(dst)
 }

@@ -35,5 +35,6 @@ library for reading and writing MP4
 9. [x] stbl
 10. [x] minf
 11. [x] mdia
-12. [ ] mdat
-13. [ ] file
+12. [ ] traf
+13. [ ] mdat
+14. [ ] file

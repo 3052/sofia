@@ -137,7 +137,7 @@ func (s SampleEncryption) senc_use_subsamples() bool {
 }
 
 func (s SampleEncryption) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
+   err := s.BoxHeader.Write(w)
    if err != nil {
       return err
    }

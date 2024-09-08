@@ -36,7 +36,8 @@ library for reading and writing MP4
 10. [x] minf
 11. [x] mdia
 12. [x] tfhd
-13. [ ] trun
-14. [ ] traf
-15. [ ] mdat
-16. [ ] file
+13. [x] trun
+14. [ ] senc
+15. [ ] traf
+16. [ ] mdat
+17. [ ] file

@@ -3,6 +3,7 @@ package traf
 import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/tfhd"
+   "154.pages.dev/sofia/trun"
    "io"
 )
 
@@ -14,7 +15,7 @@ type Box struct {
    Boxes            []*sofia.Box
    FragmentHeader   tfhd.Box
    SampleEncryption *SampleEncryption
-   TrackRun         TrackRun
+   TrackRun         trun.Box
 }
 
 func (b Box) piff(head sofia.BoxHeader) bool {
@@ -74,7 +75,7 @@ func (b *Box) read(src io.Reader, size int64) error {
             }
          case "trun":
             b.TrackRun.BoxHeader = head
-            err := b.TrackRun.read(src)
+            err := b.TrackRun.Read(src)
             if err != nil {
                return err
             }
@@ -107,5 +108,5 @@ func (b Box) write(dst io.Writer) error {
    if b.SampleEncryption != nil {
       b.SampleEncryption.write(dst)
    }
-   return b.TrackRun.write(dst)
+   return b.TrackRun.Write(dst)
 }

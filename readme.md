@@ -24,20 +24,20 @@ library for reading and writing MP4
 
 ## progress
 
-1. [x] frma
-2. [x] tenc
-3. [x] schi
-4. [x] sinf
-5. [x] SampleEntry
-6. [x] enca
-7. [x] encv
-8. [x] stsd
-9. [x] stbl
-10. [x] minf
-11. [x] mdia
-12. [x] tfhd
-13. [x] trun
-14. [ ] senc
-15. [ ] traf
-16. [ ] mdat
-17. [ ] file
+- [x]  1 frma
+- [x]  2 tenc
+- [x]  3 schi
+- [x]  4 sinf
+- [x]  5 SampleEntry
+- [x]  6 enca
+- [x]  7 encv
+- [x]  8 stsd
+- [x]  9 stbl
+- [x] 10 minf
+- [x] 11 mdia
+- [x] 12 tfhd
+- [x] 13 trun
+- [ ] 14 senc
+- [ ] 15 traf
+- [ ] 16 mdat
+- [ ] 17 file

@@ -22,22 +22,15 @@ library for reading and writing MP4
 8. https://github.com/eswarantg/mp4box/issues/3
 9. https://github.com/miquels/mp4/issues/2
 
-## progress
+> the normal place to put the encryption information in the segments is in a
+> `senc` box, and this is not the case in this file, but they seem to be placed
+> in a [uuid] box instead. This is allowed, but not supported by mp4ff library
+> at the moment. In principle the data can be put in any place given by the
+> offset in the `saio` box
 
-- [x]  1 frma
-- [x]  2 tenc
-- [x]  3 schi
-- [x]  4 sinf
-- [x]  5 SampleEntry
-- [x]  6 enca
-- [x]  7 encv
-- [x]  8 stsd
-- [x]  9 stbl
-- [x] 10 minf
-- [x] 11 mdia
-- [x] 12 tfhd
-- [x] 13 trun
-- [ ] 14 senc
-- [ ] 15 traf
-- [ ] 16 mdat
-- [ ] 17 file
+and:
+
+> If the Override TrackEncryptionBox parameters flag is set, then the
+> SampleEncryptionBox specifies the `AlgorithmID`, `IV_size`, and `KID`
+> parameters. If not present, then the default values from the
+> TrackEncryptionBox SHOULD be used for this fragment.

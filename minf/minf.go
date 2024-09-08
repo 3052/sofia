@@ -1,7 +1,8 @@
-package file
+package minf
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/stbl"
    "io"
 )
 
@@ -11,21 +12,21 @@ import (
 type Box struct {
    BoxHeader   sofia.BoxHeader
    Boxes       []sofia.Box
-   SampleTable SampleTable
+   SampleTable stbl.Box
 }
 
-func (m *Box) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (b *Box) Read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "stbl":
             _, size := head.GetSize()
-            m.SampleTable.BoxHeader = head
-            err := m.SampleTable.read(r, size)
+            b.SampleTable.BoxHeader = head
+            err := b.SampleTable.Read(src, size)
             if err != nil {
                return err
             }
@@ -33,13 +34,13 @@ func (m *Box) read(r io.Reader, size int64) error {
             "smhd", // Roku
             "vmhd": // Roku
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
-            m.Boxes = append(m.Boxes, value)
+            b.Boxes = append(b.Boxes, value)
          default:
-            return sofia.Error{m.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -49,16 +50,16 @@ func (m *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (m *Box) write(w io.Writer) error {
-   err := m.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   for _, value := range m.Boxes {
-      err := value.Write(w)
+   for _, value := range b.Boxes {
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return m.SampleTable.write(w)
+   return b.SampleTable.Write(dst)
 }

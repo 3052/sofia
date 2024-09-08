@@ -15,18 +15,18 @@ type Box struct {
    SampleDescription stsd.Box
 }
 
-func (s *Box) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (b *Box) Read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "stsd":
             _, size := head.GetSize()
-            s.SampleDescription.BoxHeader = head
-            err := s.SampleDescription.Read(r, size)
+            b.SampleDescription.BoxHeader = head
+            err := b.SampleDescription.Read(src, size)
             if err != nil {
                return err
             }
@@ -37,13 +37,13 @@ func (s *Box) read(r io.Reader, size int64) error {
             "stsz", // Roku
             "stts": // Roku
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
-            s.Boxes = append(s.Boxes, value)
+            b.Boxes = append(b.Boxes, value)
          default:
-            return sofia.Error{s.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -53,16 +53,16 @@ func (s *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (s Box) write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
+func (b Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   for _, value := range s.Boxes {
-      err := value.Write(w)
+   for _, value := range b.Boxes {
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return s.SampleDescription.Write(w)
+   return b.SampleDescription.Write(dst)
 }

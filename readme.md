@@ -33,5 +33,7 @@ library for reading and writing MP4
 7. [x] encv
 8. [x] stsd
 9. [x] stbl
-10. [ ] mdia
-11. [ ] file
+10. [x] minf
+11. [x] mdia
+12. [ ] mdat
+13. [ ] file

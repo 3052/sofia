@@ -26,7 +26,7 @@ func (b *Box) read(src io.Reader, size int64) error {
          case "minf":
             _, size := head.GetSize()
             b.MediaInformation.BoxHeader = head
-            err := b.MediaInformation.read(src, size)
+            err := b.MediaInformation.Read(src, size)
             if err != nil {
                return err
             }
@@ -60,5 +60,5 @@ func (b *Box) write(dst io.Writer) error {
          return err
       }
    }
-   return b.MediaInformation.write(dst)
+   return b.MediaInformation.Write(dst)
 }

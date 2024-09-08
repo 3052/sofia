@@ -2,6 +2,7 @@ package traf
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/tfhd"
    "io"
 )
 
@@ -11,7 +12,7 @@ import (
 type Box struct {
    BoxHeader        sofia.BoxHeader
    Boxes            []*sofia.Box
-   FragmentHeader   TrackFragmentHeader
+   FragmentHeader   tfhd.Box
    SampleEncryption *SampleEncryption
    TrackRun         TrackRun
 }
@@ -67,7 +68,7 @@ func (b *Box) read(src io.Reader, size int64) error {
             b.Boxes = append(b.Boxes, &value)
          case "tfhd":
             b.FragmentHeader.BoxHeader = head
-            err := b.FragmentHeader.read(src)
+            err := b.FragmentHeader.Read(src)
             if err != nil {
                return err
             }
@@ -99,7 +100,7 @@ func (b Box) write(dst io.Writer) error {
          return err
       }
    }
-   err = b.FragmentHeader.write(dst)
+   err = b.FragmentHeader.Write(dst)
    if err != nil {
       return err
    }

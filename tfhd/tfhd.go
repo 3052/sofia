@@ -1,4 +1,4 @@
-package file
+package tfhd
 
 import (
    "154.pages.dev/sofia"
@@ -7,7 +7,6 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class TrackFragmentHeaderBox extends FullBox(
 //      'tfhd', 0, tf_flags
 //   ) {
@@ -20,7 +19,7 @@ import (
 //      unsigned int(32) default_sample_size;
 //      unsigned int(32) default_sample_flags;
 //   }
-type TrackFragmentHeader struct {
+type Box struct {
    BoxHeader              sofia.BoxHeader
    FullBoxHeader          sofia.FullBoxHeader
    TrackId                uint32
@@ -30,39 +29,39 @@ type TrackFragmentHeader struct {
    DefaultSampleFlags     uint32
 }
 
-func (t TrackFragmentHeader) write(w io.Writer) error {
-   err := t.BoxHeader.Write(w)
+func (b Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   err = t.FullBoxHeader.Write(w)
+   err = b.FullBoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, t.TrackId)
+   err = binary.Write(dst, binary.BigEndian, b.TrackId)
    if err != nil {
       return err
    }
-   if t.sample_description_index_present() {
-      err := binary.Write(w, binary.BigEndian, t.SampleDescriptionIndex)
+   if b.sample_description_index_present() {
+      err := binary.Write(dst, binary.BigEndian, b.SampleDescriptionIndex)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_duration_present() {
-      err := binary.Write(w, binary.BigEndian, t.DefaultSampleDuration)
+   if b.default_sample_duration_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleDuration)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_size_present() {
-      err := binary.Write(w, binary.BigEndian, t.DefaultSampleSize)
+   if b.default_sample_size_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleSize)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_flags_present() {
-      err := binary.Write(w, binary.BigEndian, t.DefaultSampleFlags)
+   if b.default_sample_flags_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleFlags)
       if err != nil {
          return err
       }
@@ -70,35 +69,35 @@ func (t TrackFragmentHeader) write(w io.Writer) error {
    return nil
 }
 
-func (t *TrackFragmentHeader) read(r io.Reader) error {
-   err := t.FullBoxHeader.Read(r)
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &t.TrackId)
+   err = binary.Read(src, binary.BigEndian, &b.TrackId)
    if err != nil {
       return err
    }
-   if t.sample_description_index_present() {
-      err := binary.Read(r, binary.BigEndian, &t.SampleDescriptionIndex)
+   if b.sample_description_index_present() {
+      err := binary.Read(src, binary.BigEndian, &b.SampleDescriptionIndex)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_duration_present() {
-      err := binary.Read(r, binary.BigEndian, &t.DefaultSampleDuration)
+   if b.default_sample_duration_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleDuration)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_size_present() {
-      err := binary.Read(r, binary.BigEndian, &t.DefaultSampleSize)
+   if b.default_sample_size_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleSize)
       if err != nil {
          return err
       }
    }
-   if t.default_sample_flags_present() {
-      err := binary.Read(r, binary.BigEndian, &t.DefaultSampleFlags)
+   if b.default_sample_flags_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleFlags)
       if err != nil {
          return err
       }
@@ -107,21 +106,21 @@ func (t *TrackFragmentHeader) read(r io.Reader) error {
 }
 
 // 0x000002 sample-description-index-present
-func (t TrackFragmentHeader) sample_description_index_present() bool {
-   return t.FullBoxHeader.GetFlags()&0x2 >= 1
+func (b Box) sample_description_index_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x2 >= 1
 }
 
 // 0x000008 default-sample-duration-present
-func (t TrackFragmentHeader) default_sample_duration_present() bool {
-   return t.FullBoxHeader.GetFlags()&0x8 >= 1
+func (b Box) default_sample_duration_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x8 >= 1
 }
 
 // 0x000010 default-sample-size-present
-func (t TrackFragmentHeader) default_sample_size_present() bool {
-   return t.FullBoxHeader.GetFlags()&0x10 >= 1
+func (b Box) default_sample_size_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x10 >= 1
 }
 
 // 0x000020 default-sample-flags-present
-func (t TrackFragmentHeader) default_sample_flags_present() bool {
-   return t.FullBoxHeader.GetFlags()&0x20 >= 1
+func (b Box) default_sample_flags_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x20 >= 1
 }

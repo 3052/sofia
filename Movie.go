@@ -18,7 +18,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
             "mvex", // Roku
             "mvhd": // Roku
             value := box.Box{BoxHeader: head}
-            err := value.read(r)
+            err := value.Read(r)
             if err != nil {
                return err
             }

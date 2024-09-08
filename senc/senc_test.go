@@ -1,4 +1,4 @@
-package file
+package senc
 
 import (
    "encoding/hex"

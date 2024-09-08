@@ -2,6 +2,7 @@ package schi
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/tenc"
    "io"
 )
 
@@ -11,17 +12,17 @@ import (
 //   }
 type Box struct {
    BoxHeader       sofia.BoxHeader
-   TrackEncryption TrackEncryption
+   TrackEncryption tenc.Box
 }
 
-func (s *Box) read(r io.Reader) error {
-   return s.TrackEncryption.read(r)
+func (b *Box) Read(r io.Reader) error {
+   return b.TrackEncryption.Read(r)
 }
 
-func (s Box) write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
+func (b Box) Write(w io.Writer) error {
+   err := b.BoxHeader.Write(w)
    if err != nil {
       return err
    }
-   return s.TrackEncryption.write(w)
+   return b.TrackEncryption.Write(w)
 }

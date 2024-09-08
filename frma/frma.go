@@ -17,20 +17,20 @@ type Box struct {
    DataFormat [4]uint8
 }
 
-func (o *Box) read(r io.Reader) error {
-   _, err := io.ReadFull(r, o.DataFormat[:])
+func (b *Box) Read(r io.Reader) error {
+   _, err := io.ReadFull(r, b.DataFormat[:])
    if err != nil {
       return err
    }
    return nil
 }
 
-func (o Box) write(w io.Writer) error {
-   err := o.BoxHeader.Write(w)
+func (b Box) Write(w io.Writer) error {
+   err := b.BoxHeader.Write(w)
    if err != nil {
       return err
    }
-   _, err = w.Write(o.DataFormat[:])
+   _, err = w.Write(b.DataFormat[:])
    if err != nil {
       return err
    }

@@ -26,8 +26,8 @@ library for reading and writing MP4
 
 1. [x] frma
 2. [x] tenc
-3. [ ] schi
-4. [ ] sinf
+3. [x] schi
+4. [x] sinf
 5. [ ] stsd
 6. [ ] stbl
 7. [ ] mdia

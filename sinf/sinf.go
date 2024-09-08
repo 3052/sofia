@@ -1,7 +1,9 @@
-package file
+package sinf
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/frma"
+   "154.pages.dev/sofia/schi"
    "io"
 )
 
@@ -14,11 +16,11 @@ import (
 type Box struct {
    BoxHeader         sofia.BoxHeader
    Boxes             []sofia.Box
-   OriginalFormat    OriginalFormat
-   SchemeInformation SchemeInformation
+   OriginalFormat    frma.Box
+   SchemeInformation schi.Box
 }
 
-func (p *Box) read(r io.Reader, size int64) error {
+func (b *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -27,14 +29,14 @@ func (p *Box) read(r io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "frma":
-            p.OriginalFormat.BoxHeader = head
-            err := p.OriginalFormat.read(r)
+            b.OriginalFormat.BoxHeader = head
+            err := b.OriginalFormat.Read(r)
             if err != nil {
                return err
             }
          case "schi":
-            p.SchemeInformation.BoxHeader = head
-            err := p.SchemeInformation.read(r)
+            b.SchemeInformation.BoxHeader = head
+            err := b.SchemeInformation.Read(r)
             if err != nil {
                return err
             }
@@ -44,9 +46,9 @@ func (p *Box) read(r io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            p.Boxes = append(p.Boxes, value)
+            b.Boxes = append(b.Boxes, value)
          default:
-            return sofia.Error{p.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -56,20 +58,20 @@ func (p *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (p Box) write(w io.Writer) error {
-   err := p.BoxHeader.Write(w)
+func (b Box) write(w io.Writer) error {
+   err := b.BoxHeader.Write(w)
    if err != nil {
       return err
    }
-   for _, value := range p.Boxes {
+   for _, value := range b.Boxes {
       err := value.Write(w)
       if err != nil {
          return err
       }
    }
-   err = p.OriginalFormat.write(w)
+   err = b.OriginalFormat.Write(w)
    if err != nil {
       return err
    }
-   return p.SchemeInformation.write(w)
+   return b.SchemeInformation.Write(w)
 }

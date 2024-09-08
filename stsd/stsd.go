@@ -2,9 +2,20 @@ package stsd
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/sinf"
    "encoding/binary"
    "io"
 )
+
+func (b Box) Protection() (*sinf.Box, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.ProtectionScheme, true
+   }
+   return nil, false
+}
 
 // ISO/IEC 14496-12
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
@@ -23,13 +34,13 @@ type Box struct {
    VisualSample  *VisualSampleEntry
 }
 
-func (s *Box) read(r io.Reader, size int64) error {
+func (b *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
-   err := s.FullBoxHeader.Read(r)
+   err := b.FullBoxHeader.Read(r)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &s.EntryCount)
+   err = binary.Read(r, binary.BigEndian, &b.EntryCount)
    if err != nil {
       return err
    }
@@ -48,23 +59,23 @@ func (s *Box) read(r io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            s.Boxes = append(s.Boxes, value)
+            b.Boxes = append(b.Boxes, value)
          case "enca":
-            s.AudioSample = &AudioSampleEntry{}
-            s.AudioSample.SampleEntry.BoxHeader = head
-            err := s.AudioSample.read(r, size)
+            b.AudioSample = &AudioSampleEntry{}
+            b.AudioSample.SampleEntry.BoxHeader = head
+            err := b.AudioSample.read(r, size)
             if err != nil {
                return err
             }
          case "encv":
-            s.VisualSample = &VisualSampleEntry{}
-            s.VisualSample.SampleEntry.BoxHeader = head
-            err := s.VisualSample.read(r, size)
+            b.VisualSample = &VisualSampleEntry{}
+            b.VisualSample.SampleEntry.BoxHeader = head
+            err := b.VisualSample.read(r, size)
             if err != nil {
                return err
             }
          default:
-            return sofia.Error{s.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -74,53 +85,43 @@ func (s *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (s Box) Protection() (*ProtectionSchemeInfo, bool) {
-   if v := s.AudioSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   if v := s.VisualSample; v != nil {
-      return &v.ProtectionScheme, true
-   }
-   return nil, false
-}
-
-func (s Box) SampleEntry() (*SampleEntry, bool) {
-   if v := s.AudioSample; v != nil {
+func (b Box) SampleEntry() (*SampleEntry, bool) {
+   if v := b.AudioSample; v != nil {
       return &v.SampleEntry, true
    }
-   if v := s.VisualSample; v != nil {
+   if v := b.VisualSample; v != nil {
       return &v.SampleEntry, true
    }
    return nil, false
 }
 
-func (s Box) write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
+func (b Box) write(w io.Writer) error {
+   err := b.BoxHeader.Write(w)
    if err != nil {
       return err
    }
-   err = s.FullBoxHeader.Write(w)
+   err = b.FullBoxHeader.Write(w)
    if err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, s.EntryCount)
+   err = binary.Write(w, binary.BigEndian, b.EntryCount)
    if err != nil {
       return err
    }
-   for _, value := range s.Boxes {
+   for _, value := range b.Boxes {
       err := value.Write(w)
       if err != nil {
          return err
       }
    }
-   if s.AudioSample != nil {
-      err := s.AudioSample.write(w)
+   if b.AudioSample != nil {
+      err := b.AudioSample.write(w)
       if err != nil {
          return err
       }
    }
-   if s.VisualSample != nil {
-      err := s.VisualSample.write(w)
+   if b.VisualSample != nil {
+      err := b.VisualSample.write(w)
       if err != nil {
          return err
       }

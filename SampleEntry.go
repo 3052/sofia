@@ -38,12 +38,12 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
             "hvcC", // Hulu
             "mdcv", // Max
             "pasp": // Roku
-            object := box.Box{BoxHeader: head}
-            err := object.Read(r)
+            value := box.Box{BoxHeader: head}
+            err := value.Read(r)
             if err != nil {
                return err
             }
-            v.Boxes = append(v.Boxes, &object)
+            v.Boxes = append(v.Boxes, &value)
          default:
             return box.Error{v.SampleEntry.BoxHeader.Type, head.Type}
          }
@@ -64,8 +64,8 @@ func (v VisualSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, object := range v.Boxes {
-      err := object.write(w)
+   for _, value := range v.Boxes {
+      err := value.Write(w)
       if err != nil {
          return err
       }
@@ -122,12 +122,12 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
             }
          case "dec3", // Hulu
             "esds": // Roku
-            object := box.Box{BoxHeader: head}
-            err := object.read(r)
+            value := box.Box{BoxHeader: head}
+            err := value.Read(r)
             if err != nil {
                return err
             }
-            a.Boxes = append(a.Boxes, &object)
+            a.Boxes = append(a.Boxes, &value)
          default:
             return box.Error{a.SampleEntry.BoxHeader.Type, head.Type}
          }
@@ -148,8 +148,8 @@ func (a AudioSampleEntry) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, object := range a.Boxes {
-      err := object.write(w)
+   for _, value := range a.Boxes {
+      err := value.Write(w)
       if err != nil {
          return err
       }

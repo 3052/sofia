@@ -30,7 +30,7 @@ import (
 //	}
 type SampleEncryption struct {
 	BoxHeader     sofia.BoxHeader
-	FullBoxHeader box.FullBoxHeader
+	FullBoxHeader sofia.FullBoxHeader
 	SampleCount   uint32
 	Samples       []EncryptionSample
 }

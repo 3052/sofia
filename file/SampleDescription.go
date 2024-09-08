@@ -47,7 +47,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 					return err
 				}
 			default:
-				return box.Error{s.BoxHeader.Type, head.Type}
+				return sofia.Error{s.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil
@@ -68,7 +68,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 //	}
 type SampleDescription struct {
 	BoxHeader     sofia.BoxHeader
-	FullBoxHeader box.FullBoxHeader
+	FullBoxHeader sofia.FullBoxHeader
 	EntryCount    uint32
 	Boxes         []sofia.Box
 	AudioSample   *AudioSampleEntry

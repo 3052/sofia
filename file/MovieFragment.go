@@ -29,7 +29,7 @@ func (m *MovieFragment) read(r io.Reader, size int64) error {
 				}
 				m.Boxes = append(m.Boxes, value)
 			default:
-				return box.Error{m.BoxHeader.Type, head.Type}
+				return sofia.Error{m.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

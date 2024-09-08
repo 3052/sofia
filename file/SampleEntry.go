@@ -45,7 +45,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
 				}
 				v.Boxes = append(v.Boxes, &value)
 			default:
-				return box.Error{v.SampleEntry.BoxHeader.Type, head.Type}
+				return sofia.Error{v.SampleEntry.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil
@@ -129,7 +129,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
 				}
 				a.Boxes = append(a.Boxes, &value)
 			default:
-				return box.Error{a.SampleEntry.BoxHeader.Type, head.Type}
+				return sofia.Error{a.SampleEntry.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

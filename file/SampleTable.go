@@ -43,7 +43,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
 				}
 				s.Boxes = append(s.Boxes, object)
 			default:
-				return box.Error{s.BoxHeader.Type, head.Type}
+				return sofia.Error{s.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

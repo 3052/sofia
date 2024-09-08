@@ -48,9 +48,9 @@ func (f *File) Read(r io.Reader) error {
 				}
 				f.Boxes = append(f.Boxes, object)
 			default:
-				var container box.Type
+				var container sofia.Type
 				copy(container[:], "File")
-				return box.Error{container, head.Type}
+				return sofia.Error{container, head.Type}
 			}
 		case io.EOF:
 			return nil

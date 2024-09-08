@@ -41,7 +41,7 @@ func (t *Track) read(r io.Reader, size int64) error {
 				}
 				t.Boxes = append(t.Boxes, value)
 			default:
-				return box.Error{t.BoxHeader.Type, head.Type}
+				return sofia.Error{t.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

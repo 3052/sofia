@@ -26,14 +26,14 @@ import (
 //	}
 type TrackEncryption struct {
 	BoxHeader     sofia.BoxHeader
-	FullBoxHeader box.FullBoxHeader
+	FullBoxHeader sofia.FullBoxHeader
 	Extends       struct {
 		_                      uint8
 		_                      uint8
 		DefaultIsProtected     uint8
 		DefaultPerSampleIvSize uint8
 	}
-	DefaultKid box.UUID
+	DefaultKid sofia.UUID
 }
 
 func (t *TrackEncryption) read(r io.Reader) error {

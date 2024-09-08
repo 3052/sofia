@@ -38,7 +38,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
 					return err
 				}
 			default:
-				return box.Error{m.BoxHeader.Type, head.Type}
+				return sofia.Error{m.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

@@ -125,7 +125,7 @@ func (t TrackRun) sample_composition_time_offsets_present() bool {
 //	}
 type TrackRun struct {
 	BoxHeader        sofia.BoxHeader
-	FullBoxHeader    box.FullBoxHeader
+	FullBoxHeader    sofia.FullBoxHeader
 	SampleCount      uint32
 	DataOffset       int32
 	FirstSampleFlags uint32

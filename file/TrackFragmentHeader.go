@@ -22,7 +22,7 @@ import (
 //	}
 type TrackFragmentHeader struct {
 	BoxHeader              sofia.BoxHeader
-	FullBoxHeader          box.FullBoxHeader
+	FullBoxHeader          sofia.FullBoxHeader
 	TrackId                uint32
 	SampleDescriptionIndex uint32
 	DefaultSampleDuration  uint32

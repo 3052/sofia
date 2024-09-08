@@ -79,7 +79,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
 					return err
 				}
 			default:
-				return box.Error{t.BoxHeader.Type, head.Type}
+				return sofia.Error{t.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

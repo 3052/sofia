@@ -55,7 +55,7 @@ func (r Reference) write(dst io.Writer) error {
 //	}
 type SegmentIndex struct {
 	BoxHeader                sofia.BoxHeader
-	FullBoxHeader            box.FullBoxHeader
+	FullBoxHeader            sofia.FullBoxHeader
 	ReferenceId              uint32
 	Timescale                uint32
 	EarliestPresentationTime []byte

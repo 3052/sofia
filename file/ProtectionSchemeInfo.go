@@ -33,7 +33,7 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
 				}
 				p.Boxes = append(p.Boxes, value)
 			default:
-				return box.Error{p.BoxHeader.Type, head.Type}
+				return sofia.Error{p.BoxHeader.Type, head.Type}
 			}
 		case io.EOF:
 			return nil

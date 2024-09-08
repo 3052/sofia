@@ -25,8 +25,8 @@ import (
 //      CleanApertureBox clap; // optional
 //      PixelAspectRatioBox pasp; // optional
 //   }
-type VisualSampleEntry struct {
-   SampleEntry SampleEntry
+type SampleEntry struct {
+   SampleEntry sofia.SampleEntry
    Extends     struct {
       _               uint16
       _               uint16
@@ -45,26 +45,26 @@ type VisualSampleEntry struct {
    ProtectionScheme sinf.Box
 }
 
-func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := v.SampleEntry.read(r)
+func (s *SampleEntry) Read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
+   err := s.SampleEntry.Read(src)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &v.Extends)
+   err = binary.Read(src, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "sinf":
             _, size := head.GetSize()
-            v.ProtectionScheme.BoxHeader = head
-            err := v.ProtectionScheme.Read(r, size)
+            s.ProtectionScheme.BoxHeader = head
+            err := s.ProtectionScheme.Read(src, size)
             if err != nil {
                return err
             }
@@ -78,13 +78,13 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
             "mdcv", // Max
             "pasp": // Roku
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
-            v.Boxes = append(v.Boxes, &value)
+            s.Boxes = append(s.Boxes, &value)
          default:
-            return sofia.Error{v.SampleEntry.BoxHeader.Type, head.Type}
+            return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -94,20 +94,20 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
    }
 }
 
-func (v VisualSampleEntry) write(w io.Writer) error {
-   err := v.SampleEntry.write(w)
+func (s SampleEntry) Write(dst io.Writer) error {
+   err := s.SampleEntry.Write(dst)
    if err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, v.Extends)
+   err = binary.Write(dst, binary.BigEndian, s.Extends)
    if err != nil {
       return err
    }
-   for _, value := range v.Boxes {
-      err := value.Write(w)
+   for _, value := range s.Boxes {
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return v.ProtectionScheme.Write(w)
+   return s.ProtectionScheme.Write(dst)
 }

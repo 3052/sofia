@@ -2,6 +2,7 @@ package stbl
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/stsd"
    "io"
 )
 
@@ -11,7 +12,7 @@ import (
 type Box struct {
    BoxHeader         sofia.BoxHeader
    Boxes             []sofia.Box
-   SampleDescription SampleDescription
+   SampleDescription stsd.Box
 }
 
 func (s *Box) read(r io.Reader, size int64) error {
@@ -25,7 +26,7 @@ func (s *Box) read(r io.Reader, size int64) error {
          case "stsd":
             _, size := head.GetSize()
             s.SampleDescription.BoxHeader = head
-            err := s.SampleDescription.read(r, size)
+            err := s.SampleDescription.Read(r, size)
             if err != nil {
                return err
             }
@@ -35,12 +36,12 @@ func (s *Box) read(r io.Reader, size int64) error {
             "stss", // CineMember
             "stsz", // Roku
             "stts": // Roku
-            object := sofia.Box{BoxHeader: head}
-            err := object.Read(r)
+            value := sofia.Box{BoxHeader: head}
+            err := value.Read(r)
             if err != nil {
                return err
             }
-            s.Boxes = append(s.Boxes, object)
+            s.Boxes = append(s.Boxes, value)
          default:
             return sofia.Error{s.BoxHeader.Type, head.Type}
          }
@@ -57,11 +58,11 @@ func (s Box) write(w io.Writer) error {
    if err != nil {
       return err
    }
-   for _, object := range s.Boxes {
-      err := object.Write(w)
+   for _, value := range s.Boxes {
+      err := value.Write(w)
       if err != nil {
          return err
       }
    }
-   return s.SampleDescription.write(w)
+   return s.SampleDescription.Write(w)
 }

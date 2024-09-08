@@ -28,7 +28,10 @@ library for reading and writing MP4
 2. [x] tenc
 3. [x] schi
 4. [x] sinf
-5. [ ] stsd
-6. [ ] stbl
-7. [ ] mdia
-8. [ ] file
+5. [x] SampleEntry
+6. [x] enca
+7. [x] encv
+8. [x] stsd
+9. [x] stbl
+10. [ ] mdia
+11. [ ] file

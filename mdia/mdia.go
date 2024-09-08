@@ -15,31 +15,31 @@ type Box struct {
    MediaInformation minf.Box
 }
 
-func (m *Box) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (b *Box) read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "minf":
             _, size := head.GetSize()
-            m.MediaInformation.BoxHeader = head
-            err := m.MediaInformation.read(r, size)
+            b.MediaInformation.BoxHeader = head
+            err := b.MediaInformation.read(src, size)
             if err != nil {
                return err
             }
          case "hdlr", // Roku
             "mdhd": // Roku
-            object := sofia.Box{BoxHeader: head}
-            err := object.Read(r)
+            value := sofia.Box{BoxHeader: head}
+            err := value.Read(src)
             if err != nil {
                return err
             }
-            m.Boxes = append(m.Boxes, object)
+            b.Boxes = append(b.Boxes, value)
          default:
-            return sofia.Error{m.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -49,16 +49,16 @@ func (m *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (m *Box) write(w io.Writer) error {
-   err := m.BoxHeader.Write(w)
+func (b *Box) write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   for _, object := range m.Boxes {
-      err := object.Write(w)
+   for _, value := range b.Boxes {
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return m.MediaInformation.write(w)
+   return b.MediaInformation.write(dst)
 }

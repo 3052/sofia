@@ -1,8 +1,6 @@
 package sofia
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/sinf"
    "encoding/binary"
    "io"
 )
@@ -15,12 +13,12 @@ import (
 //      unsigned int(16) data_reference_index;
 //   }
 type SampleEntry struct {
-   BoxHeader          sofia.BoxHeader
+   BoxHeader          BoxHeader
    Reserved           [6]uint8
    DataReferenceIndex uint16
 }
 
-func (s *SampleEntry) read(r io.Reader) error {
+func (s *SampleEntry) Read(r io.Reader) error {
    _, err := io.ReadFull(r, s.Reserved[:])
    if err != nil {
       return err
@@ -28,7 +26,7 @@ func (s *SampleEntry) read(r io.Reader) error {
    return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
 }
 
-func (s *SampleEntry) write(w io.Writer) error {
+func (s *SampleEntry) Write(w io.Writer) error {
    err := s.BoxHeader.Write(w)
    if err != nil {
       return err

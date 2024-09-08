@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -124,7 +124,7 @@ func (t TrackRun) sample_composition_time_offsets_present() bool {
 //	   }[ sample_count ]
 //	}
 type TrackRun struct {
-	BoxHeader        box.Header
+	BoxHeader        sofia.BoxHeader
 	FullBoxHeader    box.FullBoxHeader
 	SampleCount      uint32
 	DataOffset       int32

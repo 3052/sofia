@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -17,7 +17,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
 		return err
 	}
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -38,7 +38,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
 				"hvcC", // Hulu
 				"mdcv", // Max
 				"pasp": // Roku
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err
@@ -93,7 +93,7 @@ type AudioSampleEntry struct {
 		_            uint16
 		SampleRate   uint32
 	}
-	Boxes            []*box.Box
+	Boxes            []*sofia.Box
 	ProtectionScheme ProtectionSchemeInfo
 }
 
@@ -108,7 +108,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
 		return err
 	}
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -122,7 +122,7 @@ func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
 				}
 			case "dec3", // Hulu
 				"esds": // Roku
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err
@@ -166,7 +166,7 @@ func (a AudioSampleEntry) write(w io.Writer) error {
 //	   unsigned int(16) data_reference_index;
 //	}
 type SampleEntry struct {
-	BoxHeader          box.Header
+	BoxHeader          sofia.BoxHeader
 	Reserved           [6]uint8
 	DataReferenceIndex uint16
 }
@@ -226,6 +226,6 @@ type VisualSampleEntry struct {
 		Depth           uint16
 		_               int16
 	}
-	Boxes            []*box.Box
+	Boxes            []*sofia.Box
 	ProtectionScheme ProtectionSchemeInfo
 }

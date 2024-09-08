@@ -1,4 +1,4 @@
-package sofia
+package file
 
 import (
 	"bytes"

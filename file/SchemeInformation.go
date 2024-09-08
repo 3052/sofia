@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
@@ -11,7 +11,7 @@ import (
 //	   Box scheme_specific_data[];
 //	}
 type SchemeInformation struct {
-	BoxHeader       box.Header
+	BoxHeader       sofia.BoxHeader
 	TrackEncryption TrackEncryption
 }
 

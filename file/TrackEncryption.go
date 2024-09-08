@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -25,7 +25,7 @@ import (
 //	   }
 //	}
 type TrackEncryption struct {
-	BoxHeader     box.Header
+	BoxHeader     sofia.BoxHeader
 	FullBoxHeader box.FullBoxHeader
 	Extends       struct {
 		_                      uint8

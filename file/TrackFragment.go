@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
@@ -10,14 +10,14 @@ import (
 //	aligned(8) class TrackFragmentBox extends Box('traf') {
 //	}
 type TrackFragment struct {
-	BoxHeader        box.Header
-	Boxes            []*box.Box
+	BoxHeader        sofia.BoxHeader
+	Boxes            []*sofia.Box
 	FragmentHeader   TrackFragmentHeader
 	SampleEncryption *SampleEncryption
 	TrackRun         TrackRun
 }
 
-func (t TrackFragment) piff(head box.Header) bool {
+func (t TrackFragment) piff(head sofia.BoxHeader) bool {
 	if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
 		if t.SampleEncryption == nil {
 			return true
@@ -29,7 +29,7 @@ func (t TrackFragment) piff(head box.Header) bool {
 func (t *TrackFragment) read(r io.Reader, size int64) error {
 	r = io.LimitReader(r, size)
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -48,7 +48,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
 						return err
 					}
 				} else {
-					value := box.Box{BoxHeader: head}
+					value := sofia.Box{BoxHeader: head}
 					err := value.Read(r)
 					if err != nil {
 						return err
@@ -60,7 +60,7 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
 				"sbgp", // Roku
 				"sgpd", // Roku
 				"tfdt": // Roku
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err

@@ -1,14 +1,14 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
 func (m *MediaInformation) read(r io.Reader, size int64) error {
 	r = io.LimitReader(r, size)
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -23,7 +23,7 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
 			case "dinf", // Roku
 				"smhd", // Roku
 				"vmhd": // Roku
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err
@@ -45,8 +45,8 @@ func (m *MediaInformation) read(r io.Reader, size int64) error {
 //	aligned(8) class MediaInformationBox extends Box('minf') {
 //	}
 type MediaInformation struct {
-	BoxHeader   box.Header
-	Boxes       []box.Box
+	BoxHeader   sofia.BoxHeader
+	Boxes       []sofia.Box
 	SampleTable SampleTable
 }
 

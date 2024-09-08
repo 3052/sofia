@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
@@ -29,7 +29,7 @@ import (
 //	   }[ sample_count ]
 //	}
 type SampleEncryption struct {
-	BoxHeader     box.Header
+	BoxHeader     sofia.BoxHeader
 	FullBoxHeader box.FullBoxHeader
 	SampleCount   uint32
 	Samples       []EncryptionSample

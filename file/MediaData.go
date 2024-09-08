@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
@@ -11,7 +11,7 @@ import (
 //	   bit(8) data[];
 //	}
 type MediaData struct {
-	Box box.Box
+	Box sofia.Box
 }
 
 func (m *MediaData) Data(track TrackFragment) [][]byte {

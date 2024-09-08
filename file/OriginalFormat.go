@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
@@ -14,7 +14,7 @@ import (
 //	   // and complete track information)
 //	}
 type OriginalFormat struct {
-	BoxHeader  box.Header
+	BoxHeader  sofia.BoxHeader
 	DataFormat [4]uint8
 }
 

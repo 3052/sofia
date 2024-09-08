@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
@@ -10,15 +10,15 @@ import (
 //	aligned(8) class SampleTableBox extends Box('stbl') {
 //	}
 type SampleTable struct {
-	BoxHeader         box.Header
-	Boxes             []box.Box
+	BoxHeader         sofia.BoxHeader
+	Boxes             []sofia.Box
 	SampleDescription SampleDescription
 }
 
 func (s *SampleTable) read(r io.Reader, size int64) error {
 	r = io.LimitReader(r, size)
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -36,7 +36,7 @@ func (s *SampleTable) read(r io.Reader, size int64) error {
 				"stss", // CineMember
 				"stsz", // Roku
 				"stts": // Roku
-				object := box.Box{BoxHeader: head}
+				object := sofia.Box{BoxHeader: head}
 				err := object.Read(r)
 				if err != nil {
 					return err

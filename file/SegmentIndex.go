@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -54,7 +54,7 @@ func (r Reference) write(dst io.Writer) error {
 //	   }
 //	}
 type SegmentIndex struct {
-	BoxHeader                box.Header
+	BoxHeader                sofia.BoxHeader
 	FullBoxHeader            box.FullBoxHeader
 	ReferenceId              uint32
 	Timescale                uint32

@@ -1,14 +1,14 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"io"
 )
 
 func (m *Movie) read(r io.Reader, size int64) error {
 	r = io.LimitReader(r, size)
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -17,7 +17,7 @@ func (m *Movie) read(r io.Reader, size int64) error {
 				"meta", // Paramount
 				"mvex", // Roku
 				"mvhd": // Roku
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err
@@ -53,8 +53,8 @@ func (m *Movie) read(r io.Reader, size int64) error {
 //	aligned(8) class MovieBox extends Box('moov') {
 //	}
 type Movie struct {
-	BoxHeader  box.Header
-	Boxes      []*box.Box
+	BoxHeader  sofia.BoxHeader
+	Boxes      []*sofia.Box
 	Protection []ProtectionSystemSpecificHeader
 	Track      Track
 }

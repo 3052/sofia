@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -21,7 +21,7 @@ import (
 //	   unsigned int(32) default_sample_flags;
 //	}
 type TrackFragmentHeader struct {
-	BoxHeader              box.Header
+	BoxHeader              sofia.BoxHeader
 	FullBoxHeader          box.FullBoxHeader
 	TrackId                uint32
 	SampleDescriptionIndex uint32

@@ -1,7 +1,7 @@
-package sofia
+package file
 
 import (
-	"154.pages.dev/sofia/box"
+	"154.pages.dev/sofia"
 	"encoding/binary"
 	"io"
 )
@@ -17,7 +17,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 		return err
 	}
 	for {
-		var head box.Header
+		var head sofia.BoxHeader
 		err := head.Read(r)
 		switch err {
 		case nil:
@@ -26,7 +26,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 			case "avc1", // Tubi
 				"ec-3", // Max
 				"mp4a": // Tubi
-				value := box.Box{BoxHeader: head}
+				value := sofia.Box{BoxHeader: head}
 				err := value.Read(r)
 				if err != nil {
 					return err
@@ -67,10 +67,10 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
 //	   }
 //	}
 type SampleDescription struct {
-	BoxHeader     box.Header
+	BoxHeader     sofia.BoxHeader
 	FullBoxHeader box.FullBoxHeader
 	EntryCount    uint32
-	Boxes         []box.Box
+	Boxes         []sofia.Box
 	AudioSample   *AudioSampleEntry
 	VisualSample  *VisualSampleEntry
 }

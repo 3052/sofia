@@ -17,7 +17,7 @@ import (
 //      // the remaining bytes are the BoxPayload
 //   }
 type Box struct {
-   BoxHeader Header
+   BoxHeader BoxHeader
    Payload   []byte
 }
 
@@ -60,13 +60,13 @@ func (b *Box) Write(w io.Writer) error {
 //         unsigned int(8)[16] usertype = extended_type;
 //      }
 //   }
-type Header struct {
+type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType UUID
 }
 
-func (b *Header) GetSize() (int, int64) {
+func (b *BoxHeader) GetSize() (int, int64) {
    size := binary.Size(b.Size)
    size += binary.Size(b.Type)
    if b.Type.String() == "uuid" {
@@ -75,7 +75,7 @@ func (b *Header) GetSize() (int, int64) {
    return size, int64(b.Size) - int64(size)
 }
 
-func (b *Header) Read(r io.Reader) error {
+func (b *BoxHeader) Read(r io.Reader) error {
    err := binary.Read(r, binary.BigEndian, &b.Size)
    if err != nil {
       return err
@@ -93,7 +93,7 @@ func (b *Header) Read(r io.Reader) error {
    return nil
 }
 
-func (b *Header) Write(w io.Writer) error {
+func (b *BoxHeader) Write(w io.Writer) error {
    err := binary.Write(w, binary.BigEndian, b.Size)
    if err != nil {
       return err

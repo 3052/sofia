@@ -37,7 +37,7 @@ type ProtectionSystemSpecificHeader struct {
 }
 
 func (p *ProtectionSystemSpecificHeader) Read(r io.Reader) error {
-	err := p.FullBoxHeader.read(r)
+	err := p.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (p ProtectionSystemSpecificHeader) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = p.FullBoxHeader.write(w)
+	err = p.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}

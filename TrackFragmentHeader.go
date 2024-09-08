@@ -35,7 +35,7 @@ func (t TrackFragmentHeader) write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = t.FullBoxHeader.write(w)
+	err = t.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (t TrackFragmentHeader) write(w io.Writer) error {
 }
 
 func (t *TrackFragmentHeader) read(r io.Reader) error {
-	err := t.FullBoxHeader.read(r)
+	err := t.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}

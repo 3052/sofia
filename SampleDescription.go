@@ -8,7 +8,7 @@ import (
 
 func (s *SampleDescription) read(r io.Reader, size int64) error {
 	r = io.LimitReader(r, size)
-	err := s.FullBoxHeader.read(r)
+	err := s.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (s SampleDescription) write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = s.FullBoxHeader.write(w)
+	err = s.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}

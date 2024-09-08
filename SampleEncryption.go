@@ -112,7 +112,7 @@ func (e EncryptionSample) write(w io.Writer, box SampleEncryption) error {
 }
 
 func (s *SampleEncryption) read(r io.Reader) error {
-	err := s.FullBoxHeader.read(r)
+	err := s.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (s SampleEncryption) write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = s.FullBoxHeader.write(w)
+	err = s.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}

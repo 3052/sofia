@@ -90,7 +90,7 @@ func (s SegmentIndex) GetSize() int {
 }
 
 func (s *SegmentIndex) read(r io.Reader) error {
-	err := s.FullBoxHeader.read(r)
+	err := s.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (s SegmentIndex) write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = s.FullBoxHeader.write(w)
+	err = s.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}

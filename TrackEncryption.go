@@ -41,7 +41,7 @@ func (t *TrackEncryption) read(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	err = t.FullBoxHeader.read(r)
+	err = t.FullBoxHeader.Read(r)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (t TrackEncryption) write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = t.FullBoxHeader.write(w)
+	err = t.FullBoxHeader.Write(w)
 	if err != nil {
 		return err
 	}

@@ -77,27 +77,27 @@ type RunSample struct {
 
 // 0x000004 first-sample-flags-present
 func (t TrackRun) first_sample_flags_present() bool {
-	return t.FullBoxHeader.get_flags()&0x4 >= 1
+	return t.FullBoxHeader.GetFlags()&0x4 >= 1
 }
 
 // 0x000100 sample-duration-present
 func (t TrackRun) sample_duration_present() bool {
-	return t.FullBoxHeader.get_flags()&0x100 >= 1
+	return t.FullBoxHeader.GetFlags()&0x100 >= 1
 }
 
 // 0x000200 sample-size-present
 func (t TrackRun) sample_size_present() bool {
-	return t.FullBoxHeader.get_flags()&0x200 >= 1
+	return t.FullBoxHeader.GetFlags()&0x200 >= 1
 }
 
 // 0x000400 sample-flags-present
 func (t TrackRun) sample_flags_present() bool {
-	return t.FullBoxHeader.get_flags()&0x400 >= 1
+	return t.FullBoxHeader.GetFlags()&0x400 >= 1
 }
 
 // 0x000800 sample-composition-time-offsets-present
 func (t TrackRun) sample_composition_time_offsets_present() bool {
-	return t.FullBoxHeader.get_flags()&0x800 >= 1
+	return t.FullBoxHeader.GetFlags()&0x800 >= 1
 }
 
 // ISO/IEC 14496-12

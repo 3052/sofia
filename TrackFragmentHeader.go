@@ -108,20 +108,20 @@ func (t *TrackFragmentHeader) read(r io.Reader) error {
 
 // 0x000002 sample-description-index-present
 func (t TrackFragmentHeader) sample_description_index_present() bool {
-	return t.FullBoxHeader.get_flags()&0x2 >= 1
+	return t.FullBoxHeader.GetFlags()&0x2 >= 1
 }
 
 // 0x000008 default-sample-duration-present
 func (t TrackFragmentHeader) default_sample_duration_present() bool {
-	return t.FullBoxHeader.get_flags()&0x8 >= 1
+	return t.FullBoxHeader.GetFlags()&0x8 >= 1
 }
 
 // 0x000010 default-sample-size-present
 func (t TrackFragmentHeader) default_sample_size_present() bool {
-	return t.FullBoxHeader.get_flags()&0x10 >= 1
+	return t.FullBoxHeader.GetFlags()&0x10 >= 1
 }
 
 // 0x000020 default-sample-flags-present
 func (t TrackFragmentHeader) default_sample_flags_present() bool {
-	return t.FullBoxHeader.get_flags()&0x20 >= 1
+	return t.FullBoxHeader.GetFlags()&0x20 >= 1
 }

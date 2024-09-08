@@ -133,7 +133,7 @@ func (s *SampleEncryption) read(r io.Reader) error {
 
 // senc_use_subsamples: flag mask is 0x000002.
 func (s SampleEncryption) senc_use_subsamples() bool {
-	return s.FullBoxHeader.get_flags()&2 >= 1
+	return s.FullBoxHeader.GetFlags()&2 >= 1
 }
 
 func (s SampleEncryption) write(w io.Writer) error {

@@ -48,24 +48,24 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
                   return err
                }
             } else {
-               data := box.Box{BoxHeader: head}
-               err := data.read(r)
+               value := box.Box{BoxHeader: head}
+               err := value.Read(r)
                if err != nil {
                   return err
                }
-               t.Boxes = append(t.Boxes, &data)
+               t.Boxes = append(t.Boxes, &value)
             }
          case "saio", // Roku
             "saiz", // Roku
             "sbgp", // Roku
             "sgpd", // Roku
             "tfdt": // Roku
-            data := box.Box{BoxHeader: head}
-            err := data.read(r)
+            value := box.Box{BoxHeader: head}
+            err := value.Read(r)
             if err != nil {
                return err
             }
-            t.Boxes = append(t.Boxes, &data)
+            t.Boxes = append(t.Boxes, &value)
          case "tfhd":
             t.FragmentHeader.BoxHeader = head
             err := t.FragmentHeader.read(r)
@@ -90,12 +90,12 @@ func (t *TrackFragment) read(r io.Reader, size int64) error {
 }
 
 func (t TrackFragment) write(w io.Writer) error {
-   err := t.BoxHeader.write(w)
+   err := t.BoxHeader.Write(w)
    if err != nil {
       return err
    }
-   for _, data := range t.Boxes {
-      err := data.write(w)
+   for _, value := range t.Boxes {
+      err := value.Write(w)
       if err != nil {
          return err
       }

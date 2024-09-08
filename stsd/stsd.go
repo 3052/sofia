@@ -14,7 +14,7 @@ import (
 //         SampleEntry(); // an instance of a class derived from SampleEntry
 //      }
 //   }
-type SampleDescription struct {
+type Box struct {
    BoxHeader     sofia.BoxHeader
    FullBoxHeader sofia.FullBoxHeader
    EntryCount    uint32
@@ -23,7 +23,7 @@ type SampleDescription struct {
    VisualSample  *VisualSampleEntry
 }
 
-func (s *SampleDescription) read(r io.Reader, size int64) error {
+func (s *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    err := s.FullBoxHeader.Read(r)
    if err != nil {
@@ -74,7 +74,7 @@ func (s *SampleDescription) read(r io.Reader, size int64) error {
    }
 }
 
-func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
+func (s Box) Protection() (*ProtectionSchemeInfo, bool) {
    if v := s.AudioSample; v != nil {
       return &v.ProtectionScheme, true
    }
@@ -84,7 +84,7 @@ func (s SampleDescription) Protection() (*ProtectionSchemeInfo, bool) {
    return nil, false
 }
 
-func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
+func (s Box) SampleEntry() (*SampleEntry, bool) {
    if v := s.AudioSample; v != nil {
       return &v.SampleEntry, true
    }
@@ -94,7 +94,7 @@ func (s SampleDescription) SampleEntry() (*SampleEntry, bool) {
    return nil, false
 }
 
-func (s SampleDescription) write(w io.Writer) error {
+func (s Box) write(w io.Writer) error {
    err := s.BoxHeader.Write(w)
    if err != nil {
       return err

@@ -5,7 +5,20 @@ import (
    "io"
 )
 
-func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
+// ISO/IEC 14496-12
+//   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
+//      OriginalFormatBox(fmt) original_format;
+//      SchemeTypeBox scheme_type_box; // optional
+//      SchemeInformationBox info; // optional
+//   }
+type Box struct {
+   BoxHeader         sofia.BoxHeader
+   Boxes             []sofia.Box
+   OriginalFormat    OriginalFormat
+   SchemeInformation SchemeInformation
+}
+
+func (p *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -43,21 +56,7 @@ func (p *ProtectionSchemeInfo) read(r io.Reader, size int64) error {
    }
 }
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
-//      OriginalFormatBox(fmt) original_format;
-//      SchemeTypeBox scheme_type_box; // optional
-//      SchemeInformationBox info; // optional
-//   }
-type ProtectionSchemeInfo struct {
-   BoxHeader         sofia.BoxHeader
-   Boxes             []sofia.Box
-   OriginalFormat    OriginalFormat
-   SchemeInformation SchemeInformation
-}
-
-func (p ProtectionSchemeInfo) write(w io.Writer) error {
+func (p Box) write(w io.Writer) error {
    err := p.BoxHeader.Write(w)
    if err != nil {
       return err

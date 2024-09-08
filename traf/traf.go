@@ -16,43 +16,43 @@ type Box struct {
    TrackRun         TrackRun
 }
 
-func (t Box) piff(head sofia.BoxHeader) bool {
+func (b Box) piff(head sofia.BoxHeader) bool {
    if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if t.SampleEncryption == nil {
+      if b.SampleEncryption == nil {
          return true
       }
    }
    return false
 }
 
-func (t *Box) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (b *Box) read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "senc":
-            t.SampleEncryption = &SampleEncryption{BoxHeader: head}
-            err := t.SampleEncryption.read(r)
+            b.SampleEncryption = &SampleEncryption{BoxHeader: head}
+            err := b.SampleEncryption.read(src)
             if err != nil {
                return err
             }
          case "uuid":
-            if t.piff(head) {
-               t.SampleEncryption = &SampleEncryption{BoxHeader: head}
-               err := t.SampleEncryption.read(r)
+            if b.piff(head) {
+               b.SampleEncryption = &SampleEncryption{BoxHeader: head}
+               err := b.SampleEncryption.read(src)
                if err != nil {
                   return err
                }
             } else {
                value := sofia.Box{BoxHeader: head}
-               err := value.Read(r)
+               err := value.Read(src)
                if err != nil {
                   return err
                }
-               t.Boxes = append(t.Boxes, &value)
+               b.Boxes = append(b.Boxes, &value)
             }
          case "saio", // Roku
             "saiz", // Roku
@@ -60,25 +60,25 @@ func (t *Box) read(r io.Reader, size int64) error {
             "sgpd", // Roku
             "tfdt": // Roku
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
-            t.Boxes = append(t.Boxes, &value)
+            b.Boxes = append(b.Boxes, &value)
          case "tfhd":
-            t.FragmentHeader.BoxHeader = head
-            err := t.FragmentHeader.read(r)
+            b.FragmentHeader.BoxHeader = head
+            err := b.FragmentHeader.read(src)
             if err != nil {
                return err
             }
          case "trun":
-            t.TrackRun.BoxHeader = head
-            err := t.TrackRun.read(r)
+            b.TrackRun.BoxHeader = head
+            err := b.TrackRun.read(src)
             if err != nil {
                return err
             }
          default:
-            return sofia.Error{t.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil
@@ -88,23 +88,23 @@ func (t *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (t Box) write(w io.Writer) error {
-   err := t.BoxHeader.Write(w)
+func (b Box) write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   for _, value := range t.Boxes {
-      err := value.Write(w)
+   for _, value := range b.Boxes {
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   err = t.FragmentHeader.write(w)
+   err = b.FragmentHeader.write(dst)
    if err != nil {
       return err
    }
-   if t.SampleEncryption != nil {
-      t.SampleEncryption.write(w)
+   if b.SampleEncryption != nil {
+      b.SampleEncryption.write(dst)
    }
-   return t.TrackRun.write(w)
+   return b.TrackRun.write(dst)
 }

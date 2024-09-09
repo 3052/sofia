@@ -14,9 +14,10 @@ func (m *Movie) read(r io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "iods", // Roku
-            "meta", // Paramount
-            "mvex", // Roku
-            "mvhd": // Roku
+         "meta", // Paramount
+         "mvex", // Roku
+         "mvhd", // Roku
+         "udta": // Criterion
             value := sofia.Box{BoxHeader: head}
             err := value.Read(r)
             if err != nil {

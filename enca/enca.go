@@ -7,29 +7,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
-//      const unsigned int(32)[2] reserved = 0;
-//      unsigned int(16) channelcount;
-//      template unsigned int(16) samplesize = 16;
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0 ;
-//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
-//   }
-type SampleEntry struct {
-   SampleEntry sofia.SampleEntry
-   Extends     struct {
-      _            [2]uint32
-      ChannelCount uint16
-      SampleSize   uint16
-      PreDefined   uint16
-      _            uint16
-      SampleRate   uint32
-   }
-   Boxes            []*sofia.Box
-   ProtectionScheme sinf.Box
-}
-
 func (s *SampleEntry) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    err := s.SampleEntry.Read(src)
@@ -53,8 +30,9 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-         case "dec3", // Hulu
-            "esds": // Roku
+         case "btrt", // Criterion
+         "dec3", // Hulu
+         "esds": // Roku
             value := sofia.Box{BoxHeader: head}
             err := value.Read(src)
             if err != nil {
@@ -70,6 +48,29 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
          return err
       }
    }
+}
+
+// ISO/IEC 14496-12
+//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
+//      const unsigned int(32)[2] reserved = 0;
+//      unsigned int(16) channelcount;
+//      template unsigned int(16) samplesize = 16;
+//      unsigned int(16) pre_defined = 0;
+//      const unsigned int(16) reserved = 0 ;
+//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
+//   }
+type SampleEntry struct {
+   SampleEntry sofia.SampleEntry
+   Extends     struct {
+      _            [2]uint32
+      ChannelCount uint16
+      SampleSize   uint16
+      PreDefined   uint16
+      _            uint16
+      SampleRate   uint32
+   }
+   Boxes            []*sofia.Box
+   ProtectionScheme sinf.Box
 }
 
 func (s SampleEntry) Write(dst io.Writer) error {

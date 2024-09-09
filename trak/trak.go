@@ -1,21 +1,21 @@
-package file
+package trak
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/mdia"
    "io"
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class TrackBox extends Box('trak') {
 //   }
-type Track struct {
+type Box struct {
    BoxHeader sofia.BoxHeader
    Boxes     []sofia.Box
-   Media     Media
+   Media     mdia.Box
 }
 
-func (t *Track) read(r io.Reader, size int64) error {
+func (t *Box) Read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -26,7 +26,7 @@ func (t *Track) read(r io.Reader, size int64) error {
          case "mdia":
             _, size := head.GetSize()
             t.Media.BoxHeader = head
-            err := t.Media.read(r, size)
+            err := t.Media.Read(r, size)
             if err != nil {
                return err
             }
@@ -51,7 +51,7 @@ func (t *Track) read(r io.Reader, size int64) error {
    }
 }
 
-func (t Track) write(w io.Writer) error {
+func (t Box) Write(w io.Writer) error {
    err := t.BoxHeader.Write(w)
    if err != nil {
       return err
@@ -62,5 +62,5 @@ func (t Track) write(w io.Writer) error {
          return err
       }
    }
-   return t.Media.write(w)
+   return t.Media.Write(w)
 }

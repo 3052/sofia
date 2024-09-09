@@ -2,6 +2,7 @@ package file
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/trak"
    "io"
 )
 
@@ -22,10 +23,8 @@ func (b Box) write(dst io.Writer) error {
          return err
       }
    }
-   return b.Track.write(dst)
+   return b.Track.Write(dst)
 }
-
-///
 
 // ISO/IEC 14496-12
 //   aligned(8) class MovieBox extends Box('moov') {
@@ -34,7 +33,7 @@ type Box struct {
    BoxHeader  sofia.BoxHeader
    Boxes      []*sofia.Box
    Protection []ProtectionSystemSpecificHeader
-   Track      Track
+   Track      trak.Box
 }
 
 func (m *Box) read(r io.Reader, size int64) error {
@@ -66,7 +65,7 @@ func (m *Box) read(r io.Reader, size int64) error {
          case "trak":
             _, size := head.GetSize()
             m.Track.BoxHeader = head
-            err := m.Track.read(r, size)
+            err := m.Track.Read(r, size)
             if err != nil {
                return err
             }

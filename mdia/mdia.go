@@ -15,7 +15,7 @@ type Box struct {
    MediaInformation minf.Box
 }
 
-func (b *Box) read(src io.Reader, size int64) error {
+func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
@@ -49,7 +49,7 @@ func (b *Box) read(src io.Reader, size int64) error {
    }
 }
 
-func (b *Box) write(dst io.Writer) error {
+func (b *Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err

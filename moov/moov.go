@@ -5,7 +5,39 @@ import (
    "io"
 )
 
-func (m *Movie) read(r io.Reader, size int64) error {
+func (b Box) write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Boxes {
+      err := value.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   for _, protect := range b.Protection {
+      err := protect.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return b.Track.write(dst)
+}
+
+///
+
+// ISO/IEC 14496-12
+//   aligned(8) class MovieBox extends Box('moov') {
+//   }
+type Box struct {
+   BoxHeader  sofia.BoxHeader
+   Boxes      []*sofia.Box
+   Protection []ProtectionSystemSpecificHeader
+   Track      Track
+}
+
+func (m *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -47,35 +79,4 @@ func (m *Movie) read(r io.Reader, size int64) error {
          return err
       }
    }
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class MovieBox extends Box('moov') {
-//   }
-type Movie struct {
-   BoxHeader  sofia.BoxHeader
-   Boxes      []*sofia.Box
-   Protection []ProtectionSystemSpecificHeader
-   Track      Track
-}
-
-func (m Movie) write(w io.Writer) error {
-   err := m.BoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   for _, value := range m.Boxes {
-      err := value.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   for _, protect := range m.Protection {
-      err := protect.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return m.Track.write(w)
 }

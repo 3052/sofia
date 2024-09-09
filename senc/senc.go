@@ -54,7 +54,7 @@ func (s Sample) DecryptCenc(text, key []byte) error {
    return nil
 }
 
-func (b Box) write(dst io.Writer) error {
+func (b Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
@@ -76,7 +76,7 @@ func (b Box) write(dst io.Writer) error {
    return nil
 }
 
-func (b *Box) read(src io.Reader) error {
+func (b *Box) Read(src io.Reader) error {
    err := b.FullBoxHeader.Read(src)
    if err != nil {
       return err
@@ -153,14 +153,12 @@ type Sample struct {
    box                  *Box
 }
 
-///
-
-func (s Sample) write(dst io.Writer, box Box) error {
+func (s Sample) write(dst io.Writer) error {
    err := binary.Write(dst, binary.BigEndian, s.InitializationVector)
    if err != nil {
       return err
    }
-   if box.senc_use_subsamples() {
+   if s.box.senc_use_subsamples() {
       err := binary.Write(dst, binary.BigEndian, s.SubsampleCount)
       if err != nil {
          return err

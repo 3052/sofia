@@ -2,10 +2,11 @@ package mdat
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/traf"
    "io"
 )
 
-func (b *Box) Data(track TrackFragment) [][]byte {
+func (b *Box) Data(track traf.Box) [][]byte {
    split := make([][]byte, track.TrackRun.SampleCount)
    for i := range split {
       size := track.TrackRun.Sample[i].SampleSize

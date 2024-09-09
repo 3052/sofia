@@ -37,7 +37,9 @@ library for reading and writing MP4
 - [x] 11 mdia
 - [x] 12 tfhd
 - [x] 13 trun
-- [ ] 14 senc
-- [ ] 15 traf
-- [ ] 16 mdat
-- [ ] 17 file
+- [x] 14 senc
+- [x] 15 traf
+- [x] 16 mdat
+- [ ] 17 trak
+- [ ] 18 moov
+- [ ] 19 file

@@ -2,6 +2,7 @@ package traf
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/senc"
    "154.pages.dev/sofia/tfhd"
    "154.pages.dev/sofia/trun"
    "io"
@@ -14,7 +15,7 @@ type Box struct {
    BoxHeader        sofia.BoxHeader
    Boxes            []*sofia.Box
    FragmentHeader   tfhd.Box
-   SampleEncryption *SampleEncryption
+   SampleEncryption *senc.Box
    TrackRun         trun.Box
 }
 
@@ -36,15 +37,15 @@ func (b *Box) read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "senc":
-            b.SampleEncryption = &SampleEncryption{BoxHeader: head}
-            err := b.SampleEncryption.read(src)
+            b.SampleEncryption = &senc.Box{BoxHeader: head}
+            err := b.SampleEncryption.Read(src)
             if err != nil {
                return err
             }
          case "uuid":
             if b.piff(head) {
-               b.SampleEncryption = &SampleEncryption{BoxHeader: head}
-               err := b.SampleEncryption.read(src)
+               b.SampleEncryption = &senc.Box{BoxHeader: head}
+               err := b.SampleEncryption.Read(src)
                if err != nil {
                   return err
                }
@@ -106,7 +107,7 @@ func (b Box) write(dst io.Writer) error {
       return err
    }
    if b.SampleEncryption != nil {
-      b.SampleEncryption.write(dst)
+      b.SampleEncryption.Write(dst)
    }
    return b.TrackRun.Write(dst)
 }

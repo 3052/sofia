@@ -5,157 +5,6 @@ import (
    "io"
 )
 
-func (a *AudioSampleEntry) read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   err := a.SampleEntry.read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &a.Extends)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "sinf":
-            _, size := head.get_size()
-            a.ProtectionScheme.BoxHeader = head
-            err := a.ProtectionScheme.read(src, size)
-            if err != nil {
-               return err
-            }
-         case "btrt", // Criterion
-         "dec3", // Hulu
-         "esds": // Roku
-            object := Box{BoxHeader: head}
-            err := object.read(src)
-            if err != nil {
-               return err
-            }
-            a.Boxes = append(a.Boxes, &object)
-         default:
-            return box_error{a.SampleEntry.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
-func (v *VisualSampleEntry) read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   err := v.SampleEntry.read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &v.Extends)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "sinf":
-            _, size := head.get_size()
-            v.ProtectionScheme.BoxHeader = head
-            err := v.ProtectionScheme.read(src, size)
-            if err != nil {
-               return err
-            }
-         case "avcC", // Roku
-         "btrt", // Mubi
-         "clli", // Max
-         "colr", // Paramount
-         "dvcC", // Max
-         "dvvC", // Max
-         "hvcC", // Hulu
-         "mdcv", // Max
-         "pasp": // Roku
-            object := Box{BoxHeader: head}
-            err := object.read(src)
-            if err != nil {
-               return err
-            }
-            v.Boxes = append(v.Boxes, &object)
-         default:
-            return box_error{v.SampleEntry.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
-func (v VisualSampleEntry) write(w io.Writer) error {
-   err := v.SampleEntry.write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, v.Extends)
-   if err != nil {
-      return err
-   }
-   for _, object := range v.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return v.ProtectionScheme.write(w)
-}
-
-// ISO/IEC 14496-12
-//   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
-//      const unsigned int(32)[2] reserved = 0;
-//      unsigned int(16) channelcount;
-//      template unsigned int(16) samplesize = 16;
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0 ;
-//      template unsigned int(32) samplerate = { default samplerate of media}<<16;
-//   }
-type AudioSampleEntry struct {
-   SampleEntry SampleEntry
-   Extends     struct {
-      _            [2]uint32
-      ChannelCount uint16
-      SampleSize   uint16
-      PreDefined   uint16
-      _            uint16
-      SampleRate   uint32
-   }
-   Boxes            []*Box
-   ProtectionScheme ProtectionSchemeInfo
-}
-
-func (a AudioSampleEntry) write(w io.Writer) error {
-   err := a.SampleEntry.write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, a.Extends)
-   if err != nil {
-      return err
-   }
-   for _, object := range a.Boxes {
-      err := object.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return a.ProtectionScheme.write(w)
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) abstract class SampleEntry(
 //      unsigned int(32) format
@@ -169,16 +18,16 @@ type SampleEntry struct {
    DataReferenceIndex uint16
 }
 
-func (s *SampleEntry) read(src io.Reader) error {
-   _, err := io.ReadFull(src, s.Reserved[:])
+func (s *SampleEntry) Read(r io.Reader) error {
+   _, err := io.ReadFull(r, s.Reserved[:])
    if err != nil {
       return err
    }
-   return binary.Read(src, binary.BigEndian, &s.DataReferenceIndex)
+   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
 }
 
-func (s *SampleEntry) write(w io.Writer) error {
-   err := s.BoxHeader.write(w)
+func (s *SampleEntry) Write(w io.Writer) error {
+   err := s.BoxHeader.Write(w)
    if err != nil {
       return err
    }
@@ -187,42 +36,4 @@ func (s *SampleEntry) write(w io.Writer) error {
       return err
    }
    return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
-}
-
-// ISO/IEC 14496-12
-//   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
-//      unsigned int(16) pre_defined = 0;
-//      const unsigned int(16) reserved = 0;
-//      unsigned int(32)[3] pre_defined = 0;
-//      unsigned int(16) width;
-//      unsigned int(16) height;
-//      template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
-//      template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
-//      const unsigned int(32) reserved = 0;
-//      template unsigned int(16) frame_count = 1;
-//      uint(8)[32] compressorname;
-//      template unsigned int(16) depth = 0x0018;
-//      int(16) pre_defined = -1;
-//      // other boxes from derived specifications
-//      CleanApertureBox clap; // optional
-//      PixelAspectRatioBox pasp; // optional
-//   }
-type VisualSampleEntry struct {
-   SampleEntry SampleEntry
-   Extends     struct {
-      _               uint16
-      _               uint16
-      _               [3]uint32
-      Width           uint16
-      Height          uint16
-      HorizResolution uint32
-      VertResolution  uint32
-      _               uint32
-      FrameCount      uint16
-      CompressorName  [32]uint8
-      Depth           uint16
-      _               int16
-   }
-   Boxes            []*Box
-   ProtectionScheme ProtectionSchemeInfo
 }

@@ -1,3 +1,3 @@
 module 154.pages.dev/sofia
 
-go 1.21.0
+go 1.22.0

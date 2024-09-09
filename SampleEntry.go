@@ -5,26 +5,69 @@ import (
    "io"
 )
 
-func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := v.SampleEntry.read(r)
+func (a *AudioSampleEntry) read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
+   err := a.SampleEntry.read(src)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &v.Extends)
+   err = binary.Read(src, binary.BigEndian, &a.Extends)
    if err != nil {
       return err
    }
    for {
       var head BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
+      switch err {
+      case nil:
+         switch head.Type.String() {
+         case "sinf":
+            _, size := head.get_size()
+            a.ProtectionScheme.BoxHeader = head
+            err := a.ProtectionScheme.read(src, size)
+            if err != nil {
+               return err
+            }
+         case "btrt", // Criterion
+         "dec3", // Hulu
+         "esds": // Roku
+            object := Box{BoxHeader: head}
+            err := object.read(src)
+            if err != nil {
+               return err
+            }
+            a.Boxes = append(a.Boxes, &object)
+         default:
+            return box_error{a.SampleEntry.BoxHeader.Type, head.Type}
+         }
+      case io.EOF:
+         return nil
+      default:
+         return err
+      }
+   }
+}
+
+func (v *VisualSampleEntry) read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
+   err := v.SampleEntry.read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &v.Extends)
+   if err != nil {
+      return err
+   }
+   for {
+      var head BoxHeader
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "sinf":
             _, size := head.get_size()
             v.ProtectionScheme.BoxHeader = head
-            err := v.ProtectionScheme.read(r, size)
+            err := v.ProtectionScheme.read(src, size)
             if err != nil {
                return err
             }
@@ -38,7 +81,7 @@ func (v *VisualSampleEntry) read(r io.Reader, size int64) error {
          "mdcv", // Max
          "pasp": // Roku
             object := Box{BoxHeader: head}
-            err := object.read(r)
+            err := object.read(src)
             if err != nil {
                return err
             }
@@ -95,48 +138,6 @@ type AudioSampleEntry struct {
    ProtectionScheme ProtectionSchemeInfo
 }
 
-func (a *AudioSampleEntry) read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
-   err := a.SampleEntry.read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &a.Extends)
-   if err != nil {
-      return err
-   }
-   for {
-      var head BoxHeader
-      err := head.Read(r)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "sinf":
-            _, size := head.get_size()
-            a.ProtectionScheme.BoxHeader = head
-            err := a.ProtectionScheme.read(r, size)
-            if err != nil {
-               return err
-            }
-         case "dec3", // Hulu
-         "esds": // Roku
-            object := Box{BoxHeader: head}
-            err := object.read(r)
-            if err != nil {
-               return err
-            }
-            a.Boxes = append(a.Boxes, &object)
-         default:
-            return box_error{a.SampleEntry.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
 func (a AudioSampleEntry) write(w io.Writer) error {
    err := a.SampleEntry.write(w)
    if err != nil {
@@ -168,12 +169,12 @@ type SampleEntry struct {
    DataReferenceIndex uint16
 }
 
-func (s *SampleEntry) read(r io.Reader) error {
-   _, err := io.ReadFull(r, s.Reserved[:])
+func (s *SampleEntry) read(src io.Reader) error {
+   _, err := io.ReadFull(src, s.Reserved[:])
    if err != nil {
       return err
    }
-   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
+   return binary.Read(src, binary.BigEndian, &s.DataReferenceIndex)
 }
 
 func (s *SampleEntry) write(w io.Writer) error {

@@ -1,0 +1,82 @@
+[ftyp] size=28
+ - majorBrand: iso5
+ - minorVersion: 512
+ - compatibleBrand: iso5
+ - compatibleBrand: iso6
+ - compatibleBrand: mp41
+[moov] size=813
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 1000
+   - duration: 0
+   - creation time: 0
+   - modification time: 0
+  [trak] size=560
+    [tkhd] size=92 version=0 flags=000003
+     - trackID: 1
+     - duration: 0
+     - creation time: 0
+     - modification time: 0
+    [edts] size=36
+      [elst] size=28 version=0 flags=000000
+      - entry[1]: segmentDuration=0 mediaTime=0, mediaRateInteger=1 mediaRateFraction=0
+    [mdia] size=424
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 48000
+       - creation time: 0
+       - modification time: 0
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "SoundHandler"
+      [minf] size=339
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=279
+          [stsd] size=203 version=0 flags=000000
+            [enca] size=187
+              [esds] size=51 version=0 flags=000000
+                Descriptor "tag=3 ES" size=2+34
+                  Descriptor "tag=4 DecoderConfig" size=2+20
+                   - BufferSizeDB: 0
+                   - MaxBitrate: 137011
+                   - AvgBitrate: 137011
+                    Descriptor "tag=5 DecoderSpecificInfo" size=2+2
+                     - DecConfig (2B): 1190
+                  Descriptor "tag=6 SLConfig" size=2+1
+              [btrt] size=20
+               - bufferSizeDB: 0
+               - maxBitrate: 137011
+               - AvgBitrate: 137011
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: mp4a
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: e4576465-a745-213f-336c-1ef1bf5d513e
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 0
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [udta] size=97
+    [meta] size=89 version=0 flags=000000
+      [hdlr] size=33 version=0 flags=000000
+       - handlerType: mdir
+       - handlerName: ""
+      [ilst] size=44
+        [©too] size=36
+          [data] size=28
+           - data: Lavf61.5.101

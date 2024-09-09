@@ -8,6 +8,117 @@ import (
    "io"
 )
 
+type Subsample struct {
+   BytesOfClearData     uint16
+   BytesOfProtectedData uint32
+}
+
+// senc_use_subsamples: flag mask is 0x000002.
+func (b Box) senc_use_subsamples() bool {
+   return b.FullBoxHeader.GetFlags()&2 >= 1
+}
+
+func (s *Subsample) read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, s)
+}
+
+func (s Subsample) write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, s)
+}
+
+// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+func (s Sample) DecryptCenc(text, key []byte) error {
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      return err
+   }
+   var iv [16]byte
+   binary.BigEndian.PutUint64(iv[:], s.InitializationVector)
+   stream := cipher.NewCTR(block, iv[:])
+   if len(s.Subsample) >= 1 {
+      var i uint32
+      for _, sub := range s.Subsample {
+         clear := uint32(sub.BytesOfClearData)
+         if clear >= 1 {
+            i += clear
+         }
+         protected := sub.BytesOfProtectedData
+         if protected >= 1 {
+            stream.XORKeyStream(text[i:i+protected], text[i:i+protected])
+            i += protected
+         }
+      }
+   } else {
+      stream.XORKeyStream(text, text)
+   }
+   return nil
+}
+
+func (b Box) write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = b.FullBoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Sample {
+      err := value.write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (b *Box) read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      err := value.read(src)
+      if err != nil {
+         return err
+      }
+      value.box = b
+      b.Sample[i] = value
+   }
+   return nil
+}
+
+func (s *Sample) read(src io.Reader) error {
+   err := binary.Read(src, binary.BigEndian, &s.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if s.box.senc_use_subsamples() {
+      err := binary.Read(src, binary.BigEndian, &s.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sub := range s.Subsample {
+         err := sub.read(src)
+         if err != nil {
+            return err
+         }
+         s.Subsample[i] = sub
+      }
+   }
+   return nil
+}
+
 // ISO/IEC 23001-7
 //
 // if the version of the SampleEncryptionBox is 0 and the flag
@@ -32,143 +143,34 @@ type Box struct {
    BoxHeader     sofia.BoxHeader
    FullBoxHeader sofia.FullBoxHeader
    SampleCount   uint32
-   Sample       []Sample
+   Sample        []Sample
 }
 
 type Sample struct {
    InitializationVector uint64
    SubsampleCount       uint16
-   Subsample           []Subsample
-}
-
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
+   Subsample            []Subsample
+   box                  *Box
 }
 
 ///
 
-func (e *Sample) read(src io.Reader, box *Box) error {
-   err := binary.Read(src, binary.BigEndian, &e.InitializationVector)
+func (s Sample) write(dst io.Writer, box Box) error {
+   err := binary.Write(dst, binary.BigEndian, s.InitializationVector)
    if err != nil {
       return err
    }
    if box.senc_use_subsamples() {
-      err := binary.Read(src, binary.BigEndian, &e.SubsampleCount)
+      err := binary.Write(dst, binary.BigEndian, s.SubsampleCount)
       if err != nil {
          return err
       }
-      e.Subsample = make([]Subsample, e.SubsampleCount)
-      for i, sub := range e.Subsample {
-         err := sub.read(src)
-         if err != nil {
-            return err
-         }
-         e.Subsample[i] = sub
-      }
-   }
-   return nil
-}
-
-func (e Sample) write(w io.Writer, box Box) error {
-   err := binary.Write(w, binary.BigEndian, e.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if box.senc_use_subsamples() {
-      err := binary.Write(w, binary.BigEndian, e.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      for _, sub := range e.Subsample {
-         err := sub.write(w)
+      for _, sub := range s.Subsample {
+         err := sub.write(dst)
          if err != nil {
             return err
          }
       }
-   }
-   return nil
-}
-
-func (s *Box) read(src io.Reader) error {
-   err := s.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &s.SampleCount)
-   if err != nil {
-      return err
-   }
-   s.Sample = make([]Sample, s.SampleCount)
-   for i, value := range s.Sample {
-      err := value.read(src, s)
-      if err != nil {
-         return err
-      }
-      s.Sample[i] = value
-   }
-   return nil
-}
-
-// senc_use_subsamples: flag mask is 0x000002.
-func (s Box) senc_use_subsamples() bool {
-   return s.FullBoxHeader.GetFlags()&2 >= 1
-}
-
-func (s Box) write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   err = s.FullBoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.SampleCount)
-   if err != nil {
-      return err
-   }
-   for _, value := range s.Sample {
-      err := value.write(w, s)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (s *Subsample) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, s)
-}
-
-func (s Subsample) write(w io.Writer) error {
-   return binary.Write(w, binary.BigEndian, s)
-}
-
-// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func (e Sample) DecryptCenc(text, key []byte) error {
-   block, err := aes.NewCipher(key)
-   if err != nil {
-      return err
-   }
-   var iv [16]byte
-   binary.BigEndian.PutUint64(iv[:], e.InitializationVector)
-   stream := cipher.NewCTR(block, iv[:])
-   if len(e.Subsample) >= 1 {
-      var pos uint32
-      for _, ss := range e.Subsample {
-         nrClear := uint32(ss.BytesOfClearData)
-         if nrClear >= 1 {
-            pos += nrClear
-         }
-         nrEnc := ss.BytesOfProtectedData
-         if nrEnc >= 1 {
-            stream.XORKeyStream(text[pos:pos+nrEnc], text[pos:pos+nrEnc])
-            pos += nrEnc
-         }
-      }
-   } else {
-      stream.XORKeyStream(text, text)
    }
    return nil
 }

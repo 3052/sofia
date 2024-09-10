@@ -8,72 +8,6 @@ import (
    "testing"
 )
 
-func (s senc_test) encode_segment(dst io.Writer) error {
-   fmt.Println(s.segment)
-   src, err := os.Open(s.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   err = value.Read(src)
-   if err != nil {
-      return err
-   }
-   track := value.MovieFragment.TrackFragment
-   if encrypt := track.SampleEncryption; encrypt != nil {
-      key, err := hex.DecodeString(s.key)
-      if err != nil {
-         return err
-      }
-      for i, text := range value.MediaData.Data(track) {
-         err := encrypt.Sample[i].DecryptCenc(text, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return value.Write(dst)
-}
-
-func (s senc_test) encode_init(dst io.Writer) error {
-   src, err := os.Open(s.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   err = value.Read(src)
-   if err != nil {
-      return err
-   }
-   for _, protect := range value.Movie.Protection {
-      copy(protect.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := value.Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   if protect, ok := description.Protection(); ok {
-      // Firefox
-      copy(protect.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-      }
-   }
-   return value.Write(dst)
-}
-
-type senc_test struct {
-   init    string
-   segment string
-   key     string
-   dst     string
-}
-
 var senc_tests = []senc_test{
    {
       "../testdata/amc-avc1/init.m4f",
@@ -130,12 +64,6 @@ var senc_tests = []senc_test{
       "nbc-mp4a.mp4",
    },
    {
-      "../testdata/paramount-avc1/init.m4v",
-      "../testdata/paramount-avc1/seg_1.m4s",
-      "efa0258cafde6102f513f031d0632290",
-      "paramount-avc1.mp4",
-   },
-   {
       "../testdata/paramount-mp4a/init.m4v",
       "../testdata/paramount-mp4a/seg_1.m4s",
       "d98277ff6d7406ec398b49bbd52937d4",
@@ -153,6 +81,40 @@ var senc_tests = []senc_test{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-mp4a.mp4",
    },
+   {
+      "../testdata/paramount-avc1/0-17641.mp4",
+      "../testdata/paramount-avc1/17642-196772.mp4",
+      "efa0258cafde6102f513f031d0632290",
+      "paramount-avc1.mp4",
+   },
+}
+
+func (s senc_test) encode_segment(dst io.Writer) error {
+   fmt.Println(s.segment)
+   src, err := os.Open(s.segment)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var value File
+   err = value.Read(src)
+   if err != nil {
+      return err
+   }
+   track := value.MovieFragment.TrackFragment
+   if encrypt := track.SampleEncryption; encrypt != nil {
+      key, err := hex.DecodeString(s.key)
+      if err != nil {
+         return err
+      }
+      for i, text := range value.MediaData.Data(track) {
+         err := encrypt.Sample[i].DecryptCenc(text, key)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return value.Write(dst)
 }
 
 func TestSenc(t *testing.T) {
@@ -173,4 +135,42 @@ func TestSenc(t *testing.T) {
          }
       }()
    }
+}
+
+func (s senc_test) encode_init(dst io.Writer) error {
+   src, err := os.Open(s.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var value File
+   err = value.Read(src)
+   if err != nil {
+      return err
+   }
+   for _, protect := range value.Movie.Protection {
+      copy(protect.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := value.Movie.
+      Track.
+      Media.
+      MediaInformation.
+      SampleTable.
+      SampleDescription
+   if protect, ok := description.Protection(); ok {
+      // Firefox
+      copy(protect.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
+      }
+   }
+   return value.Write(dst)
+}
+
+type senc_test struct {
+   init    string
+   segment string
+   key     string
+   dst     string
 }

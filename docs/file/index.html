@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico">
+    <title>file</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">154.pages.dev/sofia</a>/file<span class="navbar-right">
+          v1.6.0 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package file</h2>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/file&#34;</span></pre>
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#File">type File</a>
+      <ul>
+          <li><a href="#File.GetMovie">func (f *File) GetMovie() (*moov.Box, bool)</a></li>
+          <li><a href="#File.Read">func (f *File) Read(r io.Reader) error</a></li>
+          <li><a href="#File.Write">func (f *File) Write(dst io.Writer) error</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="File">type File</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">File</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="File.Boxes"><span class="nx">Boxes</span></span>         <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="File.MediaData"><span class="nx">MediaData</span></span>     <span class="o">*</span><a href="../mdat"><span class="nx">mdat</span></a><span class="p">.</span><a href="../mdat#Box"><span class="nx">Box</span></a>
+	<span id="File.Movie"><span class="nx">Movie</span></span>         <span class="o">*</span><a href="../moov"><span class="nx">moov</span></a><span class="p">.</span><a href="../moov#Box"><span class="nx">Box</span></a>
+	<span id="File.MovieFragment"><span class="nx">MovieFragment</span></span> <span class="o">*</span><a href="../moof"><span class="nx">moof</span></a><span class="p">.</span><a href="../moof#Box"><span class="nx">Box</span></a>
+	<span id="File.SegmentIndex"><span class="nx">SegmentIndex</span></span>  <span class="o">*</span><a href="../sidx"><span class="nx">sidx</span></a><span class="p">.</span><a href="../sidx#Box"><span class="nx">Box</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 14496-12
+<h4 id="File.GetMovie">func (*File) GetMovie</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">GetMovie</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><a href="../moov"><span class="nx">moov</span></a><span class="p">.</span><a href="../moov#Box"><span class="nx">Box</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
+  <h4 id="File.Read">func (*File) Read</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="File.Write">func (*File) Write</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><a href="#File"><span class="nx">File</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script>
+  </body>
+</html>

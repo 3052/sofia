@@ -9,6 +9,41 @@ import (
    "io"
 )
 
+func (f *File) Write(dst io.Writer) error {
+   // KEEP THESE IN ORDER
+   for _, value := range f.Boxes {
+      err := value.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Movie != nil { // moov
+      err := f.Movie.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.SegmentIndex != nil { // sidx
+      err := f.SegmentIndex.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.MovieFragment != nil { // moof
+      err := f.MovieFragment.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.MediaData != nil { // mdat
+      err := f.MediaData.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 // ISO/IEC 14496-12
 type File struct {
    Boxes         []sofia.Box
@@ -78,39 +113,4 @@ func (f *File) GetMovie() (*moov.Box, bool) {
       return f.Movie, true
    }
    return nil, false
-}
-
-func (f *File) Write(w io.Writer) error {
-   // KEEP THESE IN ORDER
-   for _, value := range f.Boxes {
-      err := value.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Movie != nil { // moov
-      err := f.Movie.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.MovieFragment != nil { // moof
-      err := f.MovieFragment.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   if f.MediaData != nil { // mdat
-      err := f.MediaData.Write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico">
+    <title>senc</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">154.pages.dev/sofia</a>/senc<span class="navbar-right">
+          v1.6.0 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package senc</h2>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/senc&#34;</span></pre>
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Box">type Box</a>
+      <ul>
+          <li><a href="#Box.Read">func (b *Box) Read(src io.Reader) error</a></li>
+          <li><a href="#Box.Write">func (b Box) Write(dst io.Writer) error</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Sample">type Sample</a>
+      <ul>
+          <li><a href="#Sample.DecryptCenc">func (s Sample) DecryptCenc(text, key []byte) error</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Subsample">type Subsample</a>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Box">type Box</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span>     <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="Box.FullBoxHeader"><span class="nx">FullBoxHeader</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#FullBoxHeader"><span class="nx">FullBoxHeader</span></a>
+	<span id="Box.SampleCount"><span class="nx">SampleCount</span></span>   <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+	<span id="Box.Sample"><span class="nx">Sample</span></span>        <span class="p">[]</span><a href="#Sample"><span class="nx">Sample</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 23001-7
+<p>if the version of the SampleEncryptionBox is 0 and the flag
+senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+<pre>aligned(8) class SampleEncryptionBox extends FullBox(
+   &apos;senc&apos;, version, flags
+) {
+   unsigned int(32) sample_count;
+   {
+      unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+      if (UseSubSampleEncryption) {
+         unsigned int(16) subsample_count;
+         {
+            unsigned int(16) BytesOfClearData;
+            unsigned int(32) BytesOfProtectedData;
+         } [subsample_count ]
+      }
+   }[ sample_count ]
+}
+</pre>
+<h4 id="Box.Read">func (*Box) Read</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">src</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="Box.Write">func (Box) Write</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h3 id="Sample">type Sample</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">Sample</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="Sample.InitializationVector"><span class="nx">InitializationVector</span></span> <a href="https://pkg.go.dev/builtin#uint64"><span class="kt">uint64</span></a>
+	<span id="Sample.SubsampleCount"><span class="nx">SubsampleCount</span></span>       <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="Sample.Subsample"><span class="nx">Subsample</span></span>            <span class="p">[]</span><a href="#Subsample"><span class="nx">Subsample</span></a>
+	<span class="c1">// contains filtered or unexported fields
+</span><span class="c1"></span><span class="p">}</span></pre>
+    <h4 id="Sample.DecryptCenc">func (Sample) DecryptCenc</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#Sample"><span class="nx">Sample</span></a><span class="p">)</span> <span class="nf">DecryptCenc</span><span class="p">(</span><span class="nx">text</span><span class="p">,</span> <span class="nx">key</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+<h3 id="Subsample">type Subsample</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">Subsample</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="Subsample.BytesOfClearData"><span class="nx">BytesOfClearData</span></span>     <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+	<span id="Subsample.BytesOfProtectedData"><span class="nx">BytesOfProtectedData</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+<span class="p">}</span></pre>
+    </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script>
+  </body>
+</html>

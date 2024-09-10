@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico">
+    <title>encv</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">154.pages.dev/sofia</a>/encv<span class="navbar-right">
+          v1.6.0 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package encv</h2>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/encv&#34;</span></pre>
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#SampleEntry">type SampleEntry</a>
+      <ul>
+          <li><a href="#SampleEntry.Read">func (s *SampleEntry) Read(src io.Reader, size int64) error</a></li>
+          <li><a href="#SampleEntry.Write">func (s SampleEntry) Write(dst io.Writer) error</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="SampleEntry">type SampleEntry</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">SampleEntry</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="SampleEntry.SampleEntry"><span class="nx">SampleEntry</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#SampleEntry"><span class="nx">SampleEntry</span></a>
+	<span id="SampleEntry.Extends"><span class="nx">Extends</span></span>     <span class="kd">struct</span> <span class="p">{</span>
+		<span id="SampleEntry.Width"><span class="nx">Width</span></span>           <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="SampleEntry.Height"><span class="nx">Height</span></span>          <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="SampleEntry.HorizResolution"><span class="nx">HorizResolution</span></span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+		<span id="SampleEntry.VertResolution"><span class="nx">VertResolution</span></span>  <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
+
+		<span id="SampleEntry.FrameCount"><span class="nx">FrameCount</span></span>     <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span id="SampleEntry.CompressorName"><span class="nx">CompressorName</span></span> <span class="p">[</span><span class="mi">32</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a>
+		<span id="SampleEntry.Depth"><span class="nx">Depth</span></span>          <a href="https://pkg.go.dev/builtin#uint16"><span class="kt">uint16</span></a>
+		<span class="c1">// contains filtered or unexported fields
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span id="SampleEntry.Boxes"><span class="nx">Boxes</span></span>            <span class="p">[]</span><span class="o">*</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="SampleEntry.ProtectionScheme"><span class="nx">ProtectionScheme</span></span> <a href="../sinf"><span class="nx">sinf</span></a><span class="p">.</span><a href="../sinf#Box"><span class="nx">Box</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 14496-12
+<pre>class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
+   unsigned int(16) pre_defined = 0;
+   const unsigned int(16) reserved = 0;
+   unsigned int(32)[3] pre_defined = 0;
+   unsigned int(16) width;
+   unsigned int(16) height;
+   template unsigned int(32) horizresolution = 0x00480000; // 72 dpi
+   template unsigned int(32) vertresolution = 0x00480000; // 72 dpi
+   const unsigned int(32) reserved = 0;
+   template unsigned int(16) frame_count = 1;
+   uint(8)[32] compressorname;
+   template unsigned int(16) depth = 0x0018;
+   int(16) pre_defined = -1;
+   // other boxes from derived specifications
+   CleanApertureBox clap; // optional
+   PixelAspectRatioBox pasp; // optional
+}
+</pre>
+<h4 id="SampleEntry.Read">func (*SampleEntry) Read</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">src</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span> <span class="nx">size</span> <a href="https://pkg.go.dev/builtin#int64"><span class="kt">int64</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="SampleEntry.Write">func (SampleEntry) Write</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script>
+  </body>
+</html>

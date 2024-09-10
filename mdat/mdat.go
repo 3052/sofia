@@ -6,15 +6,8 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class MediaDataBox extends Box('mdat') {
-//      bit(8) data[];
-//   }
-type Box struct {
-   Box sofia.Box
-}
-
-func (b *Box) Data(track traf.Box) [][]byte {
+// BE CAREFUL WITH THE RECEIVER
+func (b Box) Data(track traf.Box) [][]byte {
    split := make([][]byte, track.TrackRun.SampleCount)
    for i := range split {
       size := track.TrackRun.Sample[i].SampleSize
@@ -27,10 +20,18 @@ func (b *Box) Data(track traf.Box) [][]byte {
    return split
 }
 
-func (b *Box) Read(src io.Reader) error {
-   return b.Box.Read(src)
-}
-
 func (b *Box) Write(dst io.Writer) error {
    return b.Box.Write(dst)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MediaDataBox extends Box('mdat') {
+//      bit(8) data[];
+//   }
+type Box struct {
+   Box sofia.Box
+}
+
+func (b *Box) Read(src io.Reader) error {
+   return b.Box.Read(src)
 }

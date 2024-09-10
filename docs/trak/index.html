@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico">
+    <title>trak</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">154.pages.dev/sofia</a>/trak<span class="navbar-right">
+          v1.6.0 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package trak</h2>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/trak&#34;</span></pre>
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Box">type Box</a>
+      <ul>
+          <li><a href="#Box.Read">func (t *Box) Read(r io.Reader, size int64) error</a></li>
+          <li><a href="#Box.Write">func (t Box) Write(w io.Writer) error</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Box">type Box</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="Box.Boxes"><span class="nx">Boxes</span></span>     <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="Box.Media"><span class="nx">Media</span></span>     <a href="../mdia"><span class="nx">mdia</span></a><span class="p">.</span><a href="../mdia#Box"><span class="nx">Box</span></a>
+<span class="p">}</span></pre>
+    <p>ISO/IEC 14496-12
+<pre>aligned(8) class TrackBox extends Box(&apos;trak&apos;) {
+}
+</pre>
+<h4 id="Box.Read">func (*Box) Read</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span> <span class="nx">size</span> <a href="https://pkg.go.dev/builtin#int64"><span class="kt">int64</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="Box.Write">func (Box) Write</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script>
+  </body>
+</html>

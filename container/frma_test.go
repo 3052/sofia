@@ -1,4 +1,4 @@
-package file
+package container
 
 import (
    "fmt"
@@ -6,8 +6,8 @@ import (
    "testing"
 )
 
-func TestTenc(t *testing.T) {
-   src, err := os.Open("../testdata/amc-avc1/init.m4f")
+func TestFrma(t *testing.T) {
+   src, err := os.Open("../testdata/hulu-ec-3/init.mp4")
    if err != nil {
       t.Fatal(err)
    }
@@ -17,16 +17,15 @@ func TestTenc(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   protect, ok := value.
+   format := value.
       Movie.
       Track.
       Media.
       MediaInformation.
       SampleTable.
       SampleDescription.
-      Protection()
-   if !ok {
-      t.Fatal("Protection")
-   }
-   fmt.Printf("%+v\n", protect.SchemeInformation.TrackEncryption)
+      AudioSample.
+      ProtectionScheme.
+      OriginalFormat
+   fmt.Printf("%q\n", format.DataFormat)
 }

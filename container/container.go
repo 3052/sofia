@@ -1,4 +1,4 @@
-package file
+package container
 
 import (
    "154.pages.dev/sofia"
@@ -8,6 +8,15 @@ import (
    "154.pages.dev/sofia/sidx"
    "io"
 )
+
+// ISO/IEC 14496-12
+type File struct {
+   Boxes         []sofia.Box
+   MediaData     *mdat.Box
+   Movie         *moov.Box
+   MovieFragment *moof.Box
+   SegmentIndex  *sidx.Box
+}
 
 func (f *File) Write(dst io.Writer) error {
    // KEEP THESE IN ORDER
@@ -42,15 +51,6 @@ func (f *File) Write(dst io.Writer) error {
       }
    }
    return nil
-}
-
-// ISO/IEC 14496-12
-type File struct {
-   Boxes         []sofia.Box
-   MediaData     *mdat.Box
-   Movie         *moov.Box
-   MovieFragment *moof.Box
-   SegmentIndex  *sidx.Box
 }
 
 func (f *File) Read(r io.Reader) error {

@@ -24,25 +24,24 @@ library for reading and writing MP4
 
 ## progress
 
-- [x]  1 frma
-- [x]  2 tenc
-- [x]  3 schi
-- [x]  4 sinf
-- [x]  5 SampleEntry
-- [x]  6 enca
-- [x]  7 encv
-- [x]  8 stsd
-- [x]  9 stbl
-- [x] 10 minf
-- [x] 11 mdia
-- [x] 12 tfhd
-- [x] 13 trun
-- [x] 14 senc
-- [x] 15 traf
-- [x] 16 mdat
-- [x] 17 trak
-- [x] 18 pssh
-- [x] 19 moov
-- [x] 20 moof
-- [ ] 21 sidx
-- [ ] 22 file
+- [x]  1 enca
+- [x]  2 encv
+- [x]  3 frma
+- [x]  4 mdat
+- [x]  5 mdia
+- [x]  6 minf
+- [x]  7 moof
+- [x]  8 moov
+- [x]  9 pssh
+- [x] 10 schi
+- [x] 11 senc
+- [x] 12 sinf
+- [x] 13 stbl
+- [x] 14 stsd
+- [x] 15 tenc
+- [x] 16 tfhd
+- [x] 17 traf
+- [x] 18 trak
+- [x] 19 trun
+- [ ] 20 sidx
+- [ ] 21 file

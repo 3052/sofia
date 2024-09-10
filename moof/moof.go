@@ -1,21 +1,21 @@
-package file
+package moof
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/traf"
    "io"
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class MovieFragmentBox extends Box('moof') {
 //   }
-type MovieFragment struct {
+type Box struct {
    BoxHeader     sofia.BoxHeader
    Boxes         []sofia.Box
-   TrackFragment TrackFragment
+   TrackFragment traf.Box
 }
 
-func (m *MovieFragment) read(r io.Reader, size int64) error {
+func (m *Box) read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -26,7 +26,7 @@ func (m *MovieFragment) read(r io.Reader, size int64) error {
          case "traf":
             _, size := head.GetSize()
             m.TrackFragment.BoxHeader = head
-            err := m.TrackFragment.read(r, size)
+            err := m.TrackFragment.Read(r, size)
             if err != nil {
                return err
             }
@@ -49,7 +49,7 @@ func (m *MovieFragment) read(r io.Reader, size int64) error {
    }
 }
 
-func (m MovieFragment) write(w io.Writer) error {
+func (m Box) write(w io.Writer) error {
    err := m.BoxHeader.Write(w)
    if err != nil {
       return err
@@ -60,5 +60,5 @@ func (m MovieFragment) write(w io.Writer) error {
          return err
       }
    }
-   return m.TrackFragment.write(w)
+   return m.TrackFragment.Write(w)
 }

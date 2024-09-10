@@ -41,6 +41,7 @@ library for reading and writing MP4
 - [x] 15 traf
 - [x] 16 mdat
 - [x] 17 trak
-- [ ] 18 pssh
-- [ ] 19 moov
-- [ ] 20 file
+- [x] 18 pssh
+- [x] 19 moov
+- [ ] 20 moof
+- [ ] 21 file

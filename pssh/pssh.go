@@ -1,4 +1,4 @@
-package file
+package pssh
 
 import (
    "154.pages.dev/sofia"
@@ -7,7 +7,7 @@ import (
 )
 
 // dashif.org/identifiers/content_protection
-func (p ProtectionSystemSpecificHeader) Widevine() bool {
+func (p Box) Widevine() bool {
    return p.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
 }
 
@@ -26,7 +26,7 @@ func (p ProtectionSystemSpecificHeader) Widevine() bool {
 //      unsigned int(32) DataSize;
 //      unsigned int(8)[DataSize] Data;
 //   }
-type ProtectionSystemSpecificHeader struct {
+type Box struct {
    BoxHeader     sofia.BoxHeader
    FullBoxHeader sofia.FullBoxHeader
    SystemId      sofia.UUID
@@ -36,7 +36,7 @@ type ProtectionSystemSpecificHeader struct {
    Data          []uint8
 }
 
-func (p *ProtectionSystemSpecificHeader) Read(r io.Reader) error {
+func (p *Box) Read(r io.Reader) error {
    err := p.FullBoxHeader.Read(r)
    if err != nil {
       return err
@@ -68,7 +68,7 @@ func (p *ProtectionSystemSpecificHeader) Read(r io.Reader) error {
    return nil
 }
 
-func (p ProtectionSystemSpecificHeader) Write(w io.Writer) error {
+func (p Box) Write(w io.Writer) error {
    err := p.BoxHeader.Write(w)
    if err != nil {
       return err

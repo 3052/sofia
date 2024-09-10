@@ -1,10 +1,21 @@
-package file
+package moov
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/pssh"
    "154.pages.dev/sofia/trak"
    "io"
 )
+
+// ISO/IEC 14496-12
+//   aligned(8) class MovieBox extends Box('moov') {
+//   }
+type Box struct {
+   BoxHeader  sofia.BoxHeader
+   Boxes      []*sofia.Box
+   Protection []pssh.Box
+   Track      trak.Box
+}
 
 func (b Box) write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
@@ -24,16 +35,6 @@ func (b Box) write(dst io.Writer) error {
       }
    }
    return b.Track.Write(dst)
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class MovieBox extends Box('moov') {
-//   }
-type Box struct {
-   BoxHeader  sofia.BoxHeader
-   Boxes      []*sofia.Box
-   Protection []ProtectionSystemSpecificHeader
-   Track      trak.Box
 }
 
 func (m *Box) read(r io.Reader, size int64) error {
@@ -56,7 +57,7 @@ func (m *Box) read(r io.Reader, size int64) error {
             }
             m.Boxes = append(m.Boxes, &value)
          case "pssh":
-            protect := ProtectionSystemSpecificHeader{BoxHeader: head}
+            protect := pssh.Box{BoxHeader: head}
             err := protect.Read(r)
             if err != nil {
                return err

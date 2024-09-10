@@ -2,8 +2,21 @@ package file
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/mdat"
+   "154.pages.dev/sofia/moof"
+   "154.pages.dev/sofia/moov"
+   "154.pages.dev/sofia/sidx"
    "io"
 )
+
+// ISO/IEC 14496-12
+type File struct {
+   Boxes         []sofia.Box
+   MediaData     *mdat.Box
+   Movie         *moov.Box
+   MovieFragment *moof.Box
+   SegmentIndex  *sidx.Box
+}
 
 func (f *File) Read(r io.Reader) error {
    for {
@@ -14,27 +27,27 @@ func (f *File) Read(r io.Reader) error {
          _, size := head.GetSize()
          switch head.Type.String() {
          case "mdat":
-            f.MediaData = &MediaData{}
+            f.MediaData = &mdat.Box{}
             f.MediaData.Box.BoxHeader = head
-            err := f.MediaData.read(r)
+            err := f.MediaData.Read(r)
             if err != nil {
                return err
             }
          case "moof":
-            f.MovieFragment = &MovieFragment{BoxHeader: head}
-            err := f.MovieFragment.read(r, size)
+            f.MovieFragment = &moof.Box{BoxHeader: head}
+            err := f.MovieFragment.Read(r, size)
             if err != nil {
                return err
             }
          case "sidx":
-            f.SegmentIndex = &SegmentIndex{BoxHeader: head}
-            err := f.SegmentIndex.read(r)
+            f.SegmentIndex = &sidx.Box{BoxHeader: head}
+            err := f.SegmentIndex.Read(r)
             if err != nil {
                return err
             }
          case "moov":
-            f.Movie = &Movie{BoxHeader: head}
-            err := f.Movie.read(r, size)
+            f.Movie = &moov.Box{BoxHeader: head}
+            err := f.Movie.Read(r, size)
             if err != nil {
                return err
             }
@@ -60,16 +73,7 @@ func (f *File) Read(r io.Reader) error {
    }
 }
 
-// ISO/IEC 14496-12
-type File struct {
-   Boxes         []sofia.Box
-   MediaData     *MediaData
-   Movie         *Movie
-   MovieFragment *MovieFragment
-   SegmentIndex  *SegmentIndex
-}
-
-func (f *File) GetMovie() (*Movie, bool) {
+func (f *File) GetMovie() (*moov.Box, bool) {
    if f.Movie != nil {
       return f.Movie, true
    }
@@ -85,25 +89,25 @@ func (f *File) Write(w io.Writer) error {
       }
    }
    if f.Movie != nil { // moov
-      err := f.Movie.write(w)
+      err := f.Movie.Write(w)
       if err != nil {
          return err
       }
    }
    if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.write(w)
+      err := f.SegmentIndex.Write(w)
       if err != nil {
          return err
       }
    }
    if f.MovieFragment != nil { // moof
-      err := f.MovieFragment.write(w)
+      err := f.MovieFragment.Write(w)
       if err != nil {
          return err
       }
    }
    if f.MediaData != nil { // mdat
-      err := f.MediaData.write(w)
+      err := f.MediaData.Write(w)
       if err != nil {
          return err
       }

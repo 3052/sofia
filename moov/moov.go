@@ -17,7 +17,7 @@ type Box struct {
    Track      trak.Box
 }
 
-func (b Box) write(dst io.Writer) error {
+func (b Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
@@ -37,7 +37,7 @@ func (b Box) write(dst io.Writer) error {
    return b.Track.Write(dst)
 }
 
-func (m *Box) read(r io.Reader, size int64) error {
+func (m *Box) Read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader

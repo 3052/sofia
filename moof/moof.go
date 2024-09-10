@@ -15,7 +15,7 @@ type Box struct {
    TrackFragment traf.Box
 }
 
-func (m *Box) read(r io.Reader, size int64) error {
+func (m *Box) Read(r io.Reader, size int64) error {
    r = io.LimitReader(r, size)
    for {
       var head sofia.BoxHeader
@@ -49,7 +49,7 @@ func (m *Box) read(r io.Reader, size int64) error {
    }
 }
 
-func (m Box) write(w io.Writer) error {
+func (m Box) Write(w io.Writer) error {
    err := m.BoxHeader.Write(w)
    if err != nil {
       return err

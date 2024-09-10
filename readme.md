@@ -35,13 +35,12 @@ library for reading and writing MP4
 - [x]  9 pssh
 - [x] 10 schi
 - [x] 11 senc
-- [x] 12 sinf
-- [x] 13 stbl
-- [x] 14 stsd
-- [x] 15 tenc
-- [x] 16 tfhd
-- [x] 17 traf
-- [x] 18 trak
-- [x] 19 trun
-- [ ] 20 sidx
-- [ ] 21 file
+- [x] 12 sidx
+- [x] 13 sinf
+- [x] 14 stbl
+- [x] 15 stsd
+- [x] 16 tenc
+- [x] 17 tfhd
+- [x] 18 traf
+- [x] 19 trak
+- [x] 20 trun

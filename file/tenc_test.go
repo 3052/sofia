@@ -1,4 +1,4 @@
-package tenc
+package file
 
 import (
    "fmt"
@@ -6,7 +6,7 @@ import (
    "testing"
 )
 
-func TestTrackEncryption(t *testing.T) {
+func TestTenc(t *testing.T) {
    in, err := os.Open("testdata/amc-avc1/init.m4f")
    if err != nil {
       t.Fatal(err)

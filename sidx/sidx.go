@@ -1,4 +1,4 @@
-package file
+package sidx
 
 import (
    "154.pages.dev/sofia"
@@ -29,7 +29,7 @@ import (
 //         unsigned int(28) SAP_delta_time;
 //      }
 //   }
-type SegmentIndex struct {
+type Box struct {
    BoxHeader                sofia.BoxHeader
    FullBoxHeader            sofia.FullBoxHeader
    ReferenceId              uint32
@@ -65,7 +65,7 @@ func (r Reference) write(dst io.Writer) error {
    return binary.Write(dst, binary.BigEndian, r)
 }
 
-func (s *SegmentIndex) Append(size uint32) {
+func (s *Box) Append(size uint32) {
    var r Reference
    r.set_referenced_size(size)
    s.Reference = append(s.Reference, r)
@@ -73,11 +73,11 @@ func (s *SegmentIndex) Append(size uint32) {
    s.BoxHeader.Size = uint32(s.GetSize())
 }
 
-func (s *SegmentIndex) New() {
+func (s *Box) New() {
    copy(s.BoxHeader.Type[:], "sidx")
 }
 
-func (s SegmentIndex) GetSize() int {
+func (s Box) GetSize() int {
    v, _ := s.BoxHeader.GetSize()
    v += binary.Size(s.FullBoxHeader)
    v += binary.Size(s.ReferenceId)
@@ -89,7 +89,7 @@ func (s SegmentIndex) GetSize() int {
    return v + binary.Size(s.Reference)
 }
 
-func (s *SegmentIndex) read(r io.Reader) error {
+func (s *Box) Read(r io.Reader) error {
    err := s.FullBoxHeader.Read(r)
    if err != nil {
       return err
@@ -136,7 +136,7 @@ func (s *SegmentIndex) read(r io.Reader) error {
    return nil
 }
 
-func (s SegmentIndex) write(w io.Writer) error {
+func (s Box) Write(w io.Writer) error {
    err := s.BoxHeader.Write(w)
    if err != nil {
       return err

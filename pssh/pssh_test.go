@@ -18,7 +18,13 @@ func TestPssh(t *testing.T) {
       return bytes.NewReader(b)
    }()
    var pssh Box
-   pssh.BoxHeader.Read(read)
-   pssh.Read(read)
+   err := pssh.BoxHeader.Read(read)
+   if err != nil {
+      t.Fatal(err)
+   }
+   err = pssh.Read(read)
+   if err != nil {
+      t.Fatal(err)
+   }
    fmt.Printf("%+v\n", pssh)
 }

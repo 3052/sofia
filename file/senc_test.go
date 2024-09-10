@@ -1,4 +1,4 @@
-package senc
+package file
 
 import (
    "encoding/hex"
@@ -10,45 +10,45 @@ import (
 
 func (t testdata) encode_segment(write io.Writer) error {
    fmt.Println(t.segment)
-   read, err := os.Open(t.segment)
+   in, err := os.Open(t.segment)
    if err != nil {
       return err
    }
-   defer read.Close()
-   var f File
-   err = f.Read(read)
+   defer in.Close()
+   var out File
+   err = out.Read(in)
    if err != nil {
       return err
    }
-   track := f.MovieFragment.TrackFragment
+   track := out.MovieFragment.TrackFragment
    if encrypt := track.SampleEncryption; encrypt != nil {
       key, err := hex.DecodeString(t.key)
       if err != nil {
          return err
       }
-      for i, data := range f.MediaData.Data(track) {
-         err := encrypt.Samples[i].DecryptCenc(data, key)
+      for i, text := range out.MediaData.Data(track) {
+         err := encrypt.Sample[i].DecryptCenc(text, key)
          if err != nil {
             return err
          }
       }
    }
-   return f.Write(write)
+   return out.Write(write)
 }
 
-func TestSampleEncryption(t *testing.T) {
+func TestSenc(t *testing.T) {
    for _, test := range tests {
       func() {
-         file, err := os.Create(test.out)
+         out, err := os.Create(test.out)
          if err != nil {
             t.Fatal(err)
          }
-         defer file.Close()
-         err = test.encode_init(file)
+         defer out.Close()
+         err = test.encode_init(out)
          if err != nil {
             t.Fatal(err)
          }
-         err = test.encode_segment(file)
+         err = test.encode_segment(out)
          if err != nil {
             t.Fatal(err)
          }
@@ -144,21 +144,21 @@ type testdata struct {
    out     string
 }
 
-func (t testdata) encode_init(out io.Writer) error {
-   in, err := os.Open(t.init)
+func (t testdata) encode_init(dst io.Writer) error {
+   src, err := os.Open(t.init)
    if err != nil {
       return err
    }
-   defer in.Close()
-   var f File
-   err = f.Read(in)
+   defer src.Close()
+   var value File
+   err = value.Read(src)
    if err != nil {
       return err
    }
-   for _, protect := range f.Movie.Protection {
+   for _, protect := range value.Movie.Protection {
       copy(protect.BoxHeader.Type[:], "free") // Firefox
    }
-   description := f.Movie.
+   description := value.Movie.
       Track.
       Media.
       MediaInformation.
@@ -172,5 +172,5 @@ func (t testdata) encode_init(out io.Writer) error {
          copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
       }
    }
-   return f.Write(out)
+   return value.Write(dst)
 }

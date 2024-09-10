@@ -1,4 +1,4 @@
-package mdat
+package file
 
 import (
    "os"
@@ -13,17 +13,17 @@ var media_data_tests = []string{
 func TestMediaData(t *testing.T) {
    for _, test := range media_data_tests {
       func() {
-         read, err := os.Open(test)
+         in, err := os.Open(test)
          if err != nil {
             t.Fatal(err)
          }
-         defer read.Close()
-         var f File
-         err = f.Read(read)
+         defer in.Close()
+         var out File
+         err = out.Read(in)
          if err != nil {
             t.Fatal(err)
          }
-         f.MediaData.Data(f.MovieFragment.TrackFragment)
+         out.MediaData.Data(out.MovieFragment.TrackFragment)
       }()
    }
 }

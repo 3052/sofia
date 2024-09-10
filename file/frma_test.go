@@ -7,17 +7,17 @@ import (
 )
 
 func TestFrma(t *testing.T) {
-   in, err := os.Open("testdata/hulu-ec-3/init.mp4")
+   src, err := os.Open("../testdata/hulu-ec-3/init.mp4")
    if err != nil {
       t.Fatal(err)
    }
-   defer in.Close()
-   var out File
-   err = out.Read(in)
+   defer src.Close()
+   var value File
+   err = value.Read(src)
    if err != nil {
       t.Fatal(err)
    }
-   format := out.
+   format := value.
       Movie.
       Track.
       Media.

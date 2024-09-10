@@ -5,25 +5,25 @@ import (
    "testing"
 )
 
-var media_data_tests = []string{
-   "testdata/max-ec-3/segment-1024.m4s",
-   "testdata/max-ec-3/segment-512.m4s",
+var mdat_tests = []string{
+   "../testdata/max-ec-3/segment-1024.m4s",
+   "../testdata/max-ec-3/segment-512.m4s",
 }
 
-func TestMediaData(t *testing.T) {
-   for _, test := range media_data_tests {
+func TestMdat(t *testing.T) {
+   for _, test := range mdat_tests {
       func() {
-         in, err := os.Open(test)
+         src, err := os.Open(test)
          if err != nil {
             t.Fatal(err)
          }
-         defer in.Close()
-         var out File
-         err = out.Read(in)
+         defer src.Close()
+         var value File
+         err = value.Read(src)
          if err != nil {
             t.Fatal(err)
          }
-         out.MediaData.Data(out.MovieFragment.TrackFragment)
+         value.MediaData.Data(value.MovieFragment.TrackFragment)
       }()
    }
 }

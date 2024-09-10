@@ -7,17 +7,17 @@ import (
 )
 
 func TestTenc(t *testing.T) {
-   in, err := os.Open("testdata/amc-avc1/init.m4f")
+   src, err := os.Open("../testdata/amc-avc1/init.m4f")
    if err != nil {
       t.Fatal(err)
    }
-   defer in.Close()
-   var out File
-   err = out.Read(in)
+   defer src.Close()
+   var value File
+   err = value.Read(src)
    if err != nil {
       t.Fatal(err)
    }
-   protect, ok := out.
+   protect, ok := value.
       Movie.
       Track.
       Media.

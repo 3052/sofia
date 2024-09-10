@@ -6,6 +6,65 @@ import (
    "io"
 )
 
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.DataOffset)
+   if err != nil {
+      return err
+   }
+   if b.first_sample_flags_present() {
+      err := binary.Read(src, binary.BigEndian, &b.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      value.box = b
+      err := value.read(src)
+      if err != nil {
+         return err
+      }
+      b.Sample[i] = value
+   }
+   return nil
+}
+
+func (s *Sample) read(src io.Reader) error {
+   if s.box.sample_duration_present() {
+      err := binary.Read(src, binary.BigEndian, &s.Duration)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_size_present() {
+      err := binary.Read(src, binary.BigEndian, &s.SampleSize)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_flags_present() {
+      err := binary.Read(src, binary.BigEndian, &s.Flags)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_composition_time_offsets_present() {
+      _, err := io.ReadFull(src, s.CompositionTimeOffset[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 func (b Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
@@ -61,34 +120,6 @@ func (b Box) sample_flags_present() bool {
 // 0x000800 sample-composition-time-offsets-present
 func (b Box) sample_composition_time_offsets_present() bool {
    return b.FullBoxHeader.GetFlags()&0x800 >= 1
-}
-
-func (s *Sample) read(src io.Reader) error {
-   if s.box.sample_duration_present() {
-      err := binary.Read(src, binary.BigEndian, &s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_size_present() {
-      err := binary.Read(src, binary.BigEndian, &s.SampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_composition_time_offsets_present() {
-      _, err := io.ReadFull(src, s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }
 
 func (s Sample) write(dst io.Writer) error {
@@ -149,37 +180,6 @@ type Box struct {
    DataOffset       int32
    FirstSampleFlags uint32
    Sample           []Sample
-}
-
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.DataOffset)
-   if err != nil {
-      return err
-   }
-   if b.first_sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      err := value.read(src)
-      if err != nil {
-         return err
-      }
-      value.box = b
-      b.Sample[i] = value
-   }
-   return nil
 }
 
 type Sample struct {

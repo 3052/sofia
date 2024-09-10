@@ -7,17 +7,17 @@ import (
 )
 
 func TestSidx(t *testing.T) {
-   in, err := os.Open("testdata/hulu-avc1/init.mp4")
+   src, err := os.Open("../testdata/hulu-avc1/init.mp4")
    if err != nil {
       t.Fatal(err)
    }
-   defer in.Close()
-   var out File
-   err = out.Read(in)
+   defer src.Close()
+   var value File
+   err = value.Read(src)
    if err != nil {
       t.Fatal(err)
    }
-   for _, data := range out.SegmentIndex.Reference {
-      fmt.Println(data.ReferencedSize())
+   for _, reference := range value.SegmentIndex.Reference {
+      fmt.Println(reference.ReferencedSize())
    }
 }

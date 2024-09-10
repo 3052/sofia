@@ -8,6 +8,27 @@ import (
    "io"
 )
 
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      value.box = b
+      err := value.read(src)
+      if err != nil {
+         return err
+      }
+      b.Sample[i] = value
+   }
+   return nil
+}
+
 type Subsample struct {
    BytesOfClearData     uint16
    BytesOfProtectedData uint32
@@ -72,27 +93,6 @@ func (b Box) Write(dst io.Writer) error {
       if err != nil {
          return err
       }
-   }
-   return nil
-}
-
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      err := value.read(src)
-      if err != nil {
-         return err
-      }
-      value.box = b
-      b.Sample[i] = value
    }
    return nil
 }

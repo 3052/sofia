@@ -103,9 +103,7 @@ func (b *Box) Write(dst io.Writer) error {
    return b.TrackRun.Write(dst)
 }
 
-///
-
-func (b Box) piff(head sofia.BoxHeader) bool {
+func (b *Box) piff(head *sofia.BoxHeader) bool {
    if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
       if b.SampleEncryption == nil {
          return true

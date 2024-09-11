@@ -8,39 +8,6 @@ import (
 )
 
 // ISO/IEC 14496-12
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
-type SampleEntry struct {
-   BoxHeader          BoxHeader
-   Reserved           [6]uint8
-   DataReferenceIndex uint16
-}
-
-func (s *SampleEntry) Read(r io.Reader) error {
-   _, err := io.ReadFull(r, s.Reserved[:])
-   if err != nil {
-      return err
-   }
-   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
-}
-
-func (s *SampleEntry) Write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(s.Reserved[:])
-   if err != nil {
-      return err
-   }
-   return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
-}
-
-// ISO/IEC 14496-12
 //
 //   aligned(8) class Box (
 //      unsigned int(32) boxtype,
@@ -144,6 +111,19 @@ func (b *BoxHeader) Write(w io.Writer) error {
    return nil
 }
 
+type Error struct {
+   Container Type
+   Box       Type
+}
+
+func (e Error) Error() string {
+   c := []byte("container:")
+   c = strconv.AppendQuote(c, e.Container.String())
+   c = append(c, " box type:"...)
+   c = strconv.AppendQuote(c, e.Box.String())
+   return string(c)
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
@@ -169,27 +149,47 @@ func (f *FullBoxHeader) Write(w io.Writer) error {
    return binary.Write(w, binary.BigEndian, f)
 }
 
-type UUID [16]uint8
-
-func (u UUID) String() string {
-   return hex.EncodeToString(u[:])
+// ISO/IEC 14496-12
+//   aligned(8) abstract class SampleEntry(
+//      unsigned int(32) format
+//   ) extends Box(format) {
+//      const unsigned int(8)[6] reserved = 0;
+//      unsigned int(16) data_reference_index;
+//   }
+type SampleEntry struct {
+   BoxHeader          BoxHeader
+   Reserved           [6]uint8
+   DataReferenceIndex uint16
 }
+
+func (s *SampleEntry) Read(r io.Reader) error {
+   _, err := io.ReadFull(r, s.Reserved[:])
+   if err != nil {
+      return err
+   }
+   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
+}
+
+func (s *SampleEntry) Write(w io.Writer) error {
+   err := s.BoxHeader.Write(w)
+   if err != nil {
+      return err
+   }
+   _, err = w.Write(s.Reserved[:])
+   if err != nil {
+      return err
+   }
+   return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
+}
+
+type Type [4]uint8
 
 func (t Type) String() string {
    return string(t[:])
 }
 
-type Type [4]uint8
+type UUID [16]uint8
 
-type Error struct {
-   Container Type
-   Box       Type
-}
-
-func (b Error) Error() string {
-   c := []byte("container:")
-   c = strconv.AppendQuote(c, b.Container.String())
-   c = append(c, " box type:"...)
-   c = strconv.AppendQuote(c, b.Box.String())
-   return string(c)
+func (u UUID) String() string {
+   return hex.EncodeToString(u[:])
 }

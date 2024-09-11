@@ -23,15 +23,15 @@ func (b *Box) Read(src io.Reader) error {
 }
 
 // BE CAREFUL WITH THE RECEIVER
-func (b Box) Data(track traf.Box) [][]byte {
-   split := make([][]byte, track.TrackRun.SampleCount)
-   for i := range split {
-      size := track.TrackRun.Sample[i].SampleSize
-      if size == 0 {
-         size = track.FragmentHeader.DefaultSampleSize
+func (b *Box) Data(track *traf.Box) [][]byte {
+   payload := b.Box.Payload
+   data := make([][]byte, track.TrackRun.SampleCount)
+   for i, s := range track.TrackRun.Sample {
+      if s.SampleSize == 0 {
+         s.SampleSize = track.FragmentHeader.DefaultSampleSize
       }
-      split[i] = b.Box.Payload[:size]
-      b.Box.Payload = b.Box.Payload[size:]
+      data[i] = payload[:s.SampleSize]
+      payload = payload[s.SampleSize:]
    }
-   return split
+   return data
 }

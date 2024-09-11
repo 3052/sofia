@@ -35,40 +35,40 @@ type Box struct {
    DefaultKid sofia.UUID
 }
 
-func (b *Box) Read(r io.Reader) error {
-   err := b.BoxHeader.Read(r)
+func (b *Box) Read(src io.Reader) error {
+   err := b.BoxHeader.Read(src)
    if err != nil {
       return err
    }
-   err = b.FullBoxHeader.Read(r)
+   err = b.FullBoxHeader.Read(src)
    if err != nil {
       return err
    }
-   err = binary.Read(r, binary.BigEndian, &b.Extends)
+   err = binary.Read(src, binary.BigEndian, &b.Extends)
    if err != nil {
       return err
    }
-   _, err = io.ReadFull(r, b.DefaultKid[:])
+   _, err = io.ReadFull(src, b.DefaultKid[:])
    if err != nil {
       return err
    }
    return nil
 }
 
-func (b Box) Write(w io.Writer) error {
-   err := b.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   err = b.FullBoxHeader.Write(w)
+   err = b.FullBoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   err = binary.Write(w, binary.BigEndian, b.Extends)
+   err = binary.Write(dst, binary.BigEndian, b.Extends)
    if err != nil {
       return err
    }
-   _, err = w.Write(b.DefaultKid[:])
+   _, err = dst.Write(b.DefaultKid[:])
    if err != nil {
       return err
    }

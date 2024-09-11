@@ -53,7 +53,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
    }
 }
 
-func (b Box) Write(dst io.Writer) error {
+func (b *Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err

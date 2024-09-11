@@ -77,17 +77,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
    }
 }
 
-func (b Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   return nil, false
-}
-
-func (b Box) Write(dst io.Writer) error {
+func (b *Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
@@ -121,12 +111,22 @@ func (b Box) Write(dst io.Writer) error {
    return nil
 }
 
-func (b Box) Protection() (*sinf.Box, bool) {
+func (b *Box) Protection() (*sinf.Box, bool) {
    if v := b.AudioSample; v != nil {
       return &v.ProtectionScheme, true
    }
    if v := b.VisualSample; v != nil {
       return &v.ProtectionScheme, true
+   }
+   return nil, false
+}
+
+func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.SampleEntry, true
    }
    return nil, false
 }

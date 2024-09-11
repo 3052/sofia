@@ -20,29 +20,29 @@ type Box struct {
    SchemeInformation schi.Box
 }
 
-func (b *Box) Read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (b *Box) Read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
          case "frma":
             b.OriginalFormat.BoxHeader = head
-            err := b.OriginalFormat.Read(r)
+            err := b.OriginalFormat.Read(src)
             if err != nil {
                return err
             }
          case "schi":
             b.SchemeInformation.BoxHeader = head
-            err := b.SchemeInformation.Read(r)
+            err := b.SchemeInformation.Read(src)
             if err != nil {
                return err
             }
          case "schm": // Roku
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
@@ -58,20 +58,20 @@ func (b *Box) Read(r io.Reader, size int64) error {
    }
 }
 
-func (b Box) Write(w io.Writer) error {
-   err := b.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
    for _, value := range b.Boxes {
-      err := value.Write(w)
+      err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   err = b.OriginalFormat.Write(w)
+   err = b.OriginalFormat.Write(dst)
    if err != nil {
       return err
    }
-   return b.SchemeInformation.Write(w)
+   return b.SchemeInformation.Write(dst)
 }

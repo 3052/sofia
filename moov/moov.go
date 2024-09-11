@@ -8,12 +8,13 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MovieBox extends Box('moov') {
 //   }
 type Box struct {
-   BoxHeader  sofia.BoxHeader
-   Box      []*sofia.Box
-   Pssh []pssh.Box
+   BoxHeader sofia.BoxHeader
+   Box       []*sofia.Box
+   Pssh      []pssh.Box
    Trak      trak.Box
 }
 
@@ -46,10 +47,10 @@ func (m *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "iods", // Roku
-         "meta", // Paramount
-         "mvex", // Roku
-         "mvhd", // Roku
-         "udta": // Criterion
+            "meta", // Paramount
+            "mvex", // Roku
+            "mvhd", // Roku
+            "udta": // Criterion
             value := sofia.Box{BoxHeader: head}
             err := value.Read(src)
             if err != nil {

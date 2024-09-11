@@ -43,29 +43,6 @@ func (b *Box) Write(dst io.Writer) error {
    return nil
 }
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType UUID
-}
-
 func (b *BoxHeader) GetSize() (int, int64) {
    size := binary.Size(b.Size)
    size += binary.Size(b.Type)
@@ -124,17 +101,6 @@ func (e Error) Error() string {
    return string(c)
 }
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
 func (f *FullBoxHeader) GetFlags() uint32 {
    var flag [4]byte
    copy(flag[1:], f.Flags[:])
@@ -147,19 +113,6 @@ func (f *FullBoxHeader) Read(src io.Reader) error {
 
 func (f *FullBoxHeader) Write(dst io.Writer) error {
    return binary.Write(dst, binary.BigEndian, f)
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
-type SampleEntry struct {
-   BoxHeader          BoxHeader
-   Reserved           [6]uint8
-   DataReferenceIndex uint16
 }
 
 func (s *SampleEntry) Read(src io.Reader) error {
@@ -188,8 +141,55 @@ func (t Type) String() string {
    return string(t[:])
 }
 
-type UUID [16]uint8
+// ISO/IEC 14496-12
+//
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
 
-func (u UUID) String() string {
+// ISO/IEC 14496-12
+//
+//   aligned(8) class BoxHeader (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType Uuid
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) abstract class SampleEntry(
+//      unsigned int(32) format
+//   ) extends Box(format) {
+//      const unsigned int(8)[6] reserved = 0;
+//      unsigned int(16) data_reference_index;
+//   }
+type SampleEntry struct {
+   BoxHeader          BoxHeader
+   Reserved           [6]uint8
+   DataReferenceIndex uint16
+}
+
+func (u Uuid) String() string {
    return hex.EncodeToString(u[:])
 }
+
+type Uuid [16]uint8

@@ -94,26 +94,6 @@ func (b *Box) Write(dst io.Writer) error {
    return nil
 }
 
-func (b *Box) Protection() (*sinf.Box, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.Sinf, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.Sinf, true
-   }
-   return nil, false
-}
-
-func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   return nil, false
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
 //      int i ;
@@ -129,4 +109,24 @@ type Box struct {
    Box         []sofia.Box
    AudioSample   *enca.SampleEntry
    VisualSample  *encv.SampleEntry
+}
+
+func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   return nil, false
+}
+
+func (b *Box) Sinf() (*sinf.Box, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.Sinf, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.Sinf, true
+   }
+   return nil, false
 }

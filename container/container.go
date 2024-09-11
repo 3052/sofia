@@ -103,8 +103,8 @@ func (f *File) Read(src io.Reader) error {
 type File struct {
    Box  []sofia.Box
    Mdat *mdat.Box
-   Moov *moov.Box
    Moof *moof.Box
+   Moov *moov.Box
    Sidx *sidx.Box
 }
 

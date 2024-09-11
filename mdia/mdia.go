@@ -7,12 +7,13 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MediaBox extends Box('mdia') {
 //   }
 type Box struct {
-   BoxHeader        sofia.BoxHeader
-   Boxes            []sofia.Box
-   Minf minf.Box
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Minf      minf.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -37,7 +38,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, value)
+            b.Box = append(b.Box, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -54,7 +55,7 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err

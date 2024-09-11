@@ -32,7 +32,7 @@ type Box struct {
       DefaultIsProtected     uint8
       DefaultPerSampleIvSize uint8
    }
-   DefaultKid sofia.UUID
+   DefaultKid sofia.Uuid
 }
 
 func (b *Box) Read(src io.Reader) error {

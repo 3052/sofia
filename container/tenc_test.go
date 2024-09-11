@@ -17,16 +17,9 @@ func TestTenc(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   protect, ok := value.
-      Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription.
-      Protection()
+   sinf, ok := value.Moov.Trak.Mdia.Minf.Stbl.Stsd.Sinf()
    if !ok {
-      t.Fatal("Protection")
+      t.Fatal("Sinf")
    }
-   fmt.Printf("%+v\n", protect.SchemeInformation.TrackEncryption)
+   fmt.Printf("%+v\n", sinf.Schi.Tenc)
 }

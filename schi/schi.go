@@ -7,12 +7,13 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class SchemeInformationBox extends Box('schi') {
 //      Box scheme_specific_data[];
 //   }
 type Box struct {
-   BoxHeader       sofia.BoxHeader
-   Tenc tenc.Box
+   BoxHeader sofia.BoxHeader
+   Tenc      tenc.Box
 }
 
 func (b *Box) Read(src io.Reader) error {

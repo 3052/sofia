@@ -7,12 +7,13 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MediaInformationBox extends Box('minf') {
 //   }
 type Box struct {
-   BoxHeader   sofia.BoxHeader
+   BoxHeader sofia.BoxHeader
    Box       []sofia.Box
-   Stbl stbl.Box
+   Stbl      stbl.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {

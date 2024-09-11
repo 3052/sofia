@@ -7,12 +7,13 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class TrackBox extends Box('trak') {
 //   }
 type Box struct {
    BoxHeader sofia.BoxHeader
-   Box     []sofia.Box
-   Mdia     mdia.Box
+   Box       []sofia.Box
+   Mdia      mdia.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {

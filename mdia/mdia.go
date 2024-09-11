@@ -12,7 +12,7 @@ import (
 type Box struct {
    BoxHeader        sofia.BoxHeader
    Boxes            []sofia.Box
-   MediaInformation minf.Box
+   Minf minf.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -25,8 +25,8 @@ func (b *Box) Read(src io.Reader, size int64) error {
          switch head.Type.String() {
          case "minf":
             _, size := head.GetSize()
-            b.MediaInformation.BoxHeader = head
-            err := b.MediaInformation.Read(src, size)
+            b.Minf.BoxHeader = head
+            err := b.Minf.Read(src, size)
             if err != nil {
                return err
             }
@@ -60,5 +60,5 @@ func (b *Box) Write(dst io.Writer) error {
          return err
       }
    }
-   return b.MediaInformation.Write(dst)
+   return b.Minf.Write(dst)
 }

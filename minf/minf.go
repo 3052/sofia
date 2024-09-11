@@ -11,8 +11,8 @@ import (
 //   }
 type Box struct {
    BoxHeader   sofia.BoxHeader
-   Boxes       []sofia.Box
-   SampleTable stbl.Box
+   Box       []sofia.Box
+   Stbl stbl.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -25,8 +25,8 @@ func (b *Box) Read(src io.Reader, size int64) error {
          switch head.Type.String() {
          case "stbl":
             _, size := head.GetSize()
-            b.SampleTable.BoxHeader = head
-            err := b.SampleTable.Read(src, size)
+            b.Stbl.BoxHeader = head
+            err := b.Stbl.Read(src, size)
             if err != nil {
                return err
             }
@@ -38,7 +38,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, value)
+            b.Box = append(b.Box, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -55,11 +55,11 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return b.SampleTable.Write(dst)
+   return b.Stbl.Write(dst)
 }

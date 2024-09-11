@@ -11,8 +11,8 @@ import (
 //   }
 type Box struct {
    BoxHeader     sofia.BoxHeader
-   Boxes         []sofia.Box
-   TrackFragment traf.Box
+   Box         []sofia.Box
+   Traf traf.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -25,8 +25,8 @@ func (b *Box) Read(src io.Reader, size int64) error {
          switch head.Type.String() {
          case "traf":
             _, size := head.GetSize()
-            b.TrackFragment.BoxHeader = head
-            err := b.TrackFragment.Read(src, size)
+            b.Traf.BoxHeader = head
+            err := b.Traf.Read(src, size)
             if err != nil {
                return err
             }
@@ -37,7 +37,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, value)
+            b.Box = append(b.Box, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -54,11 +54,11 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   return b.TrackFragment.Write(dst)
+   return b.Traf.Write(dst)
 }

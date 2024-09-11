@@ -12,11 +12,11 @@ import (
 //   }
 type Box struct {
    BoxHeader       sofia.BoxHeader
-   TrackEncryption tenc.Box
+   Tenc tenc.Box
 }
 
 func (b *Box) Read(src io.Reader) error {
-   return b.TrackEncryption.Read(src)
+   return b.Tenc.Read(src)
 }
 
 func (b *Box) Write(dst io.Writer) error {
@@ -24,5 +24,5 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   return b.TrackEncryption.Write(dst)
+   return b.Tenc.Write(dst)
 }

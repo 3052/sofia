@@ -25,7 +25,7 @@ type Box struct {
    FullBoxHeader sofia.FullBoxHeader
    SystemId      sofia.UUID
    KidCount      uint32
-   KID           []sofia.UUID
+   Kid           []sofia.UUID
    DataSize      uint32
    Data          []uint8
 }
@@ -44,8 +44,8 @@ func (b *Box) Read(src io.Reader) error {
       if err != nil {
          return err
       }
-      b.KID = make([]sofia.UUID, b.KidCount)
-      err = binary.Read(src, binary.BigEndian, b.KID)
+      b.Kid = make([]sofia.UUID, b.KidCount)
+      err = binary.Read(src, binary.BigEndian, b.Kid)
       if err != nil {
          return err
       }
@@ -80,7 +80,7 @@ func (b *Box) Write(dst io.Writer) error {
       if err != nil {
          return err
       }
-      err = binary.Write(dst, binary.BigEndian, b.KID)
+      err = binary.Write(dst, binary.BigEndian, b.Kid)
       if err != nil {
          return err
       }

@@ -12,9 +12,9 @@ import (
 //   }
 type Box struct {
    BoxHeader  sofia.BoxHeader
-   Boxes      []*sofia.Box
-   Protection []pssh.Box
-   Track      trak.Box
+   Box      []*sofia.Box
+   Pssh []pssh.Box
+   Trak      trak.Box
 }
 
 func (b *Box) Write(dst io.Writer) error {
@@ -22,19 +22,19 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   for _, protect := range b.Protection {
+   for _, protect := range b.Pssh {
       err := protect.Write(dst)
       if err != nil {
          return err
       }
    }
-   return b.Track.Write(dst)
+   return b.Trak.Write(dst)
 }
 
 func (m *Box) Read(src io.Reader, size int64) error {
@@ -55,18 +55,18 @@ func (m *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            m.Boxes = append(m.Boxes, &value)
+            m.Box = append(m.Box, &value)
          case "pssh":
             protect := pssh.Box{BoxHeader: head}
             err := protect.Read(src)
             if err != nil {
                return err
             }
-            m.Protection = append(m.Protection, protect)
+            m.Pssh = append(m.Pssh, protect)
          case "trak":
             _, size := head.GetSize()
-            m.Track.BoxHeader = head
-            err := m.Track.Read(src, size)
+            m.Trak.BoxHeader = head
+            err := m.Trak.Read(src, size)
             if err != nil {
                return err
             }

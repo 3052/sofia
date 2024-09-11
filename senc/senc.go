@@ -55,40 +55,6 @@ func (s *Sample) read(src io.Reader) error {
    return nil
 }
 
-// ISO/IEC 23001-7
-//
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-//   aligned(8) class SampleEncryptionBox extends FullBox(
-//      'senc', version, flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   SampleCount   uint32
-   Sample        []Sample
-}
-
-type Sample struct {
-   InitializationVector uint64
-   SubsampleCount       uint16
-   Subsample            []Subsample
-   box                  *Box
-}
-
 // senc_use_subsamples: flag mask is 0x000002.
 func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
@@ -171,4 +137,38 @@ func (s *Sample) DecryptCenc(text, key []byte) error {
       stream.XORKeyStream(text, text)
    }
    return nil
+}
+
+// ISO/IEC 23001-7
+//
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+//   aligned(8) class SampleEncryptionBox extends FullBox(
+//      'senc', version, flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   SampleCount   uint32
+   Sample        []Sample
+}
+
+type Sample struct {
+   InitializationVector uint64
+   SubsampleCount       uint16
+   Subsample            []Subsample
+   box                  *Box
 }

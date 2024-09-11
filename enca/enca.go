@@ -25,20 +25,20 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
          switch head.Type.String() {
          case "sinf":
             _, size := head.GetSize()
-            s.ProtectionScheme.BoxHeader = head
-            err := s.ProtectionScheme.Read(src, size)
+            s.Sinf.BoxHeader = head
+            err := s.Sinf.Read(src, size)
             if err != nil {
                return err
             }
          case "btrt", // Criterion
-         "dec3", // Hulu
-         "esds": // Roku
+            "dec3", // Hulu
+            "esds": // Roku
             value := sofia.Box{BoxHeader: head}
             err := value.Read(src)
             if err != nil {
                return err
             }
-            s.Boxes = append(s.Boxes, &value)
+            s.Box = append(s.Box, &value)
          default:
             return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
          }
@@ -50,7 +50,26 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
    }
 }
 
+func (s *SampleEntry) Write(dst io.Writer) error {
+   err := s.SampleEntry.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, s.Extends)
+   if err != nil {
+      return err
+   }
+   for _, value := range s.Box {
+      err := value.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return s.Sinf.Write(dst)
+}
+
 // ISO/IEC 14496-12
+//
 //   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //      const unsigned int(32)[2] reserved = 0;
 //      unsigned int(16) channelcount;
@@ -69,24 +88,6 @@ type SampleEntry struct {
       _            uint16
       SampleRate   uint32
    }
-   Boxes            []*sofia.Box
-   ProtectionScheme sinf.Box
-}
-
-func (s *SampleEntry) Write(dst io.Writer) error {
-   err := s.SampleEntry.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, s.Extends)
-   if err != nil {
-      return err
-   }
-   for _, value := range s.Boxes {
-      err := value.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return s.ProtectionScheme.Write(dst)
+   Box  []*sofia.Box
+   Sinf sinf.Box
 }

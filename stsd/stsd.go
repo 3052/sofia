@@ -113,10 +113,10 @@ func (b *Box) Write(dst io.Writer) error {
 
 func (b *Box) Protection() (*sinf.Box, bool) {
    if v := b.AudioSample; v != nil {
-      return &v.ProtectionScheme, true
+      return &v.Sinf, true
    }
    if v := b.VisualSample; v != nil {
-      return &v.ProtectionScheme, true
+      return &v.Sinf, true
    }
    return nil, false
 }

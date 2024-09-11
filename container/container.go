@@ -9,43 +9,34 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-type File struct {
-   Boxes         []sofia.Box
-   MediaData     *mdat.Box
-   Movie         *moov.Box
-   MovieFragment *moof.Box
-   SegmentIndex  *sidx.Box
-}
-
 func (f *File) Write(dst io.Writer) error {
    // KEEP THESE IN ORDER
-   for _, value := range f.Boxes {
+   for _, value := range f.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   if f.Movie != nil { // moov
-      err := f.Movie.Write(dst)
+   if f.Moov != nil {
+      err := f.Moov.Write(dst)
       if err != nil {
          return err
       }
    }
-   if f.SegmentIndex != nil { // sidx
-      err := f.SegmentIndex.Write(dst)
+   if f.Sidx != nil {
+      err := f.Sidx.Write(dst)
       if err != nil {
          return err
       }
    }
-   if f.MovieFragment != nil { // moof
-      err := f.MovieFragment.Write(dst)
+   if f.Moof != nil {
+      err := f.Moof.Write(dst)
       if err != nil {
          return err
       }
    }
-   if f.MediaData != nil { // mdat
-      err := f.MediaData.Write(dst)
+   if f.Mdat != nil {
+      err := f.Mdat.Write(dst)
       if err != nil {
          return err
       }
@@ -62,27 +53,27 @@ func (f *File) Read(r io.Reader) error {
          _, size := head.GetSize()
          switch head.Type.String() {
          case "mdat":
-            f.MediaData = &mdat.Box{}
-            f.MediaData.Box.BoxHeader = head
-            err := f.MediaData.Read(r)
+            f.Mdat = &mdat.Box{}
+            f.Mdat.Box.BoxHeader = head
+            err := f.Mdat.Read(r)
             if err != nil {
                return err
             }
          case "moof":
-            f.MovieFragment = &moof.Box{BoxHeader: head}
-            err := f.MovieFragment.Read(r, size)
+            f.Moof = &moof.Box{BoxHeader: head}
+            err := f.Moof.Read(r, size)
             if err != nil {
                return err
             }
          case "sidx":
-            f.SegmentIndex = &sidx.Box{BoxHeader: head}
-            err := f.SegmentIndex.Read(r)
+            f.Sidx = &sidx.Box{BoxHeader: head}
+            err := f.Sidx.Read(r)
             if err != nil {
                return err
             }
          case "moov":
-            f.Movie = &moov.Box{BoxHeader: head}
-            err := f.Movie.Read(r, size)
+            f.Moov = &moov.Box{BoxHeader: head}
+            err := f.Moov.Read(r, size)
             if err != nil {
                return err
             }
@@ -94,7 +85,7 @@ func (f *File) Read(r io.Reader) error {
             if err != nil {
                return err
             }
-            f.Boxes = append(f.Boxes, object)
+            f.Box = append(f.Box, object)
          default:
             var container sofia.Type
             copy(container[:], "File")
@@ -108,9 +99,18 @@ func (f *File) Read(r io.Reader) error {
    }
 }
 
-func (f *File) GetMovie() (*moov.Box, bool) {
-   if f.Movie != nil {
-      return f.Movie, true
+// ISO/IEC 14496-12
+type File struct {
+   Box  []sofia.Box
+   Mdat *mdat.Box
+   Moov *moov.Box
+   Moof *moof.Box
+   Sidx *sidx.Box
+}
+
+func (f *File) GetMoov() (*moov.Box, bool) {
+   if f.Moov != nil {
+      return f.Moov, true
    }
    return nil, false
 }

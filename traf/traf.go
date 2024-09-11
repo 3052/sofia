@@ -19,15 +19,6 @@ type Box struct {
    TrackRun         trun.Box
 }
 
-func (b Box) piff(head sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.SampleEncryption == nil {
-         return true
-      }
-   }
-   return false
-}
-
 func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
@@ -91,7 +82,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
    }
 }
 
-func (b Box) Write(dst io.Writer) error {
+func (b *Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
@@ -110,4 +101,15 @@ func (b Box) Write(dst io.Writer) error {
       b.SampleEncryption.Write(dst)
    }
    return b.TrackRun.Write(dst)
+}
+
+///
+
+func (b Box) piff(head sofia.BoxHeader) bool {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+      if b.SampleEncryption == nil {
+         return true
+      }
+   }
+   return false
 }

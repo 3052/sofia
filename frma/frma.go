@@ -25,7 +25,7 @@ func (b *Box) Read(r io.Reader) error {
    return nil
 }
 
-func (b Box) Write(w io.Writer) error {
+func (b *Box) Write(w io.Writer) error {
    err := b.BoxHeader.Write(w)
    if err != nil {
       return err

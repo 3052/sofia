@@ -73,7 +73,7 @@ type SampleEntry struct {
    ProtectionScheme sinf.Box
 }
 
-func (s SampleEntry) Write(dst io.Writer) error {
+func (s *SampleEntry) Write(dst io.Writer) error {
    err := s.SampleEntry.Write(dst)
    if err != nil {
       return err

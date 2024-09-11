@@ -6,20 +6,6 @@ import (
    "io"
 )
 
-// BE CAREFUL WITH THE RECEIVER
-func (b Box) Data(track traf.Box) [][]byte {
-   split := make([][]byte, track.TrackRun.SampleCount)
-   for i := range split {
-      size := track.TrackRun.Sample[i].SampleSize
-      if size == 0 {
-         size = track.FragmentHeader.DefaultSampleSize
-      }
-      split[i] = b.Box.Payload[:size]
-      b.Box.Payload = b.Box.Payload[size:]
-   }
-   return split
-}
-
 func (b *Box) Write(dst io.Writer) error {
    return b.Box.Write(dst)
 }
@@ -34,4 +20,18 @@ type Box struct {
 
 func (b *Box) Read(src io.Reader) error {
    return b.Box.Read(src)
+}
+
+// BE CAREFUL WITH THE RECEIVER
+func (b Box) Data(track traf.Box) [][]byte {
+   split := make([][]byte, track.TrackRun.SampleCount)
+   for i := range split {
+      size := track.TrackRun.Sample[i].SampleSize
+      if size == 0 {
+         size = track.FragmentHeader.DefaultSampleSize
+      }
+      split[i] = b.Box.Payload[:size]
+      b.Box.Payload = b.Box.Payload[size:]
+   }
+   return split
 }

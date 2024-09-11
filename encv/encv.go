@@ -94,7 +94,7 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
    }
 }
 
-func (s SampleEntry) Write(dst io.Writer) error {
+func (s *SampleEntry) Write(dst io.Writer) error {
    err := s.SampleEntry.Write(dst)
    if err != nil {
       return err

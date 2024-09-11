@@ -41,139 +41,139 @@ type Box struct {
    Reference                []Reference
 }
 
-type Reference [3]uint32
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
+func (b *Box) Append(size uint32) {
+   var ref Reference
+   ref.set_referenced_size(size)
+   b.Reference = append(b.Reference, ref)
+   b.ReferenceCount++
+   b.BoxHeader.Size = uint32(b.GetSize())
 }
 
-func (Reference) mask() uint32 {
-   return 0xFFFFFFFF >> 1
+func (b *Box) New() {
+   copy(b.BoxHeader.Type[:], "sidx")
 }
 
 func (r *Reference) read(src io.Reader) error {
    return binary.Read(src, binary.BigEndian, r)
 }
 
-func (r Reference) set_referenced_size(v uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= v
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.ReferenceId)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.Timescale)
+   if err != nil {
+      return err
+   }
+   if b.FullBoxHeader.Version == 0 {
+      b.EarliestPresentationTime = make([]byte, 4)
+      b.FirstOffset = make([]byte, 4)
+   } else {
+      b.EarliestPresentationTime = make([]byte, 8)
+      b.FirstOffset = make([]byte, 8)
+   }
+   _, err = io.ReadFull(src, b.EarliestPresentationTime)
+   if err != nil {
+      return err
+   }
+   _, err = io.ReadFull(src, b.FirstOffset)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.Reserved)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.ReferenceCount)
+   if err != nil {
+      return err
+   }
+   b.Reference = make([]Reference, b.ReferenceCount)
+   for i, value := range b.Reference {
+      err := value.read(src)
+      if err != nil {
+         return err
+      }
+      b.Reference[i] = value
+   }
+   return nil
+}
+
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = b.FullBoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.ReferenceId)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.Timescale)
+   if err != nil {
+      return err
+   }
+   _, err = dst.Write(b.EarliestPresentationTime)
+   if err != nil {
+      return err
+   }
+   _, err = dst.Write(b.FirstOffset)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.Reserved)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.ReferenceCount)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Reference {
+      err := value.write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (*Reference) mask() uint32 {
+   return 0xFFFFFFFF >> 1
 }
 
 func (r Reference) write(dst io.Writer) error {
    return binary.Write(dst, binary.BigEndian, r)
 }
 
-func (s *Box) Append(size uint32) {
-   var r Reference
-   r.set_referenced_size(size)
-   s.Reference = append(s.Reference, r)
-   s.ReferenceCount++
-   s.BoxHeader.Size = uint32(s.GetSize())
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
 }
 
-func (s *Box) New() {
-   copy(s.BoxHeader.Type[:], "sidx")
+func (r Reference) set_referenced_size(size uint32) {
+   r[0] &= ^r.mask()
+   r[0] |= size
 }
 
-func (s Box) GetSize() int {
-   v, _ := s.BoxHeader.GetSize()
-   v += binary.Size(s.FullBoxHeader)
-   v += binary.Size(s.ReferenceId)
-   v += binary.Size(s.Timescale)
-   v += binary.Size(s.EarliestPresentationTime)
-   v += binary.Size(s.FirstOffset)
-   v += binary.Size(s.Reserved)
-   v += binary.Size(s.ReferenceCount)
-   return v + binary.Size(s.Reference)
-}
+type Reference [3]uint32
 
-func (s *Box) Read(r io.Reader) error {
-   err := s.FullBoxHeader.Read(r)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.ReferenceId)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.Timescale)
-   if err != nil {
-      return err
-   }
-   if s.FullBoxHeader.Version == 0 {
-      s.EarliestPresentationTime = make([]byte, 4)
-      s.FirstOffset = make([]byte, 4)
-   } else {
-      s.EarliestPresentationTime = make([]byte, 8)
-      s.FirstOffset = make([]byte, 8)
-   }
-   _, err = io.ReadFull(r, s.EarliestPresentationTime)
-   if err != nil {
-      return err
-   }
-   _, err = io.ReadFull(r, s.FirstOffset)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.Reserved)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(r, binary.BigEndian, &s.ReferenceCount)
-   if err != nil {
-      return err
-   }
-   s.Reference = make([]Reference, s.ReferenceCount)
-   for i, value := range s.Reference {
-      err := value.read(r)
-      if err != nil {
-         return err
-      }
-      s.Reference[i] = value
-   }
-   return nil
-}
-
-func (s Box) Write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   err = s.FullBoxHeader.Write(w)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.ReferenceId)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.Timescale)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(s.EarliestPresentationTime)
-   if err != nil {
-      return err
-   }
-   _, err = w.Write(s.FirstOffset)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.Reserved)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(w, binary.BigEndian, s.ReferenceCount)
-   if err != nil {
-      return err
-   }
-   for _, value := range s.Reference {
-      err := value.write(w)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
+func (b *Box) GetSize() int {
+   v, _ := b.BoxHeader.GetSize()
+   v += binary.Size(b.FullBoxHeader)
+   v += binary.Size(b.ReferenceId)
+   v += binary.Size(b.Timescale)
+   v += binary.Size(b.EarliestPresentationTime)
+   v += binary.Size(b.FirstOffset)
+   v += binary.Size(b.Reserved)
+   v += binary.Size(b.ReferenceCount)
+   return v + binary.Size(b.Reference)
 }

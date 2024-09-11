@@ -65,91 +65,6 @@ func (s *Sample) read(src io.Reader) error {
    return nil
 }
 
-func (b Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.DataOffset)
-   if err != nil {
-      return err
-   }
-   if b.first_sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   for _, value := range b.Sample {
-      err := value.write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-// 0x000004 first-sample-flags-present
-func (b Box) first_sample_flags_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x4 >= 1
-}
-
-// 0x000100 sample-duration-present
-func (b Box) sample_duration_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x100 >= 1
-}
-
-// 0x000200 sample-size-present
-func (b Box) sample_size_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x200 >= 1
-}
-
-// 0x000400 sample-flags-present
-func (b Box) sample_flags_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x400 >= 1
-}
-
-// 0x000800 sample-composition-time-offsets-present
-func (b Box) sample_composition_time_offsets_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x800 >= 1
-}
-
-func (s Sample) write(dst io.Writer) error {
-   if s.box.sample_duration_present() {
-      err := binary.Write(dst, binary.BigEndian, s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_size_present() {
-      err := binary.Write(dst, binary.BigEndian, s.SampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_composition_time_offsets_present() {
-      _, err := dst.Write(s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 14496-12
 //
 // If the data-offset is present, it is relative to the base-data-offset
@@ -182,10 +97,95 @@ type Box struct {
    Sample           []Sample
 }
 
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = b.FullBoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.DataOffset)
+   if err != nil {
+      return err
+   }
+   if b.first_sample_flags_present() {
+      err := binary.Write(dst, binary.BigEndian, b.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   for _, value := range b.Sample {
+      err := value.write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
 type Sample struct {
    Duration              uint32
    SampleSize            uint32
    Flags                 uint32
    CompositionTimeOffset [4]byte
    box                   *Box
+}
+
+func (s *Sample) write(dst io.Writer) error {
+   if s.box.sample_duration_present() {
+      err := binary.Write(dst, binary.BigEndian, s.Duration)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_size_present() {
+      err := binary.Write(dst, binary.BigEndian, s.SampleSize)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_flags_present() {
+      err := binary.Write(dst, binary.BigEndian, s.Flags)
+      if err != nil {
+         return err
+      }
+   }
+   if s.box.sample_composition_time_offsets_present() {
+      _, err := dst.Write(s.CompositionTimeOffset[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+// 0x000004 first-sample-flags-present
+func (b *Box) first_sample_flags_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x4 >= 1
+}
+
+// 0x000100 sample-duration-present
+func (b *Box) sample_duration_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x100 >= 1
+}
+
+// 0x000200 sample-size-present
+func (b *Box) sample_size_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x200 >= 1
+}
+
+// 0x000400 sample-flags-present
+func (b *Box) sample_flags_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x400 >= 1
+}
+
+// 0x000800 sample-composition-time-offsets-present
+func (b *Box) sample_composition_time_offsets_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x800 >= 1
 }

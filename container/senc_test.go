@@ -101,20 +101,53 @@ func (s senc_test) encode_segment(dst io.Writer) error {
    if err != nil {
       return err
    }
-   track := value.MovieFragment.TrackFragment
-   if encrypt := track.SampleEncryption; encrypt != nil {
+   track := value.Moof.Traf
+   if senc := track.Senc; senc != nil {
       key, err := hex.DecodeString(s.key)
       if err != nil {
          return err
       }
-      for i, text := range value.MediaData.Data(&track) {
-         err := encrypt.Sample[i].DecryptCenc(text, key)
+      for i, text := range value.Mdat.Data(&track) {
+         err := senc.Sample[i].DecryptCenc(text, key)
          if err != nil {
             return err
          }
       }
    }
    return value.Write(dst)
+}
+
+func (s senc_test) encode_init(dst io.Writer) error {
+   src, err := os.Open(s.init)
+   if err != nil {
+      return err
+   }
+   defer src.Close()
+   var value File
+   err = value.Read(src)
+   if err != nil {
+      return err
+   }
+   for _, pssh := range value.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := value.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return value.Write(dst)
+}
+
+type senc_test struct {
+   init    string
+   segment string
+   key     string
+   dst     string
 }
 
 func TestSenc(t *testing.T) {
@@ -135,42 +168,4 @@ func TestSenc(t *testing.T) {
          }
       }()
    }
-}
-
-func (s senc_test) encode_init(dst io.Writer) error {
-   src, err := os.Open(s.init)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   err = value.Read(src)
-   if err != nil {
-      return err
-   }
-   for _, protect := range value.Movie.Protection {
-      copy(protect.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := value.Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription
-   if protect, ok := description.Protection(); ok {
-      // Firefox
-      copy(protect.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], protect.OriginalFormat.DataFormat[:])
-      }
-   }
-   return value.Write(dst)
-}
-
-type senc_test struct {
-   init    string
-   segment string
-   key     string
-   dst     string
 }

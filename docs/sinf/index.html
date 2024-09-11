@@ -14,7 +14,7 @@
   <body>
     <nav>
         <a href="..">154.pages.dev/sofia</a>/sinf<span class="navbar-right">
-          v1.6.1 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.6.2 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sinf</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/sinf&#34;</span></pre>
@@ -23,17 +23,17 @@
   <li>
       <a href="#Box">type Box</a>
       <ul>
-          <li><a href="#Box.Read">func (b *Box) Read(r io.Reader, size int64) error</a></li>
-          <li><a href="#Box.Write">func (b Box) Write(w io.Writer) error</a></li>
+          <li><a href="#Box.Read">func (b *Box) Read(src io.Reader, size int64) error</a></li>
+          <li><a href="#Box.Write">func (b *Box) Write(dst io.Writer) error</a></li>
           </ul>
       </li>
   </ul><h3 id="pkg-types">Types</h3>
   <h3 id="Box">type Box</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span>         <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="Box.Boxes"><span class="nx">Boxes</span></span>             <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
-	<span id="Box.OriginalFormat"><span class="nx">OriginalFormat</span></span>    <a href="../frma"><span class="nx">frma</span></a><span class="p">.</span><a href="../frma#Box"><span class="nx">Box</span></a>
-	<span id="Box.SchemeInformation"><span class="nx">SchemeInformation</span></span> <a href="../schi"><span class="nx">schi</span></a><span class="p">.</span><a href="../schi#Box"><span class="nx">Box</span></a>
+	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="Box.Box"><span class="nx">Box</span></span>       <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="Box.Frma"><span class="nx">Frma</span></span>      <a href="../frma"><span class="nx">frma</span></a><span class="p">.</span><a href="../frma#Box"><span class="nx">Box</span></a>
+	<span id="Box.Schi"><span class="nx">Schi</span></span>      <a href="../schi"><span class="nx">schi</span></a><span class="p">.</span><a href="../schi#Box"><span class="nx">Box</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box(&apos;sinf&apos;) {
@@ -43,9 +43,9 @@
 }
 </pre>
 <h4 id="Box.Read">func (*Box) Read</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">r</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span> <span class="nx">size</span> <a href="https://pkg.go.dev/builtin#int64"><span class="kt">int64</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
-  <h4 id="Box.Write">func (Box) Write</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">w</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">src</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span> <span class="nx">size</span> <a href="https://pkg.go.dev/builtin#int64"><span class="kt">int64</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="Box.Write">func (*Box) Write</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Write</span><span class="p">(</span><span class="nx">dst</span> <a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   </main>
     <hr>
     <footer>

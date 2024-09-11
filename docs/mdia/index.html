@@ -14,7 +14,7 @@
   <body>
     <nav>
         <a href="..">154.pages.dev/sofia</a>/mdia<span class="navbar-right">
-          v1.6.1 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.6.2 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package mdia</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/mdia&#34;</span></pre>
@@ -30,9 +30,9 @@
   </ul><h3 id="pkg-types">Types</h3>
   <h3 id="Box">type Box</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span>        <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="Box.Boxes"><span class="nx">Boxes</span></span>            <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
-	<span id="Box.MediaInformation"><span class="nx">MediaInformation</span></span> <a href="../minf"><span class="nx">minf</span></a><span class="p">.</span><a href="../minf#Box"><span class="nx">Box</span></a>
+	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="Box.Box"><span class="nx">Box</span></span>       <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="Box.Minf"><span class="nx">Minf</span></span>      <a href="../minf"><span class="nx">minf</span></a><span class="p">.</span><a href="../minf#Box"><span class="nx">Box</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class MediaBox extends Box(&apos;mdia&apos;) {

@@ -24,5 +24,5 @@ var size_tests = []any{
    FullBoxHeader{},
    SampleEntry{},
    Type{},
-   UUID{},
+   Uuid{},
 }

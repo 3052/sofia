@@ -14,7 +14,7 @@
   <body>
     <nav>
         <a href="..">154.pages.dev/sofia</a>/minf<span class="navbar-right">
-          v1.6.1 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+          v1.6.2 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package minf</h2>
 <pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/minf&#34;</span></pre>
@@ -30,9 +30,9 @@
   </ul><h3 id="pkg-types">Types</h3>
   <h3 id="Box">type Box</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Box</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span>   <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
-	<span id="Box.Boxes"><span class="nx">Boxes</span></span>       <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
-	<span id="Box.SampleTable"><span class="nx">SampleTable</span></span> <a href="../stbl"><span class="nx">stbl</span></a><span class="p">.</span><a href="../stbl#Box"><span class="nx">Box</span></a>
+	<span id="Box.BoxHeader"><span class="nx">BoxHeader</span></span> <a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#BoxHeader"><span class="nx">BoxHeader</span></a>
+	<span id="Box.Box"><span class="nx">Box</span></span>       <span class="p">[]</span><a href=".."><span class="nx">sofia</span></a><span class="p">.</span><a href="..#Box"><span class="nx">Box</span></a>
+	<span id="Box.Stbl"><span class="nx">Stbl</span></span>      <a href="../stbl"><span class="nx">stbl</span></a><span class="p">.</span><a href="../stbl#Box"><span class="nx">Box</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class MediaInformationBox extends Box(&apos;minf&apos;) {

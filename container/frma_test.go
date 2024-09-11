@@ -17,15 +17,6 @@ func TestFrma(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   format := value.
-      Movie.
-      Track.
-      Media.
-      MediaInformation.
-      SampleTable.
-      SampleDescription.
-      AudioSample.
-      ProtectionScheme.
-      OriginalFormat
+   format := value.Moov.Trak.Mdia.Minf.Stbl.Stsd.AudioSample.Sinf.Frma
    fmt.Printf("%q\n", format.DataFormat)
 }

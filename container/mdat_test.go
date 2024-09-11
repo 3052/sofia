@@ -23,7 +23,7 @@ func TestMdat(t *testing.T) {
          if err != nil {
             t.Fatal(err)
          }
-         value.MediaData.Data(value.MovieFragment.TrackFragment)
+         value.MediaData.Data(&value.MovieFragment.TrackFragment)
       }()
    }
 }

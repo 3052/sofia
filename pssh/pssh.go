@@ -6,13 +6,7 @@ import (
    "io"
 )
 
-// dashif.org/identifiers/content_protection
-func (p Box) Widevine() bool {
-   return p.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
-}
-
 // ISO/IEC 23001-7
-//
 //   aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
 //      'pssh', version, flags=0,
 //   ) {
@@ -36,68 +30,73 @@ type Box struct {
    Data          []uint8
 }
 
-func (p *Box) Read(r io.Reader) error {
-   err := p.FullBoxHeader.Read(r)
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
    if err != nil {
       return err
    }
-   _, err = io.ReadFull(r, p.SystemId[:])
+   _, err = io.ReadFull(src, b.SystemId[:])
    if err != nil {
       return err
    }
-   if p.FullBoxHeader.Version > 0 {
-      err := binary.Read(r, binary.BigEndian, &p.KidCount)
+   if b.FullBoxHeader.Version > 0 {
+      err := binary.Read(src, binary.BigEndian, &b.KidCount)
       if err != nil {
          return err
       }
-      p.KID = make([]sofia.UUID, p.KidCount)
-      err = binary.Read(r, binary.BigEndian, p.KID)
+      b.KID = make([]sofia.UUID, b.KidCount)
+      err = binary.Read(src, binary.BigEndian, b.KID)
       if err != nil {
          return err
       }
    }
-   err = binary.Read(r, binary.BigEndian, &p.DataSize)
+   err = binary.Read(src, binary.BigEndian, &b.DataSize)
    if err != nil {
       return err
    }
-   p.Data = make([]uint8, p.DataSize)
-   _, err = io.ReadFull(r, p.Data)
+   b.Data = make([]uint8, b.DataSize)
+   _, err = io.ReadFull(src, b.Data)
    if err != nil {
       return err
    }
    return nil
 }
 
-func (p Box) Write(w io.Writer) error {
-   err := p.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   err = p.FullBoxHeader.Write(w)
+   err = b.FullBoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   _, err = w.Write(p.SystemId[:])
+   _, err = dst.Write(b.SystemId[:])
    if err != nil {
       return err
    }
-   if p.FullBoxHeader.Version > 0 {
-      err := binary.Write(w, binary.BigEndian, p.KidCount)
+   if b.FullBoxHeader.Version > 0 {
+      err := binary.Write(dst, binary.BigEndian, b.KidCount)
       if err != nil {
          return err
       }
-      err = binary.Write(w, binary.BigEndian, p.KID)
+      err = binary.Write(dst, binary.BigEndian, b.KID)
       if err != nil {
          return err
       }
    }
-   err = binary.Write(w, binary.BigEndian, p.DataSize)
+   err = binary.Write(dst, binary.BigEndian, b.DataSize)
    if err != nil {
       return err
    }
-   _, err = w.Write(p.Data)
+   _, err = dst.Write(b.Data)
    if err != nil {
       return err
    }
    return nil
+}
+
+// dashif.org/identifiers/content_protection
+func (b *Box) Widevine() bool {
+   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
 }

@@ -15,14 +15,14 @@ type Box struct {
    TrackEncryption tenc.Box
 }
 
-func (b *Box) Read(r io.Reader) error {
-   return b.TrackEncryption.Read(r)
+func (b *Box) Read(src io.Reader) error {
+   return b.TrackEncryption.Read(src)
 }
 
-func (b Box) Write(w io.Writer) error {
-   err := b.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   return b.TrackEncryption.Write(w)
+   return b.TrackEncryption.Write(dst)
 }

@@ -107,7 +107,7 @@ func (s senc_test) encode_segment(dst io.Writer) error {
       if err != nil {
          return err
       }
-      for i, text := range value.MediaData.Data(track) {
+      for i, text := range value.MediaData.Data(&track) {
          err := encrypt.Sample[i].DecryptCenc(text, key)
          if err != nil {
             return err

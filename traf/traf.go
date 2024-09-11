@@ -34,7 +34,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
                return err
             }
          case "uuid":
-            if b.piff(head) {
+            if b.piff(&head) {
                b.SampleEncryption = &senc.Box{BoxHeader: head}
                err := b.SampleEncryption.Read(src)
                if err != nil {

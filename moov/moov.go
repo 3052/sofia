@@ -17,7 +17,7 @@ type Box struct {
    Track      trak.Box
 }
 
-func (b Box) Write(dst io.Writer) error {
+func (b *Box) Write(dst io.Writer) error {
    err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
@@ -37,11 +37,11 @@ func (b Box) Write(dst io.Writer) error {
    return b.Track.Write(dst)
 }
 
-func (m *Box) Read(r io.Reader, size int64) error {
-   r = io.LimitReader(r, size)
+func (m *Box) Read(src io.Reader, size int64) error {
+   src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          switch head.Type.String() {
@@ -51,14 +51,14 @@ func (m *Box) Read(r io.Reader, size int64) error {
          "mvhd", // Roku
          "udta": // Criterion
             value := sofia.Box{BoxHeader: head}
-            err := value.Read(r)
+            err := value.Read(src)
             if err != nil {
                return err
             }
             m.Boxes = append(m.Boxes, &value)
          case "pssh":
             protect := pssh.Box{BoxHeader: head}
-            err := protect.Read(r)
+            err := protect.Read(src)
             if err != nil {
                return err
             }
@@ -66,7 +66,7 @@ func (m *Box) Read(r io.Reader, size int64) error {
          case "trak":
             _, size := head.GetSize()
             m.Track.BoxHeader = head
-            err := m.Track.Read(r, size)
+            err := m.Track.Read(src, size)
             if err != nil {
                return err
             }

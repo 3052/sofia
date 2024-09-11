@@ -13,10 +13,10 @@ import (
 //   }
 type Box struct {
    BoxHeader        sofia.BoxHeader
-   Boxes            []*sofia.Box
-   FragmentHeader   tfhd.Box
-   SampleEncryption *senc.Box
-   TrackRun         trun.Box
+   Box            []*sofia.Box
+   Tfhd   tfhd.Box
+   Senc *senc.Box
+   Trun         trun.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -28,15 +28,15 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "senc":
-            b.SampleEncryption = &senc.Box{BoxHeader: head}
-            err := b.SampleEncryption.Read(src)
+            b.Senc = &senc.Box{BoxHeader: head}
+            err := b.Senc.Read(src)
             if err != nil {
                return err
             }
          case "uuid":
             if b.piff(&head) {
-               b.SampleEncryption = &senc.Box{BoxHeader: head}
-               err := b.SampleEncryption.Read(src)
+               b.Senc = &senc.Box{BoxHeader: head}
+               err := b.Senc.Read(src)
                if err != nil {
                   return err
                }
@@ -46,7 +46,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
                if err != nil {
                   return err
                }
-               b.Boxes = append(b.Boxes, &value)
+               b.Box = append(b.Box, &value)
             }
          case "saio", // Roku
             "saiz", // Roku
@@ -58,16 +58,16 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, &value)
+            b.Box = append(b.Box, &value)
          case "tfhd":
-            b.FragmentHeader.BoxHeader = head
-            err := b.FragmentHeader.Read(src)
+            b.Tfhd.BoxHeader = head
+            err := b.Tfhd.Read(src)
             if err != nil {
                return err
             }
          case "trun":
-            b.TrackRun.BoxHeader = head
-            err := b.TrackRun.Read(src)
+            b.Trun.BoxHeader = head
+            err := b.Trun.Read(src)
             if err != nil {
                return err
             }
@@ -87,25 +87,25 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   err = b.FragmentHeader.Write(dst)
+   err = b.Tfhd.Write(dst)
    if err != nil {
       return err
    }
-   if b.SampleEncryption != nil {
-      b.SampleEncryption.Write(dst)
+   if b.Senc != nil {
+      b.Senc.Write(dst)
    }
-   return b.TrackRun.Write(dst)
+   return b.Trun.Write(dst)
 }
 
 func (b *Box) piff(head *sofia.BoxHeader) bool {
    if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.SampleEncryption == nil {
+      if b.Senc == nil {
          return true
       }
    }

@@ -6,29 +6,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentHeaderBox extends FullBox(
-//      'tfhd', 0, tf_flags
-//   ) {
-//      unsigned int(32) track_ID;
-//      // all the following are optional fields
-//      // their presence is indicated by bits in the tf_flags
-//      unsigned int(64) base_data_offset; // ASSUME NOT PRESENT
-//      unsigned int(32) sample_description_index;
-//      unsigned int(32) default_sample_duration;
-//      unsigned int(32) default_sample_size;
-//      unsigned int(32) default_sample_flags;
-//   }
-type Box struct {
-   BoxHeader              sofia.BoxHeader
-   FullBoxHeader          sofia.FullBoxHeader
-   TrackId                uint32
-   SampleDescriptionIndex uint32
-   DefaultSampleDuration  uint32
-   DefaultSampleSize      uint32
-   DefaultSampleFlags     uint32
-}
-
 func (b *Box) Read(src io.Reader) error {
    err := b.FullBoxHeader.Read(src)
    if err != nil {
@@ -123,4 +100,27 @@ func (b *Box) default_sample_size_present() bool {
 // 0x000020 default-sample-flags-present
 func (b *Box) default_sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x20 >= 1
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class TrackFragmentHeaderBox extends FullBox(
+//      'tfhd', 0, tf_flags
+//   ) {
+//      unsigned int(32) track_ID;
+//      // all the following are optional fields
+//      // their presence is indicated by bits in the tf_flags
+//      unsigned int(64) base_data_offset; // ASSUME NOT PRESENT
+//      unsigned int(32) sample_description_index;
+//      unsigned int(32) default_sample_duration;
+//      unsigned int(32) default_sample_size;
+//      unsigned int(32) default_sample_flags;
+//   }
+type Box struct {
+   BoxHeader              sofia.BoxHeader
+   FullBoxHeader          sofia.FullBoxHeader
+   TrackId                uint32
+   SampleDescriptionIndex uint32
+   DefaultSampleDuration  uint32
+   DefaultSampleSize      uint32
+   DefaultSampleFlags     uint32
 }

@@ -25,10 +25,10 @@ func (b *Box) Read(src io.Reader) error {
 // BE CAREFUL WITH THE RECEIVER
 func (b *Box) Data(track *traf.Box) [][]byte {
    payload := b.Box.Payload
-   data := make([][]byte, track.TrackRun.SampleCount)
-   for i, s := range track.TrackRun.Sample {
+   data := make([][]byte, track.Trun.SampleCount)
+   for i, s := range track.Trun.Sample {
       if s.SampleSize == 0 {
-         s.SampleSize = track.FragmentHeader.DefaultSampleSize
+         s.SampleSize = track.Tfhd.DefaultSampleSize
       }
       data[i] = payload[:s.SampleSize]
       payload = payload[s.SampleSize:]

@@ -9,23 +9,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//      int i ;
-//      unsigned int(32) entry_count;
-//      for (i = 1 ; i <= entry_count ; i++){
-//         SampleEntry(); // an instance of a class derived from SampleEntry
-//      }
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   EntryCount    uint32
-   Boxes         []sofia.Box
-   AudioSample   *enca.SampleEntry
-   VisualSample  *encv.SampleEntry
-}
-
 func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    err := b.FullBoxHeader.Read(src)
@@ -65,7 +48,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, value)
+            b.Box = append(b.Box, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -90,7 +73,7 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
@@ -129,4 +112,21 @@ func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
       return &v.SampleEntry, true
    }
    return nil, false
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//      int i ;
+//      unsigned int(32) entry_count;
+//      for (i = 1 ; i <= entry_count ; i++){
+//         SampleEntry(); // an instance of a class derived from SampleEntry
+//      }
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   EntryCount    uint32
+   Box         []sofia.Box
+   AudioSample   *enca.SampleEntry
+   VisualSample  *encv.SampleEntry
 }

@@ -15,9 +15,9 @@ import (
 //   }
 type Box struct {
    BoxHeader         sofia.BoxHeader
-   Boxes             []sofia.Box
-   OriginalFormat    frma.Box
-   SchemeInformation schi.Box
+   Box             []sofia.Box
+   Frma    frma.Box
+   Schi schi.Box
 }
 
 func (b *Box) Read(src io.Reader, size int64) error {
@@ -29,14 +29,14 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "frma":
-            b.OriginalFormat.BoxHeader = head
-            err := b.OriginalFormat.Read(src)
+            b.Frma.BoxHeader = head
+            err := b.Frma.Read(src)
             if err != nil {
                return err
             }
          case "schi":
-            b.SchemeInformation.BoxHeader = head
-            err := b.SchemeInformation.Read(src)
+            b.Schi.BoxHeader = head
+            err := b.Schi.Read(src)
             if err != nil {
                return err
             }
@@ -46,7 +46,7 @@ func (b *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            b.Boxes = append(b.Boxes, value)
+            b.Box = append(b.Box, value)
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -63,15 +63,15 @@ func (b *Box) Write(dst io.Writer) error {
    if err != nil {
       return err
    }
-   for _, value := range b.Boxes {
+   for _, value := range b.Box {
       err := value.Write(dst)
       if err != nil {
          return err
       }
    }
-   err = b.OriginalFormat.Write(dst)
+   err = b.Frma.Write(dst)
    if err != nil {
       return err
    }
-   return b.SchemeInformation.Write(dst)
+   return b.Schi.Write(dst)
 }

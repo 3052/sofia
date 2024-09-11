@@ -21,22 +21,22 @@ type Box struct {
    Payload   []byte
 }
 
-func (b *Box) Read(r io.Reader) error {
+func (b *Box) Read(src io.Reader) error {
    _, size := b.BoxHeader.GetSize()
    b.Payload = make([]byte, size)
-   _, err := io.ReadFull(r, b.Payload)
+   _, err := io.ReadFull(src, b.Payload)
    if err != nil {
       return err
    }
    return nil
 }
 
-func (b *Box) Write(w io.Writer) error {
-   err := b.BoxHeader.Write(w)
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   _, err = w.Write(b.Payload)
+   _, err = dst.Write(b.Payload)
    if err != nil {
       return err
    }
@@ -75,17 +75,17 @@ func (b *BoxHeader) GetSize() (int, int64) {
    return size, int64(b.Size) - int64(size)
 }
 
-func (b *BoxHeader) Read(r io.Reader) error {
-   err := binary.Read(r, binary.BigEndian, &b.Size)
+func (b *BoxHeader) Read(src io.Reader) error {
+   err := binary.Read(src, binary.BigEndian, &b.Size)
    if err != nil {
       return err
    }
-   _, err = io.ReadFull(r, b.Type[:])
+   _, err = io.ReadFull(src, b.Type[:])
    if err != nil {
       return err
    }
    if b.Type.String() == "uuid" {
-      _, err := io.ReadFull(r, b.UserType[:])
+      _, err := io.ReadFull(src, b.UserType[:])
       if err != nil {
          return err
       }
@@ -93,17 +93,17 @@ func (b *BoxHeader) Read(r io.Reader) error {
    return nil
 }
 
-func (b *BoxHeader) Write(w io.Writer) error {
-   err := binary.Write(w, binary.BigEndian, b.Size)
+func (b *BoxHeader) Write(dst io.Writer) error {
+   err := binary.Write(dst, binary.BigEndian, b.Size)
    if err != nil {
       return err
    }
-   _, err = w.Write(b.Type[:])
+   _, err = dst.Write(b.Type[:])
    if err != nil {
       return err
    }
    if b.Type.String() == "uuid" {
-      _, err := w.Write(b.UserType[:])
+      _, err := dst.Write(b.UserType[:])
       if err != nil {
          return err
       }
@@ -141,12 +141,12 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    return binary.BigEndian.Uint32(flag[:])
 }
 
-func (f *FullBoxHeader) Read(r io.Reader) error {
-   return binary.Read(r, binary.BigEndian, f)
+func (f *FullBoxHeader) Read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, f)
 }
 
-func (f *FullBoxHeader) Write(w io.Writer) error {
-   return binary.Write(w, binary.BigEndian, f)
+func (f *FullBoxHeader) Write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, f)
 }
 
 // ISO/IEC 14496-12
@@ -162,24 +162,24 @@ type SampleEntry struct {
    DataReferenceIndex uint16
 }
 
-func (s *SampleEntry) Read(r io.Reader) error {
-   _, err := io.ReadFull(r, s.Reserved[:])
+func (s *SampleEntry) Read(src io.Reader) error {
+   _, err := io.ReadFull(src, s.Reserved[:])
    if err != nil {
       return err
    }
-   return binary.Read(r, binary.BigEndian, &s.DataReferenceIndex)
+   return binary.Read(src, binary.BigEndian, &s.DataReferenceIndex)
 }
 
-func (s *SampleEntry) Write(w io.Writer) error {
-   err := s.BoxHeader.Write(w)
+func (s *SampleEntry) Write(dst io.Writer) error {
+   err := s.BoxHeader.Write(dst)
    if err != nil {
       return err
    }
-   _, err = w.Write(s.Reserved[:])
+   _, err = dst.Write(s.Reserved[:])
    if err != nil {
       return err
    }
-   return binary.Write(w, binary.BigEndian, s.DataReferenceIndex)
+   return binary.Write(dst, binary.BigEndian, s.DataReferenceIndex)
 }
 
 type Type [4]uint8

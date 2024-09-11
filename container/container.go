@@ -44,10 +44,10 @@ func (f *File) Write(dst io.Writer) error {
    return nil
 }
 
-func (f *File) Read(r io.Reader) error {
+func (f *File) Read(src io.Reader) error {
    for {
       var head sofia.BoxHeader
-      err := head.Read(r)
+      err := head.Read(src)
       switch err {
       case nil:
          _, size := head.GetSize()
@@ -55,25 +55,25 @@ func (f *File) Read(r io.Reader) error {
          case "mdat":
             f.Mdat = &mdat.Box{}
             f.Mdat.Box.BoxHeader = head
-            err := f.Mdat.Read(r)
+            err := f.Mdat.Read(src)
             if err != nil {
                return err
             }
          case "moof":
             f.Moof = &moof.Box{BoxHeader: head}
-            err := f.Moof.Read(r, size)
+            err := f.Moof.Read(src, size)
             if err != nil {
                return err
             }
          case "sidx":
             f.Sidx = &sidx.Box{BoxHeader: head}
-            err := f.Sidx.Read(r)
+            err := f.Sidx.Read(src)
             if err != nil {
                return err
             }
          case "moov":
             f.Moov = &moov.Box{BoxHeader: head}
-            err := f.Moov.Read(r, size)
+            err := f.Moov.Read(src, size)
             if err != nil {
                return err
             }
@@ -81,7 +81,7 @@ func (f *File) Read(r io.Reader) error {
             "ftyp", // Roku
             "styp": // Roku
             object := sofia.Box{BoxHeader: head}
-            err := object.Read(r)
+            err := object.Read(src)
             if err != nil {
                return err
             }

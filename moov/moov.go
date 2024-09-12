@@ -38,7 +38,7 @@ func (b *Box) Write(dst io.Writer) error {
    return b.Trak.Write(dst)
 }
 
-func (m *Box) Read(src io.Reader, size int64) error {
+func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
       var head sofia.BoxHeader
@@ -56,23 +56,23 @@ func (m *Box) Read(src io.Reader, size int64) error {
             if err != nil {
                return err
             }
-            m.Box = append(m.Box, &value)
+            b.Box = append(b.Box, &value)
          case "pssh":
             protect := pssh.Box{BoxHeader: head}
             err := protect.Read(src)
             if err != nil {
                return err
             }
-            m.Pssh = append(m.Pssh, protect)
+            b.Pssh = append(b.Pssh, protect)
          case "trak":
             _, size := head.GetSize()
-            m.Trak.BoxHeader = head
-            err := m.Trak.Read(src, size)
+            b.Trak.BoxHeader = head
+            err := b.Trak.Read(src, size)
             if err != nil {
                return err
             }
          default:
-            return sofia.Error{m.BoxHeader.Type, head.Type}
+            return sofia.Error{b.BoxHeader.Type, head.Type}
          }
       case io.EOF:
          return nil

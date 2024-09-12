@@ -6,15 +6,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class MovieFragmentBox extends Box('moof') {
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   Box         []sofia.Box
-   Traf traf.Box
-}
-
 func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
@@ -24,12 +15,11 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "traf":
-            _, size := head.GetSize()
-            b.Traf.BoxHeader = head
-            err := b.Traf.Read(src, size)
+            err := b.Traf.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            b.Traf.BoxHeader = head
          case "mfhd", // Roku
             "pssh": // Roku
             value := sofia.Box{BoxHeader: head}
@@ -61,4 +51,13 @@ func (b *Box) Write(dst io.Writer) error {
       }
    }
    return b.Traf.Write(dst)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MovieFragmentBox extends Box('moof') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Traf      traf.Box
 }

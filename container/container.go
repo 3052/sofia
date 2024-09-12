@@ -9,48 +9,13 @@ import (
    "io"
 )
 
-func (f *File) Write(dst io.Writer) error {
-   // KEEP THESE IN ORDER
-   for _, value := range f.Box {
-      err := value.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Moov != nil {
-      err := f.Moov.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Sidx != nil {
-      err := f.Sidx.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Moof != nil {
-      err := f.Moof.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   if f.Mdat != nil {
-      err := f.Mdat.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 func (f *File) Read(src io.Reader) error {
    for {
       var head sofia.BoxHeader
       err := head.Read(src)
       switch err {
       case nil:
-         _, size := head.GetSize()
+         size := head.PayloadSize()
          switch head.Type.String() {
          case "mdat":
             f.Mdat = &mdat.Box{}
@@ -113,4 +78,39 @@ func (f *File) GetMoov() (*moov.Box, bool) {
       return f.Moov, true
    }
    return nil, false
+}
+
+func (f *File) Write(dst io.Writer) error {
+   // KEEP THESE IN ORDER
+   for _, value := range f.Box {
+      err := value.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Moov != nil {
+      err := f.Moov.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Sidx != nil {
+      err := f.Sidx.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Moof != nil {
+      err := f.Moof.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   if f.Mdat != nil {
+      err := f.Mdat.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

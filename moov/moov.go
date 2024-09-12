@@ -7,37 +7,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class MovieBox extends Box('moov') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
-   Pssh      []pssh.Box
-   Trak      trak.Box
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Box {
-      err := value.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   for _, protect := range b.Pssh {
-      err := protect.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return b.Trak.Write(dst)
-}
-
 func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
@@ -65,12 +34,11 @@ func (b *Box) Read(src io.Reader, size int64) error {
             }
             b.Pssh = append(b.Pssh, protect)
          case "trak":
-            _, size := head.GetSize()
-            b.Trak.BoxHeader = head
-            err := b.Trak.Read(src, size)
+            err := b.Trak.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            b.Trak.BoxHeader = head
          default:
             return sofia.Error{b.BoxHeader.Type, head.Type}
          }
@@ -80,4 +48,34 @@ func (b *Box) Read(src io.Reader, size int64) error {
          return err
       }
    }
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MovieBox extends Box('moov') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []*sofia.Box
+   Pssh      []pssh.Box
+   Trak      trak.Box
+}
+
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Box {
+      err := value.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   for _, protect := range b.Pssh {
+      err := protect.Write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return b.Trak.Write(dst)
 }

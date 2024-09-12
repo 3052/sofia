@@ -7,7 +7,6 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class SampleTableBox extends Box('stbl') {
 //   }
 type Box struct {
@@ -25,12 +24,11 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "stsd":
-            _, size := head.GetSize()
-            b.Stsd.BoxHeader = head
-            err := b.Stsd.Read(src, size)
+            err := b.Stsd.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            b.Stsd.BoxHeader = head
          case "sgpd", // Paramount
             "stco", // Roku
             "stsc", // Roku

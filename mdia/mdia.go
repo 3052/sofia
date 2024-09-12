@@ -6,16 +6,6 @@ import (
    "io"
 )
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class MediaBox extends Box('mdia') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []sofia.Box
-   Minf      minf.Box
-}
-
 func (b *Box) Read(src io.Reader, size int64) error {
    src = io.LimitReader(src, size)
    for {
@@ -25,12 +15,11 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "minf":
-            _, size := head.GetSize()
-            b.Minf.BoxHeader = head
-            err := b.Minf.Read(src, size)
+            err := b.Minf.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            b.Minf.BoxHeader = head
          case "hdlr", // Roku
             "mdhd": // Roku
             value := sofia.Box{BoxHeader: head}
@@ -62,4 +51,13 @@ func (b *Box) Write(dst io.Writer) error {
       }
    }
    return b.Minf.Write(dst)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MediaBox extends Box('mdia') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Minf      minf.Box
 }

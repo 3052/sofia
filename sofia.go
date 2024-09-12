@@ -7,51 +7,6 @@ import (
    "strconv"
 )
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
-}
-
-func (b *Box) Read(src io.Reader) error {
-   _, size := b.BoxHeader.GetSize()
-   b.Payload = make([]byte, size)
-   _, err := io.ReadFull(src, b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   _, err = dst.Write(b.Payload)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b *BoxHeader) GetSize() (int, int64) {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.Type.String() == "uuid" {
-      size += binary.Size(b.UserType)
-   }
-   return size, int64(b.Size) - int64(size)
-}
-
 func (b *BoxHeader) Read(src io.Reader) error {
    err := binary.Read(src, binary.BigEndian, &b.Size)
    if err != nil {
@@ -63,24 +18,6 @@ func (b *BoxHeader) Read(src io.Reader) error {
    }
    if b.Type.String() == "uuid" {
       _, err := io.ReadFull(src, b.UserType[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *BoxHeader) Write(dst io.Writer) error {
-   err := binary.Write(dst, binary.BigEndian, b.Size)
-   if err != nil {
-      return err
-   }
-   _, err = dst.Write(b.Type[:])
-   if err != nil {
-      return err
-   }
-   if b.Type.String() == "uuid" {
-      _, err := dst.Write(b.UserType[:])
       if err != nil {
          return err
       }
@@ -153,7 +90,86 @@ type FullBoxHeader struct {
 }
 
 // ISO/IEC 14496-12
-//
+//   aligned(8) abstract class SampleEntry(
+//      unsigned int(32) format
+//   ) extends Box(format) {
+//      const unsigned int(8)[6] reserved = 0;
+//      unsigned int(16) data_reference_index;
+//   }
+type SampleEntry struct {
+   BoxHeader          BoxHeader
+   Reserved           [6]uint8
+   DataReferenceIndex uint16
+}
+
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
+func (b *BoxHeader) Write(dst io.Writer) error {
+   err := binary.Write(dst, binary.BigEndian, b.Size)
+   if err != nil {
+      return err
+   }
+   _, err = dst.Write(b.Type[:])
+   if err != nil {
+      return err
+   }
+   if b.Type.String() == "uuid" {
+      _, err := dst.Write(b.UserType[:])
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   _, err = dst.Write(b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class Box (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+func (b *Box) Read(src io.Reader) error {
+   b.Payload = make([]byte, b.BoxHeader.PayloadSize())
+   _, err := io.ReadFull(src, b.Payload)
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+func (b *BoxHeader) HeaderSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.Type.String() == "uuid" {
+      size += binary.Size(b.UserType)
+   }
+   return size
+}
+
+// ISO/IEC 14496-12
 //   aligned(8) class BoxHeader (
 //      unsigned int(32) boxtype,
 //      optional unsigned int(8)[16] extended_type
@@ -175,21 +191,6 @@ type BoxHeader struct {
    UserType Uuid
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
-type SampleEntry struct {
-   BoxHeader          BoxHeader
-   Reserved           [6]uint8
-   DataReferenceIndex uint16
+func (b *BoxHeader) PayloadSize() int64 {
+   return int64(b.Size) - int64(b.HeaderSize())
 }
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8

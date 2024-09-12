@@ -6,6 +6,18 @@ import (
    "io"
 )
 
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.HeaderSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
+}
+
 func (b *Box) Append(size uint32) {
    var ref Reference
    ref.set_referenced_size(size)
@@ -131,20 +143,7 @@ func (r Reference) set_referenced_size(size uint32) {
 
 type Reference [3]uint32
 
-func (b *Box) GetSize() int {
-   v, _ := b.BoxHeader.GetSize()
-   v += binary.Size(b.FullBoxHeader)
-   v += binary.Size(b.ReferenceId)
-   v += binary.Size(b.Timescale)
-   v += binary.Size(b.EarliestPresentationTime)
-   v += binary.Size(b.FirstOffset)
-   v += binary.Size(b.Reserved)
-   v += binary.Size(b.ReferenceCount)
-   return v + binary.Size(b.Reference)
-}
-
 // ISO/IEC 14496-12
-//
 //   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //      unsigned int(32) reference_ID;
 //      unsigned int(32) timescale;

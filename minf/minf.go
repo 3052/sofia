@@ -25,12 +25,11 @@ func (b *Box) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "stbl":
-            _, size := head.GetSize()
-            b.Stbl.BoxHeader = head
-            err := b.Stbl.Read(src, size)
+            err := b.Stbl.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            b.Stbl.BoxHeader = head
          case "dinf", // Roku
             "smhd", // Roku
             "vmhd": // Roku

@@ -24,22 +24,22 @@ func (b *Box) Read(src io.Reader, size int64) error {
       err := head.Read(src)
       switch err {
       case nil:
-         _, size := head.GetSize()
+         size := head.PayloadSize()
          switch head.Type.String() {
          case "enca":
             b.AudioSample = &enca.SampleEntry{}
-            b.AudioSample.SampleEntry.BoxHeader = head
             err := b.AudioSample.Read(src, size)
             if err != nil {
                return err
             }
+            b.AudioSample.SampleEntry.BoxHeader = head
          case "encv":
             b.VisualSample = &encv.SampleEntry{}
-            b.VisualSample.SampleEntry.BoxHeader = head
             err := b.VisualSample.Read(src, size)
             if err != nil {
                return err
             }
+            b.VisualSample.SampleEntry.BoxHeader = head
          case "avc1", // Tubi
             "ec-3", // Max
             "mp4a": // Tubi

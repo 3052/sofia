@@ -24,12 +24,11 @@ func (s *SampleEntry) Read(src io.Reader, size int64) error {
       case nil:
          switch head.Type.String() {
          case "sinf":
-            _, size := head.GetSize()
-            s.Sinf.BoxHeader = head
-            err := s.Sinf.Read(src, size)
+            err := s.Sinf.Read(src, head.PayloadSize())
             if err != nil {
                return err
             }
+            s.Sinf.BoxHeader = head
          case "avcC", // Roku
             "btrt", // Mubi
             "clli", // Max

@@ -8,53 +8,6 @@ import (
    "io"
 )
 
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      err := value.read(src)
-      if err != nil {
-         return err
-      }
-      b.Sample[i] = value
-   }
-   return nil
-}
-
-func (s *Subsample) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, s)
-}
-
-func (s *Sample) read(src io.Reader) error {
-   err := binary.Read(src, binary.BigEndian, &s.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if s.box.senc_use_subsamples() {
-      err := binary.Read(src, binary.BigEndian, &s.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sub := range s.Subsample {
-         err := sub.read(src)
-         if err != nil {
-            return err
-         }
-         s.Subsample[i] = sub
-      }
-   }
-   return nil
-}
-
 // senc_use_subsamples: flag mask is 0x000002.
 func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
@@ -63,52 +16,6 @@ func (b *Box) senc_use_subsamples() bool {
 type Subsample struct {
    BytesOfClearData     uint16
    BytesOfProtectedData uint32
-}
-
-func (s Subsample) write(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, s)
-}
-
-func (s *Sample) write(dst io.Writer) error {
-   err := binary.Write(dst, binary.BigEndian, s.InitializationVector)
-   if err != nil {
-      return err
-   }
-   if s.box.senc_use_subsamples() {
-      err := binary.Write(dst, binary.BigEndian, s.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      for _, sub := range s.Subsample {
-         err := sub.write(dst)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Sample {
-      err := value.write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
@@ -171,4 +78,99 @@ type Sample struct {
    SubsampleCount       uint16
    Subsample            []Subsample
    box                  *Box
+}
+
+///
+
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      value.box = b
+      err := value.read(src)
+      if err != nil {
+         return err
+      }
+      b.Sample[i] = value
+   }
+   return nil
+}
+
+func (s *Subsample) read(src io.Reader) error {
+   return binary.Read(src, binary.BigEndian, s)
+}
+
+func (s *Sample) read(src io.Reader) error {
+   err := binary.Read(src, binary.BigEndian, &s.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if s.box.senc_use_subsamples() {
+      err := binary.Read(src, binary.BigEndian, &s.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sub := range s.Subsample {
+         err := sub.read(src)
+         if err != nil {
+            return err
+         }
+         s.Subsample[i] = sub
+      }
+   }
+   return nil
+}
+
+func (s Subsample) write(dst io.Writer) error {
+   return binary.Write(dst, binary.BigEndian, s)
+}
+
+func (s *Sample) write(dst io.Writer) error {
+   err := binary.Write(dst, binary.BigEndian, s.InitializationVector)
+   if err != nil {
+      return err
+   }
+   if s.box.senc_use_subsamples() {
+      err := binary.Write(dst, binary.BigEndian, s.SubsampleCount)
+      if err != nil {
+         return err
+      }
+      for _, sub := range s.Subsample {
+         err := sub.write(dst)
+         if err != nil {
+            return err
+         }
+      }
+   }
+   return nil
+}
+
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = b.FullBoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
+   if err != nil {
+      return err
+   }
+   for _, value := range b.Sample {
+      err := value.write(dst)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

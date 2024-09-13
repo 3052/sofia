@@ -5,17 +5,11 @@ import (
    "crypto/aes"
    "crypto/cipher"
    "encoding/binary"
-   "io"
 )
 
 // senc_use_subsamples: flag mask is 0x000002.
 func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
-}
-
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
@@ -80,97 +74,110 @@ type Sample struct {
    box                  *Box
 }
 
-///
-
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      err := value.read(src)
-      if err != nil {
-         return err
-      }
-      b.Sample[i] = value
-   }
-   return nil
+func (s Subsample) Append(buf []byte) ([]byte, error) {
+   return binary.Append(buf, binary.BigEndian, s)
 }
 
-func (s *Subsample) read(src io.Reader) error {
-   return binary.Read(src, binary.BigEndian, s)
+type Subsample struct {
+   BytesOfClearData     uint16
+   BytesOfProtectedData uint32
 }
 
-func (s *Sample) read(src io.Reader) error {
-   err := binary.Read(src, binary.BigEndian, &s.InitializationVector)
+func (s *Subsample) decode(buf []byte) ([]byte, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, s)
    if err != nil {
-      return err
+      return nil, err
+   }
+   return buf[n:], nil
+}
+
+func (s *Sample) Append(buf []byte) ([]byte, error) {
+   var err error
+   buf, err = binary.Append(buf, binary.BigEndian, s.InitializationVector)
+   if err != nil {
+      return nil, err
    }
    if s.box.senc_use_subsamples() {
-      err := binary.Read(src, binary.BigEndian, &s.SubsampleCount)
+      buf, err = binary.Append(buf, binary.BigEndian, s.SubsampleCount)
       if err != nil {
-         return err
+         return nil, err
       }
+      for _, sub := range s.Subsample {
+         buf, err = sub.Append(buf)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return buf, nil
+}
+
+func (s *Sample) decode(buf []byte) ([]byte, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
+   if err != nil {
+      return nil, err
+   }
+   buf = buf[n:]
+   if s.box.senc_use_subsamples() {
+      n, err = binary.Decode(buf, binary.BigEndian, &s.SubsampleCount)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
       s.Subsample = make([]Subsample, s.SubsampleCount)
       for i, sub := range s.Subsample {
-         err := sub.read(src)
+         buf, err = sub.decode(buf)
          if err != nil {
-            return err
+            return nil, err
          }
          s.Subsample[i] = sub
       }
    }
-   return nil
+   return buf, nil
 }
 
-func (s Subsample) write(dst io.Writer) error {
-   return binary.Write(dst, binary.BigEndian, s)
-}
-
-func (s *Sample) write(dst io.Writer) error {
-   err := binary.Write(dst, binary.BigEndian, s.InitializationVector)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   var err error
+   buf, err = b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   if s.box.senc_use_subsamples() {
-      err := binary.Write(dst, binary.BigEndian, s.SubsampleCount)
-      if err != nil {
-         return err
-      }
-      for _, sub := range s.Subsample {
-         err := sub.write(dst)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+   buf, err = b.FullBoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = b.FullBoxHeader.Write(dst)
+   buf, err = binary.Append(buf, binary.BigEndian, b.SampleCount)
    if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
-   if err != nil {
-      return err
+      return nil, err
    }
    for _, value := range b.Sample {
-      err := value.write(dst)
+      buf, err = value.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
-   return nil
+   return buf, nil
+}
+
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   var err error
+   buf, err = b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return nil, err
+   }
+   n, err := binary.Decode(buf, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return nil, err
+   }
+   buf = buf[n:]
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      value.box = b
+      buf, err = value.decode(buf)
+      if err != nil {
+         return nil, err
+      }
+      b.Sample[i] = value
+   }
+   return buf, nil
 }

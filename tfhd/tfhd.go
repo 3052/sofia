@@ -3,84 +3,7 @@ package tfhd
 import (
    "154.pages.dev/sofia"
    "encoding/binary"
-   "io"
 )
-
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.TrackId)
-   if err != nil {
-      return err
-   }
-   if b.sample_description_index_present() {
-      err := binary.Read(src, binary.BigEndian, &b.SampleDescriptionIndex)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_duration_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleDuration)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_size_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.TrackId)
-   if err != nil {
-      return err
-   }
-   if b.sample_description_index_present() {
-      err := binary.Write(dst, binary.BigEndian, b.SampleDescriptionIndex)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_duration_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleDuration)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_size_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if b.default_sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
 
 // 0x000002 sample-description-index-present
 func (b *Box) sample_description_index_present() bool {
@@ -123,4 +46,82 @@ type Box struct {
    DefaultSampleDuration  uint32
    DefaultSampleSize      uint32
    DefaultSampleFlags     uint32
+}
+
+///
+
+func (b *Box) Write(dst io.Writer) error {
+   err := b.BoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = b.FullBoxHeader.Write(dst)
+   if err != nil {
+      return err
+   }
+   err = binary.Write(dst, binary.BigEndian, b.TrackId)
+   if err != nil {
+      return err
+   }
+   if b.sample_description_index_present() {
+      err := binary.Write(dst, binary.BigEndian, b.SampleDescriptionIndex)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_duration_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleDuration)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_size_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleSize)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_flags_present() {
+      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+func (b *Box) Read(src io.Reader) error {
+   err := b.FullBoxHeader.Read(src)
+   if err != nil {
+      return err
+   }
+   err = binary.Read(src, binary.BigEndian, &b.TrackId)
+   if err != nil {
+      return err
+   }
+   if b.sample_description_index_present() {
+      err := binary.Read(src, binary.BigEndian, &b.SampleDescriptionIndex)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_duration_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleDuration)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_size_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleSize)
+      if err != nil {
+         return err
+      }
+   }
+   if b.default_sample_flags_present() {
+      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleFlags)
+      if err != nil {
+         return err
+      }
+   }
+   return nil
 }

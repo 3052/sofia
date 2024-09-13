@@ -1,9 +1,6 @@
 package frma
 
-import (
-   "154.pages.dev/sofia"
-   "io"
-)
+import "154.pages.dev/sofia"
 
 // ISO/IEC 14496-12
 //   aligned(8) class OriginalFormatBox(codingname) extends Box('frma') {
@@ -17,22 +14,16 @@ type Box struct {
    DataFormat [4]uint8
 }
 
-func (b *Box) Read(src io.Reader) error {
-   _, err := io.ReadFull(src, b.DataFormat[:])
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   var err error
+   buf, err = b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   return nil
+   return append(buf, b.DataFormat[:]...), nil
 }
 
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   _, err = dst.Write(b.DataFormat[:])
-   if err != nil {
-      return err
-   }
-   return nil
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   n := copy(b.DataFormat[:], buf)
+   return buf[n:], nil
 }

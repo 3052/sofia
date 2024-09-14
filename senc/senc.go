@@ -83,17 +83,8 @@ type Subsample struct {
    BytesOfProtectedData uint32
 }
 
-func (s *Subsample) decode(buf []byte) ([]byte, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, s)
-   if err != nil {
-      return nil, err
-   }
-   return buf[n:], nil
-}
-
 func (s *Sample) Append(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = binary.Append(buf, binary.BigEndian, s.InitializationVector)
+   buf, err := binary.Append(buf, binary.BigEndian, s.InitializationVector)
    if err != nil {
       return nil, err
    }
@@ -112,33 +103,8 @@ func (s *Sample) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (s *Sample) decode(buf []byte) ([]byte, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
-   if err != nil {
-      return nil, err
-   }
-   buf = buf[n:]
-   if s.box.senc_use_subsamples() {
-      n, err = binary.Decode(buf, binary.BigEndian, &s.SubsampleCount)
-      if err != nil {
-         return nil, err
-      }
-      buf = buf[n:]
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sub := range s.Subsample {
-         buf, err = sub.decode(buf)
-         if err != nil {
-            return nil, err
-         }
-         s.Subsample[i] = sub
-      }
-   }
-   return buf, nil
-}
-
 func (b *Box) Append(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = b.BoxHeader.Append(buf)
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
       return nil, err
    }
@@ -150,8 +116,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, value := range b.Sample {
-      buf, err = value.Append(buf)
+   for _, sam := range b.Sample {
+      buf, err = sam.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -159,25 +125,53 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (b *Box) Decode(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = b.FullBoxHeader.Decode(buf)
+func (s *Subsample) Decode(buf []byte) (int, error) {
+   return binary.Decode(buf, binary.BigEndian, s)
+}
+
+func (s *Sample) Decode(buf []byte) (int, error) {
+   ns, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
    if err != nil {
-      return nil, err
+      return 0, err
    }
-   n, err := binary.Decode(buf, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return nil, err
-   }
-   buf = buf[n:]
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      buf, err = value.decode(buf)
+   if s.box.senc_use_subsamples() {
+      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.SubsampleCount)
       if err != nil {
-         return nil, err
+         return 0, err
       }
-      b.Sample[i] = value
+      ns += n
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sub := range s.Subsample {
+         n, err = sub.Decode(buf[ns:])
+         if err != nil {
+            return 0, err
+         }
+         ns += n
+         s.Subsample[i] = sub
+      }
    }
-   return buf, nil
+   return ns, nil
+}
+
+func (b *Box) Decode(buf []byte) error {
+   ns, err := b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   ns += n
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, sam := range b.Sample {
+      sam.box = b
+      n, err = sam.Decode(buf[ns:])
+      if err != nil {
+         return err
+      }
+      ns += n
+      b.Sample[i] = sam
+   }
+   return nil
 }

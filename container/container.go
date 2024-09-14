@@ -8,22 +8,6 @@ import (
    "154.pages.dev/sofia/sidx"
 )
 
-// ISO/IEC 14496-12
-type File struct {
-   Box  []sofia.Box
-   Mdat *mdat.Box
-   Moof *moof.Box
-   Moov *moov.Box
-   Sidx *sidx.Box
-}
-
-func (f *File) GetMoov() (*moov.Box, bool) {
-   if f.Moov != nil {
-      return f.Moov, true
-   }
-   return nil, false
-}
-
 func (f *File) Append(buf []byte) ([]byte, error) {
    var err error
    // KEEP THESE IN ORDER
@@ -52,7 +36,7 @@ func (f *File) Append(buf []byte) ([]byte, error) {
       }
    }
    if f.Mdat != nil {
-      buf, err = f.Mdat.Append(buf)
+      buf, err = f.Mdat.Box.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -70,12 +54,7 @@ func (f *File) Decode(buf []byte) error {
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "mdat":
-         f.Mdat = &mdat.Box{}
-         f.Mdat.Box.BoxHeader = value.BoxHeader
-         err := f.Mdat.Decode(value.Payload)
-         if err != nil {
-            return err
-         }
+         f.Mdat = &mdat.Box{value}
       case "moof":
          f.Moof = &moof.Box{BoxHeader: value.BoxHeader}
          err := f.Moof.Decode(value.Payload)
@@ -105,4 +84,20 @@ func (f *File) Decode(buf []byte) error {
       }
    }
    return nil
+}
+
+// ISO/IEC 14496-12
+type File struct {
+   Box  []sofia.Box
+   Mdat *mdat.Box
+   Moof *moof.Box
+   Moov *moov.Box
+   Sidx *sidx.Box
+}
+
+func (f *File) GetMoov() (*moov.Box, bool) {
+   if f.Moov != nil {
+      return f.Moov, true
+   }
+   return nil, false
 }

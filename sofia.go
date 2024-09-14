@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (b *Box) Decode(buf []byte) error {
+   n, err := b.BoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   b.Payload = buf[n:b.BoxHeader.Size]
+   return nil
+}
+
 func (f *FullBoxHeader) Decode(buf []byte) (int, error) {
    return binary.Decode(buf, binary.BigEndian, f)
 }
@@ -17,15 +26,6 @@ func (s *SampleEntry) Decode(buf []byte) (int, error) {
       return 0, err
    }
    return ns+n, nil
-}
-
-func (b *Box) Decode(buf []byte) error {
-   n, err := b.BoxHeader.Decode(buf)
-   if err != nil {
-      return err
-   }
-   b.Payload = buf[n:b.BoxHeader.Size]
-   return nil
 }
 
 // ISO/IEC 14496-12

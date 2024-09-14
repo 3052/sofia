@@ -26,11 +26,3 @@ func (b *Box) Data(track *traf.Box) [][]byte {
    }
    return data
 }
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   return b.Box.Append(buf)
-}
-
-func (b *Box) Decode(buf []byte) error {
-   return b.Box.Decode(buf)
-}

@@ -30,7 +30,9 @@ type Box struct {
 }
 
 // dashif.org/identifiers/content_protection
-const Widevine = "edef8ba979d64acea3c827dcd51d21ed"
+func (b *Box) Widevine() bool {
+   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
+}
 
 func (b *Box) Append(buf []byte) ([]byte, error) {
    buf, err := b.BoxHeader.Append(buf)
@@ -59,31 +61,30 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return append(buf, b.Data...), nil
 }
 
-func (b *Box) Decode(buf []byte) ([]byte, error) {
-   buf, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Decode(buf []byte) error {
+   off, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
-      return nil, err
+      return err
    }
-   n := copy(b.SystemId[:], buf)
-   buf = buf[n:]
+   off += copy(b.SystemId[:], buf[off:])
    if b.FullBoxHeader.Version > 0 {
-      n, err = binary.Decode(buf, binary.BigEndian, &b.KidCount)
+      n, err := binary.Decode(buf[off:], binary.BigEndian, &b.KidCount)
       if err != nil {
-         return nil, err
+         return err
       }
-      buf = buf[n:]
+      off += n
       b.Kid = make([]sofia.Uuid, b.KidCount)
-      n, err = binary.Decode(buf, binary.BigEndian, b.Kid)
+      n, err = binary.Decode(buf[off:], binary.BigEndian, b.Kid)
       if err != nil {
-         return nil, err
+         return err
       }
-      buf = buf[n:]
+      off += n
    }
-   n, err = binary.Decode(buf, binary.BigEndian, &b.DataSize)
+   n, err := binary.Decode(buf[off:], binary.BigEndian, &b.DataSize)
    if err != nil {
-      return nil, err
+      return err
    }
-   buf = buf[n:]
-   b.Data = buf[:b.DataSize]
-   return buf[b.DataSize:], nil
+   off += n
+   b.Data = buf[off:][:b.DataSize]
+   return nil
 }

@@ -84,48 +84,7 @@ type SampleEntry struct {
 
 type Type [4]uint8
 
-func (t Type) String() string {
-   return string(t[:])
-}
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
 type Uuid [16]uint8
-
-func (b *BoxHeader) GetSize() int {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.Type.String() == "uuid" {
-      size += binary.Size(b.UserType)
-   }
-   return size
-}
-
-func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
-   buf, err := binary.Append(buf, binary.BigEndian, b.Size)
-   if err != nil {
-      return nil, err
-   }
-   buf = append(buf, b.Type[:]...)
-   if b.Type.String() == "uuid" {
-      buf = append(buf, b.UserType[:]...)
-   }
-   return buf, nil
-}
-
-func (b *BoxHeader) Decode(buf []byte) (int, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
-   if err != nil {
-      return 0, err
-   }
-   n += copy(b.Type[:], buf[n:])
-   if b.Type.String() == "uuid" {
-      n += copy(b.UserType[:], buf[n:])
-   }
-   return n, nil
-}
 
 func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    buf, err := s.BoxHeader.Append(buf)
@@ -161,6 +120,47 @@ type BoxHeader struct {
 type Error struct {
    Container BoxHeader
    Box BoxHeader
+}
+
+func (t Type) String() string {
+   return string(t[:])
+}
+
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+func (b *BoxHeader) GetSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.Type.String() == "uuid" {
+      size += binary.Size(b.UserType)
+   }
+   return size
+}
+
+func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
+   buf, err := binary.Append(buf, binary.BigEndian, b.Size)
+   if err != nil {
+      return nil, err
+   }
+   buf = append(buf, b.Type[:]...)
+   if b.Type.String() == "uuid" {
+      buf = append(buf, b.UserType[:]...)
+   }
+   return buf, nil
+}
+
+func (b *BoxHeader) Decode(buf []byte) (int, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
+   if err != nil {
+      return 0, err
+   }
+   n += copy(b.Type[:], buf[n:])
+   if b.Type.String() == "uuid" {
+      n += copy(b.UserType[:], buf[n:])
+   }
+   return n, nil
 }
 
 func (e *Error) Error() string {

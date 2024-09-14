@@ -6,12 +6,6 @@ import (
    "strconv"
 )
 
-func (b *Box) Decode(buf []byte) []byte {
-   size := int(b.BoxHeader.Size) - b.BoxHeader.GetSize()
-   b.Payload, buf = buf[:size], buf[size:]
-   return buf
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class Box (
 //      unsigned int(32) boxtype,
@@ -23,43 +17,6 @@ func (b *Box) Decode(buf []byte) []byte {
 type Box struct {
    BoxHeader BoxHeader
    Payload   []byte
-}
-
-func (b *BoxHeader) Decode(buf []byte) ([]byte, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
-   if err != nil {
-      return nil, err
-   }
-   buf = buf[n:]
-   n = copy(b.Type[:], buf)
-   buf = buf[n:]
-   if b.Type.String() == "uuid" {
-      n = copy(b.UserType[:], buf)
-      buf = buf[n:]
-   }
-   return buf, nil
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   return append(buf, b.Payload...), nil
-}
-
-func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = binary.Append(buf, binary.BigEndian, b.Size)
-   if err != nil {
-      return nil, err
-   }
-   buf = append(buf, b.Type[:]...)
-   if b.Type.String() == "uuid" {
-      buf = append(buf, b.UserType[:]...)
-   }
-   return buf, nil
 }
 
 type Error struct {
@@ -177,4 +134,45 @@ func (b *BoxHeader) GetSize() int {
       size += binary.Size(b.UserType)
    }
    return size
+}
+
+func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
+   buf, err := binary.Append(buf, binary.BigEndian, b.Size)
+   if err != nil {
+      return nil, err
+   }
+   buf = append(buf, b.Type[:]...)
+   if b.Type.String() == "uuid" {
+      buf = append(buf, b.UserType[:]...)
+   }
+   return buf, nil
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   return append(buf, b.Payload...), nil
+}
+
+func (b *Box) Decode(buf []byte) error {
+   n, err := b.BoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   b.Payload = buf[n:b.BoxHeader.Size]
+   return nil
+}
+
+func (b *BoxHeader) Decode(buf []byte) (int, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
+   if err != nil {
+      return 0, err
+   }
+   n += copy(b.Type[:], buf[n:])
+   if b.Type.String() == "uuid" {
+      n += copy(b.UserType[:], buf[n:])
+   }
+   return n, nil
 }

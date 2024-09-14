@@ -7,68 +7,6 @@ import (
    "154.pages.dev/sofia/trun"
 )
 
-func (b *Box) Decode(buf []byte) error {
-   for len(buf) >= 1 {
-      var (
-         sb sofia.Box
-         err error
-      )
-      buf, err = sb.BoxHeader.Decode(buf)
-      if err != nil {
-         return err
-      }
-      switch sb.BoxHeader.Type.String() {
-      case "senc":
-         b.Senc = &senc.Box{BoxHeader: sb.BoxHeader}
-         buf, err = b.Senc.Decode(buf)
-         if err != nil {
-            return err
-         }
-      case "uuid":
-         if b.piff(&sb.BoxHeader) {
-            b.Senc = &senc.Box{BoxHeader: sb.BoxHeader}
-            buf, err = b.Senc.Decode(buf)
-            if err != nil {
-               return err
-            }
-         } else {
-            box_data := sofia.Box{BoxHeader: sb.BoxHeader}
-            buf, err = box_data.Decode(buf)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, &box_data)
-         }
-      case "saio", // Roku
-      "saiz", // Roku
-      "sbgp", // Roku
-      "sgpd", // Roku
-      "tfdt": // Roku
-         box_data := sofia.Box{BoxHeader: sb.BoxHeader}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         b.Box = append(b.Box, &box_data)
-      case "tfhd":
-         buf, err = b.Tfhd.Decode(buf)
-         if err != nil {
-            return err
-         }
-         b.Tfhd.BoxHeader = sb.BoxHeader
-      case "trun":
-         buf, err = b.Trun.Decode(buf)
-         if err != nil {
-            return err
-         }
-         b.Trun.BoxHeader = sb.BoxHeader
-      default:
-         return sofia.Error{b.BoxHeader.Type, sb.BoxHeader.Type}
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class TrackFragmentBox extends Box('traf') {
 //   }
@@ -94,8 +32,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range b.Box {
-      buf, err = box_data.Append(buf)
+   for _, sb := range b.Box {
+      buf, err = sb.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -111,4 +49,66 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
       }
    }
    return b.Trun.Append(buf)
+}
+
+func (b *Box) Decode(buf []byte) error {
+   for len(buf) >= 1 {
+      var (
+         sb sofia.Box
+         err error
+      )
+      buf, err = sb.BoxHeader.Decode(buf)
+      if err != nil {
+         return err
+      }
+      switch sb.BoxHeader.Type.String() {
+      case "senc":
+         b.Senc = &senc.Box{BoxHeader: sb.BoxHeader}
+         buf, err = b.Senc.Decode(buf)
+         if err != nil {
+            return err
+         }
+      case "uuid":
+         if b.piff(&sb.BoxHeader) {
+            b.Senc = &senc.Box{BoxHeader: sb.BoxHeader}
+            buf, err = b.Senc.Decode(buf)
+            if err != nil {
+               return err
+            }
+         } else {
+            sb := sofia.Box{BoxHeader: sb.BoxHeader}
+            buf, err = sb.Decode(buf)
+            if err != nil {
+               return err
+            }
+            b.Box = append(b.Box, &sb)
+         }
+      case "saio", // Roku
+      "saiz", // Roku
+      "sbgp", // Roku
+      "sgpd", // Roku
+      "tfdt": // Roku
+         sb := sofia.Box{BoxHeader: sb.BoxHeader}
+         buf, err = sb.Decode(buf)
+         if err != nil {
+            return err
+         }
+         b.Box = append(b.Box, &sb)
+      case "tfhd":
+         buf, err = b.Tfhd.Decode(buf)
+         if err != nil {
+            return err
+         }
+         b.Tfhd.BoxHeader = sb.BoxHeader
+      case "trun":
+         buf, err = b.Trun.Decode(buf)
+         if err != nil {
+            return err
+         }
+         b.Trun.BoxHeader = sb.BoxHeader
+      default:
+         return sofia.Error{b.BoxHeader.Type, sb.BoxHeader.Type}
+      }
+   }
+   return nil
 }

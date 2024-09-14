@@ -15,11 +15,11 @@ func (b *Box) Decode(buf []byte) error {
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "traf":
+         b.Traf.BoxHeader = value.BoxHeader
          err := b.Traf.Decode(value.Payload)
          if err != nil {
             return err
          }
-         b.Traf.BoxHeader = value.BoxHeader
       case "mfhd", // Roku
          "pssh": // Roku
          b.Box = append(b.Box, value)

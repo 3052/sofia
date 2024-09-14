@@ -19,8 +19,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, sof := range b.Box {
-      buf, err = sof.Append(buf)
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -30,24 +30,24 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 
 func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
-      var sof sofia.Box
-      err := sof.Decode(buf)
+      var value sofia.Box
+      err := value.Decode(buf)
       if err != nil {
          return err
       }
-      buf = buf[sof.BoxHeader.Size:]
-      switch sof.BoxHeader.Type.String() {
+      buf = buf[value.BoxHeader.Size:]
+      switch value.BoxHeader.Type.String() {
+      case "hdlr", // Roku
+         "mdhd": // Roku
+         b.Box = append(b.Box, value)
       case "minf":
-         b.Minf.BoxHeader = sof.BoxHeader
-         err := b.Minf.Decode(sof.Payload)
+         b.Minf.BoxHeader = value.BoxHeader
+         err := b.Minf.Decode(value.Payload)
          if err != nil {
             return err
          }
-      case "hdlr", // Roku
-         "mdhd": // Roku
-         b.Box = append(b.Box, sof)
       default:
-         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
+         return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }
    }
    return nil

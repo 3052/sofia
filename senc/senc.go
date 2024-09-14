@@ -7,6 +7,29 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Decode(buf []byte) error {
+   ns, err := b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   ns += n
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, sam := range b.Sample {
+      sam.box = b
+      n, err = sam.Decode(buf[ns:])
+      if err != nil {
+         return err
+      }
+      ns += n
+      b.Sample[i] = sam
+   }
+   return nil
+}
+
 // senc_use_subsamples: flag mask is 0x000002.
 func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
@@ -151,27 +174,4 @@ func (s *Sample) Decode(buf []byte) (int, error) {
       }
    }
    return ns, nil
-}
-
-func (b *Box) Decode(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
-   if err != nil {
-      return err
-   }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   ns += n
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, sam := range b.Sample {
-      sam.box = b
-      n, err = sam.Decode(buf[ns:])
-      if err != nil {
-         return err
-      }
-      ns += n
-      b.Sample[i] = sam
-   }
-   return nil
 }

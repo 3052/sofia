@@ -7,6 +7,7 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //      unsigned int(16) pre_defined = 0;
 //      const unsigned int(16) reserved = 0;
@@ -40,7 +41,7 @@ type SampleEntry struct {
       Depth           uint16
       _               int16
    }
-   Box            []*sofia.Box
+   Box  []*sofia.Box
    Sinf sinf.Box
 }
 
@@ -62,30 +63,31 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    return s.Sinf.Append(buf)
 }
 
-func (s *SampleEntry) Decode(buf []byte, n int) error {
-   buf, err := s.SampleEntry.Decode(buf[:n])
+func (s *SampleEntry) Decode(buf []byte) error {
+   n, err := s.SampleEntry.Decode(buf)
    if err != nil {
       return err
    }
+   buf = buf[n:]
    n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
    buf = buf[n:]
    for len(buf) >= 1 {
-      var head sofia.BoxHeader
-      buf, err = head.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
          return err
       }
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "sinf":
-         n = head.PayloadSize()
-         err := s.Sinf.Decode(buf, n)
+         s.Sinf.BoxHeader = sof.BoxHeader
+         err := s.Sinf.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         buf = buf[n:]
       case "avcC", // Roku
          "btrt", // Mubi
          "clli", // Max
@@ -95,14 +97,9 @@ func (s *SampleEntry) Decode(buf []byte, n int) error {
          "hvcC", // Hulu
          "mdcv", // Max
          "pasp": // Roku
-         sofia_box := sofia.Box{BoxHeader: head}
-         buf, err = sofia_box.Decode(buf)
-         if err != nil {
-            return err
-         }
-         s.Box = append(s.Box, &sofia_box)
+         s.Box = append(s.Box, &sof)
       default:
-         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
+         return &sofia.Error{s.SampleEntry.BoxHeader, sof.BoxHeader}
       }
    }
    return nil

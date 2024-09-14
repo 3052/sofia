@@ -28,39 +28,31 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Stsd.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte) ([]byte, error) {
+func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
-      var (
-         head sofia.BoxHeader
-         err error
-      )
-      buf, err = head.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
-         return nil, err
+         return err
       }
-      var payload []byte
-      payload, buf = head.Payload(buf)
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "stsd":
-         err := b.Stsd.Decode(payload)
+         b.Stsd.BoxHeader = sof.BoxHeader
+         err := b.Stsd.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         b.Stsd.BoxHeader = head
       case "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku
          "stss", // CineMember
          "stsz", // Roku
          "stts": // Roku
-         box_data := sofia.Box{BoxHeader: head}
-         err := box_data.Read(src)
-         if err != nil {
-            return err
-         }
-         b.Box = append(b.Box, box_data)
+         b.Box = append(b.Box, sof)
       default:
-         return sofia.Error{b.BoxHeader.Type, head.Type}
+         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
       }
    }
+   return nil
 }

@@ -79,54 +79,45 @@ func (b *Box) Sinf() (*sinf.Box, bool) {
    return nil, false
 }
 
-func (b *Box) Decode(buf []byte, n int) error {
-   buf, err := b.FullBoxHeader.Decode(buf[:n])
+func (b *Box) Decode(buf []byte) error {
+   n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
+   buf = buf[n:]
    n, err = binary.Decode(buf, binary.BigEndian, &b.EntryCount)
    if err != nil {
       return err
    }
    buf = buf[n:]
    for len(buf) >= 1 {
-      var (
-         head sofia.BoxHeader
-         err error
-      )
-      buf, err = head.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
          return err
       }
-      n = head.PayloadSize()
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
-         err := b.AudioSample.Decode(buf, n)
+         b.AudioSample.SampleEntry.BoxHeader = sof.BoxHeader
+         err := b.AudioSample.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         buf = buf[n:]
-         b.AudioSample.SampleEntry.BoxHeader = head
       case "encv":
          b.VisualSample = &encv.SampleEntry{}
-         err := b.VisualSample.Decode(buf, n)
+         b.VisualSample.SampleEntry.BoxHeader = sof.BoxHeader
+         err := b.VisualSample.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         buf = buf[n:]
-         b.VisualSample.SampleEntry.BoxHeader = head
       case "avc1", // Tubi
-      "ec-3", // Max
-      "mp4a": // Tubi
-         box_data := sofia.Box{BoxHeader: head}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         b.Box = append(b.Box, box_data)
+         "ec-3", // Max
+         "mp4a": // Tubi
+         b.Box = append(b.Box, sof)
       default:
-         return sofia.Error{b.BoxHeader.Type, head.Type}
+         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
       }
    }
    return nil

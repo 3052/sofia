@@ -48,45 +48,37 @@ type SampleEntry struct {
    Sinf sinf.Box
 }
 
-func (s *SampleEntry) Decode(buf []byte, n int) error {
-   buf, err := s.SampleEntry.Decode(buf[:n])
+func (s *SampleEntry) Decode(buf []byte) error {
+   n, err := s.SampleEntry.Decode(buf)
    if err != nil {
       return err
    }
+   buf = buf[n:]
    n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
    buf = buf[n:]
    for len(buf) > 1 {
-      var (
-         head sofia.BoxHeader
-         err error
-      )
-      buf, err = head.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
          return err
       }
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "sinf":
-         n = head.PayloadSize()
-         err := s.Sinf.Decode(buf, n)
+         s.Sinf.BoxHeader = sof.BoxHeader
+         err = s.Sinf.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         buf = buf[n:]
-         s.Sinf.BoxHeader = head
       case "btrt", // Criterion
-      "dec3", // Hulu
-      "esds": // Roku
-         box_data := sofia.Box{BoxHeader: head}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         s.Box = append(s.Box, &box_data)
+         "dec3", // Hulu
+         "esds": // Roku
+         s.Box = append(s.Box, &sof)
       default:
-         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
+         return &sofia.Error{s.SampleEntry.BoxHeader, sof.BoxHeader}
       }
    }
    return nil

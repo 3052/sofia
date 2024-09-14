@@ -6,17 +6,19 @@ import (
    "strconv"
 )
 
-func (b *BoxHeader) PayloadSize() int {
-   return int(b.Size) - b.HeaderSize()
-}
-
-func (b *BoxHeader) HeaderSize() int {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.Type.String() == "uuid" {
-      size += binary.Size(b.UserType)
+func (b *BoxHeader) Decode(buf []byte) ([]byte, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
+   if err != nil {
+      return nil, err
    }
-   return size
+   buf = buf[n:]
+   n = copy(b.Type[:], buf)
+   buf = buf[n:]
+   if b.Type.String() == "uuid" {
+      n = copy(b.UserType[:], buf)
+      buf = buf[n:]
+   }
+   return buf, nil
 }
 
 func (b *Box) Decode(buf []byte) ([]byte, error) {
@@ -45,43 +47,6 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
       return nil, err
    }
    return append(buf, b.Payload...), nil
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType Uuid
-}
-
-func (b *BoxHeader) Decode(buf []byte) ([]byte, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
-   if err != nil {
-      return nil, err
-   }
-   buf = buf[n:]
-   n = copy(b.Type[:], buf)
-   buf = buf[n:]
-   if b.Type.String() == "uuid" {
-      n = copy(b.UserType[:], buf)
-      buf = buf[n:]
-   }
-   return buf, nil
 }
 
 func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
@@ -182,3 +147,39 @@ func (u Uuid) String() string {
 }
 
 type Uuid [16]uint8
+
+// ISO/IEC 14496-12
+//   aligned(8) class BoxHeader (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType Uuid
+}
+
+func (b *BoxHeader) GetSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.Type.String() == "uuid" {
+      size += binary.Size(b.UserType)
+   }
+   return size
+}
+
+func (b *BoxHeader) Payload(buf []byte) ([]byte, []byte) {
+   size := int(b.Size) - b.GetSize()
+   return buf[:size], buf[size:]
+}

@@ -3,7 +3,6 @@ package stbl
 import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/stsd"
-   "io"
 )
 
 // ISO/IEC 14496-12
@@ -15,53 +14,53 @@ type Box struct {
    Stsd      stsd.Box
 }
 
-func (b *Box) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "stsd":
-            err := b.Stsd.Read(src, head.PayloadSize())
-            if err != nil {
-               return err
-            }
-            b.Stsd.BoxHeader = head
-         case "sgpd", // Paramount
-            "stco", // Roku
-            "stsc", // Roku
-            "stss", // CineMember
-            "stsz", // Roku
-            "stts": // Roku
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, value)
-         default:
-            return sofia.Error{b.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   for _, box_data := range b.Box {
+      buf, err = box_data.Append(buf)
+      if err != nil {
+         return nil, err
       }
    }
+   return b.Stsd.Append(buf)
 }
 
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Box {
-      err := value.Write(dst)
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   for len(buf) >= 1 {
+      var (
+         head sofia.BoxHeader
+         err error
+      )
+      buf, err = head.Decode(buf)
       if err != nil {
-         return err
+         return nil, err
+      }
+      var payload []byte
+      payload, buf = head.Payload(buf)
+      switch head.Type.String() {
+      case "stsd":
+         err := b.Stsd.Decode(payload)
+         if err != nil {
+            return err
+         }
+         b.Stsd.BoxHeader = head
+      case "sgpd", // Paramount
+         "stco", // Roku
+         "stsc", // Roku
+         "stss", // CineMember
+         "stsz", // Roku
+         "stts": // Roku
+         box_data := sofia.Box{BoxHeader: head}
+         err := box_data.Read(src)
+         if err != nil {
+            return err
+         }
+         b.Box = append(b.Box, box_data)
+      default:
+         return sofia.Error{b.BoxHeader.Type, head.Type}
       }
    }
-   return b.Stsd.Write(dst)
 }

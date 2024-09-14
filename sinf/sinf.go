@@ -39,22 +39,19 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 
 func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
-      var (
-         sof sofia.Box
-         err error
-      )
-      buf, err = sof.BoxHeader.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
          return err
       }
-      buf = sof.Decode(buf)
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "frma":
-         buf, err = b.Frma.Decode(buf)
+         err := b.Frma.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         b.Frma.BoxHeader = head
+         b.Frma.BoxHeader = sof.BoxHeader
       case "schi":
          buf, err = b.Schi.Decode(buf)
          if err != nil {

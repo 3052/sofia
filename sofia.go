@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (b *Box) Decode(buf []byte) error {
+   n, err := b.BoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   b.Payload = buf[n:b.BoxHeader.Size]
+   return nil
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class Box (
 //      unsigned int(32) boxtype,
@@ -17,6 +26,36 @@ import (
 type Box struct {
    BoxHeader BoxHeader
    Payload   []byte
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   return append(buf, b.Payload...), nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class BoxHeader (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType Uuid
 }
 
 type Error struct {
@@ -77,28 +116,6 @@ func (u Uuid) String() string {
 
 type Uuid [16]uint8
 
-// ISO/IEC 14496-12
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType Uuid
-}
-
 func (b *BoxHeader) GetSize() int {
    size := binary.Size(b.Size)
    size += binary.Size(b.Type)
@@ -118,23 +135,6 @@ func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
       buf = append(buf, b.UserType[:]...)
    }
    return buf, nil
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   return append(buf, b.Payload...), nil
-}
-
-func (b *Box) Decode(buf []byte) error {
-   n, err := b.BoxHeader.Decode(buf)
-   if err != nil {
-      return err
-   }
-   b.Payload = buf[n:b.BoxHeader.Size]
-   return nil
 }
 
 func (b *BoxHeader) Decode(buf []byte) (int, error) {

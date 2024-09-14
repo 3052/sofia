@@ -7,46 +7,49 @@ import (
    "io"
 )
 
-func (s *SampleEntry) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   err := s.SampleEntry.Read(src)
+func (s *SampleEntry) Decode(buf []byte, size int64) error {
+   buf = buf[:size]
+   buf, err = s.SampleEntry.Decode(buf)
    if err != nil {
       return err
    }
-   err = binary.Read(src, binary.BigEndian, &s.Extends)
+   n, err := binary.Decode(buf, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "sinf":
-            err := s.Sinf.Read(src, head.PayloadSize())
-            if err != nil {
-               return err
-            }
-            s.Sinf.BoxHeader = head
-         case "btrt", // Criterion
-            "dec3", // Hulu
-            "esds": // Roku
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            s.Box = append(s.Box, &value)
-         default:
-            return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
+   buf = buf[n:]
+   for len(buf) > 1 {
+      var (
+         head sofia.BoxHeader
+         err error
+      )
+      buf, err = head.Decode(buf)
+      if err != nil {
          return err
       }
+      switch head.Type.String() {
+      case "sinf":
+         n := head.PayloadSize()
+         err := s.Sinf.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+         s.Sinf.BoxHeader = head
+      case "btrt", // Criterion
+      "dec3", // Hulu
+      "esds": // Roku
+         box_data := sofia.Box{BoxHeader: head}
+         buf, err = box_data.Decode(buf)
+         if err != nil {
+            return err
+         }
+         s.Box = append(s.Box, &box_data)
+      default:
+         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
+      }
    }
+   return nil
 }
 
 func (s *SampleEntry) Write(dst io.Writer) error {

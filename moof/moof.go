@@ -5,29 +5,6 @@ import (
    "154.pages.dev/sofia/traf"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class MovieFragmentBox extends Box('moof') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []sofia.Box
-   Traf      traf.Box
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   for _, box_data := range b.Box {
-      buf, err = box_data.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return b.Traf.Write(buf)
-}
-
 func (b *Box) Decode(buf []byte, size int64) error {
    buf = buf[:size]
    for len(buf) >= 1 {
@@ -61,4 +38,27 @@ func (b *Box) Decode(buf []byte, size int64) error {
       }
    }
    return nil
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   for _, box_data := range b.Box {
+      buf, err = box_data.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return b.Traf.Append(buf)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class MovieFragmentBox extends Box('moof') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Traf      traf.Box
 }

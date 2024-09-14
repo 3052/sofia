@@ -52,34 +52,35 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Trun.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte, size int64) ([]byte, error) {
-   buf = buf[:size]
-   for len(buf) >= 1 {
+func (b *Box) Decode(src []byte, size int64) ([]byte, error) {
+   dst := src[size:]
+   src = src[:size]
+   for len(src) >= 1 {
       var (
          head sofia.BoxHeader
          err error
       )
-      buf, err = head.Decode(buf)
+      src, err = head.Decode(src)
       if err != nil {
          return nil, err
       }
       switch head.Type.String() {
       case "senc":
          b.Senc = &senc.Box{BoxHeader: head}
-         buf, err = b.Senc.Decode(buf)
+         src, err = b.Senc.Decode(src)
          if err != nil {
             return nil, err
          }
       case "uuid":
          if b.piff(&head) {
             b.Senc = &senc.Box{BoxHeader: head}
-            buf, err = b.Senc.Decode(buf)
+            src, err = b.Senc.Decode(src)
             if err != nil {
                return nil, err
             }
          } else {
             value := sofia.Box{BoxHeader: head}
-            buf, err = value.Decode(buf)
+            src, err = value.Decode(src)
             if err != nil {
                return nil, err
             }
@@ -91,25 +92,26 @@ func (b *Box) Decode(buf []byte, size int64) ([]byte, error) {
       "sgpd", // Roku
       "tfdt": // Roku
          value := sofia.Box{BoxHeader: head}
-         buf, err = value.Decode(buf)
+         src, err = value.Decode(src)
          if err != nil {
             return nil, err
          }
          b.Box = append(b.Box, &value)
       case "tfhd":
-         buf, err = b.Tfhd.Decode(buf)
+         src, err = b.Tfhd.Decode(src)
          if err != nil {
             return nil, err
          }
          b.Tfhd.BoxHeader = head
       case "trun":
-         buf, err = b.Trun.Decode(buf)
+         src, err = b.Trun.Decode(src)
          if err != nil {
             return nil, err
          }
          b.Trun.BoxHeader = head
       default:
-         return sofia.Error{b.BoxHeader.Type, head.Type}
+         return nil, sofia.Error{b.BoxHeader.Type, head.Type}
       }
    }
+   return dst, nil
 }

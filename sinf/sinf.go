@@ -8,7 +8,6 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
 //      OriginalFormatBox(fmt) original_format;
 //      SchemeTypeBox scheme_type_box; // optional
@@ -21,58 +20,58 @@ type Box struct {
    Schi      schi.Box
 }
 
-func (b *Box) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "frma":
-            b.Frma.BoxHeader = head
-            err := b.Frma.Read(src)
-            if err != nil {
-               return err
-            }
-         case "schi":
-            b.Schi.BoxHeader = head
-            err := b.Schi.Read(src)
-            if err != nil {
-               return err
-            }
-         case "schm": // Roku
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, value)
-         default:
-            return sofia.Error{b.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
    for _, value := range b.Box {
-      err := value.Write(dst)
+      buf, err = value.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
-   err = b.Frma.Write(dst)
+   buf, err = b.Frma.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   return b.Schi.Write(dst)
+   return b.Schi.Append(buf)
+}
+
+///
+
+func (b *Box) Decode(src []byte, size int64) ([]byte, error) {
+   dst := src[size:]
+   src = src[:size]
+   for len(src) >= 1 {
+      var head sofia.BoxHeader
+      src, err = head.Decode(src)
+      if err != nil {
+         return nil, err
+      }
+      switch head.Type.String() {
+      case "frma":
+         src, err = b.Frma.Decode(src)
+         if err != nil {
+            return nil, err
+         }
+         b.Frma.BoxHeader = head
+      case "schi":
+         src, err = b.Schi.Decode(src)
+         if err != nil {
+            return nil, err
+         }
+         b.Schi.BoxHeader = head
+      case "schm": // Roku
+         value := sofia.Box{BoxHeader: head}
+         src, err = value.Decode(src)
+         if err != nil {
+            return nil, err
+         }
+         b.Box = append(b.Box, value)
+      default:
+         return nil, sofia.Error{b.BoxHeader.Type, head.Type}
+      }
+   }
+   return dst, nil
 }

@@ -60,25 +60,25 @@ func (s *SampleEntry) Decode(buf []byte) error {
    }
    buf = buf[n:]
    for len(buf) > 1 {
-      var sof sofia.Box
-      err := sof.Decode(buf)
+      var value sofia.Box
+      err := value.Decode(buf)
       if err != nil {
          return err
       }
-      buf = buf[sof.BoxHeader.Size:]
-      switch sof.BoxHeader.Type.String() {
+      buf = buf[value.BoxHeader.Size:]
+      switch value.BoxHeader.Type.String() {
       case "sinf":
-         s.Sinf.BoxHeader = sof.BoxHeader
-         err = s.Sinf.Decode(sof.Payload)
+         s.Sinf.BoxHeader = value.BoxHeader
+         err = s.Sinf.Decode(value.Payload)
          if err != nil {
             return err
          }
       case "btrt", // Criterion
          "dec3", // Hulu
          "esds": // Roku
-         s.Box = append(s.Box, &sof)
+         s.Box = append(s.Box, &value)
       default:
-         return &sofia.Error{s.SampleEntry.BoxHeader, sof.BoxHeader}
+         return &sofia.Error{s.SampleEntry.BoxHeader, value.BoxHeader}
       }
    }
    return nil

@@ -117,11 +117,6 @@ type BoxHeader struct {
    UserType Uuid
 }
 
-type Error struct {
-   Container BoxHeader
-   Box BoxHeader
-}
-
 func (t Type) String() string {
    return string(t[:])
 }
@@ -161,6 +156,11 @@ func (b *BoxHeader) Decode(buf []byte) (int, error) {
       n += copy(b.UserType[:], buf[n:])
    }
    return n, nil
+}
+
+type Error struct {
+   Container BoxHeader
+   Box BoxHeader
 }
 
 func (e *Error) Error() string {

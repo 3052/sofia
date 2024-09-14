@@ -54,8 +54,8 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, sofia_box := range s.Box {
-      buf, err = sofia_box.Append(buf)
+   for _, value := range s.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -75,16 +75,16 @@ func (s *SampleEntry) Decode(buf []byte) error {
    }
    buf = buf[n:]
    for len(buf) >= 1 {
-      var sof sofia.Box
-      err := sof.Decode(buf)
+      var value sofia.Box
+      err := value.Decode(buf)
       if err != nil {
          return err
       }
-      buf = buf[sof.BoxHeader.Size:]
-      switch sof.BoxHeader.Type.String() {
+      buf = buf[value.BoxHeader.Size:]
+      switch value.BoxHeader.Type.String() {
       case "sinf":
-         s.Sinf.BoxHeader = sof.BoxHeader
-         err := s.Sinf.Decode(sof.Payload)
+         s.Sinf.BoxHeader = value.BoxHeader
+         err := s.Sinf.Decode(value.Payload)
          if err != nil {
             return err
          }
@@ -97,9 +97,9 @@ func (s *SampleEntry) Decode(buf []byte) error {
          "hvcC", // Hulu
          "mdcv", // Max
          "pasp": // Roku
-         s.Box = append(s.Box, &sof)
+         s.Box = append(s.Box, &value)
       default:
-         return &sofia.Error{s.SampleEntry.BoxHeader, sof.BoxHeader}
+         return &sofia.Error{s.SampleEntry.BoxHeader, value.BoxHeader}
       }
    }
    return nil

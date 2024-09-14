@@ -60,59 +60,49 @@ func (f *File) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-///
-
-func (f *File) Read(src io.Reader) error {
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         size := head.PayloadSize()
-         switch head.Type.String() {
-         case "mdat":
-            f.Mdat = &mdat.Box{}
-            f.Mdat.Box.BoxHeader = head
-            err := f.Mdat.Read(src)
-            if err != nil {
-               return err
-            }
-         case "moof":
-            f.Moof = &moof.Box{BoxHeader: head}
-            err := f.Moof.Read(src, size)
-            if err != nil {
-               return err
-            }
-         case "sidx":
-            f.Sidx = &sidx.Box{BoxHeader: head}
-            err := f.Sidx.Read(src)
-            if err != nil {
-               return err
-            }
-         case "moov":
-            f.Moov = &moov.Box{BoxHeader: head}
-            err := f.Moov.Read(src, size)
-            if err != nil {
-               return err
-            }
-         case "free", // Mubi
-            "ftyp", // Roku
-            "styp": // Roku
-            object := sofia.Box{BoxHeader: head}
-            err := object.Read(src)
-            if err != nil {
-               return err
-            }
-            f.Box = append(f.Box, object)
-         default:
-            var container sofia.Type
-            copy(container[:], "File")
-            return sofia.Error{container, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
+func (f *File) Decode(buf []byte) error {
+   for len(buf) >= 1 {
+      var value sofia.Box
+      err := value.Decode(buf)
+      if err != nil {
          return err
       }
+      buf = buf[value.BoxHeader.Size:]
+      switch value.BoxHeader.Type.String() {
+      case "mdat":
+         f.Mdat = &mdat.Box{}
+         f.Mdat.Box.BoxHeader = value.BoxHeader
+         err := f.Mdat.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "moof":
+         f.Moof = &moof.Box{BoxHeader: value.BoxHeader}
+         err := f.Moof.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "sidx":
+         f.Sidx = &sidx.Box{BoxHeader: value.BoxHeader}
+         err := f.Sidx.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "moov":
+         f.Moov = &moov.Box{BoxHeader: value.BoxHeader}
+         err := f.Moov.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "free", // Mubi
+         "ftyp", // Roku
+         "styp": // Roku
+         f.Box = append(f.Box, value)
+      default:
+         var container sofia.BoxHeader
+         copy(container.Type[:], "File")
+         return &sofia.Error{container, value.BoxHeader}
+      }
    }
+   return nil
 }

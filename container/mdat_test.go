@@ -12,18 +12,15 @@ var mdat_tests = []string{
 
 func TestMdat(t *testing.T) {
    for _, test := range mdat_tests {
-      func() {
-         src, err := os.Open(test)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer src.Close()
-         var value File
-         err = value.Read(src)
-         if err != nil {
-            t.Fatal(err)
-         }
-         value.Mdat.Data(&value.Moof.Traf)
-      }()
+      buf, err := os.ReadFile(test)
+      if err != nil {
+         t.Fatal(err)
+      }
+      var value File
+      err = value.Decode(buf)
+      if err != nil {
+         t.Fatal(err)
+      }
+      value.Mdat.Data(&value.Moof.Traf)
    }
 }

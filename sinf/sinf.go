@@ -6,17 +6,17 @@ import (
    "154.pages.dev/sofia/schi"
 )
 
-func (b *Box) Decode(buf []byte, size int) error {
-   buf = buf[:size]
+func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
       var (
-         head sofia.BoxHeader
+         sofia_box sofia.Box
          err error
       )
-      buf, err = head.Decode(buf)
+      buf, err = sofia_box.BoxHeader.Decode(buf)
       if err != nil {
          return err
       }
+      buf = sofia_box.Decode(buf)
       switch head.Type.String() {
       case "frma":
          buf, err = b.Frma.Decode(buf)

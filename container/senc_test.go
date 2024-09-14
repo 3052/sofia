@@ -3,7 +3,6 @@ package container
 import (
    "encoding/hex"
    "fmt"
-   "io"
    "os"
    "testing"
 )
@@ -89,44 +88,22 @@ var senc_tests = []senc_test{
    },
 }
 
-func (s senc_test) encode_segment(dst io.Writer) error {
-   fmt.Println(s.segment)
-   src, err := os.Open(s.segment)
-   if err != nil {
-      return err
-   }
-   defer src.Close()
-   var value File
-   err = value.Read(src)
-   if err != nil {
-      return err
-   }
-   track := value.Moof.Traf
-   if senc := track.Senc; senc != nil {
-      key, err := hex.DecodeString(s.key)
-      if err != nil {
-         return err
-      }
-      for i, text := range value.Mdat.Data(&track) {
-         err := senc.Sample[i].DecryptCenc(text, key)
-         if err != nil {
-            return err
-         }
-      }
-   }
-   return value.Write(dst)
+type senc_test struct {
+   init    string
+   segment string
+   key     string
+   dst     string
 }
 
-func (s senc_test) encode_init(dst io.Writer) error {
-   src, err := os.Open(s.init)
+func (s senc_test) encode_init() ([]byte, error) {
+   buf, err := os.ReadFile(s.init)
    if err != nil {
-      return err
+      return nil, err
    }
-   defer src.Close()
    var value File
-   err = value.Read(src)
+   err = value.Decode(buf)
    if err != nil {
-      return err
+      return nil, err
    }
    for _, pssh := range value.Moov.Pssh {
       copy(pssh.BoxHeader.Type[:], "free") // Firefox
@@ -140,32 +117,49 @@ func (s senc_test) encode_init(dst io.Writer) error {
          copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
       }
    }
-   return value.Write(dst)
-}
-
-type senc_test struct {
-   init    string
-   segment string
-   key     string
-   dst     string
+   return value.Append(nil)
 }
 
 func TestSenc(t *testing.T) {
    for _, test := range senc_tests {
-      func() {
-         dst, err := os.Create(test.dst)
-         if err != nil {
-            t.Fatal(err)
-         }
-         defer dst.Close()
-         err = test.encode_init(dst)
-         if err != nil {
-            t.Fatal(err)
-         }
-         err = test.encode_segment(dst)
-         if err != nil {
-            t.Fatal(err)
-         }
-      }()
+      buf, err := test.encode_init()
+      if err != nil {
+         t.Fatal(err)
+      }
+      buf, err = test.encode_segment(buf)
+      if err != nil {
+         t.Fatal(err)
+      }
+      err = os.WriteFile(test.dst, buf, os.ModePerm)
+      if err != nil {
+         t.Fatal(err)
+      }
    }
+}
+
+func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
+   fmt.Println(s.segment)
+   segment, err := os.ReadFile(s.segment)
+   if err != nil {
+      return nil, err
+   }
+   var value File
+   err = value.Decode(segment)
+   if err != nil {
+      return nil, err
+   }
+   track := value.Moof.Traf
+   if senc := track.Senc; senc != nil {
+      key, err := hex.DecodeString(s.key)
+      if err != nil {
+         return nil, err
+      }
+      for i, text := range value.Mdat.Data(&track) {
+         err := senc.Sample[i].DecryptCenc(text, key)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return value.Append(buf)
 }

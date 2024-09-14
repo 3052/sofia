@@ -5,6 +5,86 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Decode(buf []byte) error {
+   ns, err := b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceId)
+   if err != nil {
+      return err
+   }
+   ns += n
+   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Timescale)
+   if err != nil {
+      return err
+   }
+   ns += n
+   if b.FullBoxHeader.Version == 0 {
+      n = 4
+   } else {
+      n = 8
+   }
+   b.EarliestPresentationTime = buf[ns:][:n]
+   ns += n
+   b.FirstOffset = buf[ns:][:n]
+   ns += n
+   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Reserved)
+   if err != nil {
+      return err
+   }
+   ns += n
+   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceCount)
+   if err != nil {
+      return err
+   }
+   ns += n
+   b.Reference = make([]Reference, b.ReferenceCount)
+   for i, ref := range b.Reference {
+      n, err = ref.Decode(buf[ns:])
+      if err != nil {
+         return err
+      }
+      ns += n
+      b.Reference[i] = ref
+   }
+   return nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
+//      unsigned int(32) reference_ID;
+//      unsigned int(32) timescale;
+//      if (version==0) {
+//         unsigned int(32) earliest_presentation_time;
+//         unsigned int(32) first_offset;
+//      } else {
+//         unsigned int(64) earliest_presentation_time;
+//         unsigned int(64) first_offset;
+//      }
+//      unsigned int(16) reserved = 0;
+//      unsigned int(16) reference_count;
+//      for(i=1; i <= reference_count; i++) {
+//         bit (1) reference_type;
+//         unsigned int(31) referenced_size;
+//         unsigned int(32) subsegment_duration;
+//         bit(1) starts_with_SAP;
+//         unsigned int(3) SAP_type;
+//         unsigned int(28) SAP_delta_time;
+//      }
+//   }
+type Box struct {
+   BoxHeader                sofia.BoxHeader
+   FullBoxHeader            sofia.FullBoxHeader
+   ReferenceId              uint32
+   Timescale                uint32
+   EarliestPresentationTime []byte
+   FirstOffset              []byte
+   Reserved                 uint16
+   ReferenceCount           uint16
+   Reference                []Reference
+}
+
 func (b *Box) GetSize() int {
    size := b.BoxHeader.GetSize()
    size += binary.Size(b.FullBoxHeader)
@@ -77,40 +157,6 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
-//      unsigned int(32) reference_ID;
-//      unsigned int(32) timescale;
-//      if (version==0) {
-//         unsigned int(32) earliest_presentation_time;
-//         unsigned int(32) first_offset;
-//      } else {
-//         unsigned int(64) earliest_presentation_time;
-//         unsigned int(64) first_offset;
-//      }
-//      unsigned int(16) reserved = 0;
-//      unsigned int(16) reference_count;
-//      for(i=1; i <= reference_count; i++) {
-//         bit (1) reference_type;
-//         unsigned int(31) referenced_size;
-//         unsigned int(32) subsegment_duration;
-//         bit(1) starts_with_SAP;
-//         unsigned int(3) SAP_type;
-//         unsigned int(28) SAP_delta_time;
-//      }
-//   }
-type Box struct {
-   BoxHeader                sofia.BoxHeader
-   FullBoxHeader            sofia.FullBoxHeader
-   ReferenceId              uint32
-   Timescale                uint32
-   EarliestPresentationTime []byte
-   FirstOffset              []byte
-   Reserved                 uint16
-   ReferenceCount           uint16
-   Reference                []Reference
-}
-
 func (b *Box) Add(size uint32) {
    var ref Reference
    ref.set_referenced_size(size)
@@ -119,50 +165,6 @@ func (b *Box) Add(size uint32) {
    b.BoxHeader.Size = uint32(b.GetSize())
 }
 
-func (r *Reference) decode(buf []byte) (int, error) {
+func (r *Reference) Decode(buf []byte) (int, error) {
    return binary.Decode(buf, binary.BigEndian, r)
-}
-
-func (b *Box) Decode(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
-   if err != nil {
-      return err
-   }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceId)
-   if err != nil {
-      return err
-   }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Timescale)
-   if err != nil {
-      return err
-   }
-   ns += n
-   if b.FullBoxHeader.Version == 0 {
-      n = 4
-   } else {
-      n = 8
-   }
-   b.EarliestPresentationTime = buf[ns:][:n]
-   b.FirstOffset = buf[ns:][:n]
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Reserved)
-   if err != nil {
-      return err
-   }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceCount)
-   if err != nil {
-      return err
-   }
-   ns += n
-   b.Reference = make([]Reference, b.ReferenceCount)
-   for i, ref := range b.Reference {
-      n, err = ref.decode(buf[ns:])
-      if err != nil {
-         return err
-      }
-      b.Reference[i] = ref
-   }
-   return nil
 }

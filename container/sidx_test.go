@@ -7,13 +7,12 @@ import (
 )
 
 func TestSidx(t *testing.T) {
-   src, err := os.Open("../testdata/hulu-avc1/init.mp4")
+   buf, err := os.ReadFile("../testdata/hulu-avc1/init.mp4")
    if err != nil {
       t.Fatal(err)
    }
-   defer src.Close()
    var value File
-   err = value.Read(src)
+   err = value.Decode(buf)
    if err != nil {
       t.Fatal(err)
    }

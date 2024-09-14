@@ -3,7 +3,6 @@ package tenc
 import (
    "154.pages.dev/sofia"
    "encoding/binary"
-   "io"
 )
 
 // ISO/IEC 23001-7
@@ -35,42 +34,36 @@ type Box struct {
    DefaultKid sofia.Uuid
 }
 
-func (b *Box) Read(src io.Reader) error {
-   err := b.BoxHeader.Read(src)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = b.FullBoxHeader.Read(src)
+   buf, err = b.FullBoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Read(src, binary.BigEndian, &b.Extends)
+   buf, err = binary.Append(buf, binary.BigEndian, b.Extends)
    if err != nil {
-      return err
+      return nil, err
    }
-   _, err = io.ReadFull(src, b.DefaultKid[:])
-   if err != nil {
-      return err
-   }
-   return nil
+   return append(buf, b.DefaultKid[:]...), nil
 }
 
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Decode(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = b.FullBoxHeader.Write(dst)
+   buf, err = b.FullBoxHeader.Decode(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Write(dst, binary.BigEndian, b.Extends)
+   n, err := binary.Decode(buf, binary.BigEndian, &b.Extends)
    if err != nil {
-      return err
+      return nil, err
    }
-   _, err = dst.Write(b.DefaultKid[:])
-   if err != nil {
-      return err
-   }
-   return nil
+   buf = buf[n:]
+   n = copy(b.DefaultKid[:], buf)
+   return buf[n:], nil
 }

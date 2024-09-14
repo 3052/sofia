@@ -6,125 +6,6 @@ import (
    "io"
 )
 
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Read(src, binary.BigEndian, &b.DataOffset)
-   if err != nil {
-      return err
-   }
-   if b.first_sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      err := value.read(src)
-      if err != nil {
-         return err
-      }
-      b.Sample[i] = value
-   }
-   return nil
-}
-
-func (s *Sample) read(src io.Reader) error {
-   if s.box.sample_duration_present() {
-      err := binary.Read(src, binary.BigEndian, &s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_size_present() {
-      err := binary.Read(src, binary.BigEndian, &s.SampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_composition_time_offsets_present() {
-      _, err := io.ReadFull(src, s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.SampleCount)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.DataOffset)
-   if err != nil {
-      return err
-   }
-   if b.first_sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-   }
-   for _, value := range b.Sample {
-      err := value.write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
-func (s *Sample) write(dst io.Writer) error {
-   if s.box.sample_duration_present() {
-      err := binary.Write(dst, binary.BigEndian, s.Duration)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_size_present() {
-      err := binary.Write(dst, binary.BigEndian, s.SampleSize)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, s.Flags)
-      if err != nil {
-         return err
-      }
-   }
-   if s.box.sample_composition_time_offsets_present() {
-      _, err := dst.Write(s.CompositionTimeOffset[:])
-      if err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // 0x000004 first-sample-flags-present
 func (b *Box) first_sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x4 >= 1
@@ -188,4 +69,125 @@ type Box struct {
    DataOffset       int32
    FirstSampleFlags uint32
    Sample           []Sample
+}
+
+func (s *Sample) Append(buf []byte) ([]byte, error) {
+   var err error
+   if s.box.sample_duration_present() {
+      buf, err = binary.Append(buf, binary.BigEndian, s.Duration)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if s.box.sample_size_present() {
+      buf, err = binary.Append(buf, binary.BigEndian, s.SampleSize)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if s.box.sample_flags_present() {
+      buf, err = binary.Append(buf, binary.BigEndian, s.Flags)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if s.box.sample_composition_time_offsets_present() {
+      buf = append(buf, s.CompositionTimeOffset[:]...)
+   }
+   return buf, nil
+}
+
+func (s *Sample) Decode(buf []byte) ([]byte, error) {
+   if s.box.sample_duration_present() {
+      n, err := binary.Decode(buf, binary.BigEndian, &s.Duration)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+   }
+   if s.box.sample_size_present() {
+      n, err := binary.Decode(buf, binary.BigEndian, &s.SampleSize)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+   }
+   if s.box.sample_flags_present() {
+      n, err := binary.Decode(buf, binary.BigEndian, &s.Flags)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+   }
+   if s.box.sample_composition_time_offsets_present() {
+      n := copy(s.CompositionTimeOffset[:], buf)
+      buf = buf[n:]
+   }
+   return buf, nil
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = binary.Append(buf, binary.BigEndian, b.SampleCount)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = binary.Append(buf, binary.BigEndian, b.DataOffset)
+   if err != nil {
+      return nil, err
+   }
+   if b.first_sample_flags_present() {
+      buf, err = binary.Append(buf, binary.BigEndian, b.FirstSampleFlags)
+      if err != nil {
+         return nil, err
+      }
+   }
+   for _, value := range b.Sample {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
+}
+
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   buf, err := b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return nil, err
+   }
+   n, err := binary.Decode(buf, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return nil, err
+   }
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.DataOffset)
+   if err != nil {
+      return nil, err
+   }
+   buf = buf[n:]
+   if b.first_sample_flags_present() {
+      n, err = binary.Decode(buf, binary.BigEndian, &b.FirstSampleFlags)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, value := range b.Sample {
+      value.box = b
+      buf, err = value.Decode(buf)
+      if err != nil {
+         return nil, err
+      }
+      b.Sample[i] = value
+   }
+   return buf, nil
 }

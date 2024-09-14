@@ -3,7 +3,6 @@ package pssh
 import (
    "154.pages.dev/sofia"
    "encoding/binary"
-   "io"
 )
 
 // ISO/IEC 23001-7
@@ -30,73 +29,61 @@ type Box struct {
    Data          []uint8
 }
 
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
-   if err != nil {
-      return err
-   }
-   _, err = io.ReadFull(src, b.SystemId[:])
-   if err != nil {
-      return err
-   }
-   if b.FullBoxHeader.Version > 0 {
-      err := binary.Read(src, binary.BigEndian, &b.KidCount)
-      if err != nil {
-         return err
-      }
-      b.Kid = make([]sofia.Uuid, b.KidCount)
-      err = binary.Read(src, binary.BigEndian, b.Kid)
-      if err != nil {
-         return err
-      }
-   }
-   err = binary.Read(src, binary.BigEndian, &b.DataSize)
-   if err != nil {
-      return err
-   }
-   b.Data = make([]uint8, b.DataSize)
-   _, err = io.ReadFull(src, b.Data)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   _, err = dst.Write(b.SystemId[:])
-   if err != nil {
-      return err
-   }
-   if b.FullBoxHeader.Version > 0 {
-      err := binary.Write(dst, binary.BigEndian, b.KidCount)
-      if err != nil {
-         return err
-      }
-      err = binary.Write(dst, binary.BigEndian, b.Kid)
-      if err != nil {
-         return err
-      }
-   }
-   err = binary.Write(dst, binary.BigEndian, b.DataSize)
-   if err != nil {
-      return err
-   }
-   _, err = dst.Write(b.Data)
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
 // dashif.org/identifiers/content_protection
-func (b *Box) Widevine() bool {
-   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
+const Widevine = "edef8ba979d64acea3c827dcd51d21ed"
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = append(buf, b.SystemId[:]...)
+   if b.FullBoxHeader.Version > 0 {
+      buf, err = binary.Append(buf, binary.BigEndian, b.KidCount)
+      if err != nil {
+         return nil, err
+      }
+      buf, err = binary.Append(buf, binary.BigEndian, b.Kid)
+      if err != nil {
+         return nil, err
+      }
+   }
+   buf, err = binary.Append(buf, binary.BigEndian, b.DataSize)
+   if err != nil {
+      return nil, err
+   }
+   return append(buf, b.Data...), nil
+}
+
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   buf, err := b.FullBoxHeader.Decode(buf)
+   if err != nil {
+      return nil, err
+   }
+   n := copy(b.SystemId[:], buf)
+   buf = buf[n:]
+   if b.FullBoxHeader.Version > 0 {
+      n, err = binary.Decode(buf, binary.BigEndian, &b.KidCount)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+      b.Kid = make([]sofia.Uuid, b.KidCount)
+      n, err = binary.Decode(buf, binary.BigEndian, b.Kid)
+      if err != nil {
+         return nil, err
+      }
+      buf = buf[n:]
+   }
+   n, err = binary.Decode(buf, binary.BigEndian, &b.DataSize)
+   if err != nil {
+      return nil, err
+   }
+   buf = buf[n:]
+   b.Data = buf[:b.DataSize]
+   return buf[b.DataSize:], nil
 }

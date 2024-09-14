@@ -4,51 +4,7 @@ import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/pssh"
    "154.pages.dev/sofia/trak"
-   "io"
 )
-
-func (b *Box) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "iods", // Roku
-            "meta", // Paramount
-            "mvex", // Roku
-            "mvhd", // Roku
-            "udta": // Criterion
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, &value)
-         case "pssh":
-            protect := pssh.Box{BoxHeader: head}
-            err := protect.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Pssh = append(b.Pssh, protect)
-         case "trak":
-            err := b.Trak.Read(src, head.PayloadSize())
-            if err != nil {
-               return err
-            }
-            b.Trak.BoxHeader = head
-         default:
-            return sofia.Error{b.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
 
 // ISO/IEC 14496-12
 //   aligned(8) class MovieBox extends Box('moov') {
@@ -60,22 +16,59 @@ type Box struct {
    Trak      trak.Box
 }
 
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   for _, value := range b.Box {
-      err := value.Write(dst)
+   for _, sofia_box := range b.Box {
+      buf, err = sofia_box.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   for _, pssh_box := range b.Pssh {
+      buf, err = pssh_box.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return b.Trak.Append(buf)
+}
+
+///
+
+func (b *Box) Decode(buf []byte) error {
+   for len(buf) >= 1 {
+      var sofia_box sofia.Box
+      err := sofia_box.Decode(buf)
       if err != nil {
          return err
       }
-   }
-   for _, protect := range b.Pssh {
-      err := protect.Write(dst)
-      if err != nil {
-         return err
+      buf = buf[sofia_box.BoxHeader.Size:]
+      switch sofia_box.BoxHeader.Type.String() {
+      case "iods", // Roku
+         "meta", // Paramount
+         "mvex", // Roku
+         "mvhd", // Roku
+         "udta": // Criterion
+         b.Box = append(b.Box, &sofia_box)
+      case "trak":
+         b.Trak.BoxHeader = sofia_box.BoxHeader
+         err := b.Trak.Decode(sofia_box.Payload)
+         if err != nil {
+            return err
+         }
+      case "pssh":
+         pssh_box := pssh.Box{BoxHeader: sofia_box.BoxHeader}
+         err := pssh_box.Decode(sofia_box.Payload)
+         if err != nil {
+            return err
+         }
+         b.Pssh = append(b.Pssh, pssh_box)
+      default:
+         return &sofia.Error{b.BoxHeader, sofia_box.BoxHeader}
       }
    }
-   return b.Trak.Write(dst)
+   return nil
 }

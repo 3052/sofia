@@ -3,7 +3,6 @@ package trak
 import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/mdia"
-   "io"
 )
 
 // ISO/IEC 14496-12
@@ -20,8 +19,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, sofia_box := range b.Box {
-      buf, err = sofia_box.Append(buf)
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -31,31 +30,27 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 
 func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
-      var sofia_box sofia.Box
-      err := sofia_box.Decode(buf)
+      var value sofia.Box
+      err := value.Decode(buf)
       if err != nil {
          return err
       }
-      buf = buf[sofia_box.BoxHeader.Size:]
-      switch sofix_box.BoxHeader.Type.String() {
+      buf = buf[value.BoxHeader.Size:]
+      switch value.BoxHeader.Type.String() {
       case "mdia":
-         err := b.Mdia.Read(src, sofix_box.BoxHeader.PayloadSize())
+         b.Mdia.BoxHeader = value.BoxHeader
+         err := b.Mdia.Decode(value.Payload)
          if err != nil {
             return err
          }
-         b.Mdia.BoxHeader = sofix_box.BoxHeader
       case "edts", // Paramount
          "tkhd", // Roku
          "tref", // RTBF
          "udta": // Mubi
-         sofia_box := sofia.Box{BoxHeader: sofix_box.BoxHeader}
-         err := sofia_box.Read(src)
-         if err != nil {
-            return err
-         }
-         b.Box = append(b.Box, sofia_box)
+         b.Box = append(b.Box, value)
       default:
-         return sofia.Error{b.BoxHeader.Type, sofix_box.BoxHeader.Type}
+         return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }
    }
+   return nil
 }

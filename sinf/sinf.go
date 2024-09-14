@@ -4,7 +4,6 @@ import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/frma"
    "154.pages.dev/sofia/schi"
-   "io"
 )
 
 // ISO/IEC 14496-12
@@ -38,13 +37,14 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Schi.Append(buf)
 }
 
-///
-
 func (b *Box) Decode(src []byte, size int64) ([]byte, error) {
    dst := src[size:]
    src = src[:size]
    for len(src) >= 1 {
-      var head sofia.BoxHeader
+      var (
+         head sofia.BoxHeader
+         err error
+      )
       src, err = head.Decode(src)
       if err != nil {
          return nil, err

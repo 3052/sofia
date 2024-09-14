@@ -48,80 +48,83 @@ type Box struct {
    DefaultSampleFlags     uint32
 }
 
-///
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = b.FullBoxHeader.Write(dst)
+   buf, err = b.FullBoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Write(dst, binary.BigEndian, b.TrackId)
+   buf, err = binary.Append(buf, binary.BigEndian, b.TrackId)
    if err != nil {
-      return err
+      return nil, err
    }
    if b.sample_description_index_present() {
-      err := binary.Write(dst, binary.BigEndian, b.SampleDescriptionIndex)
+      buf, err = binary.Append(buf, binary.BigEndian, b.SampleDescriptionIndex)
       if err != nil {
-         return err
+         return nil, err
       }
    }
    if b.default_sample_duration_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleDuration)
+      buf, err = binary.Append(buf, binary.BigEndian, b.DefaultSampleDuration)
       if err != nil {
-         return err
+         return nil, err
       }
    }
    if b.default_sample_size_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleSize)
+      buf, err = binary.Append(buf, binary.BigEndian, b.DefaultSampleSize)
       if err != nil {
-         return err
+         return nil, err
       }
    }
    if b.default_sample_flags_present() {
-      err := binary.Write(dst, binary.BigEndian, b.DefaultSampleFlags)
+      buf, err = binary.Append(buf, binary.BigEndian, b.DefaultSampleFlags)
       if err != nil {
-         return err
+         return nil, err
       }
    }
-   return nil
+   return buf, nil
 }
 
-func (b *Box) Read(src io.Reader) error {
-   err := b.FullBoxHeader.Read(src)
+func (b *Box) Decode(buf []byte) ([]byte, error) {
+   buf, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Read(src, binary.BigEndian, &b.TrackId)
+   n, err := binary.Decode(buf, binary.BigEndian, &b.TrackId)
    if err != nil {
-      return err
+      return nil, err
    }
+   buf = buf[n:]
    if b.sample_description_index_present() {
-      err := binary.Read(src, binary.BigEndian, &b.SampleDescriptionIndex)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.SampleDescriptionIndex)
       if err != nil {
-         return err
+         return nil, err
       }
+      buf = buf[n:]
    }
    if b.default_sample_duration_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleDuration)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleDuration)
       if err != nil {
-         return err
+         return nil, err
       }
+      buf = buf[n:]
    }
    if b.default_sample_size_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleSize)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleSize)
       if err != nil {
-         return err
+         return nil, err
       }
+      buf = buf[n:]
    }
    if b.default_sample_flags_present() {
-      err := binary.Read(src, binary.BigEndian, &b.DefaultSampleFlags)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleFlags)
       if err != nil {
-         return err
+         return nil, err
       }
+      buf = buf[n:]
    }
-   return nil
+   return buf, nil
 }

@@ -3,7 +3,6 @@ package trun
 import (
    "154.pages.dev/sofia"
    "encoding/binary"
-   "io"
 )
 
 // 0x000004 first-sample-flags-present

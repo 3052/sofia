@@ -96,33 +96,33 @@ func (s *Sample) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (s *Sample) Decode(buf []byte) ([]byte, error) {
+func (s *Sample) Decode(buf []byte) (int, error) {
+   var ns int
    if s.box.sample_duration_present() {
-      n, err := binary.Decode(buf, binary.BigEndian, &s.Duration)
+      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.Duration)
       if err != nil {
-         return nil, err
+         return 0, err
       }
-      buf = buf[n:]
+      ns += n
    }
    if s.box.sample_size_present() {
-      n, err := binary.Decode(buf, binary.BigEndian, &s.SampleSize)
+      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.SampleSize)
       if err != nil {
-         return nil, err
+         return 0, err
       }
-      buf = buf[n:]
+      ns += n
    }
    if s.box.sample_flags_present() {
-      n, err := binary.Decode(buf, binary.BigEndian, &s.Flags)
+      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.Flags)
       if err != nil {
-         return nil, err
+         return 0, err
       }
-      buf = buf[n:]
+      ns += n
    }
    if s.box.sample_composition_time_offsets_present() {
-      n := copy(s.CompositionTimeOffset[:], buf)
-      buf = buf[n:]
+      ns += copy(s.CompositionTimeOffset[:], buf[ns:])
    }
-   return buf, nil
+   return ns, nil
 }
 
 func (b *Box) Append(buf []byte) ([]byte, error) {
@@ -148,8 +148,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
          return nil, err
       }
    }
-   for _, value := range b.Sample {
-      buf, err = value.Append(buf)
+   for _, sam := range b.Sample {
+      buf, err = sam.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -157,36 +157,37 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (b *Box) Decode(buf []byte) ([]byte, error) {
-   buf, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Decode(buf []byte) error {
+   ns, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
-      return nil, err
+      return err
    }
-   n, err := binary.Decode(buf, binary.BigEndian, &b.SampleCount)
+   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.SampleCount)
    if err != nil {
-      return nil, err
+      return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.DataOffset)
+   ns += n
+   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.DataOffset)
    if err != nil {
-      return nil, err
+      return err
    }
-   buf = buf[n:]
+   ns += n
    if b.first_sample_flags_present() {
-      n, err = binary.Decode(buf, binary.BigEndian, &b.FirstSampleFlags)
+      n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.FirstSampleFlags)
       if err != nil {
-         return nil, err
+         return err
       }
-      buf = buf[n:]
+      ns += n
    }
    b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      buf, err = value.Decode(buf)
+   for i, sam := range b.Sample {
+      sam.box = b
+      n, err = sam.Decode(buf)
       if err != nil {
-         return nil, err
+         return err
       }
-      b.Sample[i] = value
+      ns += n
+      b.Sample[i] = sam
    }
-   return buf, nil
+   return nil
 }

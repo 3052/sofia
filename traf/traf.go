@@ -89,13 +89,13 @@ func (b *Box) Decode(buf []byte) error {
          }
          b.Tfhd.BoxHeader = sof.BoxHeader
       case "trun":
-         buf, err = b.Trun.Decode(buf)
+         err := b.Trun.Decode(sof.Payload)
          if err != nil {
             return err
          }
          b.Trun.BoxHeader = sof.BoxHeader
       default:
-         return sofia.Error{b.BoxHeader.Type, sof.BoxHeader.Type}
+         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
       }
    }
    return nil

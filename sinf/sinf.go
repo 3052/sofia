@@ -47,26 +47,18 @@ func (b *Box) Decode(buf []byte) error {
       buf = buf[sof.BoxHeader.Size:]
       switch sof.BoxHeader.Type.String() {
       case "frma":
-         err := b.Frma.Decode(sof.Payload)
-         if err != nil {
-            return err
-         }
+         b.Frma.Decode(sof.Payload)
          b.Frma.BoxHeader = sof.BoxHeader
       case "schi":
-         buf, err = b.Schi.Decode(buf)
+         err := b.Schi.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         b.Schi.BoxHeader = head
+         b.Schi.BoxHeader = sof.BoxHeader
       case "schm": // Roku
-         sof := sofia.Box{BoxHeader: head}
-         buf, err = sof.Decode(buf)
-         if err != nil {
-            return err
-         }
          b.Box = append(b.Box, sof)
       default:
-         return sofia.Error{b.BoxHeader.Type, head.Type}
+         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
       }
    }
    return nil

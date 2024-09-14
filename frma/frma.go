@@ -2,6 +2,10 @@ package frma
 
 import "154.pages.dev/sofia"
 
+func (b *Box) Decode(buf []byte) {
+   copy(b.DataFormat[:], buf)
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class OriginalFormatBox(codingname) extends Box('frma') {
 //      unsigned int(32) data_format = codingname;
@@ -21,9 +25,4 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
       return nil, err
    }
    return append(buf, b.DataFormat[:]...), nil
-}
-
-func (b *Box) Decode(buf []byte) ([]byte, error) {
-   n := copy(b.DataFormat[:], buf)
-   return buf[n:], nil
 }

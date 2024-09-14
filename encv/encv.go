@@ -6,52 +6,6 @@ import (
    "encoding/binary"
 )
 
-func (s *SampleEntry) Decode(buf []byte, n int) error {
-   buf, err := s.SampleEntry.Decode(buf[:n])
-   if err != nil {
-      return err
-   }
-   n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
-   if err != nil {
-      return err
-   }
-   buf = buf[n:]
-   for len(buf) >= 1 {
-      var head sofia.BoxHeader
-      buf, err = head.Decode(buf)
-      if err != nil {
-         return err
-      }
-      switch head.Type.String() {
-      case "sinf":
-         n = head.PayloadSize()
-         err := s.Sinf.Decode(buf, n)
-         if err != nil {
-            return err
-         }
-         buf = buf[n:]
-      case "avcC", // Roku
-      "btrt", // Mubi
-      "clli", // Max
-      "colr", // Paramount
-      "dvcC", // Max
-      "dvvC", // Max
-      "hvcC", // Hulu
-      "mdcv", // Max
-      "pasp": // Roku
-         box_data := sofia.Box{BoxHeader: head}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         s.Box = append(s.Box, &box_data)
-      default:
-         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 14496-12
 //   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //      unsigned int(16) pre_defined = 0;
@@ -99,11 +53,57 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range s.Box {
-      buf, err = box_data.Append(buf)
+   for _, sofia_box := range s.Box {
+      buf, err = sofia_box.Append(buf)
       if err != nil {
          return nil, err
       }
    }
    return s.Sinf.Append(buf)
+}
+
+func (s *SampleEntry) Decode(buf []byte, n int) error {
+   buf, err := s.SampleEntry.Decode(buf[:n])
+   if err != nil {
+      return err
+   }
+   n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
+   if err != nil {
+      return err
+   }
+   buf = buf[n:]
+   for len(buf) >= 1 {
+      var head sofia.BoxHeader
+      buf, err = head.Decode(buf)
+      if err != nil {
+         return err
+      }
+      switch head.Type.String() {
+      case "sinf":
+         n = head.PayloadSize()
+         err := s.Sinf.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+      case "avcC", // Roku
+         "btrt", // Mubi
+         "clli", // Max
+         "colr", // Paramount
+         "dvcC", // Max
+         "dvvC", // Max
+         "hvcC", // Hulu
+         "mdcv", // Max
+         "pasp": // Roku
+         sofia_box := sofia.Box{BoxHeader: head}
+         buf, err = sofia_box.Decode(buf)
+         if err != nil {
+            return err
+         }
+         s.Box = append(s.Box, &sofia_box)
+      default:
+         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
+      }
+   }
+   return nil
 }

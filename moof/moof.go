@@ -5,36 +5,26 @@ import (
    "154.pages.dev/sofia/traf"
 )
 
-func (b *Box) Decode(buf []byte, size int64) error {
-   buf = buf[:size]
+func (b *Box) Decode(buf []byte) error {
    for len(buf) >= 1 {
-      var (
-         head sofia.BoxHeader
-         err error
-      )
-      buf, err = head.Decode(buf)
+      var sof sofia.Box
+      err := sof.Decode(buf)
       if err != nil {
          return err
       }
-      switch head.Type.String() {
+      buf = buf[sof.BoxHeader.Size:]
+      switch sof.BoxHeader.Type.String() {
       case "traf":
-         n := head.PayloadSize()
-         err := b.Traf.Decode(buf, n)
+         err := b.Traf.Decode(sof.Payload)
          if err != nil {
             return err
          }
-         buf = buf[n:]
-         b.Traf.BoxHeader = head
+         b.Traf.BoxHeader = sof.BoxHeader
       case "mfhd", // Roku
-      "pssh": // Roku
-         box_data := sofia.Box{BoxHeader: head}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         b.Box = append(b.Box, box_data)
+         "pssh": // Roku
+         b.Box = append(b.Box, sof)
       default:
-         return sofia.Error{b.BoxHeader.Type, head.Type}
+         return &sofia.Error{b.BoxHeader, sof.BoxHeader}
       }
    }
    return nil
@@ -45,8 +35,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range b.Box {
-      buf, err = box_data.Append(buf)
+   for _, sof := range b.Box {
+      buf, err = sof.Append(buf)
       if err != nil {
          return nil, err
       }

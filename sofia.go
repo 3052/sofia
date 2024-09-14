@@ -36,41 +36,6 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return append(buf, b.Payload...), nil
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType Uuid
-}
-
-type Error struct {
-   Container Type
-   Box       Type
-}
-
-func (e Error) Error() string {
-   buf := []byte("container:")
-   buf = strconv.AppendQuote(buf, e.Container.String())
-   buf = append(buf, " box type:"...)
-   buf = strconv.AppendQuote(buf, e.Box.String())
-   return string(buf)
-}
-
 func (f *FullBoxHeader) GetFlags() uint32 {
    var flag [4]byte
    copy(flag[1:], f.Flags[:])
@@ -169,4 +134,39 @@ func (s *SampleEntry) Decode(buf []byte) (int, error) {
       return 0, err
    }
    return off+n, nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class BoxHeader (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType Uuid
+}
+
+type Error struct {
+   Container BoxHeader
+   Box BoxHeader
+}
+
+func (e *Error) Error() string {
+   buf := []byte("container:")
+   buf = strconv.AppendQuote(buf, e.Container.Type.String())
+   buf = append(buf, " box type:"...)
+   buf = strconv.AppendQuote(buf, e.Box.Type.String())
+   return string(buf)
 }

@@ -25,7 +25,8 @@ func (s *SampleEntry) Decode(buf []byte, size int64) error {
       }
       switch head.Type.String() {
       case "sinf":
-         n, err := s.Sinf.Decode(buf, head)
+         n := head.PayloadSize()
+         err := s.Sinf.Decode(buf, n)
          if err != nil {
             return err
          }

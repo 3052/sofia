@@ -7,51 +7,6 @@ import (
    "io"
 )
 
-func (s *SampleEntry) Decode(buf []byte, size int64) error {
-   buf = buf[:size]
-   buf, err = s.SampleEntry.Decode(buf)
-   if err != nil {
-      return err
-   }
-   n, err := binary.Decode(buf, binary.BigEndian, &s.Extends)
-   if err != nil {
-      return err
-   }
-   buf = buf[n:]
-   for len(buf) > 1 {
-      var (
-         head sofia.BoxHeader
-         err error
-      )
-      buf, err = head.Decode(buf)
-      if err != nil {
-         return err
-      }
-      switch head.Type.String() {
-      case "sinf":
-         n := head.PayloadSize()
-         err := s.Sinf.Decode(buf, n)
-         if err != nil {
-            return err
-         }
-         buf = buf[n:]
-         s.Sinf.BoxHeader = head
-      case "btrt", // Criterion
-      "dec3", // Hulu
-      "esds": // Roku
-         box_data := sofia.Box{BoxHeader: head}
-         buf, err = box_data.Decode(buf)
-         if err != nil {
-            return err
-         }
-         s.Box = append(s.Box, &box_data)
-      default:
-         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
-      }
-   }
-   return nil
-}
-
 func (s *SampleEntry) Write(dst io.Writer) error {
    err := s.SampleEntry.Write(dst)
    if err != nil {
@@ -92,4 +47,49 @@ type SampleEntry struct {
    }
    Box  []*sofia.Box
    Sinf sinf.Box
+}
+
+func (s *SampleEntry) Decode(buf []byte, size int64) error {
+   buf = buf[:size]
+   buf, err := s.SampleEntry.Decode(buf)
+   if err != nil {
+      return err
+   }
+   n, err := binary.Decode(buf, binary.BigEndian, &s.Extends)
+   if err != nil {
+      return err
+   }
+   buf = buf[n:]
+   for len(buf) > 1 {
+      var (
+         head sofia.BoxHeader
+         err error
+      )
+      buf, err = head.Decode(buf)
+      if err != nil {
+         return err
+      }
+      switch head.Type.String() {
+      case "sinf":
+         n := head.PayloadSize()
+         err := s.Sinf.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+         s.Sinf.BoxHeader = head
+      case "btrt", // Criterion
+      "dec3", // Hulu
+      "esds": // Roku
+         box_data := sofia.Box{BoxHeader: head}
+         buf, err = box_data.Decode(buf)
+         if err != nil {
+            return err
+         }
+         s.Box = append(s.Box, &box_data)
+      default:
+         return sofia.Error{s.SampleEntry.BoxHeader.Type, head.Type}
+      }
+   }
+   return nil
 }

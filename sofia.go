@@ -6,6 +6,19 @@ import (
    "strconv"
 )
 
+func (b *BoxHeader) PayloadSize() int {
+   return int(b.Size) - b.HeaderSize()
+}
+
+func (b *BoxHeader) HeaderSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.Type.String() == "uuid" {
+      size += binary.Size(b.UserType)
+   }
+   return size
+}
+
 func (b *Box) Decode(buf []byte) ([]byte, error) {
    size := b.BoxHeader.PayloadSize()
    b.Payload = buf[:size]
@@ -69,19 +82,6 @@ func (b *BoxHeader) Decode(buf []byte) ([]byte, error) {
       buf = buf[n:]
    }
    return buf, nil
-}
-
-func (b *BoxHeader) HeaderSize() int {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.Type.String() == "uuid" {
-      size += binary.Size(b.UserType)
-   }
-   return size
-}
-
-func (b *BoxHeader) PayloadSize() int {
-   return int(b.Size) - b.HeaderSize()
 }
 
 func (b *BoxHeader) Append(buf []byte) ([]byte, error) {

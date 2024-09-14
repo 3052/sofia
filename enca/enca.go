@@ -4,25 +4,24 @@ import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/sinf"
    "encoding/binary"
-   "io"
 )
 
-func (s *SampleEntry) Write(dst io.Writer) error {
-   err := s.SampleEntry.Write(dst)
+func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
+   buf, err := s.SampleEntry.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Write(dst, binary.BigEndian, s.Extends)
+   buf, err = binary.Append(buf, binary.BigEndian, s.Extends)
    if err != nil {
-      return err
+      return nil, err
    }
-   for _, value := range s.Box {
-      err := value.Write(dst)
+   for _, box_data := range s.Box {
+      buf, err = box_data.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
-   return s.Sinf.Write(dst)
+   return s.Sinf.Append(buf)
 }
 
 // ISO/IEC 14496-12
@@ -49,13 +48,12 @@ type SampleEntry struct {
    Sinf sinf.Box
 }
 
-func (s *SampleEntry) Decode(buf []byte, size int64) error {
-   buf = buf[:size]
-   buf, err := s.SampleEntry.Decode(buf)
+func (s *SampleEntry) Decode(buf []byte, n int) error {
+   buf, err := s.SampleEntry.Decode(buf[:n])
    if err != nil {
       return err
    }
-   n, err := binary.Decode(buf, binary.BigEndian, &s.Extends)
+   n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
@@ -71,7 +69,7 @@ func (s *SampleEntry) Decode(buf []byte, size int64) error {
       }
       switch head.Type.String() {
       case "sinf":
-         n := head.PayloadSize()
+         n = head.PayloadSize()
          err := s.Sinf.Decode(buf, n)
          if err != nil {
             return err

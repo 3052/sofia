@@ -6,92 +6,40 @@ import (
    "154.pages.dev/sofia/encv"
    "154.pages.dev/sofia/sinf"
    "encoding/binary"
-   "io"
 )
 
-func (b *Box) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   err := b.FullBoxHeader.Read(src)
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = binary.Read(src, binary.BigEndian, &b.EntryCount)
+   buf, err = b.FullBoxHeader.Append(buf)
    if err != nil {
-      return err
+      return nil, err
    }
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         size := head.PayloadSize()
-         switch head.Type.String() {
-         case "enca":
-            b.AudioSample = &enca.SampleEntry{}
-            err := b.AudioSample.Read(src, size)
-            if err != nil {
-               return err
-            }
-            b.AudioSample.SampleEntry.BoxHeader = head
-         case "encv":
-            b.VisualSample = &encv.SampleEntry{}
-            err := b.VisualSample.Read(src, size)
-            if err != nil {
-               return err
-            }
-            b.VisualSample.SampleEntry.BoxHeader = head
-         case "avc1", // Tubi
-            "ec-3", // Max
-            "mp4a": // Tubi
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, value)
-         default:
-            return sofia.Error{b.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
+   buf, err = binary.Append(buf, binary.BigEndian, b.EntryCount)
    if err != nil {
-      return err
+      return nil, err
    }
-   err = b.FullBoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   err = binary.Write(dst, binary.BigEndian, b.EntryCount)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Box {
-      err := value.Write(dst)
+   for _, box_data := range b.Box {
+      buf, err = box_data.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
    if b.AudioSample != nil {
-      err := b.AudioSample.Write(dst)
+      buf, err = b.AudioSample.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
    if b.VisualSample != nil {
-      err := b.VisualSample.Write(dst)
+      buf, err = b.VisualSample.Append(buf)
       if err != nil {
-         return err
+         return nil, err
       }
    }
-   return nil
+   return buf, nil
 }
 
 // ISO/IEC 14496-12
@@ -129,4 +77,57 @@ func (b *Box) Sinf() (*sinf.Box, bool) {
       return &v.Sinf, true
    }
    return nil, false
+}
+
+func (b *Box) Decode(buf []byte, n int) error {
+   buf, err := b.FullBoxHeader.Decode(buf[:n])
+   if err != nil {
+      return err
+   }
+   n, err = binary.Decode(buf, binary.BigEndian, &b.EntryCount)
+   if err != nil {
+      return err
+   }
+   buf = buf[n:]
+   for len(buf) >= 1 {
+      var (
+         head sofia.BoxHeader
+         err error
+      )
+      buf, err = head.Decode(buf)
+      if err != nil {
+         return err
+      }
+      n = head.PayloadSize()
+      switch head.Type.String() {
+      case "enca":
+         b.AudioSample = &enca.SampleEntry{}
+         err := b.AudioSample.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+         b.AudioSample.SampleEntry.BoxHeader = head
+      case "encv":
+         b.VisualSample = &encv.SampleEntry{}
+         err := b.VisualSample.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+         b.VisualSample.SampleEntry.BoxHeader = head
+      case "avc1", // Tubi
+      "ec-3", // Max
+      "mp4a": // Tubi
+         box_data := sofia.Box{BoxHeader: head}
+         buf, err = box_data.Decode(buf)
+         if err != nil {
+            return err
+         }
+         b.Box = append(b.Box, box_data)
+      default:
+         return sofia.Error{b.BoxHeader.Type, head.Type}
+      }
+   }
+   return nil
 }

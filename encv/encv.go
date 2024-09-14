@@ -6,13 +6,12 @@ import (
    "encoding/binary"
 )
 
-func (s *SampleEntry) Decode(buf []byte, size int64) error {
-   buf = buf[:size]
-   buf, err := s.SampleEntry.Decode(buf)
+func (s *SampleEntry) Decode(buf []byte, n int) error {
+   buf, err := s.SampleEntry.Decode(buf[:n])
    if err != nil {
       return err
    }
-   n, err := binary.Decode(buf, binary.BigEndian, &s.Extends)
+   n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
@@ -25,7 +24,7 @@ func (s *SampleEntry) Decode(buf []byte, size int64) error {
       }
       switch head.Type.String() {
       case "sinf":
-         n := head.PayloadSize()
+         n = head.PayloadSize()
          err := s.Sinf.Decode(buf, n)
          if err != nil {
             return err

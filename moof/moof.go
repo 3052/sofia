@@ -3,55 +3,7 @@ package moof
 import (
    "154.pages.dev/sofia"
    "154.pages.dev/sofia/traf"
-   "io"
 )
-
-func (b *Box) Read(src io.Reader, size int64) error {
-   src = io.LimitReader(src, size)
-   for {
-      var head sofia.BoxHeader
-      err := head.Read(src)
-      switch err {
-      case nil:
-         switch head.Type.String() {
-         case "traf":
-            err := b.Traf.Read(src, head.PayloadSize())
-            if err != nil {
-               return err
-            }
-            b.Traf.BoxHeader = head
-         case "mfhd", // Roku
-            "pssh": // Roku
-            value := sofia.Box{BoxHeader: head}
-            err := value.Read(src)
-            if err != nil {
-               return err
-            }
-            b.Box = append(b.Box, value)
-         default:
-            return sofia.Error{b.BoxHeader.Type, head.Type}
-         }
-      case io.EOF:
-         return nil
-      default:
-         return err
-      }
-   }
-}
-
-func (b *Box) Write(dst io.Writer) error {
-   err := b.BoxHeader.Write(dst)
-   if err != nil {
-      return err
-   }
-   for _, value := range b.Box {
-      err := value.Write(dst)
-      if err != nil {
-         return err
-      }
-   }
-   return b.Traf.Write(dst)
-}
 
 // ISO/IEC 14496-12
 //   aligned(8) class MovieFragmentBox extends Box('moof') {
@@ -60,4 +12,53 @@ type Box struct {
    BoxHeader sofia.BoxHeader
    Box       []sofia.Box
    Traf      traf.Box
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   for _, box_data := range b.Box {
+      buf, err = box_data.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return b.Traf.Write(buf)
+}
+
+func (b *Box) Decode(buf []byte, size int64) error {
+   buf = buf[:size]
+   for len(buf) >= 1 {
+      var (
+         head sofia.BoxHeader
+         err error
+      )
+      buf, err = head.Decode(buf)
+      if err != nil {
+         return err
+      }
+      switch head.Type.String() {
+      case "traf":
+         n := head.PayloadSize()
+         err := b.Traf.Decode(buf, n)
+         if err != nil {
+            return err
+         }
+         buf = buf[n:]
+         b.Traf.BoxHeader = head
+      case "mfhd", // Roku
+      "pssh": // Roku
+         box_data := sofia.Box{BoxHeader: head}
+         buf, err = box_data.Decode(buf)
+         if err != nil {
+            return err
+         }
+         b.Box = append(b.Box, box_data)
+      default:
+         return sofia.Error{b.BoxHeader.Type, head.Type}
+      }
+   }
+   return nil
 }

@@ -53,17 +53,15 @@ func (f *File) Decode(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "free", // Mubi
+         "ftyp", // Roku
+         "styp": // Roku
+         f.Box = append(f.Box, value)
       case "mdat":
          f.Mdat = &mdat.Box{value}
       case "moof":
          f.Moof = &moof.Box{BoxHeader: value.BoxHeader}
          err := f.Moof.Decode(value.Payload)
-         if err != nil {
-            return err
-         }
-      case "sidx":
-         f.Sidx = &sidx.Box{BoxHeader: value.BoxHeader}
-         err := f.Sidx.Decode(value.Payload)
          if err != nil {
             return err
          }
@@ -73,10 +71,12 @@ func (f *File) Decode(buf []byte) error {
          if err != nil {
             return err
          }
-      case "free", // Mubi
-         "ftyp", // Roku
-         "styp": // Roku
-         f.Box = append(f.Box, value)
+      case "sidx":
+         f.Sidx = &sidx.Box{BoxHeader: value.BoxHeader}
+         err := f.Sidx.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
       default:
          var container sofia.BoxHeader
          copy(container.Type[:], "File")

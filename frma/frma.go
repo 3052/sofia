@@ -19,8 +19,7 @@ type Box struct {
 }
 
 func (b *Box) Append(buf []byte) ([]byte, error) {
-   var err error
-   buf, err = b.BoxHeader.Append(buf)
+   buf, err := b.BoxHeader.Append(buf)
    if err != nil {
       return nil, err
    }

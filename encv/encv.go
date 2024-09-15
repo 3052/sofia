@@ -7,7 +7,6 @@ import (
 )
 
 // ISO/IEC 14496-12
-//
 //   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //      unsigned int(16) pre_defined = 0;
 //      const unsigned int(16) reserved = 0;
@@ -82,12 +81,6 @@ func (s *SampleEntry) Decode(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
-      case "sinf":
-         s.Sinf.BoxHeader = value.BoxHeader
-         err := s.Sinf.Decode(value.Payload)
-         if err != nil {
-            return err
-         }
       case "avcC", // Roku
          "btrt", // Mubi
          "clli", // Max
@@ -98,6 +91,12 @@ func (s *SampleEntry) Decode(buf []byte) error {
          "mdcv", // Max
          "pasp": // Roku
          s.Box = append(s.Box, &value)
+      case "sinf":
+         s.Sinf.BoxHeader = value.BoxHeader
+         err := s.Sinf.Decode(value.Payload)
+         if err != nil {
+            return err
+         }
       default:
          return &sofia.Error{s.SampleEntry.BoxHeader, value.BoxHeader}
       }

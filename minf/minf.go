@@ -36,18 +36,17 @@ func (b *Box) Decode(buf []byte) error {
          return err
       }
       buf = buf[value.BoxHeader.Size:]
-      
       switch value.BoxHeader.Type.String() {
+      case "dinf", // Roku
+         "smhd", // Roku
+         "vmhd": // Roku
+         b.Box = append(b.Box, value)
       case "stbl":
          b.Stbl.BoxHeader = value.BoxHeader
          err := b.Stbl.Decode(value.Payload)
          if err != nil {
             return err
          }
-      case "dinf", // Roku
-         "smhd", // Roku
-         "vmhd": // Roku
-         b.Box = append(b.Box, value)
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

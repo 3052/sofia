@@ -15,8 +15,8 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range s.Box {
-      buf, err = box_data.Append(buf)
+   for _, value := range s.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -67,16 +67,16 @@ func (s *SampleEntry) Decode(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "btrt", // Criterion
+         "dec3", // Hulu
+         "esds": // Roku
+         s.Box = append(s.Box, &value)
       case "sinf":
          s.Sinf.BoxHeader = value.BoxHeader
          err = s.Sinf.Decode(value.Payload)
          if err != nil {
             return err
          }
-      case "btrt", // Criterion
-         "dec3", // Hulu
-         "esds": // Roku
-         s.Box = append(s.Box, &value)
       default:
          return &sofia.Error{s.SampleEntry.BoxHeader, value.BoxHeader}
       }

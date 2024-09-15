@@ -28,10 +28,10 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Minf.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -42,7 +42,7 @@ func (b *Box) Decode(buf []byte) error {
          b.Box = append(b.Box, value)
       case "minf":
          b.Minf.BoxHeader = value.BoxHeader
-         err := b.Minf.Decode(value.Payload)
+         err := b.Minf.Read(value.Payload)
          if err != nil {
             return err
          }

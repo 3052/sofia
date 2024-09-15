@@ -37,20 +37,23 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Schi.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "frma":
-         b.Frma.Decode(value.Payload)
          b.Frma.BoxHeader = value.BoxHeader
+         err := b.Frma.Read(value.Payload)
+         if err != nil {
+            return err
+         }
       case "schi":
-         err := b.Schi.Decode(value.Payload)
+         err := b.Schi.Read(value.Payload)
          if err != nil {
             return err
          }

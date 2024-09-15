@@ -18,7 +18,7 @@ func TestPssh(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   err = pssh.Decode(buf[n:])
+   err = pssh.Read(buf[n:])
    if err != nil {
       t.Fatal(err)
    }

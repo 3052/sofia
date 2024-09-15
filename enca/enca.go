@@ -48,7 +48,7 @@ type SampleEntry struct {
    Sinf sinf.Box
 }
 
-func (s *SampleEntry) Decode(buf []byte) error {
+func (s *SampleEntry) Read(buf []byte) error {
    n, err := s.SampleEntry.Decode(buf)
    if err != nil {
       return err
@@ -61,7 +61,7 @@ func (s *SampleEntry) Decode(buf []byte) error {
    buf = buf[n:]
    for len(buf) > 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -73,7 +73,7 @@ func (s *SampleEntry) Decode(buf []byte) error {
          s.Box = append(s.Box, &value)
       case "sinf":
          s.Sinf.BoxHeader = value.BoxHeader
-         err = s.Sinf.Decode(value.Payload)
+         err = s.Sinf.Read(value.Payload)
          if err != nil {
             return err
          }

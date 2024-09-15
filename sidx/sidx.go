@@ -5,7 +5,7 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    ns, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
@@ -40,13 +40,13 @@ func (b *Box) Decode(buf []byte) error {
    }
    ns += n
    b.Reference = make([]Reference, b.ReferenceCount)
-   for i, ref := range b.Reference {
-      n, err = ref.Decode(buf[ns:])
+   for i, value := range b.Reference {
+      n, err = value.Decode(buf[ns:])
       if err != nil {
          return err
       }
       ns += n
-      b.Reference[i] = ref
+      b.Reference[i] = value
    }
    return nil
 }
@@ -148,8 +148,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, ref := range b.Reference {
-      buf, err = ref.Append(buf)
+   for _, value := range b.Reference {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -158,9 +158,9 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 }
 
 func (b *Box) Add(size uint32) {
-   var ref Reference
-   ref.set_referenced_size(size)
-   b.Reference = append(b.Reference, ref)
+   var value Reference
+   value.set_referenced_size(size)
+   b.Reference = append(b.Reference, value)
    b.ReferenceCount++
    b.BoxHeader.Size = uint32(b.GetSize())
 }

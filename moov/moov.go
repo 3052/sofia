@@ -21,8 +21,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, sofia_box := range b.Box {
-      buf, err = sofia_box.Append(buf)
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -36,12 +36,10 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Trak.Append(buf)
 }
 
-///
-
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var sofia_box sofia.Box
-      err := sofia_box.Decode(buf)
+      err := sofia_box.Read(buf)
       if err != nil {
          return err
       }
@@ -55,13 +53,13 @@ func (b *Box) Decode(buf []byte) error {
          b.Box = append(b.Box, &sofia_box)
       case "trak":
          b.Trak.BoxHeader = sofia_box.BoxHeader
-         err := b.Trak.Decode(sofia_box.Payload)
+         err := b.Trak.Read(sofia_box.Payload)
          if err != nil {
             return err
          }
       case "pssh":
          pssh_box := pssh.Box{BoxHeader: sofia_box.BoxHeader}
-         err := pssh_box.Decode(sofia_box.Payload)
+         err := pssh_box.Read(sofia_box.Payload)
          if err != nil {
             return err
          }

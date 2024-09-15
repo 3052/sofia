@@ -79,7 +79,7 @@ func (b *Box) Sinf() (*sinf.Box, bool) {
    return nil, false
 }
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
@@ -92,7 +92,7 @@ func (b *Box) Decode(buf []byte) error {
    buf = buf[n:]
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -101,14 +101,14 @@ func (b *Box) Decode(buf []byte) error {
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
          b.AudioSample.SampleEntry.BoxHeader = value.BoxHeader
-         err := b.AudioSample.Decode(value.Payload)
+         err := b.AudioSample.Read(value.Payload)
          if err != nil {
             return err
          }
       case "encv":
          b.VisualSample = &encv.SampleEntry{}
          b.VisualSample.SampleEntry.BoxHeader = value.BoxHeader
-         err := b.VisualSample.Decode(value.Payload)
+         err := b.VisualSample.Read(value.Payload)
          if err != nil {
             return err
          }

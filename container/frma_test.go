@@ -12,7 +12,7 @@ func TestFrma(t *testing.T) {
       t.Fatal(err)
    }
    var value File
-   err = value.Decode(buf)
+   err = value.Read(buf)
    if err != nil {
       t.Fatal(err)
    }

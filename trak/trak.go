@@ -28,10 +28,10 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Mdia.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -39,7 +39,7 @@ func (b *Box) Decode(buf []byte) error {
       switch value.BoxHeader.Type.String() {
       case "mdia":
          b.Mdia.BoxHeader = value.BoxHeader
-         err := b.Mdia.Decode(value.Payload)
+         err := b.Mdia.Read(value.Payload)
          if err != nil {
             return err
          }

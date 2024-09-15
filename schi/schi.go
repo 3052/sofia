@@ -22,6 +22,6 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return b.Tenc.Append(buf)
 }
 
-func (b *Box) Decode(buf []byte) error {
-   return b.Tenc.Decode(buf)
+func (b *Box) Read(buf []byte) error {
+   return b.Tenc.Read(buf)
 }

@@ -101,7 +101,7 @@ func (s senc_test) encode_init() ([]byte, error) {
       return nil, err
    }
    var value File
-   err = value.Decode(buf)
+   err = value.Read(buf)
    if err != nil {
       return nil, err
    }
@@ -127,7 +127,7 @@ func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
       return nil, err
    }
    var value File
-   err = value.Decode(segment)
+   err = value.Read(segment)
    if err != nil {
       return nil, err
    }

@@ -54,7 +54,7 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -62,14 +62,14 @@ func (b *Box) Read(buf []byte) error {
       switch value.BoxHeader.Type.String() {
       case "senc":
          b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
-         err := b.Senc.Decode(value.Payload)
+         err := b.Senc.Read(value.Payload)
          if err != nil {
             return err
          }
       case "uuid":
          if b.piff(&value.BoxHeader) {
             b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
-            err := b.Senc.Decode(value.Payload)
+            err := b.Senc.Read(value.Payload)
             if err != nil {
                return err
             }
@@ -83,13 +83,13 @@ func (b *Box) Read(buf []byte) error {
          "tfdt": // Roku
          b.Box = append(b.Box, &value)
       case "tfhd":
-         err := b.Tfhd.Decode(value.Payload)
+         err := b.Tfhd.Read(value.Payload)
          if err != nil {
             return err
          }
          b.Tfhd.BoxHeader = value.BoxHeader
       case "trun":
-         err := b.Trun.Decode(value.Payload)
+         err := b.Trun.Read(value.Payload)
          if err != nil {
             return err
          }

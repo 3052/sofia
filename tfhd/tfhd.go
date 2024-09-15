@@ -88,7 +88,7 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (b *Box) Decode(buf []byte) error {
+func (b *Box) Read(buf []byte) error {
    ns, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err

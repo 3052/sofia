@@ -44,10 +44,10 @@ func (f *File) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-func (f *File) Decode(buf []byte) error {
+func (f *File) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
-      err := value.Decode(buf)
+      err := value.Read(buf)
       if err != nil {
          return err
       }
@@ -61,19 +61,19 @@ func (f *File) Decode(buf []byte) error {
          f.Mdat = &mdat.Box{value}
       case "moof":
          f.Moof = &moof.Box{BoxHeader: value.BoxHeader}
-         err := f.Moof.Decode(value.Payload)
+         err := f.Moof.Read(value.Payload)
          if err != nil {
             return err
          }
       case "moov":
          f.Moov = &moov.Box{BoxHeader: value.BoxHeader}
-         err := f.Moov.Decode(value.Payload)
+         err := f.Moov.Read(value.Payload)
          if err != nil {
             return err
          }
       case "sidx":
          f.Sidx = &sidx.Box{BoxHeader: value.BoxHeader}
-         err := f.Sidx.Decode(value.Payload)
+         err := f.Sidx.Read(value.Payload)
          if err != nil {
             return err
          }

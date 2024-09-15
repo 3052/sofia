@@ -5,29 +5,6 @@ import (
    "154.pages.dev/sofia/stsd"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class SampleTableBox extends Box('stbl') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []sofia.Box
-   Stsd      stsd.Box
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return b.Stsd.Append(buf)
-}
-
 func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
@@ -55,4 +32,27 @@ func (b *Box) Read(buf []byte) error {
       }
    }
    return nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SampleTableBox extends Box('stbl') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Stsd      stsd.Box
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return b.Stsd.Append(buf)
 }

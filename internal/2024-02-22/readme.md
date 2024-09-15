@@ -3,7 +3,7 @@
 start with this:
 
 ~~~
-youtube -b BCRhBaFqtf0 -vc avc1
+youtube -b BCRhBaFqtf0 -i 137
 ~~~
 
 then:

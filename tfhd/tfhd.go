@@ -89,42 +89,39 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
+   n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.TrackId)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.TrackId)
    if err != nil {
       return err
    }
-   ns += n
+   buf = buf[n:]
    if b.sample_description_index_present() {
-      n, err = binary.Decode(
-         buf[ns:], binary.BigEndian, &b.SampleDescriptionIndex,
-      )
+      n, err = binary.Decode(buf, binary.BigEndian, &b.SampleDescriptionIndex)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
    }
    if b.default_sample_duration_present() {
-      n, err = binary.Decode(
-         buf[ns:], binary.BigEndian, &b.DefaultSampleDuration,
-      )
+      n, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleDuration)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
    }
    if b.default_sample_size_present() {
-      n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.DefaultSampleSize)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleSize)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
    }
    if b.default_sample_flags_present() {
-      _, err = binary.Decode(buf[ns:], binary.BigEndian, &b.DefaultSampleFlags)
+      _, err = binary.Decode(buf, binary.BigEndian, &b.DefaultSampleFlags)
       if err != nil {
          return err
       }

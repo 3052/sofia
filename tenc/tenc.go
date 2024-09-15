@@ -51,20 +51,21 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(buf []byte) error {
-   ns, err := b.BoxHeader.Decode(buf)
+   n, err := b.BoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   n, err := b.FullBoxHeader.Decode(buf[ns:])
+   buf = buf[n:]
+   n, err = b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Extends)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.Extends)
    if err != nil {
       return err
    }
-   ns += n
-   copy(b.DefaultKid[:], buf[ns:])
+   buf = buf[n:]
+   copy(b.DefaultKid[:], buf)
    return nil
 }

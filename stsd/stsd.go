@@ -21,8 +21,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range b.Box {
-      buf, err = box_data.Append(buf)
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -98,6 +98,10 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "avc1", // Tubi
+         "ec-3", // Max
+         "mp4a": // Tubi
+         b.Box = append(b.Box, value)
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
          b.AudioSample.SampleEntry.BoxHeader = value.BoxHeader
@@ -112,10 +116,6 @@ func (b *Box) Read(buf []byte) error {
          if err != nil {
             return err
          }
-      case "avc1", // Tubi
-         "ec-3", // Max
-         "mp4a": // Tubi
-         b.Box = append(b.Box, value)
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

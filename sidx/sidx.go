@@ -6,46 +6,47 @@ import (
 )
 
 func (b *Box) Read(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
+   n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceId)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.ReferenceId)
    if err != nil {
       return err
    }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Timescale)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.Timescale)
    if err != nil {
       return err
    }
-   ns += n
+   buf = buf[n:]
    if b.FullBoxHeader.Version == 0 {
       n = 4
    } else {
       n = 8
    }
-   b.EarliestPresentationTime = buf[ns:][:n]
-   ns += n
-   b.FirstOffset = buf[ns:][:n]
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.Reserved)
+   b.EarliestPresentationTime = buf[:n]
+   buf = buf[n:]
+   b.FirstOffset = buf[:n]
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.Reserved)
    if err != nil {
       return err
    }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.ReferenceCount)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.ReferenceCount)
    if err != nil {
       return err
    }
-   ns += n
+   buf = buf[n:]
    b.Reference = make([]Reference, b.ReferenceCount)
    for i, value := range b.Reference {
-      n, err = value.Decode(buf[ns:])
+      n, err = value.Decode(buf)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
       b.Reference[i] = value
    }
    return nil

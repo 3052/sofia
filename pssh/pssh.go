@@ -62,29 +62,31 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
+   n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   ns += copy(b.SystemId[:], buf[ns:])
+   buf = buf[n:]
+   n = copy(b.SystemId[:], buf)
+   buf = buf[n:]
    if b.FullBoxHeader.Version > 0 {
-      n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.KidCount)
+      n, err := binary.Decode(buf, binary.BigEndian, &b.KidCount)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
       b.Kid = make([]sofia.Uuid, b.KidCount)
-      n, err = binary.Decode(buf[ns:], binary.BigEndian, b.Kid)
+      n, err = binary.Decode(buf, binary.BigEndian, b.Kid)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
    }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.DataSize)
+   n, err = binary.Decode(buf, binary.BigEndian, &b.DataSize)
    if err != nil {
       return err
    }
-   ns += n
-   b.Data = buf[ns:][:b.DataSize]
+   buf = buf[n:]
+   b.Data = buf[:b.DataSize]
    return nil
 }

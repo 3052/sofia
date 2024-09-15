@@ -60,9 +60,27 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "saio", // Roku
+         "saiz", // Roku
+         "sbgp", // Roku
+         "sgpd", // Roku
+         "tfdt": // Roku
+         b.Box = append(b.Box, &value)
       case "senc":
          b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
          err := b.Senc.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "tfhd":
+         b.Tfhd.BoxHeader = value.BoxHeader
+         err := b.Tfhd.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "trun":
+         b.Trun.BoxHeader = value.BoxHeader
+         err := b.Trun.Read(value.Payload)
          if err != nil {
             return err
          }
@@ -76,24 +94,6 @@ func (b *Box) Read(buf []byte) error {
          } else {
             b.Box = append(b.Box, &value)
          }
-      case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt": // Roku
-         b.Box = append(b.Box, &value)
-      case "tfhd":
-         err := b.Tfhd.Read(value.Payload)
-         if err != nil {
-            return err
-         }
-         b.Tfhd.BoxHeader = value.BoxHeader
-      case "trun":
-         err := b.Trun.Read(value.Payload)
-         if err != nil {
-            return err
-         }
-         b.Trun.BoxHeader = value.BoxHeader
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

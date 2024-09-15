@@ -37,17 +37,17 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "edts", // Paramount
+         "tkhd", // Roku
+         "tref", // RTBF
+         "udta": // Mubi
+         b.Box = append(b.Box, value)
       case "mdia":
          b.Mdia.BoxHeader = value.BoxHeader
          err := b.Mdia.Read(value.Payload)
          if err != nil {
             return err
          }
-      case "edts", // Paramount
-         "tkhd", // Roku
-         "tref", // RTBF
-         "udta": // Mubi
-         b.Box = append(b.Box, value)
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

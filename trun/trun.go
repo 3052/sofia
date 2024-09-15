@@ -119,8 +119,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
          return nil, err
       }
    }
-   for _, sam := range b.Sample {
-      buf, err = sam.Append(buf)
+   for _, value := range b.Sample {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -129,36 +129,37 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(buf []byte) error {
-   ns, err := b.FullBoxHeader.Decode(buf)
+   n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
       return err
    }
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &b.SampleCount)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.SampleCount)
    if err != nil {
       return err
    }
-   ns += n
-   n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.DataOffset)
+   buf = buf[n:]
+   n, err = binary.Decode(buf, binary.BigEndian, &b.DataOffset)
    if err != nil {
       return err
    }
-   ns += n
+   buf = buf[n:]
    if b.first_sample_flags_present() {
-      n, err = binary.Decode(buf[ns:], binary.BigEndian, &b.FirstSampleFlags)
+      n, err = binary.Decode(buf, binary.BigEndian, &b.FirstSampleFlags)
       if err != nil {
          return err
       }
-      ns += n
+      buf = buf[n:]
    }
    b.Sample = make([]Sample, b.SampleCount)
-   for i, sam := range b.Sample {
-      sam.box = b
-      n, err = sam.Decode(buf[ns:])
+   for i, value := range b.Sample {
+      value.box = b
+      n, err = value.Decode(buf)
       if err != nil {
          return err
       }
-      ns += n
-      b.Sample[i] = sam
+      buf = buf[n:]
+      b.Sample[i] = value
    }
    return nil
 }

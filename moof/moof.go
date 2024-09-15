@@ -14,15 +14,15 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "mfhd", // Roku
+         "pssh": // Roku
+         b.Box = append(b.Box, value)
       case "traf":
          b.Traf.BoxHeader = value.BoxHeader
          err := b.Traf.Read(value.Payload)
          if err != nil {
             return err
          }
-      case "mfhd", // Roku
-         "pssh": // Roku
-         b.Box = append(b.Box, value)
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

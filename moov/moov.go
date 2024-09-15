@@ -27,8 +27,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
          return nil, err
       }
    }
-   for _, pssh_box := range b.Pssh {
-      buf, err = pssh_box.Append(buf)
+   for _, value := range b.Pssh {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }

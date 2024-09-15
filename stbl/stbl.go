@@ -19,8 +19,8 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box_data := range b.Box {
-      buf, err = box_data.Append(buf)
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
       if err != nil {
          return nil, err
       }
@@ -37,12 +37,6 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
-      case "stsd":
-         b.Stsd.BoxHeader = value.BoxHeader
-         err := b.Stsd.Read(value.Payload)
-         if err != nil {
-            return err
-         }
       case "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku
@@ -50,6 +44,12 @@ func (b *Box) Read(buf []byte) error {
          "stsz", // Roku
          "stts": // Roku
          b.Box = append(b.Box, value)
+      case "stsd":
+         b.Stsd.BoxHeader = value.BoxHeader
+         err := b.Stsd.Read(value.Payload)
+         if err != nil {
+            return err
+         }
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

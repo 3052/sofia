@@ -64,40 +64,6 @@ func (s *Sample) DecryptCenc(text, key []byte) error {
    return nil
 }
 
-// ISO/IEC 23001-7
-//
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-//   aligned(8) class SampleEncryptionBox extends FullBox(
-//      'senc', version, flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   SampleCount   uint32
-   Sample        []Sample
-}
-
-type Sample struct {
-   InitializationVector uint64
-   SubsampleCount       uint16
-   Subsample            []Subsample
-   box                  *Box
-}
-
 func (s Subsample) Append(buf []byte) ([]byte, error) {
    return binary.Append(buf, binary.BigEndian, s)
 }
@@ -105,48 +71,6 @@ func (s Subsample) Append(buf []byte) ([]byte, error) {
 type Subsample struct {
    BytesOfClearData     uint16
    BytesOfProtectedData uint32
-}
-
-func (s *Sample) Append(buf []byte) ([]byte, error) {
-   buf, err := binary.Append(buf, binary.BigEndian, s.InitializationVector)
-   if err != nil {
-      return nil, err
-   }
-   if s.box.senc_use_subsamples() {
-      buf, err = binary.Append(buf, binary.BigEndian, s.SubsampleCount)
-      if err != nil {
-         return nil, err
-      }
-      for _, value := range s.Subsample {
-         buf, err = value.Append(buf)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return buf, nil
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.SampleCount)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Sample {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
 }
 
 func (s *Subsample) Decode(buf []byte) (int, error) {
@@ -175,4 +99,71 @@ func (s *Sample) Decode(buf []byte) (int, error) {
       }
    }
    return ns, nil
+}
+
+type Sample struct {
+   InitializationVector uint64
+   SubsampleCount       uint16
+   Subsample            []Subsample
+   box                  *Box
+}
+
+func (s *Sample) Append(buf []byte) ([]byte, error) {
+   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
+   if s.box.senc_use_subsamples() {
+      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
+      for _, value := range s.Subsample {
+         buf, err = value.Append(buf)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return buf, nil
+}
+
+// ISO/IEC 23001-7
+//
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+//   aligned(8) class SampleEncryptionBox extends FullBox(
+//      'senc', version, flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   SampleCount   uint32
+   Sample        []Sample
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
+   for _, value := range b.Sample {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
 }

@@ -5,6 +5,32 @@ import (
    "encoding/binary"
 )
 
+// dashif.org/identifiers/content_protection
+func (b *Box) Widevine() bool {
+   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = append(buf, b.SystemId[:]...)
+   if b.FullBoxHeader.Version > 0 {
+      buf = binary.BigEndian.AppendUint32(buf, b.KidCount)
+      buf, err = binary.Append(buf, binary.BigEndian, b.Kid)
+      if err != nil {
+         return nil, err
+      }
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.DataSize)
+   return append(buf, b.Data...), nil
+}
+
 // ISO/IEC 23001-7
 //   aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
 //      'pssh', version, flags=0,
@@ -27,38 +53,6 @@ type Box struct {
    Kid           []sofia.Uuid
    DataSize      uint32
    Data          []uint8
-}
-
-// dashif.org/identifiers/content_protection
-func (b *Box) Widevine() bool {
-   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf = append(buf, b.SystemId[:]...)
-   if b.FullBoxHeader.Version > 0 {
-      buf, err = binary.Append(buf, binary.BigEndian, b.KidCount)
-      if err != nil {
-         return nil, err
-      }
-      buf, err = binary.Append(buf, binary.BigEndian, b.Kid)
-      if err != nil {
-         return nil, err
-      }
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.DataSize)
-   if err != nil {
-      return nil, err
-   }
-   return append(buf, b.Data...), nil
 }
 
 func (b *Box) Read(buf []byte) error {

@@ -8,6 +8,15 @@ import (
    "154.pages.dev/sofia/sidx"
 )
 
+// ISO/IEC 14496-12
+type File struct {
+   Box  []sofia.Box
+   Mdat *mdat.Box
+   Moof *moof.Box
+   Moov *moov.Box
+   Sidx *sidx.Box
+}
+
 func (f *File) Append(buf []byte) ([]byte, error) {
    var err error
    // KEEP THESE IN ORDER
@@ -84,15 +93,6 @@ func (f *File) Read(buf []byte) error {
       }
    }
    return nil
-}
-
-// ISO/IEC 14496-12
-type File struct {
-   Box  []sofia.Box
-   Mdat *mdat.Box
-   Moof *moof.Box
-   Moov *moov.Box
-   Sidx *sidx.Box
 }
 
 func (f *File) GetMoov() (*moov.Box, bool) {

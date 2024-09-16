@@ -14,7 +14,8 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
-      case "sgpd", // Paramount
+      case "ctts", // FFmpeg
+         "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku
          "stss", // CineMember

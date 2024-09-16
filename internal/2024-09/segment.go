@@ -21,7 +21,8 @@ func main() {
    if err != nil {
       panic(err)
    }
-   err = os.WriteFile("segment.m4s", buf, os.ModePerm)
+   file = container.File{}
+   err = file.Read(buf)
    if err != nil {
       panic(err)
    }

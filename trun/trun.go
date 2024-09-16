@@ -37,6 +37,14 @@ type Box struct {
    Sample           []Sample
 }
 
+type Sample struct {
+   Duration              uint32
+   SampleSize            uint32
+   Flags                 uint32
+   CompositionTimeOffset [4]byte
+   box                   *Box
+}
+
 // 0x000004 first-sample-flags-present
 func (b *Box) first_sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x4 >= 1
@@ -60,14 +68,6 @@ func (b *Box) sample_flags_present() bool {
 // 0x000800 sample-composition-time-offsets-present
 func (b *Box) sample_composition_time_offsets_present() bool {
    return b.FullBoxHeader.GetFlags()&0x800 >= 1
-}
-
-type Sample struct {
-   Duration              uint32
-   SampleSize            uint32
-   Flags                 uint32
-   CompositionTimeOffset [4]byte
-   box                   *Box
 }
 
 func (s *Sample) Append(buf []byte) ([]byte, error) {

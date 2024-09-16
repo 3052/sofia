@@ -15,7 +15,6 @@ type Box struct {
    Box       []*sofia.Box
    Senc      *senc.Box
    Tfhd      tfhd.Box
-   
    Trun      trun.Box
 }
 

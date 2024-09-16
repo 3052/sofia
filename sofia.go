@@ -6,6 +6,36 @@ import (
    "strconv"
 )
 
+// ISO/IEC 14496-12
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
+
+func (t Type) MarshalText() ([]byte, error) {
+   return t[:], nil
+}
+
+func (t Type) String() string {
+   return string(t[:])
+}
+
+type Type [4]uint8
+
+func (u Uuid) MarshalText() ([]byte, error) {
+   return hex.AppendEncode(nil, u[:]), nil
+}
+
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
 type Appender interface {
    Append([]byte) ([]byte, error)
 }
@@ -126,16 +156,6 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    return binary.BigEndian.Uint32(flag[:])
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
 type Reader interface {
    Read([]byte) error
 }
@@ -169,16 +189,4 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    }
    buf = append(buf, s.Reserved[:]...)
    return binary.Append(buf, binary.BigEndian, s.DataReferenceIndex)
-}
-
-type Type [4]uint8
-
-func (t Type) String() string {
-   return string(t[:])
-}
-
-type Uuid [16]uint8
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
 }

@@ -5,29 +5,6 @@ import (
    "encoding/binary"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentHeaderBox extends FullBox(
-//      'tfhd', 0, tf_flags
-//   ) {
-//      unsigned int(32) track_ID;
-//      // all the following are optional fields
-//      // their presence is indicated by bits in the tf_flags
-//      unsigned int(64) base_data_offset; // ASSUME NOT PRESENT
-//      unsigned int(32) sample_description_index;
-//      unsigned int(32) default_sample_duration;
-//      unsigned int(32) default_sample_size;
-//      unsigned int(32) default_sample_flags;
-//   }
-type Box struct {
-   BoxHeader              sofia.BoxHeader
-   FullBoxHeader          sofia.FullBoxHeader
-   TrackId                uint32
-   SampleDescriptionIndex uint32
-   DefaultSampleDuration  uint32
-   DefaultSampleSize      uint32
-   DefaultSampleFlags     uint32
-}
-
 // 0x000002 sample-description-index-present
 func (b *Box) sample_description_index_present() bool {
    return b.FullBoxHeader.GetFlags()&0x2 >= 1
@@ -48,6 +25,36 @@ func (b *Box) default_sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x20 >= 1
 }
 
+// ISO/IEC 14496-12
+//
+//   aligned(8) class TrackFragmentHeaderBox extends FullBox(
+//      'tfhd', 0, tf_flags
+//   ) {
+//      unsigned int(32) track_ID;
+//      // all the following are optional fields
+//      // their presence is indicated by bits in the tf_flags
+//      unsigned int(64) base_data_offset;
+//      unsigned int(32) sample_description_index;
+//      unsigned int(32) default_sample_duration;
+//      unsigned int(32) default_sample_size;
+//      unsigned int(32) default_sample_flags;
+//   }
+type Box struct {
+   BoxHeader              sofia.BoxHeader
+   FullBoxHeader          sofia.FullBoxHeader
+   TrackId                uint32
+   BaseDataOffset         uint64
+   SampleDescriptionIndex uint32
+   DefaultSampleDuration  uint32
+   DefaultSampleSize      uint32
+   DefaultSampleFlags     uint32
+}
+
+// 0x000001 base-data-offset-present
+func (b *Box) base_data_offset_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x1 >= 1
+}
+
 func (b *Box) Append(buf []byte) ([]byte, error) {
    buf, err := b.BoxHeader.Append(buf)
    if err != nil {
@@ -60,6 +67,12 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    buf, err = binary.Append(buf, binary.BigEndian, b.TrackId)
    if err != nil {
       return nil, err
+   }
+   if b.base_data_offset_present() {
+      buf, err = binary.Append(buf, binary.BigEndian, b.BaseDataOffset)
+      if err != nil {
+         return nil, err
+      }
    }
    if b.sample_description_index_present() {
       buf, err = binary.Append(buf, binary.BigEndian, b.SampleDescriptionIndex)
@@ -99,6 +112,13 @@ func (b *Box) Read(buf []byte) error {
       return err
    }
    buf = buf[n:]
+   if b.base_data_offset_present() {
+      n, err = binary.Decode(buf, binary.BigEndian, &b.BaseDataOffset)
+      if err != nil {
+         return err
+      }
+      buf = buf[n:]
+   }
    if b.sample_description_index_present() {
       n, err = binary.Decode(buf, binary.BigEndian, &b.SampleDescriptionIndex)
       if err != nil {

@@ -5,8 +5,10 @@ import (
    "os"
 )
 
+const name = "../../testdata/youtube/segment-1.0001.m4s"
+
 func main() {
-   buf, err := os.ReadFile("segment-1.0001.m4s")
+   buf, err := os.ReadFile(name)
    if err != nil {
       panic(err)
    }
@@ -19,7 +21,7 @@ func main() {
    if err != nil {
       panic(err)
    }
-   err = os.WriteFile("out.m4s", buf, os.ModePerm)
+   err = os.WriteFile("segment.m4s", buf, os.ModePerm)
    if err != nil {
       panic(err)
    }

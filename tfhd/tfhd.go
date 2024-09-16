@@ -5,26 +5,6 @@ import (
    "encoding/binary"
 )
 
-// 0x000002 sample-description-index-present
-func (b *Box) sample_description_index_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x2 >= 1
-}
-
-// 0x000008 default-sample-duration-present
-func (b *Box) default_sample_duration_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x8 >= 1
-}
-
-// 0x000010 default-sample-size-present
-func (b *Box) default_sample_size_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x10 >= 1
-}
-
-// 0x000020 default-sample-flags-present
-func (b *Box) default_sample_flags_present() bool {
-   return b.FullBoxHeader.GetFlags()&0x20 >= 1
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class TrackFragmentHeaderBox extends FullBox(
 //      'tfhd', 0, tf_flags
@@ -46,6 +26,26 @@ type Box struct {
    DefaultSampleDuration  uint32
    DefaultSampleSize      uint32
    DefaultSampleFlags     uint32
+}
+
+// 0x000002 sample-description-index-present
+func (b *Box) sample_description_index_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x2 >= 1
+}
+
+// 0x000008 default-sample-duration-present
+func (b *Box) default_sample_duration_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x8 >= 1
+}
+
+// 0x000010 default-sample-size-present
+func (b *Box) default_sample_size_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x10 >= 1
+}
+
+// 0x000020 default-sample-flags-present
+func (b *Box) default_sample_flags_present() bool {
+   return b.FullBoxHeader.GetFlags()&0x20 >= 1
 }
 
 func (b *Box) Append(buf []byte) ([]byte, error) {

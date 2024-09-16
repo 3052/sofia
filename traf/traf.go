@@ -13,8 +13,9 @@ import (
 type Box struct {
    BoxHeader sofia.BoxHeader
    Box       []*sofia.Box
-   Tfhd      tfhd.Box
    Senc      *senc.Box
+   Tfhd      tfhd.Box
+   
    Trun      trun.Box
 }
 

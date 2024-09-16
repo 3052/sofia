@@ -5,6 +5,15 @@ import (
    "154.pages.dev/sofia/traf"
 )
 
+// ISO/IEC 14496-12
+//   aligned(8) class MovieFragmentBox extends Box('moof') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []sofia.Box
+   Traf      traf.Box
+}
+
 func (b *Box) Read(buf []byte) error {
    for len(buf) >= 1 {
       var value sofia.Box
@@ -42,13 +51,4 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
       }
    }
    return b.Traf.Append(buf)
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class MovieFragmentBox extends Box('moof') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []sofia.Box
-   Traf      traf.Box
 }

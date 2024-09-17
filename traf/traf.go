@@ -2,20 +2,52 @@ package traf
 
 import (
    "154.pages.dev/sofia"
+   "154.pages.dev/sofia/saio"
    "154.pages.dev/sofia/senc"
    "154.pages.dev/sofia/tfhd"
    "154.pages.dev/sofia/trun"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
-   Senc      *senc.Box
-   Tfhd      tfhd.Box
-   Trun      trun.Box
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.Tfhd.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.Tfdt.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.Trun.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.Saiz.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   if b.Saio != nil {
+      buf, err = b.Saio.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if b.Senc != nil {
+      buf, err = b.Senc.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return b.Uuid.Append(buf)
+   //for _, value := range b.Box {
+   //   buf, err = value.Append(buf)
+   //   if err != nil {
+   //      return nil, err
+   //   }
+   //}
 }
 
 func (b *Box) piff(head *sofia.BoxHeader) bool {
@@ -27,28 +59,19 @@ func (b *Box) piff(head *sofia.BoxHeader) bool {
    return false
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   buf, err = b.Tfhd.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   if b.Senc != nil {
-      buf, err = b.Senc.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return b.Trun.Append(buf)
+// ISO/IEC 14496-12
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Tfhd      tfhd.Box
+   Tfdt sofia.Box
+   Trun      trun.Box
+   Saiz sofia.Box
+   Saio      *saio.Box
+   Senc      *senc.Box
+   Uuid sofia.Box
+   // Box       []*sofia.Box
 }
 
 func (b *Box) Read(buf []byte) error {
@@ -60,27 +83,31 @@ func (b *Box) Read(buf []byte) error {
       }
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
-      case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt": // Roku
-         b.Box = append(b.Box, &value)
-      case "senc":
-         b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
-         err := b.Senc.Read(value.Payload)
-         if err != nil {
-            return err
-         }
       case "tfhd":
          b.Tfhd.BoxHeader = value.BoxHeader
          err := b.Tfhd.Read(value.Payload)
          if err != nil {
             return err
          }
+      case "tfdt":
+         b.Tfdt = value
       case "trun":
          b.Trun.BoxHeader = value.BoxHeader
          err := b.Trun.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "saiz":
+         b.Saiz = value
+      case "saio":
+         b.Saio = &saio.Box{BoxHeader: value.BoxHeader}
+         err := b.Saio.Read(value.Payload)
+         if err != nil {
+            return err
+         }
+      case "senc":
+         b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
+         err := b.Senc.Read(value.Payload)
          if err != nil {
             return err
          }
@@ -92,8 +119,14 @@ func (b *Box) Read(buf []byte) error {
                return err
             }
          } else {
-            b.Box = append(b.Box, &value)
+            //b.Box = append(b.Box, &value)
+            b.Uuid = value
          }
+      //case "saiz", // Roku
+      //   "sbgp", // Roku
+      //   "sgpd", // Roku
+      //   "tfdt": // Roku
+      //   b.Box = append(b.Box, &value)
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

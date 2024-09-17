@@ -6,6 +6,28 @@ import (
    "strconv"
 )
 
+// ISO/IEC 14496-12
+//   aligned(8) class BoxHeader (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType Uuid
+}
+
 func (t Type) String() string {
    return string(t[:])
 }
@@ -98,28 +120,6 @@ func (f *FullBoxHeader) GetFlags() uint32 {
 
 type Reader interface {
    Read([]byte) error
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class BoxHeader (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType Uuid
 }
 
 func (b *BoxHeader) Append(buf []byte) ([]byte, error) {

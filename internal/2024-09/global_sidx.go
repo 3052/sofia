@@ -21,6 +21,9 @@ func encode_segment(name string, key []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
+   
+   return file.Append(nil)
+   
    track := file.Moof.Traf
    if senc := track.Senc; senc != nil {
       for i, text := range file.Mdat.Data(&track) {
@@ -67,5 +70,6 @@ func main() {
       if err != nil {
          panic(err)
       }
+      break
    }
 }

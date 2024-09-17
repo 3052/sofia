@@ -89,8 +89,6 @@ type Box struct {
    VisualSample  *encv.SampleEntry
 }
 
-///
-
 func (b *Box) Append(buf []byte) ([]byte, error) {
    buf, err := b.BoxHeader.Append(buf)
    if err != nil {
@@ -100,10 +98,7 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   buf, err = binary.Append(buf, binary.BigEndian, b.EntryCount)
-   if err != nil {
-      return nil, err
-   }
+   buf = binary.BigEndian.AppendUint32(buf, b.EntryCount)
    for _, value := range b.Box {
       buf, err = value.Append(buf)
       if err != nil {

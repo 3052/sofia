@@ -52,40 +52,6 @@ func (b *Box) Read(buf []byte) error {
    return nil
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
-//      unsigned int(32) reference_ID;
-//      unsigned int(32) timescale;
-//      if (version==0) {
-//         unsigned int(32) earliest_presentation_time;
-//         unsigned int(32) first_offset;
-//      } else {
-//         unsigned int(64) earliest_presentation_time;
-//         unsigned int(64) first_offset;
-//      }
-//      unsigned int(16) reserved = 0;
-//      unsigned int(16) reference_count;
-//      for(i=1; i <= reference_count; i++) {
-//         bit (1) reference_type;
-//         unsigned int(31) referenced_size;
-//         unsigned int(32) subsegment_duration;
-//         bit(1) starts_with_SAP;
-//         unsigned int(3) SAP_type;
-//         unsigned int(28) SAP_delta_time;
-//      }
-//   }
-type Box struct {
-   BoxHeader                sofia.BoxHeader
-   FullBoxHeader            sofia.FullBoxHeader
-   ReferenceId              uint32
-   Timescale                uint32
-   EarliestPresentationTime []byte
-   FirstOffset              []byte
-   Reserved                 uint16
-   ReferenceCount           uint16
-   Reference                []Reference
-}
-
 func (b *Box) GetSize() int {
    size := b.BoxHeader.GetSize()
    size += binary.Size(b.FullBoxHeader)
@@ -122,42 +88,6 @@ func (r Reference) Append(buf []byte) ([]byte, error) {
    return binary.Append(buf, binary.BigEndian, r)
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.ReferenceId)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.Timescale)
-   if err != nil {
-      return nil, err
-   }
-   buf = append(buf, b.EarliestPresentationTime...)
-   buf = append(buf, b.FirstOffset...)
-   buf, err = binary.Append(buf, binary.BigEndian, b.Reserved)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.ReferenceCount)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Reference {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
-}
-
 func (b *Box) Add(size uint32) {
    var value Reference
    value.set_referenced_size(size)
@@ -168,4 +98,64 @@ func (b *Box) Add(size uint32) {
 
 func (r *Reference) Decode(buf []byte) (int, error) {
    return binary.Decode(buf, binary.BigEndian, r)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
+//      unsigned int(32) reference_ID;
+//      unsigned int(32) timescale;
+//      if (version==0) {
+//         unsigned int(32) earliest_presentation_time;
+//         unsigned int(32) first_offset;
+//      } else {
+//         unsigned int(64) earliest_presentation_time;
+//         unsigned int(64) first_offset;
+//      }
+//      unsigned int(16) reserved = 0;
+//      unsigned int(16) reference_count;
+//      for(i=1; i <= reference_count; i++) {
+//         bit (1) reference_type;
+//         unsigned int(31) referenced_size;
+//         unsigned int(32) subsegment_duration;
+//         bit(1) starts_with_SAP;
+//         unsigned int(3) SAP_type;
+//         unsigned int(28) SAP_delta_time;
+//      }
+//   }
+type Box struct {
+   BoxHeader                sofia.BoxHeader
+   FullBoxHeader            sofia.FullBoxHeader
+   ReferenceId              uint32
+   Timescale                uint32
+   EarliestPresentationTime []byte
+   FirstOffset              []byte
+   Reserved                 uint16
+   ReferenceCount           uint16
+   Reference                []Reference
+}
+
+///
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.ReferenceId)
+   buf = binary.BigEndian.AppendUint32(buf, b.Timescale)
+   buf = append(buf, b.EarliestPresentationTime...)
+   buf = append(buf, b.FirstOffset...)
+   buf = binary.BigEndian.AppendUint16(buf, b.Reserved)
+   buf = binary.BigEndian.AppendUint16(buf, b.ReferenceCount)
+   for _, value := range b.Reference {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
 }

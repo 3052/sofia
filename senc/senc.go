@@ -7,6 +7,21 @@ import (
    "encoding/binary"
 )
 
+func (s *Sample) Append(buf []byte) ([]byte, error) {
+   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
+   if s.box.senc_use_subsamples() {
+      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
+      for _, value := range s.Subsample {
+         var err error
+         buf, err = value.Append(buf)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return buf, nil
+}
+
 func (b *Box) Read(buf []byte) error {
    n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
@@ -106,20 +121,6 @@ type Sample struct {
    SubsampleCount       uint16
    Subsample            []Subsample
    box                  *Box
-}
-
-func (s *Sample) Append(buf []byte) ([]byte, error) {
-   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
-   if s.box.senc_use_subsamples() {
-      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
-      for _, value := range s.Subsample {
-         buf, err = value.Append(buf)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return buf, nil
 }
 
 // ISO/IEC 23001-7

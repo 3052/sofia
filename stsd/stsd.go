@@ -8,57 +8,6 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, b.EntryCount)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if b.AudioSample != nil {
-      buf, err = b.AudioSample.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if b.VisualSample != nil {
-      buf, err = b.VisualSample.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//      int i ;
-//      unsigned int(32) entry_count;
-//      for (i = 1 ; i <= entry_count ; i++){
-//         SampleEntry(); // an instance of a class derived from SampleEntry
-//      }
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   EntryCount    uint32
-   Box         []sofia.Box
-   AudioSample   *enca.SampleEntry
-   VisualSample  *encv.SampleEntry
-}
-
 func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
    if v := b.AudioSample; v != nil {
       return &v.SampleEntry, true
@@ -121,4 +70,57 @@ func (b *Box) Read(buf []byte) error {
       }
    }
    return nil
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//      int i ;
+//      unsigned int(32) entry_count;
+//      for (i = 1 ; i <= entry_count ; i++){
+//         SampleEntry(); // an instance of a class derived from SampleEntry
+//      }
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   EntryCount    uint32
+   Box         []sofia.Box
+   AudioSample   *enca.SampleEntry
+   VisualSample  *encv.SampleEntry
+}
+
+///
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = binary.Append(buf, binary.BigEndian, b.EntryCount)
+   if err != nil {
+      return nil, err
+   }
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if b.AudioSample != nil {
+      buf, err = b.AudioSample.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if b.VisualSample != nil {
+      buf, err = b.VisualSample.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
 }

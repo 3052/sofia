@@ -7,6 +7,31 @@ import (
    "testing"
 )
 
+func (s senc_test) encode_init() ([]byte, error) {
+   buf, err := os.ReadFile(s.init)
+   if err != nil {
+      return nil, err
+   }
+   var value File
+   err = value.Read(buf)
+   if err != nil {
+      return nil, err
+   }
+   for _, pssh := range value.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := value.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return value.Append(nil)
+}
+
 func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
    fmt.Println(s.segment)
    segment, err := os.ReadFile(s.segment)
@@ -32,31 +57,6 @@ func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
       }
    }
    return value.Append(buf)
-}
-
-func (s senc_test) encode_init() ([]byte, error) {
-   buf, err := os.ReadFile(s.init)
-   if err != nil {
-      return nil, err
-   }
-   var value File
-   err = value.Read(buf)
-   if err != nil {
-      return nil, err
-   }
-   for _, pssh := range value.Moov.Pssh {
-      copy(pssh.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := value.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   if sinf, ok := description.Sinf(); ok {
-      // Firefox
-      copy(sinf.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
-      }
-   }
-   return value.Append(nil)
 }
 
 var senc_tests = []senc_test{

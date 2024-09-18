@@ -5,40 +5,6 @@ import (
    "encoding/binary"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
-//      unsigned int(32) reference_ID;
-//      unsigned int(32) timescale;
-//      if (version==0) {
-//         unsigned int(32) earliest_presentation_time;
-//         unsigned int(32) first_offset;
-//      } else {
-//         unsigned int(64) earliest_presentation_time;
-//         unsigned int(64) first_offset;
-//      }
-//      unsigned int(16) reserved = 0;
-//      unsigned int(16) reference_count;
-//      for(i=1; i <= reference_count; i++) {
-//         bit (1) reference_type;
-//         unsigned int(31) referenced_size;
-//         unsigned int(32) subsegment_duration;
-//         bit(1) starts_with_SAP;
-//         unsigned int(3) SAP_type;
-//         unsigned int(28) SAP_delta_time;
-//      }
-//   }
-type Box struct {
-   BoxHeader                sofia.BoxHeader
-   FullBoxHeader            sofia.FullBoxHeader
-   ReferenceId              uint32
-   Timescale                uint32
-   EarliestPresentationTime []byte
-   FirstOffset              []byte
-   Reserved                 uint16
-   ReferenceCount           uint16
-   Reference                []Reference
-}
-
 func (b *Box) Read(buf []byte) error {
    n, err := b.FullBoxHeader.Decode(buf)
    if err != nil {
@@ -86,29 +52,8 @@ func (b *Box) Read(buf []byte) error {
    return nil
 }
 
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
-}
-
-func (b *Box) New() {
-   copy(b.BoxHeader.Type[:], "sidx")
-}
-
 func (*Reference) mask() uint32 {
    return 0xFFFFFFFF >> 1
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
 }
 
 func (r Reference) set_referenced_size(size uint32) {
@@ -117,18 +62,6 @@ func (r Reference) set_referenced_size(size uint32) {
 }
 
 type Reference [3]uint32
-
-func (r Reference) Append(buf []byte) ([]byte, error) {
-   return binary.Append(buf, binary.BigEndian, r)
-}
-
-func (b *Box) Add(size uint32) {
-   var value Reference
-   value.set_referenced_size(size)
-   b.Reference = append(b.Reference, value)
-   b.ReferenceCount++
-   b.BoxHeader.Size = uint32(b.GetSize())
-}
 
 func (r *Reference) Decode(buf []byte) (int, error) {
    return binary.Decode(buf, binary.BigEndian, r)
@@ -156,4 +89,71 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
       }
    }
    return buf, nil
+}
+
+func (r Reference) Append(buf []byte) ([]byte, error) {
+   return binary.Append(buf, binary.BigEndian, r)
+}
+
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.GetSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
+//      unsigned int(32) reference_ID;
+//      unsigned int(32) timescale;
+//      if (version==0) {
+//         unsigned int(32) earliest_presentation_time;
+//         unsigned int(32) first_offset;
+//      } else {
+//         unsigned int(64) earliest_presentation_time;
+//         unsigned int(64) first_offset;
+//      }
+//      unsigned int(16) reserved = 0;
+//      unsigned int(16) reference_count;
+//      for(i=1; i <= reference_count; i++) {
+//         bit (1) reference_type;
+//         unsigned int(31) referenced_size;
+//         unsigned int(32) subsegment_duration;
+//         bit(1) starts_with_SAP;
+//         unsigned int(3) SAP_type;
+//         unsigned int(28) SAP_delta_time;
+//      }
+//   }
+type Box struct {
+   BoxHeader                sofia.BoxHeader
+   FullBoxHeader            sofia.FullBoxHeader
+   ReferenceId              uint32
+   Timescale                uint32
+   EarliestPresentationTime []byte
+   FirstOffset              []byte
+   Reserved                 uint16
+   ReferenceCount           uint16
+   Reference                []Reference
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
+}
+
+func (b *Box) New() {
+   copy(b.BoxHeader.Type[:], "sidx")
+}
+
+func (b *Box) Add(size uint32) {
+   var value Reference
+   value.set_referenced_size(size)
+   b.Reference = append(b.Reference, value)
+   b.ReferenceCount++
+   b.BoxHeader.Size = uint32(b.GetSize())
 }

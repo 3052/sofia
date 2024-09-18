@@ -2,7 +2,6 @@ package traf
 
 import (
    "154.pages.dev/sofia"
-   "154.pages.dev/sofia/saio"
    "154.pages.dev/sofia/senc"
    "154.pages.dev/sofia/tfhd"
    "154.pages.dev/sofia/trun"
@@ -13,11 +12,13 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   buf, err = b.Tfhd.Append(buf)
-   if err != nil {
-      return nil, err
+   for _, value := range b.Box {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
    }
-   buf, err = b.Tfdt.Append(buf)
+   buf, err = b.Tfhd.Append(buf)
    if err != nil {
       return nil, err
    }
@@ -25,53 +26,17 @@ func (b *Box) Append(buf []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   buf, err = b.Saiz.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   if b.Saio != nil {
-      buf, err = b.Saio.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
    if b.Senc != nil {
       buf, err = b.Senc.Append(buf)
       if err != nil {
          return nil, err
       }
    }
-   return b.Uuid.Append(buf)
-   //for _, value := range b.Box {
-   //   buf, err = value.Append(buf)
-   //   if err != nil {
-   //      return nil, err
-   //   }
+   //buf, err = b.Uuid.Append(buf)
+   //if err != nil {
+   //   return nil, err
    //}
-}
-
-func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.Senc == nil {
-         return true
-      }
-   }
-   return false
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Tfhd      tfhd.Box
-   Tfdt sofia.Box
-   Trun      trun.Box
-   Saiz sofia.Box
-   Saio      *saio.Box
-   Senc      *senc.Box
-   Uuid sofia.Box
-   // Box       []*sofia.Box
+   return buf, nil
 }
 
 func (b *Box) Read(buf []byte) error {
@@ -90,7 +55,7 @@ func (b *Box) Read(buf []byte) error {
             return err
          }
       case "tfdt":
-         b.Tfdt = value
+         b.Box = append(b.Box, &value)
       case "trun":
          b.Trun.BoxHeader = value.BoxHeader
          err := b.Trun.Read(value.Payload)
@@ -98,13 +63,9 @@ func (b *Box) Read(buf []byte) error {
             return err
          }
       case "saiz":
-         b.Saiz = value
+         b.Box = append(b.Box, &value)
       case "saio":
-         b.Saio = &saio.Box{BoxHeader: value.BoxHeader}
-         err := b.Saio.Read(value.Payload)
-         if err != nil {
-            return err
-         }
+         b.Box = append(b.Box, &value)
       case "senc":
          b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
          err := b.Senc.Read(value.Payload)
@@ -119,8 +80,8 @@ func (b *Box) Read(buf []byte) error {
                return err
             }
          } else {
-            //b.Box = append(b.Box, &value)
-            b.Uuid = value
+            b.Box = append(b.Box, &value)
+            //b.Uuid = value
          }
       //case "saiz", // Roku
       //   "sbgp", // Roku
@@ -132,4 +93,28 @@ func (b *Box) Read(buf []byte) error {
       }
    }
    return nil
+}
+
+func (b *Box) piff(head *sofia.BoxHeader) bool {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+      if b.Senc == nil {
+         return true
+      }
+   }
+   return false
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []*sofia.Box
+   Saiz      sofia.Box
+   Senc      *senc.Box
+   Tfdt      sofia.Box
+   Tfhd      tfhd.Box
+   Trun      trun.Box
+   Uuid      sofia.Box
 }

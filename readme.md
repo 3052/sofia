@@ -24,23 +24,23 @@ library for reading and writing MP4
 
 ## progress
 
-- [x]  1 enca
-- [x]  2 encv
-- [x]  3 frma
-- [x]  4 mdat
-- [x]  5 mdia
-- [x]  6 minf
-- [x]  7 moof
-- [x]  8 moov
-- [x]  9 pssh
-- [x] 10 schi
-- [x] 11 senc
-- [x] 12 sidx
-- [x] 13 sinf
-- [x] 14 stbl
-- [x] 15 stsd
-- [x] 16 tenc
-- [x] 17 tfhd
-- [x] 18 traf
-- [x] 19 trak
-- [x] 20 trun
+- [x] enca, provides sinf
+- [x] encv, provides sinf
+- [x] frma, provides original format
+- [x] mdat, provides media data
+- [x] mdia, provides minf
+- [x] minf, provides stbl
+- [x] moof, provides traf
+- [x] moov, provides trak
+- [x] pssh, provides pssh data
+- [x] schi, provides tenc
+- [x] senc, provides initialization vector
+- [x] sidx, provides segment indexes
+- [x] sinf, provides frma
+- [x] stbl, provides stsd
+- [x] stsd, provides enca encv
+- [x] tenc, provides default key ID
+- [x] tfhd, provides default sample size
+- [x] traf, provides senc
+- [x] trak, provides mdia
+- [x] trun, provides sample sizes

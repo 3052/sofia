@@ -7,6 +7,33 @@ import (
    "encoding/binary"
 )
 
+// ISO/IEC 23001-7
+//
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+//   aligned(8) class SampleEncryptionBox extends FullBox(
+//      'senc', version, flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   SampleCount   uint32
+   Sample        []Sample
+}
+
 func (s *Sample) Append(buf []byte) ([]byte, error) {
    buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
    if s.box.senc_use_subsamples() {
@@ -121,33 +148,6 @@ type Sample struct {
    SubsampleCount       uint16
    Subsample            []Subsample
    box                  *Box
-}
-
-// ISO/IEC 23001-7
-//
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-//   aligned(8) class SampleEncryptionBox extends FullBox(
-//      'senc', version, flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   SampleCount   uint32
-   Sample        []Sample
 }
 
 func (b *Box) Append(buf []byte) ([]byte, error) {

@@ -23,18 +23,18 @@ func main() {
    if err != nil {
       panic(err)
    }
-   // GLOBAL SIDX BEGIN
-   var index sidx.Box
-   index.New()
-   // GLOBAL SIDX END
-   matches, err := filepath.Glob("../persona/segment-*.mp4")
-   if err != nil {
-      panic(err)
-   }
    key, err := base64.StdEncoding.DecodeString(raw_key)
    if err != nil {
       panic(err)
    }
+   matches, err := filepath.Glob("../persona/segment-*.mp4")
+   if err != nil {
+      panic(err)
+   }
+   // SIDX STUB BEGIN
+   var index sidx.Box
+   index.New()
+   // SIDX STUB END
    for _, match := range matches {
       fmt.Println(match)
       buf, err = encode_segment(match, key)
@@ -46,6 +46,7 @@ func main() {
          panic(err)
       }
    }
+   // func (f *File) WriteAt(b []byte, off int64) (n int, err error)
 }
 
 func encode_segment(name string, key []byte) ([]byte, error) {

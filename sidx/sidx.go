@@ -141,11 +141,6 @@ type Box struct {
    Reference                []Reference
 }
 
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) ReferencedSize() uint32 {
-   return r[0] & r.mask()
-}
-
 func (b *Box) New() {
    copy(b.BoxHeader.Type[:], "sidx")
 }
@@ -156,4 +151,9 @@ func (b *Box) Add(size uint32) {
    b.Reference = append(b.Reference, value)
    b.ReferenceCount++
    b.BoxHeader.Size = uint32(b.GetSize())
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) ReferencedSize() uint32 {
+   return r[0] & r.mask()
 }

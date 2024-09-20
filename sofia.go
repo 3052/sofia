@@ -6,6 +6,12 @@ import (
    "strconv"
 )
 
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
 // ISO/IEC 14496-12
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
 //      unsigned int(8) version = v;
@@ -139,7 +145,7 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
 type BoxHeader struct {
    Size     uint32
    Type     Type
-   UserType Uuid
+   UserType []uint8
 }
 
 type Type [4]uint8
@@ -161,10 +167,4 @@ func (b *BoxHeader) Decode(buf []byte) (int, error) {
       n += len(b.UserType)
    }
    return n, nil
-}
-
-type Uuid []uint8
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u)
 }

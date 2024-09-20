@@ -15,14 +15,6 @@ func main() {
       panic(err)
    }
    defer file.Close()
-   buf, err := os.ReadFile("../persona/init-000.mp4")
-   if err != nil {
-      panic(err)
-   }
-   _, err = file.Write(buf)
-   if err != nil {
-      panic(err)
-   }
    key, err := base64.StdEncoding.DecodeString(raw_key)
    if err != nil {
       panic(err)
@@ -31,24 +23,51 @@ func main() {
    if err != nil {
       panic(err)
    }
-   // SIDX STUB BEGIN
-   var index sidx.Box
-   copy(index.BoxHeader.Type[:], "sidx")
-   index.ReferenceCount = len(matches)
-   index.Reference = make([]sidx.Reference, index.ReferenceCount)
-   // SIDX STUB END
-   for _, match := range matches {
-      fmt.Println(match)
-      buf, err = encode_segment(match, key)
-      if err != nil {
-         panic(err)
-      }
-      _, err = file.Write(buf)
-      if err != nil {
-         panic(err)
-      }
+   buf, err := os.ReadFile("../persona/init-000.mp4")
+   if err != nil {
+      panic(err)
    }
-   // func (f *File) WriteAt(b []byte, off int64) (n int, err error)
+   // offset, err := file.Write(buf)
+   if err != nil {
+      panic(err)
+   }
+   var index sidx.Box
+   index.Reference = make([]sidx.Reference, len(matches))
+   buf, err = index.Append(nil)
+   if err != nil {
+      panic(err)
+   }
+   // _, err = file.Write(buf)
+   if err != nil {
+      panic(err)
+   }
+   for i, match := range matches {
+      buf, err := encode_segment(match, key)
+      if err != nil {
+         panic(err)
+      }
+      // n, err := file.Write(buf)
+      if err != nil {
+         panic(err)
+      }
+      // index.Reference[i].SetSize(uint32(n))
+      index.Reference[i].SetSize(uint32(len(buf)))
+   }
+   copy(index.BoxHeader.Type[:], "sidx")
+   index.BoxHeader.Size = uint32(index.GetSize())
+   index.ReferenceCount = uint16(len(matches))
+   index.EarliestPresentationTime = make([]byte, 4)
+   index.FirstOffset = make([]byte, 4)
+   fmt.Printf("%+v\n", index)
+   buf, err = index.Append(nil)
+   if err != nil {
+      panic(err)
+   }
+   // _, err = file.WriteAt(buf, int64(offset))
+   _, err = file.Write(buf)
+   if err != nil {
+      panic(err)
+   }
 }
 
 func encode_segment(name string, key []byte) ([]byte, error) {

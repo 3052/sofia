@@ -52,34 +52,6 @@ func (b *Box) Read(buf []byte) error {
    return nil
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf = binary.BigEndian.AppendUint32(buf, b.ReferenceId)
-   buf = binary.BigEndian.AppendUint32(buf, b.Timescale)
-   buf = append(buf, b.EarliestPresentationTime...)
-   buf = append(buf, b.FirstOffset...)
-   buf = binary.BigEndian.AppendUint16(buf, b.Reserved)
-   buf = binary.BigEndian.AppendUint16(buf, b.ReferenceCount)
-   for _, value := range b.Reference {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
-}
-
-func (b *Box) New() {
-   copy(b.BoxHeader.Type[:], "sidx")
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //      unsigned int(32) reference_ID;
@@ -114,16 +86,35 @@ type Box struct {
    Reference                []Reference
 }
 
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
+func (r *Reference) SetSize(size uint32) {
+   (*r)[0] &= ^r.mask()
+   (*r)[0] |= size
+}
+
+type Reference [3]uint32
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.ReferenceId)
+   buf = binary.BigEndian.AppendUint32(buf, b.Timescale)
+   buf = append(buf, b.EarliestPresentationTime...)
+   buf = append(buf, b.FirstOffset...)
+   buf = binary.BigEndian.AppendUint16(buf, b.Reserved)
+   buf = binary.BigEndian.AppendUint16(buf, b.ReferenceCount)
+   for _, value := range b.Reference {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
 }
 
 func (r Reference) Append(buf []byte) ([]byte, error) {
@@ -138,15 +129,19 @@ func (*Reference) mask() uint32 {
    return 0xFFFFFFFF >> 1
 }
 
-type Reference [3]uint32
-
 // this is the size of the fragment, typically `moof` + `mdat`
 func (r Reference) Size() uint32 {
    return r[0] & r.mask()
 }
 
-// unsigned int(31) referenced_size;
-func (r Reference) SetSize(size uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= size
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.GetSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
 }

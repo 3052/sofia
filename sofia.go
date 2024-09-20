@@ -6,6 +6,19 @@ import (
    "strconv"
 )
 
+func (b *BoxHeader) Decode(buf []byte) (int, error) {
+   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
+   if err != nil {
+      return 0, err
+   }
+   n += copy(b.Type[:], buf[n:])
+   if b.Type.String() == "uuid" {
+      b.UserType = &Uuid{}
+      n += copy(b.UserType[:], buf[n:])
+   }
+   return n, nil
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
 //      unsigned int(8) version = v;
@@ -171,17 +184,4 @@ func (u Uuid) String() string {
 type Uuid [16]uint8
 
 type Type [4]uint8
-
-func (b *BoxHeader) Decode(buf []byte) (int, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
-   if err != nil {
-      return 0, err
-   }
-   n += copy(b.Type[:], buf[n:])
-   if b.Type.String() == "uuid" {
-      b.UserType = &Uuid{}
-      n += copy(b.UserType[:], buf[n:])
-   }
-   return n, nil
-}
 

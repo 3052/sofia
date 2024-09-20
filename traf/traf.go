@@ -5,11 +5,10 @@ import (
    "154.pages.dev/sofia/senc"
    "154.pages.dev/sofia/tfhd"
    "154.pages.dev/sofia/trun"
-   "encoding/hex"
 )
 
 func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if hex.EncodeToString(head.UserType) == "a2394f525a9b4f14a2446c427c648df4" {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
       if b.Senc == nil {
          return true
       }

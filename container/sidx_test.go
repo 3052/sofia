@@ -17,6 +17,6 @@ func TestSidx(t *testing.T) {
       t.Fatal(err)
    }
    for _, reference := range value.Sidx.Reference {
-      fmt.Println(reference.ReferencedSize())
+      fmt.Println(reference.Size())
    }
 }

@@ -28,17 +28,21 @@ type BoxHeader struct {
    UserType Uuid
 }
 
+// ISO/IEC 14496-12
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
+
 func (t Type) String() string {
    return string(t[:])
 }
 
 type Type [4]uint8
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
 
 type Appender interface {
    Append([]byte) ([]byte, error)
@@ -131,16 +135,6 @@ func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
    return buf, nil
 }
 
-// ISO/IEC 14496-12
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
 func (f *FullBoxHeader) Append(buf []byte) ([]byte, error) {
    return binary.Append(buf, binary.BigEndian, f)
 }
@@ -178,4 +172,10 @@ func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
    }
    buf = append(buf, s.Reserved[:]...)
    return binary.BigEndian.AppendUint16(buf, s.DataReferenceIndex), nil
+}
+
+type Uuid [16]uint8
+
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
 }

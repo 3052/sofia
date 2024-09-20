@@ -33,7 +33,9 @@ func main() {
    }
    // SIDX STUB BEGIN
    var index sidx.Box
-   index.New()
+   copy(index.BoxHeader.Type[:], "sidx")
+   index.ReferenceCount = len(matches)
+   index.Reference = make([]sidx.Reference, index.ReferenceCount)
    // SIDX STUB END
    for _, match := range matches {
       fmt.Println(match)

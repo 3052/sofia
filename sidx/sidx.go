@@ -95,18 +95,6 @@ func (r Reference) Append(buf []byte) ([]byte, error) {
    return binary.Append(buf, binary.BigEndian, r)
 }
 
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //      unsigned int(32) reference_ID;
@@ -156,4 +144,16 @@ func (b *Box) Add(size uint32) {
 // this is the size of the fragment, typically `moof` + `mdat`
 func (r Reference) ReferencedSize() uint32 {
    return r[0] & r.mask()
+}
+
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.GetSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
 }

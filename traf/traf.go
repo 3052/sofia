@@ -7,6 +7,15 @@ import (
    "154.pages.dev/sofia/trun"
 )
 
+func (b *Box) piff(head *sofia.BoxHeader) bool {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+      if b.Senc == nil {
+         return true
+      }
+   }
+   return false
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class TrackFragmentBox extends Box('traf') {
 //   }
@@ -16,15 +25,6 @@ type Box struct {
    Senc      *senc.Box
    Tfhd      tfhd.Box
    Trun      trun.Box
-}
-
-func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.Senc == nil {
-         return true
-      }
-   }
-   return false
 }
 
 func (b *Box) Append(buf []byte) ([]byte, error) {

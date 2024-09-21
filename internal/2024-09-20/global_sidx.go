@@ -4,7 +4,6 @@ import (
    "154.pages.dev/sofia/container"
    "154.pages.dev/sofia/sidx"
    "encoding/base64"
-   "fmt"
    "os"
    "path/filepath"
 )
@@ -23,7 +22,7 @@ func main() {
    if err != nil {
       panic(err)
    }
-   buf, err := os.ReadFile("../persona/init-000.mp4")
+   // buf, err := os.ReadFile("../persona/init-000.mp4")
    if err != nil {
       panic(err)
    }
@@ -32,8 +31,10 @@ func main() {
       panic(err)
    }
    var index sidx.Box
+   index.EarliestPresentationTime = make([]byte, 4)
+   index.FirstOffset = make([]byte, 4)
    index.Reference = make([]sidx.Reference, len(matches))
-   buf, err = index.Append(nil)
+   // buf, err := index.Append(nil)
    if err != nil {
       panic(err)
    }
@@ -46,25 +47,21 @@ func main() {
       if err != nil {
          panic(err)
       }
-      // n, err := file.Write(buf)
+      n, err := file.Write(buf)
       if err != nil {
          panic(err)
       }
-      // index.Reference[i].SetSize(uint32(n))
-      index.Reference[i].SetSize(uint32(len(buf)))
+      index.Reference[i].SetSize(uint32(n))
+      break
    }
    copy(index.BoxHeader.Type[:], "sidx")
-   index.BoxHeader.Size = uint32(index.GetSize())
    index.ReferenceCount = uint16(len(matches))
-   index.EarliestPresentationTime = make([]byte, 4)
-   index.FirstOffset = make([]byte, 4)
-   fmt.Printf("%+v\n", index)
-   buf, err = index.Append(nil)
+   index.BoxHeader.Size = uint32(index.GetSize())
+   // buf, err = index.Append(nil)
    if err != nil {
       panic(err)
    }
    // _, err = file.WriteAt(buf, int64(offset))
-   _, err = file.Write(buf)
    if err != nil {
       panic(err)
    }

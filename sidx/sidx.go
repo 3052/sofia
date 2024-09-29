@@ -5,6 +5,18 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.GetSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
+}
+
 func (b *Box) Append(buf []byte) ([]byte, error) {
    buf, err := b.BoxHeader.Append(buf)
    if err != nil {
@@ -132,16 +144,4 @@ func (*Reference) mask() uint32 {
 // this is the size of the fragment, typically `moof` + `mdat`
 func (r Reference) Size() uint32 {
    return r[0] & r.mask()
-}
-
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
 }

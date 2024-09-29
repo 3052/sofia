@@ -7,6 +7,25 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
+   for _, value := range b.Sample {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
+}
+
 // ISO/IEC 23001-7
 //
 // if the version of the SampleEncryptionBox is 0 and the flag
@@ -32,21 +51,6 @@ type Box struct {
    FullBoxHeader sofia.FullBoxHeader
    SampleCount   uint32
    Sample        []Sample
-}
-
-func (s *Sample) Append(buf []byte) ([]byte, error) {
-   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
-   if s.box.senc_use_subsamples() {
-      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
-      for _, value := range s.Subsample {
-         var err error
-         buf, err = value.Append(buf)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return buf, nil
 }
 
 func (b *Box) Read(buf []byte) error {
@@ -76,6 +80,52 @@ func (b *Box) Read(buf []byte) error {
 // senc_use_subsamples: flag mask is 0x000002.
 func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
+}
+
+func (s *Sample) Append(buf []byte) ([]byte, error) {
+   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
+   if s.box.senc_use_subsamples() {
+      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
+      for _, value := range s.Subsample {
+         var err error
+         buf, err = value.Append(buf)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return buf, nil
+}
+
+func (s *Sample) Decode(buf []byte) (int, error) {
+   ns, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
+   if err != nil {
+      return 0, err
+   }
+   if s.box.senc_use_subsamples() {
+      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.SubsampleCount)
+      if err != nil {
+         return 0, err
+      }
+      ns += n
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, value := range s.Subsample {
+         n, err = value.Decode(buf[ns:])
+         if err != nil {
+            return 0, err
+         }
+         ns += n
+         s.Subsample[i] = value
+      }
+   }
+   return ns, nil
+}
+
+type Sample struct {
+   InitializationVector uint64
+   SubsampleCount       uint16
+   Subsample            []Subsample
+   box                  *Box
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
@@ -117,54 +167,4 @@ type Subsample struct {
 
 func (s *Subsample) Decode(buf []byte) (int, error) {
    return binary.Decode(buf, binary.BigEndian, s)
-}
-
-func (s *Sample) Decode(buf []byte) (int, error) {
-   ns, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
-   if err != nil {
-      return 0, err
-   }
-   if s.box.senc_use_subsamples() {
-      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.SubsampleCount)
-      if err != nil {
-         return 0, err
-      }
-      ns += n
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, value := range s.Subsample {
-         n, err = value.Decode(buf[ns:])
-         if err != nil {
-            return 0, err
-         }
-         ns += n
-         s.Subsample[i] = value
-      }
-   }
-   return ns, nil
-}
-
-type Sample struct {
-   InitializationVector uint64
-   SubsampleCount       uint16
-   Subsample            []Subsample
-   box                  *Box
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
-   for _, value := range b.Sample {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
 }

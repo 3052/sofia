@@ -5,6 +5,64 @@ import (
    "encoding/binary"
 )
 
+// ISO/IEC 14496-12
+//
+// If the data-offset is present, it is relative to the base-data-offset
+// established in the track fragment header.
+//
+// sample-size-present: each sample has its own size, otherwise the default is
+// used.
+//
+//   aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
+//      unsigned int(32) sample_count;
+//      signed int(32) data_offset; // 0x000001, assume present
+//      unsigned int(32) first_sample_flags; // 0x000004
+//      {
+//         unsigned int(32) sample_duration; // 0x000100
+//         unsigned int(32) sample_size; // 0x000200
+//         unsigned int(32) sample_flags // 0x000400
+//         if (version == 0) {
+//            unsigned int(32) sample_composition_time_offset; // 0x000800
+//         } else {
+//            signed int(32) sample_composition_time_offset; // 0x000800
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader        sofia.BoxHeader
+   FullBoxHeader    sofia.FullBoxHeader
+   SampleCount      uint32
+   DataOffset       int32
+   FirstSampleFlags uint32
+   Sample           []Sample
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf, err = b.FullBoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
+   buf, err = binary.Append(buf, binary.BigEndian, b.DataOffset)
+   if err != nil {
+      return nil, err
+   }
+   if b.first_sample_flags_present() {
+      buf = binary.BigEndian.AppendUint32(buf, b.FirstSampleFlags)
+   }
+   for _, value := range b.Sample {
+      buf, err = value.Append(buf)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return buf, nil
+}
+
 // 0x000004 first-sample-flags-present
 func (b *Box) first_sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x4 >= 1
@@ -117,62 +175,4 @@ type Sample struct {
    Flags                 uint32
    CompositionTimeOffset [4]byte
    box                   *Box
-}
-
-// ISO/IEC 14496-12
-//
-// If the data-offset is present, it is relative to the base-data-offset
-// established in the track fragment header.
-//
-// sample-size-present: each sample has its own size, otherwise the default is
-// used.
-//
-//   aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
-//      unsigned int(32) sample_count;
-//      signed int(32) data_offset; // 0x000001, assume present
-//      unsigned int(32) first_sample_flags; // 0x000004
-//      {
-//         unsigned int(32) sample_duration; // 0x000100
-//         unsigned int(32) sample_size; // 0x000200
-//         unsigned int(32) sample_flags // 0x000400
-//         if (version == 0) {
-//            unsigned int(32) sample_composition_time_offset; // 0x000800
-//         } else {
-//            signed int(32) sample_composition_time_offset; // 0x000800
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader        sofia.BoxHeader
-   FullBoxHeader    sofia.FullBoxHeader
-   SampleCount      uint32
-   DataOffset       int32
-   FirstSampleFlags uint32
-   Sample           []Sample
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = b.FullBoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
-   buf, err = binary.Append(buf, binary.BigEndian, b.DataOffset)
-   if err != nil {
-      return nil, err
-   }
-   if b.first_sample_flags_present() {
-      buf = binary.BigEndian.AppendUint32(buf, b.FirstSampleFlags)
-   }
-   for _, value := range b.Sample {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
 }

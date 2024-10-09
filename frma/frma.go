@@ -1,6 +1,6 @@
 package frma
 
-import "154.pages.dev/sofia"
+import "41.neocities.org/sofia"
 
 // ISO/IEC 14496-12
 //   aligned(8) class OriginalFormatBox(codingname) extends Box('frma') {

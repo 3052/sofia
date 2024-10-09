@@ -1,8 +1,8 @@
 package main
 
 import (
-   "154.pages.dev/sofia/container"
-   "154.pages.dev/sofia/sidx"
+   "41.neocities.org/sofia/container"
+   "41.neocities.org/sofia/sidx"
    "encoding/base64"
    "os"
    "path/filepath"
@@ -52,7 +52,6 @@ func main() {
          panic(err)
       }
       index.Reference[i].SetSize(uint32(n))
-      break
    }
    copy(index.BoxHeader.Type[:], "sidx")
    index.ReferenceCount = uint16(len(matches))

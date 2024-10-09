@@ -1,9 +1,9 @@
 package sinf
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/frma"
-   "154.pages.dev/sofia/schi"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/frma"
+   "41.neocities.org/sofia/schi"
 )
 
 // ISO/IEC 14496-12

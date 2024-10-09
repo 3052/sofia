@@ -1,7 +1,7 @@
 package senc
 
 import (
-   "154.pages.dev/sofia"
+   "41.neocities.org/sofia"
    "crypto/aes"
    "crypto/cipher"
    "encoding/binary"

@@ -1,8 +1,8 @@
 package mdia
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/minf"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/minf"
 )
 
 // ISO/IEC 14496-12

@@ -13,11 +13,11 @@
 </head>
   <body>
     <nav>
-        154.pages.dev/sofia<span class="navbar-right">
-          v1.6.5 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
+        41.neocities.org/sofia<span class="navbar-right">
+          v1.6.6 | <a href="">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sofia</h2>
-<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia&#34;</span></pre>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;41.neocities.org/sofia&#34;</span></pre>
 <h3 id="pkg-index">Index</h3>
 <ul>
   <li>
@@ -66,6 +66,9 @@
           </ul>
       </li>
   <li>
+      <a href="#SizeGetter">type SizeGetter</a>
+      </li>
+  <li>
       <a href="#Type">type Type</a>
       <ul>
           <li><a href="#Type.String">func (t Type) String() string</a></li>
@@ -104,7 +107,7 @@
     <pre class="chroma"><span class="kd">type</span> <span class="nx">BoxHeader</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span id="BoxHeader.Size"><span class="nx">Size</span></span>     <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a>
 	<span id="BoxHeader.Type"><span class="nx">Type</span></span>     <a href="#Type"><span class="nx">Type</span></a>
-	<span id="BoxHeader.UserType"><span class="nx">UserType</span></span> <a href="#Uuid"><span class="nx">Uuid</span></a>
+	<span id="BoxHeader.UserType"><span class="nx">UserType</span></span> <span class="o">*</span><a href="#Uuid"><span class="nx">Uuid</span></a>
 <span class="p">}</span></pre>
     <p>ISO/IEC 14496-12
 <pre>aligned(8) class BoxHeader (
@@ -179,7 +182,11 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Append</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <span class="p">([]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
   <h4 id="SampleEntry.Decode">func (*SampleEntry) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><a href="#SampleEntry"><span class="nx">SampleEntry</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <span class="p">(</span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
-  <h3 id="Type">type Type</h3>
+  <h3 id="SizeGetter">type SizeGetter</h3>
+    <pre class="chroma"><span class="kd">type</span> <span class="nx">SizeGetter</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span id="SizeGetter.GetSize"><span class="nf">GetSize</span></span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a>
+<span class="p">}</span></pre>
+    <h3 id="Type">type Type</h3>
     <pre class="chroma"><span class="kd">type</span> <span class="nx">Type</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><a href="https://pkg.go.dev/builtin#uint8"><span class="kt">uint8</span></a></pre>
     <h4 id="Type.String">func (Type) String</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <a href="#Type"><span class="nx">Type</span></a><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>

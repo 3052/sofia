@@ -1,7 +1,7 @@
 package tfhd
 
 import (
-   "154.pages.dev/sofia"
+   "41.neocities.org/sofia"
    "encoding/binary"
 )
 

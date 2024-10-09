@@ -1,8 +1,8 @@
 package minf
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/stbl"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/stbl"
 )
 
 // ISO/IEC 14496-12

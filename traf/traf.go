@@ -1,10 +1,10 @@
 package traf
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/senc"
-   "154.pages.dev/sofia/tfhd"
-   "154.pages.dev/sofia/trun"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/senc"
+   "41.neocities.org/sofia/tfhd"
+   "41.neocities.org/sofia/trun"
 )
 
 func (b *Box) piff(head *sofia.BoxHeader) bool {

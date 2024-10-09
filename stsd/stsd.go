@@ -1,10 +1,10 @@
 package stsd
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/enca"
-   "154.pages.dev/sofia/encv"
-   "154.pages.dev/sofia/sinf"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/enca"
+   "41.neocities.org/sofia/encv"
+   "41.neocities.org/sofia/sinf"
    "encoding/binary"
 )
 

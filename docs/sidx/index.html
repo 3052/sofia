@@ -13,20 +13,18 @@
 </head>
   <body>
     <nav>
-        <a href="..">154.pages.dev/sofia</a>/sidx<span class="navbar-right">
-          v1.6.5 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+        <a href="..">41.neocities.org/sofia</a>/sidx<span class="navbar-right">
+          v1.6.6 | <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
       </nav>
     <main><h2 id="pkg-overview">package sidx</h2>
-<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;154.pages.dev/sofia/sidx&#34;</span></pre>
+<pre class="chroma"><span class="kn">import</span> <span class="s">&#34;41.neocities.org/sofia/sidx&#34;</span></pre>
 <h3 id="pkg-index">Index</h3>
 <ul>
   <li>
       <a href="#Box">type Box</a>
       <ul>
-          <li><a href="#Box.Add">func (b *Box) Add(size uint32)</a></li>
           <li><a href="#Box.Append">func (b *Box) Append(buf []byte) ([]byte, error)</a></li>
           <li><a href="#Box.GetSize">func (b *Box) GetSize() int</a></li>
-          <li><a href="#Box.New">func (b *Box) New()</a></li>
           <li><a href="#Box.Read">func (b *Box) Read(buf []byte) error</a></li>
           </ul>
       </li>
@@ -35,7 +33,8 @@
       <ul>
           <li><a href="#Reference.Append">func (r Reference) Append(buf []byte) ([]byte, error)</a></li>
           <li><a href="#Reference.Decode">func (r *Reference) Decode(buf []byte) (int, error)</a></li>
-          <li><a href="#Reference.ReferencedSize">func (r Reference) ReferencedSize() uint32</a></li>
+          <li><a href="#Reference.SetSize">func (r *Reference) SetSize(size uint32)</a></li>
+          <li><a href="#Reference.Size">func (r Reference) Size() uint32</a></li>
           </ul>
       </li>
   </ul><h3 id="pkg-types">Types</h3>
@@ -74,14 +73,10 @@
    }
 }
 </pre>
-<h4 id="Box.Add">func (*Box) Add</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">size</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
-  <h4 id="Box.Append">func (*Box) Append</h4>
+<h4 id="Box.Append">func (*Box) Append</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Append</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <span class="p">([]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
   <h4 id="Box.GetSize">func (*Box) GetSize</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">GetSize</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
-  <h4 id="Box.New">func (*Box) New</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">New</span><span class="p">()</span></pre>
   <h4 id="Box.Read">func (*Box) Read</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><a href="#Box"><span class="nx">Box</span></a><span class="p">)</span> <span class="nf">Read</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
   <h3 id="Reference">type Reference</h3>
@@ -90,8 +85,10 @@
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Append</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <span class="p">([]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
   <h4 id="Reference.Decode">func (*Reference) Decode</h4>
   <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Decode</span><span class="p">(</span><span class="nx">buf</span> <span class="p">[]</span><a href="https://pkg.go.dev/builtin#byte"><span class="kt">byte</span></a><span class="p">)</span> <span class="p">(</span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">,</span> <a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
-  <h4 id="Reference.ReferencedSize">func (Reference) ReferencedSize</h4>
-  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">ReferencedSize</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
+  <h4 id="Reference.SetSize">func (*Reference) SetSize</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">SetSize</span><span class="p">(</span><span class="nx">size</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a><span class="p">)</span></pre>
+  <h4 id="Reference.Size">func (Reference) Size</h4>
+  <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <a href="#Reference"><span class="nx">Reference</span></a><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <a href="https://pkg.go.dev/builtin#uint32"><span class="kt">uint32</span></a></pre>
   <p>this is the size of the fragment, typically `moof` + `mdat`
 </main>
     <hr>

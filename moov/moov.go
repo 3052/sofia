@@ -1,9 +1,9 @@
 package moov
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/pssh"
-   "154.pages.dev/sofia/trak"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/pssh"
+   "41.neocities.org/sofia/trak"
 )
 
 // ISO/IEC 14496-12

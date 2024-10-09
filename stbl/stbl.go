@@ -1,8 +1,8 @@
 package stbl
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/stsd"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/stsd"
 )
 
 func (b *Box) Read(buf []byte) error {

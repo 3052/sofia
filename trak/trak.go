@@ -1,8 +1,8 @@
 package trak
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/mdia"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/mdia"
 )
 
 // ISO/IEC 14496-12

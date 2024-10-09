@@ -1,11 +1,11 @@
 package container
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/mdat"
-   "154.pages.dev/sofia/moof"
-   "154.pages.dev/sofia/moov"
-   "154.pages.dev/sofia/sidx"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/mdat"
+   "41.neocities.org/sofia/moof"
+   "41.neocities.org/sofia/moov"
+   "41.neocities.org/sofia/sidx"
 )
 
 // ISO/IEC 14496-12

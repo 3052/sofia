@@ -1,8 +1,8 @@
 package moof
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/traf"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/traf"
 )
 
 // ISO/IEC 14496-12

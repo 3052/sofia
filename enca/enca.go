@@ -1,8 +1,8 @@
 package enca
 
 import (
-   "154.pages.dev/sofia"
-   "154.pages.dev/sofia/sinf"
+   "41.neocities.org/sofia"
+   "41.neocities.org/sofia/sinf"
    "encoding/binary"
 )
 

@@ -6,49 +6,6 @@ import (
    "strconv"
 )
 
-type Appender interface {
-   Append([]byte) ([]byte, error)
-}
-
-func (b *Box) Read(buf []byte) error {
-   n, err := b.BoxHeader.Decode(buf)
-   if err != nil {
-      return err
-   }
-   b.Payload = buf[n:b.BoxHeader.Size]
-   return nil
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class Box (
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   return append(buf, b.Payload...), nil
-}
-
-func (b *BoxHeader) GetSize() int {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.UserType != nil {
-      size += binary.Size(b.UserType)
-   }
-   return size
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class BoxHeader (
 //      unsigned int(32) boxtype,
@@ -69,6 +26,49 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType *Uuid
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class Box (
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+type Appender interface {
+   Append([]byte) ([]byte, error)
+}
+
+func (b *Box) Read(buf []byte) error {
+   n, err := b.BoxHeader.Decode(buf)
+   if err != nil {
+      return err
+   }
+   b.Payload = buf[n:b.BoxHeader.Size]
+   return nil
+}
+
+func (b *Box) Append(buf []byte) ([]byte, error) {
+   buf, err := b.BoxHeader.Append(buf)
+   if err != nil {
+      return nil, err
+   }
+   return append(buf, b.Payload...), nil
+}
+
+func (b *BoxHeader) GetSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.UserType != nil {
+      size += binary.Size(b.UserType)
+   }
+   return size
 }
 
 func (b *BoxHeader) Append(buf []byte) ([]byte, error) {

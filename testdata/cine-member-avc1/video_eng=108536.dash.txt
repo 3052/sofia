@@ -4,20 +4,24 @@
  - compatibleBrand: iso6
  - compatibleBrand: dash
 [free] size=40
-[moov] size=674
+[moov] size=1536
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 1
    - duration: 0
    - creation time: 0
    - modification time: 0
-  [trak] size=518
+  [pssh] size=63 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [pssh] size=702 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [trak] size=615
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
      - creation time: 0
      - modification time: 0
      - Width: 320.0, Height: 180.0
-    [mdia] size=418
+    [mdia] size=515
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 600
        - creation time: 0
@@ -26,28 +30,41 @@
       [hdlr] size=50 version=0 flags=000000
        - handlerType: vide
        - handlerName: "USP Video Handler"
-      [minf] size=328
+      [minf] size=425
         [vmhd] size=20 version=0 flags=000001
         [dinf] size=36
           [dref] size=28 version=0 flags=000000
-            [url ] size=12
-             - location: ""
-        [stbl] size=264
-          [stsd] size=172 version=0 flags=000000
-            [avc1] size=156
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=361
+          [stsd] size=269 version=0 flags=000000
+            [encv] size=253
              - width: 320
              - height: 180
-             - compressorName: ""
+             - compressorName: "Lavc59.37.100 libx264"
               [avcC] size=50
                - AVCProfileIndication: 100
                - profileCompatibility: 00
-               - AVCLevelIndication: 41
-               - SPS: 67640029acd941419f9f011000000300100000030328f1831960
+               - AVCLevelIndication: 31
+               - SPS: 6764001facd941419f9f011000000300100000030328f1831960
                - PPS: 68ebecb22c
               [btrt] size=20
                - bufferSizeDB: 0
-               - maxBitrate: 0
-               - AvgBitrate: 110000
+               - maxBitrate: 108536
+               - AvgBitrate: 108536
+              [sinf] size=97
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cbcs
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=57
+                  [tenc] size=49 version=1 flags=000000
+                   - defaultCryptByteBlock: 1
+                   - defaultSkipByteBlock: 9
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 0
+                   - defaultKID: fbef035c-b3b5-4819-a1a3-c213aeff15b2
+                   - defaultConstantIV: fbef035cb3b54819a1a3c213aeff15b2
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000

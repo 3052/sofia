@@ -6,61 +6,18 @@ import (
    "41.neocities.org/sofia/moof"
    "41.neocities.org/sofia/moov"
    "41.neocities.org/sofia/sidx"
+   "log/slog"
 )
 
-// ISO/IEC 14496-12
-type File struct {
-   Box  []sofia.Box
-   Mdat *mdat.Box
-   Moof *moof.Box
-   Moov *moov.Box
-   Sidx *sidx.Box
-}
-
-func (f *File) Append(buf []byte) ([]byte, error) {
-   var err error
-   // KEEP THESE IN ORDER
-   for _, value := range f.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if f.Moov != nil {
-      buf, err = f.Moov.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if f.Sidx != nil {
-      buf, err = f.Sidx.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if f.Moof != nil {
-      buf, err = f.Moof.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if f.Mdat != nil {
-      buf, err = f.Mdat.Box.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return buf, nil
-}
-
-func (f *File) Read(buf []byte) error {
-   for len(buf) >= 1 {
+func (f *File) Read(data []byte) error {
+   for len(data) >= 1 {
       var value sofia.Box
-      err := value.Read(buf)
+      err := value.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[value.BoxHeader.Size:]
+      slog.Debug("box", "header", value.BoxHeader)
+      data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "free", // Mubi
          "ftyp", // Roku
@@ -93,6 +50,51 @@ func (f *File) Read(buf []byte) error {
       }
    }
    return nil
+}
+
+// ISO/IEC 14496-12
+type File struct {
+   Box  []sofia.Box
+   Mdat *mdat.Box
+   Moof *moof.Box
+   Moov *moov.Box
+   Sidx *sidx.Box
+}
+
+func (f *File) Append(data []byte) ([]byte, error) {
+   var err error
+   // KEEP THESE IN ORDER
+   for _, value := range f.Box {
+      data, err = value.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if f.Moov != nil {
+      data, err = f.Moov.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if f.Sidx != nil {
+      data, err = f.Sidx.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if f.Moof != nil {
+      data, err = f.Moof.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if f.Mdat != nil {
+      data, err = f.Mdat.Box.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return data, nil
 }
 
 func (f *File) GetMoov() (*moov.Box, bool) {

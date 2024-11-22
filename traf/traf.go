@@ -5,60 +5,18 @@ import (
    "41.neocities.org/sofia/senc"
    "41.neocities.org/sofia/tfhd"
    "41.neocities.org/sofia/trun"
+   "log/slog"
 )
 
-func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.Senc == nil {
-         return true
-      }
-   }
-   return false
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
-   Senc      *senc.Box
-   Tfhd      tfhd.Box
-   Trun      trun.Box
-}
-
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range b.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if b.Senc != nil {
-      buf, err = b.Senc.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   buf, err = b.Tfhd.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   return b.Trun.Append(buf)
-}
-
-func (b *Box) Read(buf []byte) error {
-   for len(buf) >= 1 {
+func (b *Box) Read(data []byte) error {
+   for len(data) >= 1 {
       var value sofia.Box
-      err := value.Read(buf)
+      err := value.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[value.BoxHeader.Size:]
+      slog.Debug("box", "header", value.BoxHeader)
+      data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "saio", // Roku
          "saiz", // Roku
@@ -99,4 +57,48 @@ func (b *Box) Read(buf []byte) error {
       }
    }
    return nil
+}
+
+func (b *Box) piff(head *sofia.BoxHeader) bool {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+      if b.Senc == nil {
+         return true
+      }
+   }
+   return false
+}
+
+// ISO/IEC 14496-12
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []*sofia.Box
+   Senc      *senc.Box
+   Tfhd      tfhd.Box
+   Trun      trun.Box
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, value := range b.Box {
+      data, err = value.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if b.Senc != nil {
+      data, err = b.Senc.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   data, err = b.Tfhd.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   return b.Trun.Append(data)
 }

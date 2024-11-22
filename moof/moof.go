@@ -3,6 +3,7 @@ package moof
 import (
    "41.neocities.org/sofia"
    "41.neocities.org/sofia/traf"
+   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -21,6 +22,7 @@ func (b *Box) Read(buf []byte) error {
       if err != nil {
          return err
       }
+      slog.Debug("box", "header", value.BoxHeader)
       buf = buf[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "mfhd", // Roku

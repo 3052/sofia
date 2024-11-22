@@ -7,23 +7,23 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = b.FullBoxHeader.Append(buf)
+   data, err = b.FullBoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf = binary.BigEndian.AppendUint32(buf, b.SampleCount)
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
    for _, value := range b.Sample {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   return buf, nil
+   return data, nil
 }
 
 // ISO/IEC 23001-7
@@ -53,25 +53,25 @@ type Box struct {
    Sample        []Sample
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.SampleCount)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
    if err != nil {
       return err
    }
-   buf = buf[n:]
+   data = data[n:]
    b.Sample = make([]Sample, b.SampleCount)
    for i, value := range b.Sample {
       value.box = b
-      n, err = value.Decode(buf)
+      n, err = value.Decode(data)
       if err != nil {
          return err
       }
-      buf = buf[n:]
+      data = data[n:]
       b.Sample[i] = value
    }
    return nil
@@ -82,35 +82,35 @@ func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
 }
 
-func (s *Sample) Append(buf []byte) ([]byte, error) {
-   buf = binary.BigEndian.AppendUint64(buf, s.InitializationVector)
+func (s *Sample) Append(data []byte) ([]byte, error) {
+   data = binary.BigEndian.AppendUint64(data, s.InitializationVector)
    if s.box.senc_use_subsamples() {
-      buf = binary.BigEndian.AppendUint16(buf, s.SubsampleCount)
+      data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
       for _, value := range s.Subsample {
          var err error
-         buf, err = value.Append(buf)
+         data, err = value.Append(data)
          if err != nil {
             return nil, err
          }
       }
    }
-   return buf, nil
+   return data, nil
 }
 
-func (s *Sample) Decode(buf []byte) (int, error) {
-   ns, err := binary.Decode(buf, binary.BigEndian, &s.InitializationVector)
+func (s *Sample) Decode(data []byte) (int, error) {
+   ns, err := binary.Decode(data, binary.BigEndian, &s.InitializationVector)
    if err != nil {
       return 0, err
    }
    if s.box.senc_use_subsamples() {
-      n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.SubsampleCount)
+      n, err := binary.Decode(data[ns:], binary.BigEndian, &s.SubsampleCount)
       if err != nil {
          return 0, err
       }
       ns += n
       s.Subsample = make([]Subsample, s.SubsampleCount)
       for i, value := range s.Subsample {
-         n, err = value.Decode(buf[ns:])
+         n, err = value.Decode(data[ns:])
          if err != nil {
             return 0, err
          }
@@ -156,8 +156,8 @@ func (s *Sample) DecryptCenc(text, key []byte) error {
    return nil
 }
 
-func (s Subsample) Append(buf []byte) ([]byte, error) {
-   return binary.Append(buf, binary.BigEndian, s)
+func (s Subsample) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, s)
 }
 
 type Subsample struct {
@@ -165,6 +165,6 @@ type Subsample struct {
    BytesOfProtectedData uint32
 }
 
-func (s *Subsample) Decode(buf []byte) (int, error) {
-   return binary.Decode(buf, binary.BigEndian, s)
+func (s *Subsample) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, s)
 }

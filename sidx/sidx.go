@@ -17,28 +17,28 @@ func (b *Box) GetSize() int {
    return size + binary.Size(b.Reference)
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = b.FullBoxHeader.Append(buf)
+   data, err = b.FullBoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf = binary.BigEndian.AppendUint32(buf, b.ReferenceId)
-   buf = binary.BigEndian.AppendUint32(buf, b.Timescale)
-   buf = append(buf, b.EarliestPresentationTime...)
-   buf = append(buf, b.FirstOffset...)
-   buf = binary.BigEndian.AppendUint16(buf, b.Reserved)
-   buf = binary.BigEndian.AppendUint16(buf, b.ReferenceCount)
+   data = binary.BigEndian.AppendUint32(data, b.ReferenceId)
+   data = binary.BigEndian.AppendUint32(data, b.Timescale)
+   data = append(data, b.EarliestPresentationTime...)
+   data = append(data, b.FirstOffset...)
+   data = binary.BigEndian.AppendUint16(data, b.Reserved)
+   data = binary.BigEndian.AppendUint16(data, b.ReferenceCount)
    for _, value := range b.Reference {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   return buf, nil
+   return data, nil
 }
 
 // ISO/IEC 14496-12
@@ -75,48 +75,48 @@ type Box struct {
    Reference                []Reference
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.ReferenceId)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceId)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.Timescale)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.Timescale)
    if err != nil {
       return err
    }
-   buf = buf[n:]
+   data = data[n:]
    if b.FullBoxHeader.Version == 0 {
       n = 4
    } else {
       n = 8
    }
-   b.EarliestPresentationTime = buf[:n]
-   buf = buf[n:]
-   b.FirstOffset = buf[:n]
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.Reserved)
+   b.EarliestPresentationTime = data[:n]
+   data = data[n:]
+   b.FirstOffset = data[:n]
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.Reserved)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.ReferenceCount)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceCount)
    if err != nil {
       return err
    }
-   buf = buf[n:]
+   data = data[n:]
    b.Reference = make([]Reference, b.ReferenceCount)
    for i, value := range b.Reference {
-      n, err = value.Decode(buf)
+      n, err = value.Decode(data)
       if err != nil {
          return err
       }
-      buf = buf[n:]
+      data = data[n:]
       b.Reference[i] = value
    }
    return nil
@@ -129,12 +129,12 @@ func (r *Reference) SetSize(size uint32) {
 
 type Reference [3]uint32
 
-func (r Reference) Append(buf []byte) ([]byte, error) {
-   return binary.Append(buf, binary.BigEndian, r)
+func (r Reference) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, r)
 }
 
-func (r *Reference) Decode(buf []byte) (int, error) {
-   return binary.Decode(buf, binary.BigEndian, r)
+func (r *Reference) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, r)
 }
 
 func (*Reference) mask() uint32 {

@@ -34,53 +34,53 @@ func (b *Box) Widevine() bool {
    return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = b.FullBoxHeader.Append(buf)
+   data, err = b.FullBoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf = append(buf, b.SystemId[:]...)
+   data = append(data, b.SystemId[:]...)
    if b.FullBoxHeader.Version > 0 {
-      buf = binary.BigEndian.AppendUint32(buf, b.KidCount)
-      buf, err = binary.Append(buf, binary.BigEndian, b.Kid)
+      data = binary.BigEndian.AppendUint32(data, b.KidCount)
+      data, err = binary.Append(data, binary.BigEndian, b.Kid)
       if err != nil {
          return nil, err
       }
    }
-   buf = binary.BigEndian.AppendUint32(buf, b.DataSize)
-   return append(buf, b.Data...), nil
+   data = binary.BigEndian.AppendUint32(data, b.DataSize)
+   return append(data, b.Data...), nil
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n = copy(b.SystemId[:], buf)
-   buf = buf[n:]
+   data = data[n:]
+   n = copy(b.SystemId[:], data)
+   data = data[n:]
    if b.FullBoxHeader.Version > 0 {
-      n, err := binary.Decode(buf, binary.BigEndian, &b.KidCount)
+      n, err := binary.Decode(data, binary.BigEndian, &b.KidCount)
       if err != nil {
          return err
       }
-      buf = buf[n:]
+      data = data[n:]
       b.Kid = make([]sofia.Uuid, b.KidCount)
-      n, err = binary.Decode(buf, binary.BigEndian, b.Kid)
+      n, err = binary.Decode(data, binary.BigEndian, b.Kid)
       if err != nil {
          return err
       }
-      buf = buf[n:]
+      data = data[n:]
    }
-   n, err = binary.Decode(buf, binary.BigEndian, &b.DataSize)
+   n, err = binary.Decode(data, binary.BigEndian, &b.DataSize)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   b.Data = buf[:b.DataSize]
+   data = data[n:]
+   b.Data = data[:b.DataSize]
    return nil
 }

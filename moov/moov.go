@@ -16,34 +16,34 @@ type Box struct {
    Trak      trak.Box
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
    for _, value := range b.Box {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
    for _, value := range b.Pssh {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   return b.Trak.Append(buf)
+   return b.Trak.Append(data)
 }
 
-func (b *Box) Read(buf []byte) error {
-   for len(buf) >= 1 {
+func (b *Box) Read(data []byte) error {
+   for len(data) >= 1 {
       var sofia_box sofia.Box
-      err := sofia_box.Read(buf)
+      err := sofia_box.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[sofia_box.BoxHeader.Size:]
+      data = data[sofia_box.BoxHeader.Size:]
       switch sofia_box.BoxHeader.Type.String() {
       case "iods", // Roku
          "meta", // Paramount

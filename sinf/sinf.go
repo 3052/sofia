@@ -19,32 +19,32 @@ type Box struct {
    Schi      schi.Box
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
    for _, value := range b.Box {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   buf, err = b.Frma.Append(buf)
+   data, err = b.Frma.Append(data)
    if err != nil {
       return nil, err
    }
-   return b.Schi.Append(buf)
+   return b.Schi.Append(data)
 }
 
-func (b *Box) Read(buf []byte) error {
-   for len(buf) >= 1 {
+func (b *Box) Read(data []byte) error {
+   for len(data) >= 1 {
       var value sofia.Box
-      err := value.Read(buf)
+      err := value.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[value.BoxHeader.Size:]
+      data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "frma":
          b.Frma.BoxHeader = value.BoxHeader

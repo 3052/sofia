@@ -14,14 +14,14 @@ type Box struct {
    Tenc      tenc.Box
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   return b.Tenc.Append(buf)
+   return b.Tenc.Append(data)
 }
 
-func (b *Box) Read(buf []byte) error {
-   return b.Tenc.Read(buf)
+func (b *Box) Read(data []byte) error {
+   return b.Tenc.Read(data)
 }

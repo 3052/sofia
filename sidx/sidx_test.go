@@ -15,9 +15,9 @@ func TestDecode(t *testing.T) {
    index.Reference = []Reference{ref}
    index.ReferenceCount = 1
    index.BoxHeader.Size = uint32(index.GetSize())
-   buf, err := index.Append(nil)
+   data, err := index.Append(nil)
    if err != nil {
       t.Fatal(err)
    }
-   os.WriteFile("reverse.txt", buf, os.ModePerm)
+   os.WriteFile("reverse.txt", data, os.ModePerm)
 }

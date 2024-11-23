@@ -6,6 +6,12 @@ import (
    "strconv"
 )
 
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
 // ISO/IEC 14496-12
 //   aligned(8) class BoxHeader (
 //      unsigned int(32) boxtype,
@@ -178,9 +184,3 @@ func (t Type) String() string {
 }
 
 type Type [4]uint8
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8

@@ -12,12 +12,12 @@ var mdat_tests = []string{
 
 func TestMdat(t *testing.T) {
    for _, test := range mdat_tests {
-      buf, err := os.ReadFile(test)
+      data, err := os.ReadFile(test)
       if err != nil {
          t.Fatal(err)
       }
       var value File
-      err = value.Read(buf)
+      err = value.Read(data)
       if err != nil {
          t.Fatal(err)
       }

@@ -8,12 +8,12 @@ import (
 )
 
 func (s senc_test) encode_init() ([]byte, error) {
-   buf, err := os.ReadFile(s.init)
+   data, err := os.ReadFile(s.init)
    if err != nil {
       return nil, err
    }
    var value File
-   err = value.Read(buf)
+   err = value.Read(data)
    if err != nil {
       return nil, err
    }
@@ -32,7 +32,7 @@ func (s senc_test) encode_init() ([]byte, error) {
    return value.Append(nil)
 }
 
-func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
+func (s senc_test) encode_segment(data []byte) ([]byte, error) {
    fmt.Println(s.segment)
    segment, err := os.ReadFile(s.segment)
    if err != nil {
@@ -56,7 +56,7 @@ func (s senc_test) encode_segment(buf []byte) ([]byte, error) {
          }
       }
    }
-   return value.Append(buf)
+   return value.Append(data)
 }
 
 var senc_tests = []senc_test{
@@ -149,15 +149,15 @@ type senc_test struct {
 
 func TestSenc(t *testing.T) {
    for _, test := range senc_tests {
-      buf, err := test.encode_init()
+      data, err := test.encode_init()
       if err != nil {
          t.Fatal(err)
       }
-      buf, err = test.encode_segment(buf)
+      data, err = test.encode_segment(data)
       if err != nil {
          t.Fatal(err)
       }
-      err = os.WriteFile(test.dst, buf, os.ModePerm)
+      err = os.WriteFile(test.dst, data, os.ModePerm)
       if err != nil {
          t.Fatal(err)
       }

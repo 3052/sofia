@@ -6,26 +6,7 @@ import (
    "encoding/binary"
 )
 
-func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
-   buf, err := s.SampleEntry.Append(buf)
-   if err != nil {
-      return nil, err
-   }
-   buf, err = binary.Append(buf, binary.BigEndian, s.Extends)
-   if err != nil {
-      return nil, err
-   }
-   for _, value := range s.Box {
-      buf, err = value.Append(buf)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return s.Sinf.Append(buf)
-}
-
 // ISO/IEC 14496-12
-//
 //   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //      const unsigned int(32)[2] reserved = 0;
 //      unsigned int(16) channelcount;
@@ -48,24 +29,42 @@ type SampleEntry struct {
    Sinf sinf.Box
 }
 
-func (s *SampleEntry) Read(buf []byte) error {
-   n, err := s.SampleEntry.Decode(buf)
+func (s *SampleEntry) Append(data []byte) ([]byte, error) {
+   data, err := s.SampleEntry.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, s.Extends)
+   if err != nil {
+      return nil, err
+   }
+   for _, value := range s.Box {
+      data, err = value.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return s.Sinf.Append(data)
+}
+
+func (s *SampleEntry) Read(data []byte) error {
+   n, err := s.SampleEntry.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &s.Extends)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &s.Extends)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   for len(buf) > 1 {
+   data = data[n:]
+   for len(data) > 1 {
       var value sofia.Box
-      err := value.Read(buf)
+      err := value.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[value.BoxHeader.Size:]
+      data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "btrt", // Criterion
          "dec3", // Hulu

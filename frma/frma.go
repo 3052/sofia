@@ -14,15 +14,15 @@ type Box struct {
    DataFormat [4]uint8
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   return append(buf, b.DataFormat[:]...), nil
+   return append(data, b.DataFormat[:]...), nil
 }
 
-func (b *Box) Read(buf []byte) error {
-   copy(b.DataFormat[:], buf)
+func (b *Box) Read(data []byte) error {
+   copy(b.DataFormat[:], data)
    return nil
 }

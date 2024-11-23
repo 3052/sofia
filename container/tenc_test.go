@@ -7,12 +7,12 @@ import (
 )
 
 func TestTenc(t *testing.T) {
-   buf, err := os.ReadFile("../testdata/amc-avc1/init.m4f")
+   data, err := os.ReadFile("../testdata/amc-avc1/init.m4f")
    if err != nil {
       t.Fatal(err)
    }
    var value File
-   err = value.Read(buf)
+   err = value.Read(data)
    if err != nil {
       t.Fatal(err)
    }

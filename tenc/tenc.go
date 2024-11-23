@@ -34,38 +34,38 @@ type Box struct {
    DefaultKid sofia.Uuid
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = b.FullBoxHeader.Append(buf)
+   data, err = b.FullBoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = binary.Append(buf, binary.BigEndian, b.Extends)
+   data, err = binary.Append(data, binary.BigEndian, b.Extends)
    if err != nil {
       return nil, err
    }
-   return append(buf, b.DefaultKid[:]...), nil
+   return append(data, b.DefaultKid[:]...), nil
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.BoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = b.FullBoxHeader.Decode(buf)
+   data = data[n:]
+   n, err = b.FullBoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.Extends)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.Extends)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   copy(b.DefaultKid[:], buf)
+   data = data[n:]
+   copy(b.DefaultKid[:], data)
    return nil
 }

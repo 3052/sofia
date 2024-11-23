@@ -22,11 +22,11 @@ func main() {
    if err != nil {
       panic(err)
    }
-   // buf, err := os.ReadFile("../persona/init-000.mp4")
+   // data, err := os.ReadFile("../persona/init-000.mp4")
    if err != nil {
       panic(err)
    }
-   // offset, err := file.Write(buf)
+   // offset, err := file.Write(data)
    if err != nil {
       panic(err)
    }
@@ -34,20 +34,20 @@ func main() {
    index.EarliestPresentationTime = make([]byte, 4)
    index.FirstOffset = make([]byte, 4)
    index.Reference = make([]sidx.Reference, len(matches))
-   // buf, err := index.Append(nil)
+   // data, err := index.Append(nil)
    if err != nil {
       panic(err)
    }
-   // _, err = file.Write(buf)
+   // _, err = file.Write(data)
    if err != nil {
       panic(err)
    }
    for i, match := range matches {
-      buf, err := encode_segment(match, key)
+      data, err := encode_segment(match, key)
       if err != nil {
          panic(err)
       }
-      n, err := file.Write(buf)
+      n, err := file.Write(data)
       if err != nil {
          panic(err)
       }
@@ -56,23 +56,23 @@ func main() {
    copy(index.BoxHeader.Type[:], "sidx")
    index.ReferenceCount = uint16(len(matches))
    index.BoxHeader.Size = uint32(index.GetSize())
-   // buf, err = index.Append(nil)
+   // data, err = index.Append(nil)
    if err != nil {
       panic(err)
    }
-   // _, err = file.WriteAt(buf, int64(offset))
+   // _, err = file.WriteAt(data, int64(offset))
    if err != nil {
       panic(err)
    }
 }
 
 func encode_segment(name string, key []byte) ([]byte, error) {
-   buf, err := os.ReadFile(name)
+   data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
    var file container.File
-   err = file.Read(buf)
+   err = file.Read(data)
    if err != nil {
       return nil, err
    }

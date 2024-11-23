@@ -28,24 +28,24 @@ func (b *Box) Sinf() (*sinf.Box, bool) {
    return nil, false
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.FullBoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   n, err = binary.Decode(buf, binary.BigEndian, &b.EntryCount)
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.EntryCount)
    if err != nil {
       return err
    }
-   buf = buf[n:]
-   for len(buf) >= 1 {
+   data = data[n:]
+   for len(data) >= 1 {
       var value sofia.Box
-      err := value.Read(buf)
+      err := value.Read(data)
       if err != nil {
          return err
       }
-      buf = buf[value.BoxHeader.Size:]
+      data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
       case "avc1", // Tubi
          "ec-3", // Max
@@ -89,33 +89,33 @@ type Box struct {
    VisualSample  *encv.SampleEntry
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf, err = b.FullBoxHeader.Append(buf)
+   data, err = b.FullBoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf = binary.BigEndian.AppendUint32(buf, b.EntryCount)
+   data = binary.BigEndian.AppendUint32(data, b.EntryCount)
    for _, value := range b.Box {
-      buf, err = value.Append(buf)
+      data, err = value.Append(data)
       if err != nil {
          return nil, err
       }
    }
    if b.AudioSample != nil {
-      buf, err = b.AudioSample.Append(buf)
+      data, err = b.AudioSample.Append(data)
       if err != nil {
          return nil, err
       }
    }
    if b.VisualSample != nil {
-      buf, err = b.VisualSample.Append(buf)
+      data, err = b.VisualSample.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   return buf, nil
+   return data, nil
 }

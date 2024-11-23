@@ -45,21 +45,21 @@ type Appender interface {
    Append([]byte) ([]byte, error)
 }
 
-func (b *Box) Read(buf []byte) error {
-   n, err := b.BoxHeader.Decode(buf)
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
    if err != nil {
       return err
    }
-   b.Payload = buf[n:b.BoxHeader.Size]
+   b.Payload = data[n:b.BoxHeader.Size]
    return nil
 }
 
-func (b *Box) Append(buf []byte) ([]byte, error) {
-   buf, err := b.BoxHeader.Append(buf)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   return append(buf, b.Payload...), nil
+   return append(data, b.Payload...), nil
 }
 
 func (b *BoxHeader) GetSize() int {
@@ -71,24 +71,24 @@ func (b *BoxHeader) GetSize() int {
    return size
 }
 
-func (b *BoxHeader) Append(buf []byte) ([]byte, error) {
-   buf = binary.BigEndian.AppendUint32(buf, b.Size)
-   buf = append(buf, b.Type[:]...)
+func (b *BoxHeader) Append(data []byte) ([]byte, error) {
+   data = binary.BigEndian.AppendUint32(data, b.Size)
+   data = append(data, b.Type[:]...)
    if b.UserType != nil {
-      buf = append(buf, (*b.UserType)[:]...)
+      data = append(data, (*b.UserType)[:]...)
    }
-   return buf, nil
+   return data, nil
 }
 
-func (b *BoxHeader) Decode(buf []byte) (int, error) {
-   n, err := binary.Decode(buf, binary.BigEndian, &b.Size)
+func (b *BoxHeader) Decode(data []byte) (int, error) {
+   n, err := binary.Decode(data, binary.BigEndian, &b.Size)
    if err != nil {
       return 0, err
    }
-   n += copy(b.Type[:], buf[n:])
+   n += copy(b.Type[:], data[n:])
    if b.Type.String() == "uuid" {
       b.UserType = &Uuid{}
-      n += copy(b.UserType[:], buf[n:])
+      n += copy(b.UserType[:], data[n:])
    }
    return n, nil
 }
@@ -103,11 +103,11 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-   buf := []byte("container:")
-   buf = strconv.AppendQuote(buf, e.Container.Type.String())
-   buf = append(buf, " box type:"...)
-   buf = strconv.AppendQuote(buf, e.Box.Type.String())
-   return string(buf)
+   data := []byte("container:")
+   data = strconv.AppendQuote(data, e.Container.Type.String())
+   data = append(data, " box type:"...)
+   data = strconv.AppendQuote(data, e.Box.Type.String())
+   return string(data)
 }
 
 // ISO/IEC 14496-12
@@ -126,21 +126,21 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    return binary.BigEndian.Uint32(flag[:])
 }
 
-func (f *FullBoxHeader) Append(buf []byte) ([]byte, error) {
-   return binary.Append(buf, binary.BigEndian, f)
+func (f *FullBoxHeader) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, f)
 }
 
-func (f *FullBoxHeader) Decode(buf []byte) (int, error) {
-   return binary.Decode(buf, binary.BigEndian, f)
+func (f *FullBoxHeader) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, f)
 }
 
 type Reader interface {
    Read([]byte) error
 }
 
-func (s *SampleEntry) Decode(buf []byte) (int, error) {
-   ns := copy(s.Reserved[:], buf)
-   n, err := binary.Decode(buf[ns:], binary.BigEndian, &s.DataReferenceIndex)
+func (s *SampleEntry) Decode(data []byte) (int, error) {
+   ns := copy(s.Reserved[:], data)
+   n, err := binary.Decode(data[ns:], binary.BigEndian, &s.DataReferenceIndex)
    if err != nil {
       return 0, err
    }
@@ -160,13 +160,13 @@ type SampleEntry struct {
    DataReferenceIndex uint16
 }
 
-func (s *SampleEntry) Append(buf []byte) ([]byte, error) {
-   buf, err := s.BoxHeader.Append(buf)
+func (s *SampleEntry) Append(data []byte) ([]byte, error) {
+   data, err := s.BoxHeader.Append(data)
    if err != nil {
       return nil, err
    }
-   buf = append(buf, s.Reserved[:]...)
-   return binary.BigEndian.AppendUint16(buf, s.DataReferenceIndex), nil
+   data = append(data, s.Reserved[:]...)
+   return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
 }
 
 type SizeGetter interface {

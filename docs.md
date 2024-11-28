@@ -33,7 +33,7 @@ package `sofia`
 
 ## Types
 
-### type [Appender](./sofia.go#L75)
+### type [Appender](./sofia.go#L77)
 
 ```go
 type Appender interface {
@@ -60,13 +60,13 @@ ISO/IEC 14496-12
        // the remaining bytes are the BoxPayload
     }
 
-### func (\*Box) [Append](./sofia.go#L88)
+### func (\*Box) [Append](./sofia.go#L90)
 
 ```go
 func (b *Box) Append(data []byte) ([]byte, error)
 ```
 
-### func (\*Box) [Read](./sofia.go#L79)
+### func (\*Box) [Read](./sofia.go#L81)
 
 ```go
 func (b *Box) Read(data []byte) error
@@ -84,41 +84,41 @@ type BoxHeader struct {
 
 ISO/IEC 14496-12
 
- aligned(8) class BoxHeader (
-    unsigned int(32) boxtype,
-    optional unsigned int(8)[16] extended_type
- ) {
-    unsigned int(32) size;
-    unsigned int(32) type = boxtype;
-    if (size==1) {
-       unsigned int(64) largesize;
-    } else if (size==0) {
-       // box extends to end of file
+    aligned(8) class BoxHeader (
+       unsigned int(32) boxtype,
+       optional unsigned int(8)[16] extended_type
+    ) {
+       unsigned int(32) size;
+       unsigned int(32) type = boxtype;
+       if (size==1) {
+          unsigned int(64) largesize;
+       } else if (size==0) {
+          // box extends to end of file
+       }
+       if (boxtype=='uuid') {
+          unsigned int(8)[16] usertype = extended_type;
+       }
     }
-    if (boxtype=='uuid') {
-       unsigned int(8)[16] usertype = extended_type;
-    }
- }
 
-### func (\*BoxHeader) [Append](./sofia.go#L105)
+### func (\*BoxHeader) [Append](./sofia.go#L107)
 
 ```go
 func (b *BoxHeader) Append(data []byte) ([]byte, error)
 ```
 
-### func (\*BoxHeader) [Decode](./sofia.go#L114)
+### func (\*BoxHeader) [Decode](./sofia.go#L116)
 
 ```go
 func (b *BoxHeader) Decode(data []byte) (int, error)
 ```
 
-### func (\*BoxHeader) [GetSize](./sofia.go#L96)
+### func (\*BoxHeader) [GetSize](./sofia.go#L98)
 
 ```go
 func (b *BoxHeader) GetSize() int
 ```
 
-### type [Decoder](./sofia.go#L127)
+### type [Decoder](./sofia.go#L129)
 
 ```go
 type Decoder interface {
@@ -126,7 +126,7 @@ type Decoder interface {
 }
 ```
 
-### type [Error](./sofia.go#L131)
+### type [Error](./sofia.go#L133)
 
 ```go
 type Error struct {
@@ -135,13 +135,13 @@ type Error struct {
 }
 ```
 
-### func (\*Error) [Error](./sofia.go#L136)
+### func (\*Error) [Error](./sofia.go#L138)
 
 ```go
 func (e *Error) Error() string
 ```
 
-### type [FullBoxHeader](./sofia.go#L51)
+### type [FullBoxHeader](./sofia.go#L52)
 
 ```go
 type FullBoxHeader struct {
@@ -151,30 +151,31 @@ type FullBoxHeader struct {
 ```
 
 ISO/IEC 14496-12
-  aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-     unsigned int(8) version = v;
-     bit(24) flags = f;
-  }
 
-### func (\*FullBoxHeader) [Append](./sofia.go#L150)
+    aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+       unsigned int(8) version = v;
+       bit(24) flags = f;
+    }
+
+### func (\*FullBoxHeader) [Append](./sofia.go#L152)
 
 ```go
 func (f *FullBoxHeader) Append(data []byte) ([]byte, error)
 ```
 
-### func (\*FullBoxHeader) [Decode](./sofia.go#L154)
+### func (\*FullBoxHeader) [Decode](./sofia.go#L156)
 
 ```go
 func (f *FullBoxHeader) Decode(data []byte) (int, error)
 ```
 
-### func (\*FullBoxHeader) [GetFlags](./sofia.go#L144)
+### func (\*FullBoxHeader) [GetFlags](./sofia.go#L146)
 
 ```go
 func (f *FullBoxHeader) GetFlags() uint32
 ```
 
-### type [Reader](./sofia.go#L158)
+### type [Reader](./sofia.go#L160)
 
 ```go
 type Reader interface {
@@ -182,7 +183,7 @@ type Reader interface {
 }
 ```
 
-### type [SampleEntry](./sofia.go#L63)
+### type [SampleEntry](./sofia.go#L65)
 
 ```go
 type SampleEntry struct {
@@ -193,26 +194,27 @@ type SampleEntry struct {
 ```
 
 ISO/IEC 14496-12
-  aligned(8) abstract class SampleEntry(
-     unsigned int(32) format
-  ) extends Box(format) {
-     const unsigned int(8)[6] reserved = 0;
-     unsigned int(16) data_reference_index;
-  }
 
-### func (\*SampleEntry) [Append](./sofia.go#L171)
+    aligned(8) abstract class SampleEntry(
+       unsigned int(32) format
+    ) extends Box(format) {
+       const unsigned int(8)[6] reserved = 0;
+       unsigned int(16) data_reference_index;
+    }
+
+### func (\*SampleEntry) [Append](./sofia.go#L173)
 
 ```go
 func (s *SampleEntry) Append(data []byte) ([]byte, error)
 ```
 
-### func (\*SampleEntry) [Decode](./sofia.go#L162)
+### func (\*SampleEntry) [Decode](./sofia.go#L164)
 
 ```go
 func (s *SampleEntry) Decode(data []byte) (int, error)
 ```
 
-### type [SizeGetter](./sofia.go#L180)
+### type [SizeGetter](./sofia.go#L182)
 
 ```go
 type SizeGetter interface {
@@ -220,25 +222,25 @@ type SizeGetter interface {
 }
 ```
 
-### type [Type](./sofia.go#L188)
+### type [Type](./sofia.go#L190)
 
 ```go
 type Type [4]uint8
 ```
 
-### func (Type) [String](./sofia.go#L184)
+### func (Type) [String](./sofia.go#L186)
 
 ```go
 func (t Type) String() string
 ```
 
-### type [Uuid](./sofia.go#L73)
+### type [Uuid](./sofia.go#L75)
 
 ```go
 type Uuid [16]uint8
 ```
 
-### func (Uuid) [String](./sofia.go#L69)
+### func (Uuid) [String](./sofia.go#L71)
 
 ```go
 func (u Uuid) String() string

@@ -22,21 +22,21 @@ type Box struct {
 
 // ISO/IEC 14496-12
 //
-//  aligned(8) class BoxHeader (
-//     unsigned int(32) boxtype,
-//     optional unsigned int(8)[16] extended_type
-//  ) {
-//     unsigned int(32) size;
-//     unsigned int(32) type = boxtype;
-//     if (size==1) {
-//        unsigned int(64) largesize;
-//     } else if (size==0) {
-//        // box extends to end of file
+//     aligned(8) class BoxHeader (
+//        unsigned int(32) boxtype,
+//        optional unsigned int(8)[16] extended_type
+//     ) {
+//        unsigned int(32) size;
+//        unsigned int(32) type = boxtype;
+//        if (size==1) {
+//           unsigned int(64) largesize;
+//        } else if (size==0) {
+//           // box extends to end of file
+//        }
+//        if (boxtype=='uuid') {
+//           unsigned int(8)[16] usertype = extended_type;
+//        }
 //     }
-//     if (boxtype=='uuid') {
-//        unsigned int(8)[16] usertype = extended_type;
-//     }
-//  }
 type BoxHeader struct {
    Size     uint32
    Type     Type
@@ -44,22 +44,24 @@ type BoxHeader struct {
 }
 
 // ISO/IEC 14496-12
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
+//
+//     aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//        unsigned int(8) version = v;
+//        bit(24) flags = f;
+//     }
 type FullBoxHeader struct {
    Version uint8
    Flags   [3]byte
 }
 
 // ISO/IEC 14496-12
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
+//
+//     aligned(8) abstract class SampleEntry(
+//        unsigned int(32) format
+//     ) extends Box(format) {
+//        const unsigned int(8)[6] reserved = 0;
+//        unsigned int(16) data_reference_index;
+//     }
 type SampleEntry struct {
    BoxHeader          BoxHeader
    Reserved           [6]uint8

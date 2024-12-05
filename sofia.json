@@ -1,0 +1,13 @@
+{
+   "html": {
+      "output": "../41.neocities.org"
+   },
+   "modules": {
+      "sofia": {
+         "archive_ref_prefix": "tags/",
+         "ref": "v1.6.6",
+         "type": "github",
+         "url": "https://github.com/3052/sofia"
+      }
+   }
+}

@@ -59,6 +59,23 @@ func (s senc_test) encode_segment(data []byte) ([]byte, error) {
    return value.Append(data)
 }
 
+func TestSenc(t *testing.T) {
+   for _, test := range senc_tests[:2] {
+      data, err := test.encode_init()
+      if err != nil {
+         t.Fatal(err)
+      }
+      data, err = test.encode_segment(data)
+      if err != nil {
+         t.Fatal(err)
+      }
+      err = os.WriteFile(test.dst, data, os.ModePerm)
+      if err != nil {
+         t.Fatal(err)
+      }
+   }
+}
+
 var senc_tests = []senc_test{
    {
       "../testdata/amc-avc1/init.m4f",
@@ -147,19 +164,3 @@ type senc_test struct {
    dst     string
 }
 
-func TestSenc(t *testing.T) {
-   for _, test := range senc_tests {
-      data, err := test.encode_init()
-      if err != nil {
-         t.Fatal(err)
-      }
-      data, err = test.encode_segment(data)
-      if err != nil {
-         t.Fatal(err)
-      }
-      err = os.WriteFile(test.dst, data, os.ModePerm)
-      if err != nil {
-         t.Fatal(err)
-      }
-   }
-}

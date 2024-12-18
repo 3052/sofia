@@ -8,6 +8,23 @@ import (
    "encoding/binary"
 )
 
+// ISO/IEC 14496-12
+//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//      int i ;
+//      unsigned int(32) entry_count;
+//      for (i = 1 ; i <= entry_count ; i++){
+//         SampleEntry(); // an instance of a class derived from SampleEntry
+//      }
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   EntryCount    uint32
+   Box         []sofia.Box
+   AudioSample   *enca.SampleEntry
+   VisualSample  *encv.SampleEntry
+}
+
 func (b *Box) Read(data []byte) error {
    n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
@@ -50,23 +67,6 @@ func (b *Box) Read(data []byte) error {
       }
    }
    return nil
-}
-
-// ISO/IEC 14496-12
-//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//      int i ;
-//      unsigned int(32) entry_count;
-//      for (i = 1 ; i <= entry_count ; i++){
-//         SampleEntry(); // an instance of a class derived from SampleEntry
-//      }
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   EntryCount    uint32
-   Box         []sofia.Box
-   AudioSample   *enca.SampleEntry
-   VisualSample  *encv.SampleEntry
 }
 
 func (b *Box) Append(data []byte) ([]byte, error) {

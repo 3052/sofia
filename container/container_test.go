@@ -6,7 +6,7 @@ import (
    "testing"
 )
 
-const file_test = "../testdata/cine-member-avc1/video_eng=108536-0.dash"
+const file_test = "_init.mp4"
 
 func TestFile(t *testing.T) {
    data, err := os.ReadFile(file_test)

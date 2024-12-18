@@ -8,26 +8,6 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.SampleEntry, true
-   }
-   return nil, false
-}
-
-func (b *Box) Sinf() (*sinf.Box, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.Sinf, true
-   }
-   if v := b.VisualSample; v != nil {
-      return &v.Sinf, true
-   }
-   return nil, false
-}
-
 func (b *Box) Read(data []byte) error {
    n, err := b.FullBoxHeader.Decode(data)
    if err != nil {
@@ -118,4 +98,23 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
+}
+func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.SampleEntry, true
+   }
+   return nil, false
+}
+
+func (b *Box) Sinf() (*sinf.Box, bool) {
+   if v := b.AudioSample; v != nil {
+      return &v.Sinf, true
+   }
+   if v := b.VisualSample; v != nil {
+      return &v.Sinf, true
+   }
+   return nil, false
 }

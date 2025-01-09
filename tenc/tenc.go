@@ -11,13 +11,13 @@ func (b *Box) Read(data []byte) error {
       return err
    }
    data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.Fixed)
+   n, err = binary.Decode(data, binary.BigEndian, &b.S)
    if err != nil {
       return err
    }
    data = data[n:]
-   if b.Fixed.DefaultPerSampleIvSize == 0 {
-      if b.Fixed.DefaultIsProtected == 1 {
+   if b.S.DefaultPerSampleIvSize == 0 {
+      if b.S.DefaultIsProtected == 1 {
          b.DefaultConstantIvSize, data = data[0], data[1:]
          b.DefaultConstantIv = data[:b.DefaultConstantIvSize]
       }
@@ -26,6 +26,7 @@ func (b *Box) Read(data []byte) error {
 }
 
 // ISO/IEC 23001-7
+//
 //   aligned(8) class TrackEncryptionBox extends FullBox('tenc', version, flags=0) {
 //      unsigned int(8) reserved = 0;
 //      if (version==0) {
@@ -44,7 +45,7 @@ func (b *Box) Read(data []byte) error {
 //   }
 type Box struct {
    BoxHeader sofia.BoxHeader
-   Fixed     struct {
+   S         struct {
       FullBoxHeader          sofia.FullBoxHeader
       Reserved               uint8
       ByteBlock              uint8
@@ -61,12 +62,12 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = binary.Append(data, binary.BigEndian, b.Fixed)
+   data, err = binary.Append(data, binary.BigEndian, b.S)
    if err != nil {
       return nil, err
    }
-   if b.Fixed.DefaultPerSampleIvSize == 0 {
-      if b.Fixed.DefaultIsProtected == 1 {
+   if b.S.DefaultPerSampleIvSize == 0 {
+      if b.S.DefaultIsProtected == 1 {
          data = append(data, b.DefaultConstantIvSize)
          data = append(data, b.DefaultConstantIv...)
       }

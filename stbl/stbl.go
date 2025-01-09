@@ -14,7 +14,14 @@ func (b *Box) Read(data []byte) error {
       }
       data = data[value.BoxHeader.Size:]
       switch value.BoxHeader.Type.String() {
+      case "stsd":
+         b.Stsd.BoxHeader = value.BoxHeader
+         err := b.Stsd.Read(value.Payload)
+         if err != nil {
+            return err
+         }
       case "ctts", // FFmpeg
+         "sbgp", // Criterion
          "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku
@@ -22,12 +29,6 @@ func (b *Box) Read(data []byte) error {
          "stsz", // Roku
          "stts": // Roku
          b.Box = append(b.Box, value)
-      case "stsd":
-         b.Stsd.BoxHeader = value.BoxHeader
-         err := b.Stsd.Read(value.Payload)
-         if err != nil {
-            return err
-         }
       default:
          return &sofia.Error{b.BoxHeader, value.BoxHeader}
       }

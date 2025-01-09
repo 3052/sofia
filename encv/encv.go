@@ -7,6 +7,7 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   class VisualSampleEntry(codingname) extends SampleEntry(codingname) {
 //      unsigned int(16) pre_defined = 0;
 //      const unsigned int(16) reserved = 0;
@@ -26,7 +27,7 @@ import (
 //   }
 type SampleEntry struct {
    SampleEntry sofia.SampleEntry
-   Extends     struct {
+   S           struct {
       _               uint16
       _               uint16
       _               [3]uint32
@@ -49,7 +50,7 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = binary.Append(data, binary.BigEndian, s.Extends)
+   data, err = binary.Append(data, binary.BigEndian, s.S)
    if err != nil {
       return nil, err
    }
@@ -68,7 +69,7 @@ func (s *SampleEntry) Read(data []byte) error {
       return err
    }
    data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &s.Extends)
+   n, err = binary.Decode(data, binary.BigEndian, &s.S)
    if err != nil {
       return err
    }

@@ -1,0 +1,83 @@
+[ftyp] size=32
+ - majorBrand: dash
+ - minorVersion: 0
+ - compatibleBrand: dash
+ - compatibleBrand: mp42
+ - compatibleBrand: iso6
+ - compatibleBrand: avc1
+[moov] size=853
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 24000
+   - duration: 0
+   - creation time: 2024-11-20T09:01:43Z
+   - modification time: 2024-11-20T09:01:43Z
+  [trak] size=677
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2024-11-20T09:01:43Z
+     - modification time: 2024-11-20T09:01:43Z
+     - Width: 426.0, Height: 240.0
+    [edts] size=36
+      [elst] size=28 version=0 flags=000000
+      - entry[1]: segmentDuration=0 mediaTime=3003, mediaRateInteger=1 mediaRateFraction=0
+    [mdia] size=541
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 24000
+       - creation time: 2024-11-20T09:01:43Z
+       - modification time: 2024-11-20T09:01:43Z
+       - language: und
+      [hdlr] size=59 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "Vimeo Isopod Video Handler"
+      [minf] size=442
+        [vmhd] size=20 version=0 flags=000001
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=378
+          [stsd] size=258 version=0 flags=000000
+            [encv] size=242
+             - width: 426
+             - height: 240
+             - compressorName: "AVC Coding"
+              [avcC] size=57
+               - AVCProfileIndication: 100
+               - profileCompatibility: 00
+               - AVCLevelIndication: 21
+               - SPS: 67640015ac56241b1fe4e6a0c0c0c800000300080005dc0078b16c4c
+               - PPS: 68e88ecb22c0
+              [colr] size=19
+               - colorType: nclx
+               - ColorPrimaries: 6, TransferCharacteristics: 6, MatrixCoefficients: 6, FullRange: false
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 71daff53-b5e1-5376-01d0-26f82d21a871
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+          [sgpd] size=24 version=1 flags=000000
+             groupingType: roll
+           - defaultLength: 2
+           - entryCount: 0
+          [sbgp] size=20 version=0 flags=000000
+           - groupingType: roll
+           - entryCount: 0
+  [mvex] size=60
+    [mehd] size=20 version=1 flags=000000
+     - fragmentDuration: 163408245
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 1
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0)

@@ -1,12 +1,11 @@
 package container
 
 import (
-   "log/slog"
    "os"
    "testing"
 )
 
-const file_test = "_init.mp4"
+const file_test = "../testdata/criterion-avc1/0-804.mp4"
 
 func TestFile(t *testing.T) {
    data, err := os.ReadFile(file_test)
@@ -14,7 +13,6 @@ func TestFile(t *testing.T) {
       t.Fatal(err)
    }
    var video_eng File
-   slog.SetLogLoggerLevel(slog.LevelDebug)
    err = video_eng.Read(data)
    if err != nil {
       t.Fatal(err)

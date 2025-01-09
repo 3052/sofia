@@ -7,6 +7,7 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
 //      const unsigned int(32)[2] reserved = 0;
 //      unsigned int(16) channelcount;
@@ -17,7 +18,7 @@ import (
 //   }
 type SampleEntry struct {
    SampleEntry sofia.SampleEntry
-   Extends     struct {
+   S           struct {
       _            [2]uint32
       ChannelCount uint16
       SampleSize   uint16
@@ -34,7 +35,7 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = binary.Append(data, binary.BigEndian, s.Extends)
+   data, err = binary.Append(data, binary.BigEndian, s.S)
    if err != nil {
       return nil, err
    }
@@ -53,7 +54,7 @@ func (s *SampleEntry) Read(data []byte) error {
       return err
    }
    data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &s.Extends)
+   n, err = binary.Decode(data, binary.BigEndian, &s.S)
    if err != nil {
       return err
    }

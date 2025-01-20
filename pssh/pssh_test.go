@@ -2,7 +2,8 @@ package pssh
 
 import (
    "encoding/base64"
-   "fmt"
+   "encoding/json"
+   "os"
    "testing"
 )
 
@@ -22,5 +23,18 @@ func TestPssh(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   fmt.Printf("%+v\n", pssh)
+   encode := json.NewEncoder(os.Stdout)
+   encode.SetIndent("", " ")
+   err = encode.Encode(pssh)
+   if err != nil {
+      t.Fatal(err)
+   }
+   message := protobuf.Message{}
+   
+   message.Unmarsh
+   
+   
+   
+   
+   
 }

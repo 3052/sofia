@@ -1,0 +1,42 @@
+{
+ "BoxHeader": {
+  "Size": 74,
+  "Type": [
+   112,
+   115,
+   115,
+   104
+  ],
+  "UserType": null
+ },
+ "FullBoxHeader": {
+  "Version": 0,
+  "Flags": [
+   0,
+   0,
+   0
+  ]
+ },
+ "SystemId": [
+  237,
+  239,
+  139,
+  169,
+  121,
+  214,
+  74,
+  206,
+  163,
+  200,
+  39,
+  220,
+  213,
+  29,
+  33,
+  237
+ ],
+ "KidCount": 0,
+ "Kid": null,
+ "DataSize": 42,
+ "Data": "EhAAAAAAZ0ZA2W7BNJEH/yXuEhAAAAAAZ0ZA2W7BNJEH/yXvSOPclZsG"
+}

@@ -10,6 +10,9 @@ ISOBMFF
 
 library for reading and writing MP4
 
+- <https://wikipedia.org/wiki/MP4_file_format>
+- <https://wikipedia.org/wiki/MPEG_Common_Encryption>
+
 ## prior art
 
 1. https://github.com/mozilla/mp4parse-rust/issues/415

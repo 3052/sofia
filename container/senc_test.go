@@ -7,58 +7,6 @@ import (
    "testing"
 )
 
-func (s senc_test) encode_init() ([]byte, error) {
-   data, err := os.ReadFile(s.init)
-   if err != nil {
-      return nil, err
-   }
-   var value File
-   err = value.Read(data)
-   if err != nil {
-      return nil, err
-   }
-   for _, pssh := range value.Moov.Pssh {
-      copy(pssh.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := value.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   if sinf, ok := description.Sinf(); ok {
-      // Firefox
-      copy(sinf.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
-      }
-   }
-   return value.Append(nil)
-}
-
-func (s senc_test) encode_segment(data []byte) ([]byte, error) {
-   fmt.Println(s.segment)
-   segment, err := os.ReadFile(s.segment)
-   if err != nil {
-      return nil, err
-   }
-   var value File
-   err = value.Read(segment)
-   if err != nil {
-      return nil, err
-   }
-   track := value.Moof.Traf
-   if senc := track.Senc; senc != nil {
-      key, err := hex.DecodeString(s.key)
-      if err != nil {
-         return nil, err
-      }
-      for i, text := range value.Mdat.Data(&track) {
-         err := senc.Sample[i].DecryptCenc(text, key)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return value.Append(data)
-}
-
 func TestSenc(t *testing.T) {
    for _, test := range senc_tests[:2] {
       data, err := test.encode_init()
@@ -162,5 +110,57 @@ type senc_test struct {
    segment string
    key     string
    dst     string
+}
+
+func (s senc_test) encode_init() ([]byte, error) {
+   data, err := os.ReadFile(s.init)
+   if err != nil {
+      return nil, err
+   }
+   var value File
+   err = value.Read(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, pssh := range value.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := value.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return value.Append(nil)
+}
+
+func (s senc_test) encode_segment(data []byte) ([]byte, error) {
+   fmt.Println(s.segment)
+   segment, err := os.ReadFile(s.segment)
+   if err != nil {
+      return nil, err
+   }
+   var value File
+   err = value.Read(segment)
+   if err != nil {
+      return nil, err
+   }
+   track := value.Moof.Traf
+   if senc := track.Senc; senc != nil {
+      key, err := hex.DecodeString(s.key)
+      if err != nil {
+         return nil, err
+      }
+      for i, text := range value.Mdat.Data(&track) {
+         err := senc.Sample[i].DecryptCenc(text, key)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return value.Append(data)
 }
 

@@ -8,15 +8,6 @@ import (
    "log/slog"
 )
 
-func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
-      if b.Senc == nil {
-         return true
-      }
-   }
-   return false
-}
-
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
       var value sofia.Box
@@ -101,4 +92,13 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    return b.Trun.Append(data)
+}
+
+func (b *Box) piff(head *sofia.BoxHeader) bool {
+   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+      if b.Senc == nil {
+         return true
+      }
+   }
+   return false
 }

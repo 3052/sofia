@@ -11,42 +11,42 @@ import (
 
 func (f *File) Read(data []byte) error {
    for len(data) >= 1 {
-      var value sofia.Box
-      err := value.Read(data)
+      var box sofia.Box
+      err := box.Read(data)
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", value.BoxHeader)
-      data = data[value.BoxHeader.Size:]
-      switch value.BoxHeader.Type.String() {
+      slog.Debug("box", "header", box.BoxHeader)
+      data = data[box.BoxHeader.Size:]
+      switch box.BoxHeader.Type.String() {
       case "free", // Mubi
          "ftyp", // Roku
          "styp": // Roku
-         f.Box = append(f.Box, value)
+         f.Box = append(f.Box, box)
       case "mdat":
-         f.Mdat = &mdat.Box{value}
+         f.Mdat = &mdat.Box{box}
       case "moof":
-         f.Moof = &moof.Box{BoxHeader: value.BoxHeader}
-         err := f.Moof.Read(value.Payload)
+         f.Moof = &moof.Box{BoxHeader: box.BoxHeader}
+         err := f.Moof.Read(box.Payload)
          if err != nil {
             return err
          }
       case "moov":
-         f.Moov = &moov.Box{BoxHeader: value.BoxHeader}
-         err := f.Moov.Read(value.Payload)
+         f.Moov = &moov.Box{BoxHeader: box.BoxHeader}
+         err := f.Moov.Read(box.Payload)
          if err != nil {
             return err
          }
       case "sidx":
-         f.Sidx = &sidx.Box{BoxHeader: value.BoxHeader}
-         err := f.Sidx.Read(value.Payload)
+         f.Sidx = &sidx.Box{BoxHeader: box.BoxHeader}
+         err := f.Sidx.Read(box.Payload)
          if err != nil {
             return err
          }
       default:
          var container sofia.BoxHeader
          copy(container.Type[:], "File")
-         return &sofia.Error{container, value.BoxHeader}
+         return &sofia.Error{container, box.BoxHeader}
       }
    }
    return nil
@@ -64,8 +64,8 @@ type File struct {
 func (f *File) Append(data []byte) ([]byte, error) {
    var err error
    // KEEP THESE IN ORDER
-   for _, value := range f.Box {
-      data, err = value.Append(data)
+   for _, box := range f.Box {
+      data, err = box.Append(data)
       if err != nil {
          return nil, err
       }

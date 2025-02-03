@@ -10,50 +10,50 @@ import (
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var value sofia.Box
-      err := value.Read(data)
+      var box0 sofia.Box
+      err := box0.Read(data)
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", value.BoxHeader)
-      data = data[value.BoxHeader.Size:]
-      switch value.BoxHeader.Type.String() {
+      slog.Debug("box", "header", box0.BoxHeader)
+      data = data[box0.BoxHeader.Size:]
+      switch box0.BoxHeader.Type.String() {
       case "senc":
-         b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
-         err := b.Senc.Read(value.Payload)
+         b.Senc = &senc.Box{BoxHeader: box0.BoxHeader}
+         err := b.Senc.Read(box0.Payload)
          if err != nil {
             return err
          }
       case "uuid":
-         if b.piff(&value.BoxHeader) {
-            b.Senc = &senc.Box{BoxHeader: value.BoxHeader}
-            err := b.Senc.Read(value.Payload)
+         if b.piff(&box0.BoxHeader) {
+            b.Senc = &senc.Box{BoxHeader: box0.BoxHeader}
+            err := b.Senc.Read(box0.Payload)
             if err != nil {
                return err
             }
          } else {
-            b.Box = append(b.Box, &value)
+            b.Box = append(b.Box, &box0)
          }
       case "saio", // Roku
          "saiz", // Roku
          "sbgp", // Roku
          "sgpd", // Roku
          "tfdt": // Roku
-         b.Box = append(b.Box, &value)
+         b.Box = append(b.Box, &box0)
       case "tfhd":
-         b.Tfhd.BoxHeader = value.BoxHeader
-         err := b.Tfhd.Read(value.Payload)
+         b.Tfhd.BoxHeader = box0.BoxHeader
+         err := b.Tfhd.Read(box0.Payload)
          if err != nil {
             return err
          }
       case "trun":
-         b.Trun.BoxHeader = value.BoxHeader
-         err := b.Trun.Read(value.Payload)
+         b.Trun.BoxHeader = box0.BoxHeader
+         err := b.Trun.Read(box0.Payload)
          if err != nil {
             return err
          }
       default:
-         return &sofia.BoxError{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, box0.BoxHeader}
       }
    }
    return nil
@@ -75,8 +75,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, value := range b.Box {
-      data, err = value.Append(data)
+   for _, box0 := range b.Box {
+      data, err = box0.Append(data)
       if err != nil {
          return nil, err
       }

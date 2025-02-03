@@ -21,14 +21,14 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, value := range b.Box {
-      data, err = value.Append(data)
+   for _, box0 := range b.Box {
+      data, err = box0.Append(data)
       if err != nil {
          return nil, err
       }
    }
-   for _, value := range b.Pssh {
-      data, err = value.Append(data)
+   for _, box0 := range b.Pssh {
+      data, err = box0.Append(data)
       if err != nil {
          return nil, err
       }
@@ -38,34 +38,34 @@ func (b *Box) Append(data []byte) ([]byte, error) {
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var sofia_box sofia.Box
-      err := sofia_box.Read(data)
+      var box0 sofia.Box
+      err := box0.Read(data)
       if err != nil {
          return err
       }
-      data = data[sofia_box.BoxHeader.Size:]
-      switch sofia_box.BoxHeader.Type.String() {
+      data = data[box0.BoxHeader.Size:]
+      switch box0.BoxHeader.Type.String() {
       case "iods", // Roku
          "meta", // Paramount
          "mvex", // Roku
          "mvhd", // Roku
          "udta": // Criterion
-         b.Box = append(b.Box, &sofia_box)
+         b.Box = append(b.Box, &box0)
       case "trak":
-         b.Trak.BoxHeader = sofia_box.BoxHeader
-         err := b.Trak.Read(sofia_box.Payload)
+         b.Trak.BoxHeader = box0.BoxHeader
+         err := b.Trak.Read(box0.Payload)
          if err != nil {
             return err
          }
       case "pssh":
-         pssh_box := pssh.Box{BoxHeader: sofia_box.BoxHeader}
-         err := pssh_box.Read(sofia_box.Payload)
+         pssh0 := pssh.Box{BoxHeader: box0.BoxHeader}
+         err := pssh0.Read(box0.Payload)
          if err != nil {
             return err
          }
-         b.Pssh = append(b.Pssh, pssh_box)
+         b.Pssh = append(b.Pssh, pssh0)
       default:
-         return &sofia.Error{b.BoxHeader, sofia_box.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, box0.BoxHeader}
       }
    }
    return nil

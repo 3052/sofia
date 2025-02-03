@@ -45,8 +45,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   for _, value := range b.Sample {
-      data, err = value.Append(data)
+   for _, sample0 := range b.Sample {
+      data, err = sample0.Append(data)
       if err != nil {
          return nil, err
       }
@@ -72,9 +72,9 @@ func (s *Sample) Append(data []byte) ([]byte, error) {
    data = append(data, s.InitializationVector[:]...)
    if s.box.senc_use_subsamples() {
       data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
-      for _, value := range s.Subsample {
+      for _, sample0 := range s.Subsample {
          var err error
-         data, err = value.Append(data)
+         data, err = sample0.Append(data)
          if err != nil {
             return nil, err
          }
@@ -132,14 +132,14 @@ func (b *Box) Read(data []byte) error {
    }
    data = data[n:]
    b.Sample = make([]Sample, b.SampleCount)
-   for i, value := range b.Sample {
-      value.box = b
-      n, err = value.Decode(data)
+   for i, sample0 := range b.Sample {
+      sample0.box = b
+      n, err = sample0.Decode(data)
       if err != nil {
          return err
       }
       data = data[n:]
-      b.Sample[i] = value
+      b.Sample[i] = sample0
    }
    return nil
 }
@@ -153,13 +153,13 @@ func (s *Sample) Decode(data []byte) (int, error) {
       }
       ns += n
       s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, value := range s.Subsample {
-         n, err = value.Decode(data[ns:])
+      for i, sample0 := range s.Subsample {
+         n, err = sample0.Decode(data[ns:])
          if err != nil {
             return 0, err
          }
          ns += n
-         s.Subsample[i] = value
+         s.Subsample[i] = sample0
       }
    }
    return ns, nil

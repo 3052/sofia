@@ -63,7 +63,7 @@ func (b *Box) Read(data []byte) error {
             return err
          }
       default:
-         return &sofia.Error{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, value.BoxHeader}
       }
    }
    return nil

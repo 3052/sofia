@@ -17,25 +17,25 @@ type Box struct {
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var value sofia.Box
-      err := value.Read(data)
+      var box0 sofia.Box
+      err := box0.Read(data)
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", value.BoxHeader)
-      data = data[value.BoxHeader.Size:]
-      switch value.BoxHeader.Type.String() {
+      slog.Debug("box", "header", box0.BoxHeader)
+      data = data[box0.BoxHeader.Size:]
+      switch box0.BoxHeader.Type.String() {
       case "mfhd", // Roku
          "pssh": // Roku
-         b.Box = append(b.Box, value)
+         b.Box = append(b.Box, box0)
       case "traf":
-         b.Traf.BoxHeader = value.BoxHeader
-         err := b.Traf.Read(value.Payload)
+         b.Traf.BoxHeader = box0.BoxHeader
+         err := b.Traf.Read(box0.Payload)
          if err != nil {
             return err
          }
       default:
-         return &sofia.Error{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, box0.BoxHeader}
       }
    }
    return nil
@@ -46,8 +46,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, value := range b.Box {
-      data, err = value.Append(data)
+   for _, box0 := range b.Box {
+      data, err = box0.Append(data)
       if err != nil {
          return nil, err
       }

@@ -29,12 +29,4 @@ func TestPssh(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   message := protobuf.Message{}
-   
-   message.Unmarsh
-   
-   
-   
-   
-   
 }

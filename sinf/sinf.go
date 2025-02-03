@@ -61,7 +61,7 @@ func (b *Box) Read(data []byte) error {
       case "schm": // Roku
          b.Box = append(b.Box, value)
       default:
-         return &sofia.Error{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, value.BoxHeader}
       }
    }
    return nil

@@ -30,13 +30,14 @@ func (b *Box) Read(data []byte) error {
          "stts": // Roku
          b.Box = append(b.Box, value)
       default:
-         return &sofia.Error{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, value.BoxHeader}
       }
    }
    return nil
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class SampleTableBox extends Box('stbl') {
 //   }
 type Box struct {

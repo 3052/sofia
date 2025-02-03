@@ -17,12 +17,12 @@ type Box struct {
 func (b *Box) Data(track *traf.Box) [][]byte {
    payload := b.Box.Payload
    data := make([][]byte, track.Trun.SampleCount)
-   for i, s := range track.Trun.Sample {
-      if s.SampleSize == 0 {
-         s.SampleSize = track.Tfhd.DefaultSampleSize
+   for i, sample := range track.Trun.Sample {
+      if sample.SampleSize == 0 {
+         sample.SampleSize = track.Tfhd.DefaultSampleSize
       }
-      data[i] = payload[:s.SampleSize]
-      payload = payload[s.SampleSize:]
+      data[i] = payload[:sample.SampleSize]
+      payload = payload[sample.SampleSize:]
    }
    return data
 }

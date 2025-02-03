@@ -6,6 +6,19 @@ import (
    "strconv"
 )
 
+type BoxError struct {
+   Container BoxHeader
+   Box       BoxHeader
+}
+
+func (b *BoxError) Error() string {
+   data := []byte("container:")
+   data = strconv.AppendQuote(data, b.Container.Type.String())
+   data = append(data, " box type:"...)
+   data = strconv.AppendQuote(data, b.Box.Type.String())
+   return string(data)
+}
+
 // ISO/IEC 14496-12
 //
 //     aligned(8) class Box (
@@ -128,19 +141,6 @@ func (b *BoxHeader) Decode(data []byte) (int, error) {
 
 type Decoder interface {
    Decode([]byte) (int, error)
-}
-
-type Error struct {
-   Container BoxHeader
-   Box       BoxHeader
-}
-
-func (e *Error) Error() string {
-   data := []byte("container:")
-   data = strconv.AppendQuote(data, e.Container.Type.String())
-   data = append(data, " box type:"...)
-   data = strconv.AppendQuote(data, e.Box.Type.String())
-   return string(data)
 }
 
 func (f *FullBoxHeader) GetFlags() uint32 {

@@ -44,9 +44,9 @@ func (f *File) Read(data []byte) error {
             return err
          }
       default:
-         var container sofia.BoxHeader
-         copy(container.Type[:], "File")
-         return &sofia.Error{container, box.BoxHeader}
+         var header sofia.BoxHeader
+         copy(header.Type[:], "File")
+         return &sofia.BoxError{header, box.BoxHeader}
       }
    }
    return nil

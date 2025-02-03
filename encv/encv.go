@@ -54,8 +54,8 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, value := range s.Box {
-      data, err = value.Append(data)
+   for _, box := range s.Box {
+      data, err = box.Append(data)
       if err != nil {
          return nil, err
       }
@@ -75,13 +75,13 @@ func (s *SampleEntry) Read(data []byte) error {
    }
    data = data[n:]
    for len(data) >= 1 {
-      var value sofia.Box
-      err := value.Read(data)
+      var box sofia.Box
+      err := box.Read(data)
       if err != nil {
          return err
       }
-      data = data[value.BoxHeader.Size:]
-      switch value.BoxHeader.Type.String() {
+      data = data[box.BoxHeader.Size:]
+      switch box.BoxHeader.Type.String() {
       case "avcC", // Roku
          "btrt", // Mubi
          "clli", // Max
@@ -91,15 +91,15 @@ func (s *SampleEntry) Read(data []byte) error {
          "hvcC", // Hulu
          "mdcv", // Max
          "pasp": // Roku
-         s.Box = append(s.Box, &value)
+         s.Box = append(s.Box, &box)
       case "sinf":
-         s.Sinf.BoxHeader = value.BoxHeader
-         err := s.Sinf.Read(value.Payload)
+         s.Sinf.BoxHeader = box.BoxHeader
+         err := s.Sinf.Read(box.Payload)
          if err != nil {
             return err
          }
       default:
-         return &sofia.Error{s.SampleEntry.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{s.SampleEntry.BoxHeader, box.BoxHeader}
       }
    }
    return nil

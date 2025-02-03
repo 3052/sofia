@@ -37,33 +37,33 @@ func (b *Box) Read(data []byte) error {
    }
    data = data[n:]
    for len(data) >= 1 {
-      var value sofia.Box
-      err := value.Read(data)
+      var box0 sofia.Box
+      err := box0.Read(data)
       if err != nil {
          return err
       }
-      data = data[value.BoxHeader.Size:]
-      switch value.BoxHeader.Type.String() {
+      data = data[box0.BoxHeader.Size:]
+      switch box0.BoxHeader.Type.String() {
       case "avc1", // Tubi
          "ec-3", // Max
          "mp4a": // Tubi
-         b.Box = append(b.Box, value)
+         b.Box = append(b.Box, box0)
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
-         b.AudioSample.SampleEntry.BoxHeader = value.BoxHeader
-         err := b.AudioSample.Read(value.Payload)
+         b.AudioSample.SampleEntry.BoxHeader = box0.BoxHeader
+         err := b.AudioSample.Read(box0.Payload)
          if err != nil {
             return err
          }
       case "encv":
          b.VisualSample = &encv.SampleEntry{}
-         b.VisualSample.SampleEntry.BoxHeader = value.BoxHeader
-         err := b.VisualSample.Read(value.Payload)
+         b.VisualSample.SampleEntry.BoxHeader = box0.BoxHeader
+         err := b.VisualSample.Read(box0.Payload)
          if err != nil {
             return err
          }
       default:
-         return &sofia.BoxError{b.BoxHeader, value.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, box0.BoxHeader}
       }
    }
    return nil
@@ -79,8 +79,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    data = binary.BigEndian.AppendUint32(data, b.EntryCount)
-   for _, value := range b.Box {
-      data, err = value.Append(data)
+   for _, box0 := range b.Box {
+      data, err = box0.Append(data)
       if err != nil {
          return nil, err
       }
@@ -99,22 +99,23 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    }
    return data, nil
 }
+
 func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.SampleEntry, true
+   if as := b.AudioSample; as != nil {
+      return &as.SampleEntry, true
    }
-   if v := b.VisualSample; v != nil {
-      return &v.SampleEntry, true
+   if vs := b.VisualSample; vs != nil {
+      return &vs.SampleEntry, true
    }
    return nil, false
 }
 
 func (b *Box) Sinf() (*sinf.Box, bool) {
-   if v := b.AudioSample; v != nil {
-      return &v.Sinf, true
+   if as := b.AudioSample; as != nil {
+      return &as.Sinf, true
    }
-   if v := b.VisualSample; v != nil {
-      return &v.Sinf, true
+   if vs := b.VisualSample; vs != nil {
+      return &vs.Sinf, true
    }
    return nil, false
 }

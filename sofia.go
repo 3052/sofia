@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (s *SampleEntry) Decode(data []byte) (int, error) {
+   n := copy(s.Reserved[:], data)
+   n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
+   if err != nil {
+      return 0, err
+   }
+   return n + n1, nil
+}
+
 type BoxError struct {
    Container BoxHeader
    Box       BoxHeader
@@ -159,15 +168,6 @@ func (f *FullBoxHeader) Decode(data []byte) (int, error) {
 
 type Reader interface {
    Read([]byte) error
-}
-
-func (s *SampleEntry) Decode(data []byte) (int, error) {
-   ns := copy(s.Reserved[:], data)
-   n, err := binary.Decode(data[ns:], binary.BigEndian, &s.DataReferenceIndex)
-   if err != nil {
-      return 0, err
-   }
-   return ns + n, nil
 }
 
 func (s *SampleEntry) Append(data []byte) ([]byte, error) {

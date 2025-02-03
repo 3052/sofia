@@ -5,6 +5,35 @@ import (
    "encoding/binary"
 )
 
+func (s *Sample) Decode(data []byte) (int, error) {
+   var n int
+   if s.box.sample_duration_present() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Duration)
+      if err != nil {
+         return 0, err
+      }
+      n += n1
+   }
+   if s.box.sample_size_present() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SampleSize)
+      if err != nil {
+         return 0, err
+      }
+      n += n1
+   }
+   if s.box.sample_flags_present() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Flags)
+      if err != nil {
+         return 0, err
+      }
+      n += n1
+   }
+   if s.box.sample_composition_time_offsets_present() {
+      n += copy(s.CompositionTimeOffset[:], data[n:])
+   }
+   return n, nil
+}
+
 // ISO/IEC 14496-12
 //
 // If the data-offset is present, it is relative to the base-data-offset
@@ -122,35 +151,6 @@ func (b *Box) Read(data []byte) error {
       b.Sample[i] = value
    }
    return nil
-}
-
-func (s *Sample) Decode(data []byte) (int, error) {
-   var ns int
-   if s.box.sample_duration_present() {
-      n, err := binary.Decode(data[ns:], binary.BigEndian, &s.Duration)
-      if err != nil {
-         return 0, err
-      }
-      ns += n
-   }
-   if s.box.sample_size_present() {
-      n, err := binary.Decode(data[ns:], binary.BigEndian, &s.SampleSize)
-      if err != nil {
-         return 0, err
-      }
-      ns += n
-   }
-   if s.box.sample_flags_present() {
-      n, err := binary.Decode(data[ns:], binary.BigEndian, &s.Flags)
-      if err != nil {
-         return 0, err
-      }
-      ns += n
-   }
-   if s.box.sample_composition_time_offsets_present() {
-      ns += copy(s.CompositionTimeOffset[:], data[ns:])
-   }
-   return ns, nil
 }
 
 func (s *Sample) Append(data []byte) ([]byte, error) {

@@ -8,6 +8,10 @@ import (
    "log/slog"
 )
 
+func (s *Subsample) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, s)
+}
+
 // ISO/IEC 23001-7
 //
 // if the version of the SampleEncryptionBox is 0 and the flag
@@ -83,39 +87,32 @@ func (s *Sample) Append(data []byte) ([]byte, error) {
    return data, nil
 }
 
-// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func (s *Sample) DecryptCenc(text, key []byte) error {
-   block, err := aes.NewCipher(key)
-   if err != nil {
-      return err
-   }
-   var iv [16]byte
-   copy(iv[:], s.InitializationVector[:])
-   stream := cipher.NewCTR(block, iv[:])
-   if len(s.Subsample) >= 1 {
-      var i uint32
-      for _, sub := range s.Subsample {
-         clear := uint32(sub.BytesOfClearData)
-         if clear >= 1 {
-            i += clear
-         }
-         protected := sub.BytesOfProtectedData
-         if protected >= 1 {
-            stream.XORKeyStream(text[i:i+protected], text[i:i+protected])
-            i += protected
-         }
-      }
-   } else {
-      stream.XORKeyStream(text, text)
-   }
-   return nil
-}
-
 type Sample struct {
    InitializationVector [8]uint8
    SubsampleCount       uint16
    Subsample            []Subsample
    box                  *Box
+}
+
+func (s *Sample) Decode(data []byte) (int, error) {
+   n := copy(s.InitializationVector[:], data)
+   if s.box.senc_use_subsamples() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
+      if err != nil {
+         return 0, err
+      }
+      n += n1
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sample0 := range s.Subsample {
+         n1, err = sample0.Decode(data[n:])
+         if err != nil {
+            return 0, err
+         }
+         n += n1
+         s.Subsample[i] = sample0
+      }
+   }
+   return n, nil
 }
 
 func (b *Box) Read(data []byte) error {
@@ -144,27 +141,30 @@ func (b *Box) Read(data []byte) error {
    return nil
 }
 
-func (s *Sample) Decode(data []byte) (int, error) {
-   ns := copy(s.InitializationVector[:], data)
-   if s.box.senc_use_subsamples() {
-      n, err := binary.Decode(data[ns:], binary.BigEndian, &s.SubsampleCount)
-      if err != nil {
-         return 0, err
-      }
-      ns += n
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sample0 := range s.Subsample {
-         n, err = sample0.Decode(data[ns:])
-         if err != nil {
-            return 0, err
-         }
-         ns += n
-         s.Subsample[i] = sample0
-      }
+// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+func (s *Sample) DecryptCenc(data, key []byte) error {
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      return err
    }
-   return ns, nil
-}
-
-func (s *Subsample) Decode(data []byte) (int, error) {
-   return binary.Decode(data, binary.BigEndian, s)
+   var iv [16]byte
+   copy(iv[:], s.InitializationVector[:])
+   stream := cipher.NewCTR(block, iv[:])
+   if len(s.Subsample) >= 1 {
+      var i uint32
+      for _, sample0 := range s.Subsample {
+         clear := uint32(sample0.BytesOfClearData)
+         if clear >= 1 {
+            i += clear
+         }
+         protected := sample0.BytesOfProtectedData
+         if protected >= 1 {
+            stream.XORKeyStream(data[i:i+protected], data[i:i+protected])
+            i += protected
+         }
+      }
+   } else {
+      stream.XORKeyStream(data, data)
+   }
+   return nil
 }

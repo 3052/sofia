@@ -5,40 +5,28 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
+func (r *Reference) SetSize(size uint32) {
+   (*r)[0] &= ^r.mask()
+   (*r)[0] |= size
 }
 
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = b.FullBoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.ReferenceId)
-   data = binary.BigEndian.AppendUint32(data, b.Timescale)
-   data = append(data, b.EarliestPresentationTime...)
-   data = append(data, b.FirstOffset...)
-   data = binary.BigEndian.AppendUint16(data, b.Reserved)
-   data = binary.BigEndian.AppendUint16(data, b.ReferenceCount)
-   for _, value := range b.Reference {
-      data, err = value.Append(data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return data, nil
+type Reference [3]uint32
+
+func (r Reference) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, r)
+}
+
+func (r *Reference) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, r)
+}
+
+func (*Reference) mask() uint32 {
+   return 0xFFFFFFFF >> 1
+}
+
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r Reference) Size() uint32 {
+   return r[0] & r.mask()
 }
 
 // ISO/IEC 14496-12
@@ -73,6 +61,42 @@ type Box struct {
    Reserved                 uint16
    ReferenceCount           uint16
    Reference                []Reference
+}
+
+func (b *Box) GetSize() int {
+   size := b.BoxHeader.GetSize()
+   size += binary.Size(b.FullBoxHeader)
+   size += binary.Size(b.ReferenceId)
+   size += binary.Size(b.Timescale)
+   size += binary.Size(b.EarliestPresentationTime)
+   size += binary.Size(b.FirstOffset)
+   size += binary.Size(b.Reserved)
+   size += binary.Size(b.ReferenceCount)
+   return size + binary.Size(b.Reference)
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = b.FullBoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.ReferenceId)
+   data = binary.BigEndian.AppendUint32(data, b.Timescale)
+   data = append(data, b.EarliestPresentationTime...)
+   data = append(data, b.FirstOffset...)
+   data = binary.BigEndian.AppendUint16(data, b.Reserved)
+   data = binary.BigEndian.AppendUint16(data, b.ReferenceCount)
+   for _, refer := range b.Reference {
+      data, err = refer.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return data, nil
 }
 
 func (b *Box) Read(data []byte) error {
@@ -111,37 +135,13 @@ func (b *Box) Read(data []byte) error {
    }
    data = data[n:]
    b.Reference = make([]Reference, b.ReferenceCount)
-   for i, value := range b.Reference {
-      n, err = value.Decode(data)
+   for i, refer := range b.Reference {
+      n, err = refer.Decode(data)
       if err != nil {
          return err
       }
       data = data[n:]
-      b.Reference[i] = value
+      b.Reference[i] = refer
    }
    return nil
-}
-
-func (r *Reference) SetSize(size uint32) {
-   (*r)[0] &= ^r.mask()
-   (*r)[0] |= size
-}
-
-type Reference [3]uint32
-
-func (r Reference) Append(data []byte) ([]byte, error) {
-   return binary.Append(data, binary.BigEndian, r)
-}
-
-func (r *Reference) Decode(data []byte) (int, error) {
-   return binary.Decode(data, binary.BigEndian, r)
-}
-
-func (*Reference) mask() uint32 {
-   return 0xFFFFFFFF >> 1
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) Size() uint32 {
-   return r[0] & r.mask()
 }

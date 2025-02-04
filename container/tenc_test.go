@@ -11,12 +11,12 @@ func TestTenc(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   var value File
-   err = value.Read(data)
+   var file0 File
+   err = file0.Read(data)
    if err != nil {
       t.Fatal(err)
    }
-   sinf, ok := value.Moov.Trak.Mdia.Minf.Stbl.Stsd.Sinf()
+   sinf, ok := file0.Moov.Trak.Mdia.Minf.Stbl.Stsd.Sinf()
    if !ok {
       t.Fatal("Sinf")
    }

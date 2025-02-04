@@ -135,19 +135,6 @@ func (b *BoxHeader) Append(data []byte) ([]byte, error) {
    return data, nil
 }
 
-func (b *BoxHeader) Decode(data []byte) (int, error) {
-   n, err := binary.Decode(data, binary.BigEndian, &b.Size)
-   if err != nil {
-      return 0, err
-   }
-   n += copy(b.Type[:], data[n:])
-   if b.Type.String() == "uuid" {
-      b.UserType = &Uuid{}
-      n += copy(b.UserType[:], data[n:])
-   }
-   return n, nil
-}
-
 type Decoder interface {
    Decode([]byte) (int, error)
 }
@@ -170,15 +157,6 @@ type Reader interface {
    Read([]byte) error
 }
 
-func (s *SampleEntry) Append(data []byte) ([]byte, error) {
-   data, err := s.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data = append(data, s.Reserved[:]...)
-   return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
-}
-
 type SizeGetter interface {
    GetSize() int
 }
@@ -188,3 +166,25 @@ func (t Type) String() string {
 }
 
 type Type [4]uint8
+
+func (b *BoxHeader) Decode(data []byte) (int, error) {
+   n, err := binary.Decode(data, binary.BigEndian, &b.Size)
+   if err != nil {
+      return 0, err
+   }
+   n += copy(b.Type[:], data[n:])
+   if b.Type.String() == "uuid" {
+      b.UserType = &Uuid{}
+      n += copy(b.UserType[:], data[n:])
+   }
+   return n, nil
+}
+
+func (s *SampleEntry) Append(data []byte) ([]byte, error) {
+   data, err := s.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data = append(data, s.Reserved[:]...)
+   return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
+}

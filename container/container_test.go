@@ -12,8 +12,8 @@ func TestFile(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   var video_eng File
-   err = video_eng.Read(data)
+   var file0 File
+   err = file0.Read(data)
    if err != nil {
       t.Fatal(err)
    }

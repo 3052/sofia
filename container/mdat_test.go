@@ -16,11 +16,11 @@ func TestMdat(t *testing.T) {
       if err != nil {
          t.Fatal(err)
       }
-      var value File
-      err = value.Read(data)
+      var file0 File
+      err = file0.Read(data)
       if err != nil {
          t.Fatal(err)
       }
-      value.Mdat.Data(&value.Moof.Traf)
+      file0.Mdat.Data(&file0.Moof.Traf)
    }
 }

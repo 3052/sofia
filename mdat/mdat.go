@@ -9,20 +9,17 @@ import (
 //   aligned(8) class MediaDataBox extends Box('mdat') {
 //      bit(8) data[];
 //   }
-type Box struct {
-   Box sofia.Box
-}
+type Box [1]sofia.Box
 
 // BE CAREFUL WITH THE RECEIVER
-func (b *Box) Data(track *traf.Box) [][]byte {
-   payload := b.Box.Payload
+func (b Box) Data(track *traf.Box) [][]byte {
    data := make([][]byte, track.Trun.SampleCount)
    for i, sample := range track.Trun.Sample {
       if sample.SampleSize == 0 {
          sample.SampleSize = track.Tfhd.DefaultSampleSize
       }
-      data[i] = payload[:sample.SampleSize]
-      payload = payload[sample.SampleSize:]
+      data[i] = b[0].Payload[:sample.SampleSize]
+      b[0].Payload = b[0].Payload[sample.SampleSize:]
    }
    return data
 }

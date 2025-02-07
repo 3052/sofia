@@ -8,7 +8,7 @@ import (
 )
 
 func TestSenc(t *testing.T) {
-   for _, test := range senc_tests[:2] {
+   for _, test := range senc_tests {
       data, err := test.encode_init()
       if err != nil {
          t.Fatal(err)

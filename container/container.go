@@ -89,7 +89,7 @@ func (f *File) Append(data []byte) ([]byte, error) {
       }
    }
    if f.Mdat != nil {
-      data, err = f.Mdat.Box.Append(data)
+      data, err = f.Mdat[0].Append(data)
       if err != nil {
          return nil, err
       }

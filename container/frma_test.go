@@ -11,11 +11,11 @@ func TestFrma(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   var file0 File
-   err = file0.Read(data)
+   var file1 File
+   err = file1.Read(data)
    if err != nil {
       t.Fatal(err)
    }
-   format := file0.Moov.Trak.Mdia.Minf.Stbl.Stsd.AudioSample.Sinf.Frma
+   format := file1.Moov.Trak.Mdia.Minf.Stbl.Stsd.AudioSample.Sinf.Frma
    fmt.Printf("%q\n", format.DataFormat)
 }

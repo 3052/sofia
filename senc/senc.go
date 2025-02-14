@@ -49,8 +49,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   for _, sample0 := range b.Sample {
-      data, err = sample0.Append(data)
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(data)
       if err != nil {
          return nil, err
       }
@@ -76,9 +76,9 @@ func (s *Sample) Append(data []byte) ([]byte, error) {
    data = append(data, s.InitializationVector[:]...)
    if s.box.senc_use_subsamples() {
       data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
-      for _, sample0 := range s.Subsample {
+      for _, sample1 := range s.Subsample {
          var err error
-         data, err = sample0.Append(data)
+         data, err = sample1.Append(data)
          if err != nil {
             return nil, err
          }
@@ -103,13 +103,13 @@ func (s *Sample) Decode(data []byte) (int, error) {
       }
       n += n1
       s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sample0 := range s.Subsample {
-         n1, err = sample0.Decode(data[n:])
+      for i, sample1 := range s.Subsample {
+         n1, err = sample1.Decode(data[n:])
          if err != nil {
-            return 0, err
+            return 1, err
          }
          n += n1
-         s.Subsample[i] = sample0
+         s.Subsample[i] = sample1
       }
    }
    return n, nil
@@ -129,14 +129,14 @@ func (b *Box) Read(data []byte) error {
    }
    data = data[n:]
    b.Sample = make([]Sample, b.SampleCount)
-   for i, sample0 := range b.Sample {
-      sample0.box = b
-      n, err = sample0.Decode(data)
+   for i, sample1 := range b.Sample {
+      sample1.box = b
+      n, err = sample1.Decode(data)
       if err != nil {
          return err
       }
       data = data[n:]
-      b.Sample[i] = sample0
+      b.Sample[i] = sample1
    }
    return nil
 }
@@ -152,12 +152,12 @@ func (s *Sample) DecryptCenc(data, key []byte) error {
    stream := cipher.NewCTR(block, iv[:])
    if len(s.Subsample) >= 1 {
       var i uint32
-      for _, sample0 := range s.Subsample {
-         clear := uint32(sample0.BytesOfClearData)
+      for _, sample1 := range s.Subsample {
+         clear := uint32(sample1.BytesOfClearData)
          if clear >= 1 {
             i += clear
          }
-         protected := sample0.BytesOfProtectedData
+         protected := sample1.BytesOfProtectedData
          if protected >= 1 {
             stream.XORKeyStream(data[i:i+protected], data[i:i+protected])
             i += protected

@@ -132,8 +132,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if b.first_sample_flags_present() {
       data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
    }
-   for _, sample0 := range b.Sample {
-      data, err = sample0.Append(data)
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(data)
       if err != nil {
          return nil, err
       }
@@ -165,14 +165,14 @@ func (b *Box) Read(data []byte) error {
       data = data[n:]
    }
    b.Sample = make([]Sample, b.SampleCount)
-   for i, sample0 := range b.Sample {
-      sample0.box = b
-      n, err = sample0.Decode(data)
+   for i, sample1 := range b.Sample {
+      sample1.box = b
+      n, err = sample1.Decode(data)
       if err != nil {
          return err
       }
       data = data[n:]
-      b.Sample[i] = sample0
+      b.Sample[i] = sample1
    }
    return nil
 }

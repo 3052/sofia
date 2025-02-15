@@ -29,11 +29,6 @@ type Box struct {
    Data          []uint8
 }
 
-// dashif.org/identifiers/content_protection
-func (b *Box) Widevine() bool {
-   return b.SystemId.String() == "edef8ba979d64acea3c827dcd51d21ed"
-}
-
 func (b *Box) Append(data []byte) ([]byte, error) {
    data, err := b.BoxHeader.Append(data)
    if err != nil {

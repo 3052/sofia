@@ -8,57 +8,6 @@ import (
    "log/slog"
 )
 
-func (b *Box) Read(data []byte) error {
-   for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
-      if err != nil {
-         return err
-      }
-      slog.Debug("box", "header", box1.BoxHeader)
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
-      case "senc":
-         b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
-         err := b.Senc.Read(box1.Payload)
-         if err != nil {
-            return err
-         }
-      case "uuid":
-         if b.piff(&box1.BoxHeader) {
-            b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
-            err := b.Senc.Read(box1.Payload)
-            if err != nil {
-               return err
-            }
-         } else {
-            b.Box = append(b.Box, &box1)
-         }
-      case "saio", // Roku
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt": // Roku
-         b.Box = append(b.Box, &box1)
-      case "tfhd":
-         b.Tfhd.BoxHeader = box1.BoxHeader
-         err := b.Tfhd.Read(box1.Payload)
-         if err != nil {
-            return err
-         }
-      case "trun":
-         b.Trun.BoxHeader = box1.BoxHeader
-         err := b.Trun.Read(box1.Payload)
-         if err != nil {
-            return err
-         }
-      default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 14496-12
 //   aligned(8) class TrackFragmentBox extends Box('traf') {
 //   }
@@ -94,8 +43,59 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    return b.Trun.Append(data)
 }
 
-func (b *Box) piff(head *sofia.BoxHeader) bool {
-   if head.UserType.String() == "a2394f525a9b4f14a2446c427c648df4" {
+func (b *Box) Read(data []byte) error {
+   for len(data) >= 1 {
+      var box1 sofia.Box
+      err := box1.Read(data)
+      if err != nil {
+         return err
+      }
+      slog.Debug("box", "header", box1.BoxHeader)
+      data = data[box1.BoxHeader.Size:]
+      switch box1.BoxHeader.Type.String() {
+      case "senc":
+         b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
+         err := b.Senc.Read(box1.Payload)
+         if err != nil {
+            return err
+         }
+      case "saio", // Roku
+         "saiz", // Roku
+         "sbgp", // Roku
+         "sgpd", // Roku
+         "tfdt": // Roku
+         b.Box = append(b.Box, &box1)
+      case "tfhd":
+         b.Tfhd.BoxHeader = box1.BoxHeader
+         err := b.Tfhd.Read(box1.Payload)
+         if err != nil {
+            return err
+         }
+      case "trun":
+         b.Trun.BoxHeader = box1.BoxHeader
+         err := b.Trun.Read(box1.Payload)
+         if err != nil {
+            return err
+         }
+      case "uuid":
+         if b.piff(&box1) {
+            b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
+            err := b.Senc.Read(box1.Payload)
+            if err != nil {
+               return err
+            }
+         } else {
+            b.Box = append(b.Box, &box1)
+         }
+      default:
+         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
+      }
+   }
+   return nil
+}
+
+func (b *Box) piff(box1 *sofia.Box) bool {
+   if box1.BoxHeader.UserType.String() == sofia.PiffExtendedType {
       if b.Senc == nil {
          return true
       }

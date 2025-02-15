@@ -6,64 +6,11 @@ import (
    "strconv"
 )
 
-func (s *SampleEntry) Decode(data []byte) (int, error) {
-   n := copy(s.Reserved[:], data)
-   n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
-   if err != nil {
-      return 0, err
-   }
-   return n + n1, nil
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
 }
 
-type BoxError struct {
-   Container BoxHeader
-   Box       BoxHeader
-}
-
-func (b *BoxError) Error() string {
-   data := []byte("container:")
-   data = strconv.AppendQuote(data, b.Container.Type.String())
-   data = append(data, " box type:"...)
-   data = strconv.AppendQuote(data, b.Box.Type.String())
-   return string(data)
-}
-
-// ISO/IEC 14496-12
-//
-//     aligned(8) class Box (
-//        unsigned int(32) boxtype,
-//        optional unsigned int(8)[16] extended_type
-//     ) {
-//        BoxHeader(boxtype, extended_type);
-//        // the remaining bytes are the BoxPayload
-//     }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
-}
-
-// ISO/IEC 14496-12
-//
-//     aligned(8) class BoxHeader (
-//        unsigned int(32) boxtype,
-//        optional unsigned int(8)[16] extended_type
-//     ) {
-//        unsigned int(32) size;
-//        unsigned int(32) type = boxtype;
-//        if (size==1) {
-//           unsigned int(64) largesize;
-//        } else if (size==0) {
-//           // box extends to end of file
-//        }
-//        if (boxtype=='uuid') {
-//           unsigned int(8)[16] usertype = extended_type;
-//        }
-//     }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType *Uuid
-}
+type Uuid [16]uint8
 
 // ISO/IEC 14496-12
 //
@@ -89,12 +36,6 @@ type SampleEntry struct {
    Reserved           [6]uint8
    DataReferenceIndex uint16
 }
-
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
 
 type Appender interface {
    Append([]byte) ([]byte, error)
@@ -188,3 +129,64 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
    data = append(data, s.Reserved[:]...)
    return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
 }
+
+func (s *SampleEntry) Decode(data []byte) (int, error) {
+   n := copy(s.Reserved[:], data)
+   n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
+   if err != nil {
+      return 0, err
+   }
+   return n + n1, nil
+}
+
+type BoxError struct {
+   Container BoxHeader
+   Box       BoxHeader
+}
+
+func (b *BoxError) Error() string {
+   data := []byte("container:")
+   data = strconv.AppendQuote(data, b.Container.Type.String())
+   data = append(data, " box type:"...)
+   data = strconv.AppendQuote(data, b.Box.Type.String())
+   return string(data)
+}
+
+// ISO/IEC 14496-12
+//
+//     aligned(8) class Box(
+//        unsigned int(32) boxtype,
+//        optional unsigned int(8)[16] extended_type
+//     ) {
+//        BoxHeader(boxtype, extended_type);
+//        // the remaining bytes are the BoxPayload
+//     }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+// ISO/IEC 14496-12
+//
+//     aligned(8) class BoxHeader(
+//        unsigned int(32) boxtype,
+//        optional unsigned int(8)[16] extended_type
+//     ) {
+//        unsigned int(32) size;
+//        unsigned int(32) type = boxtype;
+//        if (size==1) {
+//           unsigned int(64) largesize;
+//        } else if (size==0) {
+//           // box extends to end of file
+//        }
+//        if (boxtype=='uuid') {
+//           unsigned int(8)[16] usertype = extended_type;
+//        }
+//     }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType *Uuid
+}
+
+const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"

@@ -5,26 +5,6 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.S)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   if b.S.DefaultPerSampleIvSize == 0 {
-      if b.S.DefaultIsProtected == 1 {
-         b.DefaultConstantIvSize, data = data[0], data[1:]
-         b.DefaultConstantIv = data[:b.DefaultConstantIvSize]
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 23001-7
 //
 //   aligned(8) class TrackEncryptionBox extends FullBox('tenc', version, flags=0) {
@@ -55,6 +35,26 @@ type Box struct {
    }
    DefaultConstantIvSize uint8
    DefaultConstantIv     []uint8
+}
+
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.S)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   if b.S.DefaultPerSampleIvSize == 0 {
+      if b.S.DefaultIsProtected == 1 {
+         b.DefaultConstantIvSize, data = data[0], data[1:]
+         b.DefaultConstantIv = data[:b.DefaultConstantIvSize]
+      }
+   }
+   return nil
 }
 
 func (b *Box) Append(data []byte) ([]byte, error) {

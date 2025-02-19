@@ -120,7 +120,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = b.FullBoxHeader.Append(data)
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
    if err != nil {
       return nil, err
    }
@@ -142,7 +142,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(data []byte) error {
-   n, err := b.FullBoxHeader.Decode(data)
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
       return err
    }

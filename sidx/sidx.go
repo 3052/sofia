@@ -30,6 +30,7 @@ func (r Reference) Size() uint32 {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class SegmentIndexBox extends FullBox('sidx', version, 0) {
 //      unsigned int(32) reference_ID;
 //      unsigned int(32) timescale;
@@ -58,7 +59,7 @@ type Box struct {
    Timescale                uint32
    EarliestPresentationTime []byte
    FirstOffset              []byte
-   Reserved                 uint16
+   _                        uint16
    ReferenceCount           uint16
    Reference                []Reference
 }
@@ -70,7 +71,7 @@ func (b *Box) GetSize() int {
    size += binary.Size(b.Timescale)
    size += binary.Size(b.EarliestPresentationTime)
    size += binary.Size(b.FirstOffset)
-   size += binary.Size(b.Reserved)
+   size += 2 // reserved
    size += binary.Size(b.ReferenceCount)
    return size + binary.Size(b.Reference)
 }
@@ -80,7 +81,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = b.FullBoxHeader.Append(data)
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
    if err != nil {
       return nil, err
    }
@@ -88,7 +89,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    data = binary.BigEndian.AppendUint32(data, b.Timescale)
    data = append(data, b.EarliestPresentationTime...)
    data = append(data, b.FirstOffset...)
-   data = binary.BigEndian.AppendUint16(data, b.Reserved)
+   data = append(data, 0, 0) // reserved
    data = binary.BigEndian.AppendUint16(data, b.ReferenceCount)
    for _, refer := range b.Reference {
       data, err = refer.Append(data)
@@ -100,7 +101,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(data []byte) error {
-   n, err := b.FullBoxHeader.Decode(data)
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
       return err
    }
@@ -124,11 +125,7 @@ func (b *Box) Read(data []byte) error {
    data = data[n:]
    b.FirstOffset = data[:n]
    data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.Reserved)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
+   data = data[2:] // reserved
    n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceCount)
    if err != nil {
       return err

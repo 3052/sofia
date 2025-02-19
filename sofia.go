@@ -12,31 +12,6 @@ func (u Uuid) String() string {
 
 type Uuid [16]uint8
 
-// ISO/IEC 14496-12
-//
-//     aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//        unsigned int(8) version = v;
-//        bit(24) flags = f;
-//     }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
-// ISO/IEC 14496-12
-//
-//     aligned(8) abstract class SampleEntry(
-//        unsigned int(32) format
-//     ) extends Box(format) {
-//        const unsigned int(8)[6] reserved = 0;
-//        unsigned int(16) data_reference_index;
-//     }
-type SampleEntry struct {
-   BoxHeader          BoxHeader
-   Reserved           [6]uint8
-   DataReferenceIndex uint16
-}
-
 type Appender interface {
    Append([]byte) ([]byte, error)
 }
@@ -80,20 +55,6 @@ type Decoder interface {
    Decode([]byte) (int, error)
 }
 
-func (f *FullBoxHeader) GetFlags() uint32 {
-   var flag [4]byte
-   copy(flag[1:], f.Flags[:])
-   return binary.BigEndian.Uint32(flag[:])
-}
-
-func (f *FullBoxHeader) Append(data []byte) ([]byte, error) {
-   return binary.Append(data, binary.BigEndian, f)
-}
-
-func (f *FullBoxHeader) Decode(data []byte) (int, error) {
-   return binary.Decode(data, binary.BigEndian, f)
-}
-
 type Reader interface {
    Read([]byte) error
 }
@@ -121,24 +82,6 @@ func (b *BoxHeader) Decode(data []byte) (int, error) {
    return n, nil
 }
 
-func (s *SampleEntry) Append(data []byte) ([]byte, error) {
-   data, err := s.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data = append(data, s.Reserved[:]...)
-   return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
-}
-
-func (s *SampleEntry) Decode(data []byte) (int, error) {
-   n := copy(s.Reserved[:], data)
-   n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
-   if err != nil {
-      return 0, err
-   }
-   return n + n1, nil
-}
-
 type BoxError struct {
    Container BoxHeader
    Box       BoxHeader
@@ -154,13 +97,13 @@ func (b *BoxError) Error() string {
 
 // ISO/IEC 14496-12
 //
-//     aligned(8) class Box(
-//        unsigned int(32) boxtype,
-//        optional unsigned int(8)[16] extended_type
-//     ) {
-//        BoxHeader(boxtype, extended_type);
-//        // the remaining bytes are the BoxPayload
-//     }
+//   aligned(8) class Box(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
 type Box struct {
    BoxHeader BoxHeader
    Payload   []byte
@@ -168,21 +111,21 @@ type Box struct {
 
 // ISO/IEC 14496-12
 //
-//     aligned(8) class BoxHeader(
-//        unsigned int(32) boxtype,
-//        optional unsigned int(8)[16] extended_type
-//     ) {
-//        unsigned int(32) size;
-//        unsigned int(32) type = boxtype;
-//        if (size==1) {
-//           unsigned int(64) largesize;
-//        } else if (size==0) {
-//           // box extends to end of file
-//        }
-//        if (boxtype=='uuid') {
-//           unsigned int(8)[16] usertype = extended_type;
-//        }
-//     }
+//   aligned(8) class BoxHeader(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
 type BoxHeader struct {
    Size     uint32
    Type     Type
@@ -190,3 +133,53 @@ type BoxHeader struct {
 }
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
+
+func (f *FullBoxHeader) GetFlags() uint32 {
+   var flag [4]byte
+   copy(flag[1:], f.Flags[:])
+   return binary.BigEndian.Uint32(flag[:])
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
+
+func (s *SampleEntry) Decode(data []byte) (int, error) {
+   n := 6 // reserved
+   data = data[n:]
+   n1, err := binary.Decode(data, binary.BigEndian, &s.DataReferenceIndex)
+   if err != nil {
+      return 0, err
+   }
+   return n + n1, nil
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) abstract class SampleEntry(
+//      unsigned int(32) format
+//   ) extends Box(format) {
+//      const unsigned int(8)[6] reserved = 0;
+//      unsigned int(16) data_reference_index;
+//   }
+type SampleEntry struct {
+   BoxHeader          BoxHeader
+   _                  [6]uint8
+   DataReferenceIndex uint16
+}
+
+func (s *SampleEntry) Append(data []byte) ([]byte, error) {
+   data, err := s.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data = append(data, 0, 0, 0, 0, 0, 0) // reserved
+   return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
+}

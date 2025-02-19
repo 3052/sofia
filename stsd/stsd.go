@@ -9,6 +9,7 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
 //      int i ;
 //      unsigned int(32) entry_count;
@@ -20,13 +21,13 @@ type Box struct {
    BoxHeader     sofia.BoxHeader
    FullBoxHeader sofia.FullBoxHeader
    EntryCount    uint32
-   Box         []sofia.Box
+   Box           []sofia.Box
    AudioSample   *enca.SampleEntry
    VisualSample  *encv.SampleEntry
 }
 
 func (b *Box) Read(data []byte) error {
-   n, err := b.FullBoxHeader.Decode(data)
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
       return err
    }
@@ -74,7 +75,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   data, err = b.FullBoxHeader.Append(data)
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
    if err != nil {
       return nil, err
    }

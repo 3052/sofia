@@ -6,14 +6,40 @@ import (
    "strconv"
 )
 
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
+// ISO/IEC 14496-12
+//
+//   aligned(8) class BoxHeader(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      unsigned int(32) size;
+//      unsigned int(32) type = boxtype;
+//      if (size==1) {
+//         unsigned int(64) largesize;
+//      } else if (size==0) {
+//         // box extends to end of file
+//      }
+//      if (boxtype=='uuid') {
+//         unsigned int(8)[16] usertype = extended_type;
+//      }
+//   }
+type BoxHeader struct {
+   Size     uint32
+   Type     Type
+   UserType *Uuid
 }
 
-type Uuid [16]uint8
-
-type Appender interface {
-   Append([]byte) ([]byte, error)
+func (b *BoxHeader) Decode(data []byte) (int, error) {
+   n, err := binary.Decode(data, binary.BigEndian, &b.Size)
+   if err != nil {
+      return 0, err
+   }
+   n += copy(b.Type[:], data[n:])
+   if b.Type.String() == "uuid" {
+      b.UserType = &Uuid{}
+      n += copy(b.UserType[:], data[n:])
+   }
+   return n, nil
 }
 
 func (b *Box) Read(data []byte) error {
@@ -23,6 +49,16 @@ func (b *Box) Read(data []byte) error {
    }
    b.Payload = data[n:b.BoxHeader.Size]
    return nil
+}
+
+func (u Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
+type Appender interface {
+   Append([]byte) ([]byte, error)
 }
 
 func (b *Box) Append(data []byte) ([]byte, error) {
@@ -69,19 +105,6 @@ func (t Type) String() string {
 
 type Type [4]uint8
 
-func (b *BoxHeader) Decode(data []byte) (int, error) {
-   n, err := binary.Decode(data, binary.BigEndian, &b.Size)
-   if err != nil {
-      return 0, err
-   }
-   n += copy(b.Type[:], data[n:])
-   if b.Type.String() == "uuid" {
-      b.UserType = &Uuid{}
-      n += copy(b.UserType[:], data[n:])
-   }
-   return n, nil
-}
-
 type BoxError struct {
    Container BoxHeader
    Box       BoxHeader
@@ -107,29 +130,6 @@ func (b *BoxError) Error() string {
 type Box struct {
    BoxHeader BoxHeader
    Payload   []byte
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class BoxHeader(
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      unsigned int(32) size;
-//      unsigned int(32) type = boxtype;
-//      if (size==1) {
-//         unsigned int(64) largesize;
-//      } else if (size==0) {
-//         // box extends to end of file
-//      }
-//      if (boxtype=='uuid') {
-//         unsigned int(8)[16] usertype = extended_type;
-//      }
-//   }
-type BoxHeader struct {
-   Size     uint32
-   Type     Type
-   UserType *Uuid
 }
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"

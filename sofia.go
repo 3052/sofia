@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class BoxHeader(
@@ -40,15 +49,6 @@ func (b *BoxHeader) Decode(data []byte) (int, error) {
       n += copy(b.UserType[:], data[n:])
    }
    return n, nil
-}
-
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
 }
 
 func (u Uuid) String() string {

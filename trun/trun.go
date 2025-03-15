@@ -3,13 +3,10 @@ package trun
 import (
    "41.neocities.org/sofia"
    "encoding/binary"
-   "time"
 )
 
-func (s *Sample) Duration() time.Duration {
-   return time.Duration(s.SampleDuration) * time.Millisecond
-}
-
+// bandwidth
+// 1000 * sample_size / sample_duration
 type Sample struct {
    SampleDuration              uint32
    SampleSize                  uint32

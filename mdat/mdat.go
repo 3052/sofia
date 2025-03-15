@@ -15,11 +15,11 @@ type Box [1]sofia.Box
 func (b Box) Data(track *traf.Box) [][]byte {
    data := make([][]byte, track.Trun.SampleCount)
    for i, sample := range track.Trun.Sample {
-      if sample.SampleSize == 0 {
-         sample.SampleSize = track.Tfhd.DefaultSampleSize
+      if sample.Size == 0 {
+         sample.Size = track.Tfhd.DefaultSampleSize
       }
-      data[i] = b[0].Payload[:sample.SampleSize]
-      b[0].Payload = b[0].Payload[sample.SampleSize:]
+      data[i] = b[0].Payload[:sample.Size]
+      b[0].Payload = b[0].Payload[sample.Size:]
    }
    return data
 }

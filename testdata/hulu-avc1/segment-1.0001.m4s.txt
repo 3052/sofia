@@ -10,6 +10,17 @@
      - baseMediaDecodeTime: 0
     [trun] size=1464 version=0 flags=000b05
      - sampleCount: 120
+     - DataOffset: 3649
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=417083 size=79 compositionTimeOffset=834167
+     - sample[2]: dur=417084 size=20 compositionTimeOffset=2502500
+     - sample[3]: dur=417083 size=16 compositionTimeOffset=834166
+     - sample[4]: dur=417083 size=16 compositionTimeOffset=0
+     - sample[5]: dur=417084 size=16 compositionTimeOffset=417084
+     - sample[6]: dur=417083 size=16 compositionTimeOffset=417083
+     - sample[7]: dur=417083 size=25 compositionTimeOffset=2502500
+     - sample[8]: dur=417084 size=17 compositionTimeOffset=834167
+     - sample[9]: dur=417083 size=16 compositionTimeOffset=0
     [uuid] size=1952
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: senc

@@ -2,8 +2,46 @@ package trun
 
 import (
    "41.neocities.org/sofia"
+   "41.neocities.org/sofia/mdhd"
    "encoding/binary"
 )
+
+func (s *Sample) Seconds(media *mdhd.Box) float64 {
+   return float64(s.SampleDuration) / float64(media.Timescale)
+}
+
+type Sample struct {
+   SampleDuration              uint32
+   SampleSize                  uint32
+   SampleFlags                 uint32
+   SampleCompositionTimeOffset [4]byte
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
+   data, err = binary.Append(data, binary.BigEndian, b.DataOffset)
+   if err != nil {
+      return nil, err
+   }
+   if b.first_sample_flags_present() {
+      data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
+   }
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(b, data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return data, nil
+}
 
 func (b *Box) Read(data []byte) error {
    n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
@@ -72,42 +110,9 @@ type Box struct {
    Sample           []Sample
 }
 
-type Sample struct {
-   SampleDuration              uint32
-   SampleSize                  uint32
-   SampleFlags                 uint32
-   SampleCompositionTimeOffset [4]byte
-}
-
 // 0x000800 sample-composition-time-offsets-present
 func (b *Box) sample_composition_time_offsets_present() bool {
    return b.FullBoxHeader.GetFlags()&0x800 >= 1
-}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   data, err = binary.Append(data, binary.BigEndian, b.DataOffset)
-   if err != nil {
-      return nil, err
-   }
-   if b.first_sample_flags_present() {
-      data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
-   }
-   for _, sample1 := range b.Sample {
-      data, err = sample1.Append(b, data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return data, nil
 }
 
 // 0x000004 first-sample-flags-present

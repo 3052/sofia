@@ -7,6 +7,35 @@ import (
    "encoding/binary"
 )
 
+// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
+func (s *Sample) Decrypt(data, key []byte) error {
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      return err
+   }
+   var iv [16]byte
+   copy(iv[:], s.InitializationVector[:])
+   stream := cipher.NewCTR(block, iv[:])
+   if len(s.Subsample) >= 1 {
+      var i uint32
+      for _, sample1 := range s.Subsample {
+         clear := uint32(sample1.BytesOfClearData)
+         if clear >= 1 {
+            i += clear
+         }
+         protected := sample1.BytesOfProtectedData
+         if protected >= 1 {
+            stream.XORKeyStream(data[i:i+protected], data[i:i+protected])
+            i += protected
+         }
+      }
+   } else {
+      stream.XORKeyStream(data, data)
+   }
+   return nil
+}
+
+
 func (s *Subsample) Decode(data []byte) (int, error) {
    return binary.Decode(data, binary.BigEndian, s)
 }
@@ -134,34 +163,6 @@ func (b *Box) Read(data []byte) error {
       }
       data = data[n:]
       b.Sample[i] = sample1
-   }
-   return nil
-}
-
-// github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func (s *Sample) DecryptCenc(data, key []byte) error {
-   block, err := aes.NewCipher(key)
-   if err != nil {
-      return err
-   }
-   var iv [16]byte
-   copy(iv[:], s.InitializationVector[:])
-   stream := cipher.NewCTR(block, iv[:])
-   if len(s.Subsample) >= 1 {
-      var i uint32
-      for _, sample1 := range s.Subsample {
-         clear := uint32(sample1.BytesOfClearData)
-         if clear >= 1 {
-            i += clear
-         }
-         protected := sample1.BytesOfProtectedData
-         if protected >= 1 {
-            stream.XORKeyStream(data[i:i+protected], data[i:i+protected])
-            i += protected
-         }
-      }
-   } else {
-      stream.XORKeyStream(data, data)
    }
    return nil
 }

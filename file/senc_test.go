@@ -155,7 +155,7 @@ func (s senc_test) encode_segment(data []byte) ([]byte, error) {
          return nil, err
       }
       for i, data := range file1.Mdat.Data(&track) {
-         err := senc.Sample[i].DecryptCenc(data, key)
+         err := senc.Sample[i].Decrypt(data, key)
          if err != nil {
             return nil, err
          }

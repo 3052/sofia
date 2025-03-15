@@ -5,8 +5,73 @@ import (
    "encoding/binary"
 )
 
-// bandwidth
-// 1000 * sample_size / sample_duration
+func (b *Box) Read(data []byte) error {
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.DataOffset)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   if b.first_sample_flags_present() {
+      n, err = binary.Decode(data, binary.BigEndian, &b.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+      data = data[n:]
+   }
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, sample1 := range b.Sample {
+      n, err = sample1.Decode(b, data)
+      if err != nil {
+         return err
+      }
+      data = data[n:]
+      b.Sample[i] = sample1
+   }
+   return nil
+}
+
+// ISO/IEC 14496-12
+//
+// If the data-offset is present, it is relative to the base-data-offset
+// established in the track fragment header.
+//
+// sample-size-present: each sample has its own size, otherwise the default is
+// used.
+//
+//   aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
+//      unsigned int(32) sample_count;
+//      signed int(32) data_offset; // 0x000001, assume present
+//      unsigned int(32) first_sample_flags; // 0x000004
+//      {
+//         unsigned int(32) sample_duration; // 0x000100
+//         unsigned int(32) sample_size; // 0x000200
+//         unsigned int(32) sample_flags // 0x000400
+//         if (version == 0) {
+//            unsigned int(32) sample_composition_time_offset; // 0x000800
+//         } else {
+//            signed int(32) sample_composition_time_offset; // 0x000800
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader        sofia.BoxHeader
+   FullBoxHeader    sofia.FullBoxHeader
+   SampleCount      uint32
+   DataOffset       int32
+   FirstSampleFlags uint32
+   Sample           []Sample
+}
+
 type Sample struct {
    SampleDuration              uint32
    SampleSize                  uint32
@@ -65,38 +130,6 @@ func (b *Box) sample_flags_present() bool {
    return b.FullBoxHeader.GetFlags()&0x400 >= 1
 }
 
-// ISO/IEC 14496-12
-//
-// If the data-offset is present, it is relative to the base-data-offset
-// established in the track fragment header.
-//
-// sample-size-present: each sample has its own size, otherwise the default is
-// used.
-//
-//   aligned(8) class TrackRunBox extends FullBox('trun', version, tr_flags) {
-//      unsigned int(32) sample_count;
-//      signed int(32) data_offset; // 0x000001, assume present
-//      unsigned int(32) first_sample_flags; // 0x000004
-//      {
-//         unsigned int(32) sample_duration; // 0x000100
-//         unsigned int(32) sample_size; // 0x000200
-//         unsigned int(32) sample_flags // 0x000400
-//         if (version == 0) {
-//            unsigned int(32) sample_composition_time_offset; // 0x000800
-//         } else {
-//            signed int(32) sample_composition_time_offset; // 0x000800
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader        sofia.BoxHeader
-   FullBoxHeader    sofia.FullBoxHeader
-   SampleCount      uint32
-   DataOffset       int32
-   FirstSampleFlags uint32
-   Sample           []Sample
-}
-
 func (s *Sample) Decode(box1 *Box, data []byte) (int, error) {
    var n int
    if box1.sample_duration_present() {
@@ -140,39 +173,4 @@ func (s *Sample) Append(box1 *Box, data []byte) ([]byte, error) {
       data = append(data, s.SampleCompositionTimeOffset[:]...)
    }
    return data, nil
-}
-
-func (b *Box) Read(data []byte) error {
-   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.DataOffset)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   if b.first_sample_flags_present() {
-      n, err = binary.Decode(data, binary.BigEndian, &b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, sample1 := range b.Sample {
-      n, err = sample1.Decode(b, data)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-      b.Sample[i] = sample1
-   }
-   return nil
 }

@@ -6,15 +6,6 @@ import (
    "strconv"
 )
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
-}
-
 // ISO/IEC 14496-12
 //
 //   aligned(8) class BoxHeader(
@@ -36,6 +27,26 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType *Uuid
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
+
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
 }
 
 func (b *BoxHeader) Decode(data []byte) (int, error) {
@@ -138,17 +149,6 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    var flag [4]byte
    copy(flag[1:], f.Flags[:])
    return binary.BigEndian.Uint32(flag[:])
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
 }
 
 func (s *SampleEntry) Decode(data []byte) (int, error) {

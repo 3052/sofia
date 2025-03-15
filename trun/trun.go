@@ -2,8 +2,47 @@ package trun
 
 import (
    "41.neocities.org/sofia"
+   "41.neocities.org/sofia/mdhd"
    "encoding/binary"
 )
+
+// wikipedia.org/wiki/Data-rate_units
+func (s *Sample) Bandwidth(media *mdhd.Box) uint64 {
+   return uint64(media.Timescale) * uint64(s.Size) * 8 / uint64(s.Duration)
+}
+
+type Sample struct {
+   Duration              uint32
+   Size                  uint32
+   Flags                 uint32
+   CompositionTimeOffset [4]byte
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
+   data, err = binary.Append(data, binary.BigEndian, b.DataOffset)
+   if err != nil {
+      return nil, err
+   }
+   if b.first_sample_flags_present() {
+      data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
+   }
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(b, data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   return data, nil
+}
 
 func (b *Box) Read(data []byte) error {
    n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
@@ -72,42 +111,9 @@ type Box struct {
    Sample           []Sample
 }
 
-type Sample struct {
-   SampleDuration              uint32
-   SampleSize                  uint32
-   SampleFlags                 uint32
-   SampleCompositionTimeOffset [4]byte
-}
-
 // 0x000800 sample-composition-time-offsets-present
 func (b *Box) sample_composition_time_offsets_present() bool {
    return b.FullBoxHeader.GetFlags()&0x800 >= 1
-}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   data, err = binary.Append(data, binary.BigEndian, b.DataOffset)
-   if err != nil {
-      return nil, err
-   }
-   if b.first_sample_flags_present() {
-      data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
-   }
-   for _, sample1 := range b.Sample {
-      data, err = sample1.Append(b, data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   return data, nil
 }
 
 // 0x000004 first-sample-flags-present
@@ -133,44 +139,44 @@ func (b *Box) sample_flags_present() bool {
 func (s *Sample) Decode(box1 *Box, data []byte) (int, error) {
    var n int
    if box1.sample_duration_present() {
-      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SampleDuration)
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Duration)
       if err != nil {
          return 0, err
       }
       n += n1
    }
    if box1.sample_size_present() {
-      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SampleSize)
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Size)
       if err != nil {
          return 0, err
       }
       n += n1
    }
    if box1.sample_flags_present() {
-      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SampleFlags)
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Flags)
       if err != nil {
          return 0, err
       }
       n += n1
    }
    if box1.sample_composition_time_offsets_present() {
-      n += copy(s.SampleCompositionTimeOffset[:], data[n:])
+      n += copy(s.CompositionTimeOffset[:], data[n:])
    }
    return n, nil
 }
 
 func (s *Sample) Append(box1 *Box, data []byte) ([]byte, error) {
    if box1.sample_duration_present() {
-      data = binary.BigEndian.AppendUint32(data, s.SampleDuration)
+      data = binary.BigEndian.AppendUint32(data, s.Duration)
    }
    if box1.sample_size_present() {
-      data = binary.BigEndian.AppendUint32(data, s.SampleSize)
+      data = binary.BigEndian.AppendUint32(data, s.Size)
    }
    if box1.sample_flags_present() {
-      data = binary.BigEndian.AppendUint32(data, s.SampleFlags)
+      data = binary.BigEndian.AppendUint32(data, s.Flags)
    }
    if box1.sample_composition_time_offsets_present() {
-      data = append(data, s.SampleCompositionTimeOffset[:]...)
+      data = append(data, s.CompositionTimeOffset[:]...)
    }
    return data, nil
 }

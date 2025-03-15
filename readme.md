@@ -24,26 +24,3 @@ library for reading and writing MP4
 7. https://github.com/garden4hu/fmp4parser-go/issues/4
 8. https://github.com/eswarantg/mp4box/issues/3
 9. https://github.com/miquels/mp4/issues/2
-
-## progress
-
-- [x] enca, provides sinf
-- [x] encv, provides sinf
-- [x] frma, provides original format
-- [x] mdat, provides media data
-- [x] mdia, provides minf
-- [x] minf, provides stbl
-- [x] moof, provides traf
-- [x] moov, provides trak
-- [x] pssh, provides pssh data
-- [x] schi, provides tenc
-- [x] senc, provides initialization vector
-- [x] sidx, provides segment indexes
-- [x] sinf, provides frma
-- [x] stbl, provides stsd
-- [x] stsd, provides enca encv
-- [x] tenc, provides default key ID
-- [x] tfhd, provides default sample size
-- [x] traf, provides senc
-- [x] trak, provides mdia
-- [x] trun, provides sample sizes

@@ -1,0 +1,79 @@
+[ftyp] size=36
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: cmfc
+[moov] size=622
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 48000
+   - duration: 0
+   - creation time: 2024-11-09T22:12:17Z
+   - modification time: 2024-11-09T22:12:17Z
+  [trak] size=466
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2024-11-09T22:12:17Z
+     - modification time: 2024-11-09T22:12:17Z
+    [mdia] size=366
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 48000
+       - creation time: 2024-11-09T22:12:17Z
+       - modification time: 2024-11-09T22:12:17Z
+       - language: eng
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: soun
+       - handlerName: "SoundHandler"
+      [minf] size=281
+        [smhd] size=16 version=0 flags=000000
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=221
+          [stsd] size=145 version=0 flags=000000
+            [enca] size=129
+              [dec3] size=13
+               - bitrate=256kbps
+               - sampleRateCode=0 => sampleRate=48000
+               - nrChannels=6, chanmap=f801
+               - nrSubstreams=1
+                 - 1 fscod=0 bsid=16 asvc=0 bsmod=0 acmod=7 lfeon=1 num_dep_sub=0 chan_loc=0
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: ec-3
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 010049f1-5029-41c1-b9a8-26ee66f8a78e
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+  [mvex] size=40
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 1536
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+[sidx] size=19328 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 48000
+ - earliestPresentationTime: 0
+ - firstOffset: 0
+ - reference[1]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[2]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[3]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[4]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[5]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[6]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[7]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[8]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
+ - reference[9]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0

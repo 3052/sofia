@@ -11,6 +11,9 @@ func (s *Sample) Bandwidth(track *tfhd.Box, media *mdhd.Box) uint64 {
    if s.Duration == 0 {
       s.Duration = track.DefaultSampleDuration
    }
+   if s.Size == 0 {
+      s.Size = track.DefaultSampleSize
+   }
    return uint64(media.Timescale) * uint64(s.Size) * 8 / uint64(s.Duration)
 }
 

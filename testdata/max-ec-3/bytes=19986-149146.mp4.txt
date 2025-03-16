@@ -1,0 +1,45 @@
+[moof] size=1153
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=1129
+    [tfhd] size=32 version=0 flags=02003a
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 1
+     - defaultSampleDuration: 1536
+     - defaultSampleSize: 1024
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=20 version=0 flags=000001
+     - sampleCount: 125
+     - DataOffset: 1161
+     - sample[1]:
+     - sample[2]:
+     - sample[3]:
+     - sample[4]:
+     - sample[5]:
+     - sample[6]:
+     - sample[7]:
+     - sample[8]:
+     - sample[9]:
+     - sample[10]:
+    [saiz] size=17 version=0 flags=000000
+     - defaultSampleInfoSize: 8
+     - sampleCount: 125
+    [saio] size=20 version=0 flags=000000
+     - sampleCount: 1
+     - offset[1]=153
+    [senc] size=1016 version=0 flags=000000
+     - sampleCount: 125
+     - perSampleIVSize: 8
+     - sample[1]: iv=972f7de626d22a9f
+     - sample[2]: iv=972f7de626d22aa0
+     - sample[3]: iv=972f7de626d22aa1
+     - sample[4]: iv=972f7de626d22aa2
+     - sample[5]: iv=972f7de626d22aa3
+     - sample[6]: iv=972f7de626d22aa4
+     - sample[7]: iv=972f7de626d22aa5
+     - sample[8]: iv=972f7de626d22aa6
+     - sample[9]: iv=972f7de626d22aa7
+[mdat] size=128008

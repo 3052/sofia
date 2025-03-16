@@ -3,11 +3,14 @@ package trun
 import (
    "41.neocities.org/sofia"
    "41.neocities.org/sofia/mdhd"
+   "41.neocities.org/sofia/tfhd"
    "encoding/binary"
 )
 
-// wikipedia.org/wiki/Data-rate_units
-func (s *Sample) Bandwidth(media *mdhd.Box) uint64 {
+func (s *Sample) Bandwidth(track *tfhd.Box, media *mdhd.Box) uint64 {
+   if s.Duration == 0 {
+      s.Duration = track.DefaultSampleDuration
+   }
    return uint64(media.Timescale) * uint64(s.Size) * 8 / uint64(s.Duration)
 }
 

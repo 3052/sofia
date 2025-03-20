@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class BoxHeader(
@@ -40,14 +49,7 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
-}
+///
 
 func (b *BoxHeader) Decode(data []byte) (int, error) {
    n, err := binary.Decode(data, binary.BigEndian, &b.Size)

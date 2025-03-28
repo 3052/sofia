@@ -62,17 +62,13 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-///
-
 func (u Uuid) String() string {
    return hex.EncodeToString(u[:])
 }
 
 type Uuid [16]uint8
 
-type Appender interface {
-   Append([]byte) ([]byte, error)
-}
+///
 
 func (b *Box) Append(data []byte) ([]byte, error) {
    data, err := b.BoxHeader.Append(data)

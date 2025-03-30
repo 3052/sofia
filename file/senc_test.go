@@ -112,7 +112,7 @@ type senc_test struct {
    dst     string
 }
 
-func (s senc_test) encode_init() ([]byte, error) {
+func (s *senc_test) encode_init() ([]byte, error) {
    data, err := os.ReadFile(s.init)
    if err != nil {
       return nil, err
@@ -137,7 +137,7 @@ func (s senc_test) encode_init() ([]byte, error) {
    return file1.Append(nil)
 }
 
-func (s senc_test) encode_segment(data []byte) ([]byte, error) {
+func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
    fmt.Println(s.segment)
    segment, err := os.ReadFile(s.segment)
    if err != nil {

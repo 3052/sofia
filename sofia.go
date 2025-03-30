@@ -6,13 +6,13 @@ import (
    "strconv"
 )
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
+func (b *BoxHeader) Append(data []byte) ([]byte, error) {
+   data = binary.BigEndian.AppendUint32(data, b.Size)
+   data = append(data, b.Type[:]...)
+   if b.UserType != nil {
+      data = append(data, b.UserType[:]...)
    }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
+   return data, nil
 }
 
 // ISO/IEC 14496-12
@@ -36,6 +36,15 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType *Uuid
+}
+
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
 }
 
 func (b *BoxHeader) Decode(data []byte) (int, error) {
@@ -62,14 +71,6 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-func (u Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
-
-///
-
 func (b *Box) Append(data []byte) ([]byte, error) {
    data, err := b.BoxHeader.Append(data)
    if err != nil {
@@ -86,33 +87,6 @@ func (b *BoxHeader) GetSize() int {
    }
    return size
 }
-
-func (b *BoxHeader) Append(data []byte) ([]byte, error) {
-   data = binary.BigEndian.AppendUint32(data, b.Size)
-   data = append(data, b.Type[:]...)
-   if b.UserType != nil {
-      data = append(data, (*b.UserType)[:]...)
-   }
-   return data, nil
-}
-
-type Decoder interface {
-   Decode([]byte) (int, error)
-}
-
-type Reader interface {
-   Read([]byte) error
-}
-
-type SizeGetter interface {
-   GetSize() int
-}
-
-func (t Type) String() string {
-   return string(t[:])
-}
-
-type Type [4]uint8
 
 type BoxError struct {
    Container BoxHeader
@@ -180,4 +154,16 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
    }
    data = append(data, 0, 0, 0, 0, 0, 0) // reserved
    return binary.BigEndian.AppendUint16(data, s.DataReferenceIndex), nil
+}
+
+type Uuid [16]uint8
+
+type Type [4]uint8
+
+func (t Type) String() string {
+   return string(t[:])
+}
+
+func (u *Uuid) String() string {
+   return hex.EncodeToString(u[:])
 }

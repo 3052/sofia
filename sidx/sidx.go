@@ -6,13 +6,13 @@ import (
 )
 
 func (r *Reference) SetSize(size uint32) {
-   (*r)[0] &= ^r.mask()
-   (*r)[0] |= size
+   r[0] &= ^r.mask()
+   r[0] |= size
 }
 
 type Reference [3]uint32
 
-func (r Reference) Append(data []byte) ([]byte, error) {
+func (r *Reference) Append(data []byte) ([]byte, error) {
    return binary.Append(data, binary.BigEndian, r)
 }
 
@@ -25,7 +25,7 @@ func (*Reference) mask() uint32 {
 }
 
 // this is the size of the fragment, typically `moof` + `mdat`
-func (r Reference) Size() uint32 {
+func (r *Reference) Size() uint32 {
    return r[0] & r.mask()
 }
 

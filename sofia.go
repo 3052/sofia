@@ -6,6 +6,15 @@ import (
    "strconv"
 )
 
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
+}
+
 func (b *BoxHeader) Append(data []byte) ([]byte, error) {
    data = binary.BigEndian.AppendUint32(data, b.Size)
    data = append(data, b.Type[:]...)
@@ -38,14 +47,7 @@ type BoxHeader struct {
    UserType *Uuid
 }
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
-}
+///
 
 func (b *BoxHeader) Decode(data []byte) (int, error) {
    n, err := binary.Decode(data, binary.BigEndian, &b.Size)

@@ -47,8 +47,6 @@ type BoxHeader struct {
    UserType *Uuid
 }
 
-///
-
 func (b *BoxHeader) Decode(data []byte) (int, error) {
    n, err := binary.Decode(data, binary.BigEndian, &b.Size)
    if err != nil {
@@ -61,6 +59,8 @@ func (b *BoxHeader) Decode(data []byte) (int, error) {
    }
    return n, nil
 }
+
+///
 
 // ISO/IEC 14496-12
 //

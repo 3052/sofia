@@ -6,6 +6,14 @@ import (
    "strconv"
 )
 
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   return append(data, b.Payload...), nil
+}
+
 func (b *Box) Read(data []byte) error {
    n, err := b.BoxHeader.Decode(data)
    if err != nil {
@@ -60,8 +68,6 @@ func (b *BoxHeader) Decode(data []byte) (int, error) {
    return n, nil
 }
 
-///
-
 // ISO/IEC 14496-12
 //
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
@@ -73,13 +79,7 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   return append(data, b.Payload...), nil
-}
+///
 
 func (b *BoxHeader) GetSize() int {
    size := binary.Size(b.Size)

@@ -23,6 +23,15 @@ func (b *Box) Read(data []byte) error {
    return nil
 }
 
+func (b *BoxHeader) GetSize() int {
+   size := binary.Size(b.Size)
+   size += binary.Size(b.Type)
+   if b.UserType != nil {
+      size += binary.Size(b.UserType)
+   }
+   return size
+}
+
 func (b *BoxHeader) Append(data []byte) ([]byte, error) {
    data = binary.BigEndian.AppendUint32(data, b.Size)
    data = append(data, b.Type[:]...)
@@ -80,15 +89,6 @@ type FullBoxHeader struct {
 }
 
 ///
-
-func (b *BoxHeader) GetSize() int {
-   size := binary.Size(b.Size)
-   size += binary.Size(b.Type)
-   if b.UserType != nil {
-      size += binary.Size(b.UserType)
-   }
-   return size
-}
 
 type BoxError struct {
    Container BoxHeader

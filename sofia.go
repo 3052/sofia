@@ -23,6 +23,19 @@ func (b *Box) Read(data []byte) error {
    return nil
 }
 
+type BoxError struct {
+   Container BoxHeader
+   Box       BoxHeader
+}
+
+func (b *BoxError) Error() string {
+   data := []byte("container:")
+   data = strconv.AppendQuote(data, b.Container.Type.String())
+   data = append(data, " box type:"...)
+   data = strconv.AppendQuote(data, b.Box.Type.String())
+   return string(data)
+}
+
 func (b *BoxHeader) GetSize() int {
    size := binary.Size(b.Size)
    size += binary.Size(b.Type)
@@ -89,19 +102,6 @@ type FullBoxHeader struct {
 }
 
 ///
-
-type BoxError struct {
-   Container BoxHeader
-   Box       BoxHeader
-}
-
-func (b *BoxError) Error() string {
-   data := []byte("container:")
-   data = strconv.AppendQuote(data, b.Container.Type.String())
-   data = append(data, " box type:"...)
-   data = strconv.AppendQuote(data, b.Box.Type.String())
-   return string(data)
-}
 
 // ISO/IEC 14496-12
 //

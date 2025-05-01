@@ -101,8 +101,6 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-///
-
 // ISO/IEC 14496-12
 //
 //   aligned(8) class Box(

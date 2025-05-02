@@ -6,6 +6,20 @@ import (
    "strconv"
 )
 
+// ISO/IEC 14496-12
+//
+//   aligned(8) class Box(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
 func (b *Box) Append(data []byte) ([]byte, error) {
    data, err := b.BoxHeader.Append(data)
    if err != nil {
@@ -101,19 +115,7 @@ type FullBoxHeader struct {
    Flags   [3]byte
 }
 
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box(
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
-}
+///
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 

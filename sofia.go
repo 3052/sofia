@@ -6,6 +6,8 @@ import (
    "strconv"
 )
 
+const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class Box(
@@ -116,8 +118,6 @@ type FullBoxHeader struct {
 }
 
 ///
-
-const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 
 func (f *FullBoxHeader) GetFlags() uint32 {
    var flag [4]byte

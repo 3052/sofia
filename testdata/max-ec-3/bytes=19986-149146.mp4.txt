@@ -23,7 +23,6 @@
      - sample[7]:
      - sample[8]:
      - sample[9]:
-     - sample[10]:
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 8
      - sampleCount: 125

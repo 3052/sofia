@@ -10,6 +10,7 @@
  - timeScale: 600
  - earliestPresentationTime: 0
  - firstOffset: 0
+ - reference[1]: type=0 size=67611 subSegmentDuration=1200 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
 [moof] size=1309
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
@@ -24,6 +25,17 @@
      - baseMediaDecodeTime: 0
     [trun] size=408 version=1 flags=000a05
      - sampleCount: 48
+     - DataOffset: 1317
+     - firstSampleFlags: 02400040 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=64)
+     - sample[1]: size=855 compositionTimeOffset=0
+     - sample[2]: size=4753 compositionTimeOffset=0
+     - sample[3]: size=2682 compositionTimeOffset=75
+     - sample[4]: size=1414 compositionTimeOffset=0
+     - sample[5]: size=739 compositionTimeOffset=-50
+     - sample[6]: size=734 compositionTimeOffset=-25
+     - sample[7]: size=2213 compositionTimeOffset=75
+     - sample[8]: size=1283 compositionTimeOffset=0
+     - sample[9]: size=716 compositionTimeOffset=-50
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 48
@@ -33,4 +45,22 @@
     [senc] size=784 version=0 flags=000002
      - sampleCount: 48
      - perSampleIVSize: 8
+     - sample[1]: iv=0c0d63984e0c8f76
+       - subSample[1]: nrBytesClear=793 nrBytesProtected=62
+     - sample[2]: iv=0c0d63984e0c8f77
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=4732
+     - sample[3]: iv=0c0d63984e0c8f78
+       - subSample[1]: nrBytesClear=25 nrBytesProtected=2657
+     - sample[4]: iv=0c0d63984e0c8f79
+       - subSample[1]: nrBytesClear=22 nrBytesProtected=1392
+     - sample[5]: iv=0c0d63984e0c8f7a
+       - subSample[1]: nrBytesClear=22 nrBytesProtected=717
+     - sample[6]: iv=0c0d63984e0c8f7b
+       - subSample[1]: nrBytesClear=22 nrBytesProtected=712
+     - sample[7]: iv=0c0d63984e0c8f7c
+       - subSample[1]: nrBytesClear=27 nrBytesProtected=2186
+     - sample[8]: iv=0c0d63984e0c8f7d
+       - subSample[1]: nrBytesClear=23 nrBytesProtected=1260
+     - sample[9]: iv=0c0d63984e0c8f7e
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=695
 [mdat] size=66302

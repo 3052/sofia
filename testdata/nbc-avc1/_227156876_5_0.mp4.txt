@@ -17,13 +17,51 @@
      - baseMediaDecodeTime: 0
     [trun] size=744 version=1 flags=000b05
      - sampleCount: 60
+     - DataOffset: 1897
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=1001 size=2968 compositionTimeOffset=0
+     - sample[2]: dur=1001 size=1368 compositionTimeOffset=2002
+     - sample[3]: dur=1001 size=499 compositionTimeOffset=-1001
+     - sample[4]: dur=1001 size=508 compositionTimeOffset=-1001
+     - sample[5]: dur=1001 size=1506 compositionTimeOffset=2002
+     - sample[6]: dur=1001 size=603 compositionTimeOffset=-1001
+     - sample[7]: dur=1001 size=604 compositionTimeOffset=-1001
+     - sample[8]: dur=1001 size=1472 compositionTimeOffset=2002
+     - sample[9]: dur=1001 size=603 compositionTimeOffset=-1001
     [saiz] size=77 version=0 flags=000000
      - defaultSampleInfoSize: 0
      - sampleCount: 60
+     - sampleInfo[1]=16
+     - sampleInfo[2]=16
+     - sampleInfo[3]=16
+     - sampleInfo[4]=16
+     - sampleInfo[5]=16
+     - sampleInfo[6]=16
+     - sampleInfo[7]=16
+     - sampleInfo[8]=16
+     - sampleInfo[9]=16
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=929
     [senc] size=976 version=0 flags=000002
      - sampleCount: 60
      - perSampleIVSize: 8
+     - sample[1]: iv=5081120abbf649af
+       - subSample[1]: nrBytesClear=1000 nrBytesProtected=1968
+     - sample[2]: iv=5081120abbf649b0
+       - subSample[1]: nrBytesClear=184 nrBytesProtected=1184
+     - sample[3]: iv=5081120abbf649b1
+       - subSample[1]: nrBytesClear=179 nrBytesProtected=320
+     - sample[4]: iv=5081120abbf649b2
+       - subSample[1]: nrBytesClear=188 nrBytesProtected=320
+     - sample[5]: iv=5081120abbf649b3
+       - subSample[1]: nrBytesClear=178 nrBytesProtected=1328
+     - sample[6]: iv=5081120abbf649b4
+       - subSample[1]: nrBytesClear=187 nrBytesProtected=416
+     - sample[7]: iv=5081120abbf649b5
+       - subSample[1]: nrBytesClear=188 nrBytesProtected=416
+     - sample[8]: iv=5081120abbf649b6
+       - subSample[1]: nrBytesClear=176 nrBytesProtected=1296
+     - sample[9]: iv=5081120abbf649b7
+       - subSample[1]: nrBytesClear=187 nrBytesProtected=416
 [mdat] size=84481

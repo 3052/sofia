@@ -2,46 +2,34 @@ package senc
 
 import (
    "41.neocities.org/sofia"
+   "41.neocities.org/sofia/tenc"
    "crypto/aes"
    "crypto/cipher"
    "encoding/binary"
 )
 
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   for _, sample1 := range b.Sample {
-      data, err = sample1.Append(data, b)
+func (s *Sample) Decode(
+   data []byte, box1 *Box, tenc_box *tenc.Box,
+) (int, error) {
+   n := int(tenc_box.DefaultPerSampleIvSize)
+   s.InitializationVector = data[:n]
+   if box1.senc_use_subsamples() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
       if err != nil {
-         return nil, err
+         return 0, err
+      }
+      n += n1
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sample1 := range s.Subsample {
+         n1, err = sample1.Decode(data[n:])
+         if err != nil {
+            return 0, err
+         }
+         n += n1
+         s.Subsample[i] = sample1
       }
    }
-   return data, nil
-}
-
-// senc_use_subsamples: flag mask is 0x000002.
-func (b *Box) senc_use_subsamples() bool {
-   return b.FullBoxHeader.GetFlags()&2 >= 1
-}
-
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
-}
-
-func (s *Subsample) Append(data []byte) ([]byte, error) {
-   return binary.Append(data, binary.BigEndian, s)
-}
-
-func (s *Subsample) Decode(data []byte) (int, error) {
-   return binary.Decode(data, binary.BigEndian, s)
+   return n, nil
 }
 
 // ISO/IEC 23001-7
@@ -71,45 +59,24 @@ type Box struct {
    Sample        []Sample
 }
 
-func (b *Box) Read(data []byte) error {
-   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, sample1 := range b.Sample {
-      n, err = sample1.Decode(data, b)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-      b.Sample[i] = sample1
-   }
-   return nil
-}
-
-///
-
 type Sample struct {
-   InitializationVector [8]uint8
+   InitializationVector []uint8
    SubsampleCount       uint16
    Subsample            []Subsample
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
-func (s *Sample) Decrypt(data, key []byte) error {
+func (s *Sample) Decrypt(data, key []byte, tenc_box *tenc.Box) error {
    block, err := aes.NewCipher(key)
    if err != nil {
       return err
    }
    var iv [16]byte
-   copy(iv[:], s.InitializationVector[:])
+   if tenc_box.DefaultPerSampleIvSize >= 1 {
+      copy(iv[:], s.InitializationVector)
+   } else {
+      copy(iv[:], tenc_box.DefaultConstantIv)
+   }
    stream := cipher.NewCTR(block, iv[:])
    if len(s.Subsample) >= 1 {
       var i uint32
@@ -129,30 +96,68 @@ func (s *Sample) Decrypt(data, key []byte) error {
    }
    return nil
 }
-
-func (s *Sample) Decode(data []byte, box1 *Box) (int, error) {
-   n := copy(s.InitializationVector[:], data)
-   if box1.senc_use_subsamples() {
-      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
+func (b *Box) Read(data []byte, tenc_box *tenc.Box) error {
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   b.Sample = make([]Sample, b.SampleCount)
+   for i, sample1 := range b.Sample {
+      n, err = sample1.Decode(data, b, tenc_box)
       if err != nil {
-         return 0, err
+         return err
       }
-      n += n1
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sample1 := range s.Subsample {
-         n1, err = sample1.Decode(data[n:])
-         if err != nil {
-            return 0, err
-         }
-         n += n1
-         s.Subsample[i] = sample1
+      data = data[n:]
+      b.Sample[i] = sample1
+   }
+   return nil
+}
+
+type Subsample struct {
+   BytesOfClearData     uint16
+   BytesOfProtectedData uint32
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(data, b)
+      if err != nil {
+         return nil, err
       }
    }
-   return n, nil
+   return data, nil
+}
+
+// senc_use_subsamples: flag mask is 0x000002.
+func (b *Box) senc_use_subsamples() bool {
+   return b.FullBoxHeader.GetFlags()&2 >= 1
+}
+
+func (s *Subsample) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, s)
+}
+
+func (s *Subsample) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, s)
 }
 
 func (s *Sample) Append(data []byte, box1 *Box) ([]byte, error) {
-   data = append(data, s.InitializationVector[:]...)
+   data = append(data, s.InitializationVector...)
    if box1.senc_use_subsamples() {
       data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
       for _, sample1 := range s.Subsample {

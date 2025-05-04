@@ -5,7 +5,6 @@ import (
    "41.neocities.org/sofia/senc"
    "41.neocities.org/sofia/tfhd"
    "41.neocities.org/sofia/trun"
-   "log/slog"
 )
 
 // ISO/IEC 14496-12
@@ -50,7 +49,7 @@ func (b *Box) Read(data []byte) error {
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", box1.BoxHeader)
+      sofia.Debug.Print(box1.BoxHeader)
       data = data[box1.BoxHeader.Size:]
       switch box1.BoxHeader.Type.String() {
       case "senc":

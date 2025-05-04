@@ -64,18 +64,6 @@ type Box struct {
    Reference                []Reference
 }
 
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += 2 // reserved
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
-}
-
 func (b *Box) Append(data []byte) ([]byte, error) {
    data, err := b.BoxHeader.Append(data)
    if err != nil {

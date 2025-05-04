@@ -7,30 +7,71 @@ import (
    "encoding/binary"
 )
 
-func (s *Sample) Decode(data []byte) (int, error) {
-   sofia.Debug.Print("senc.Sample.Decode")
-   n := copy(s.InitializationVector[:], data)
-   if s.box.senc_use_subsamples() {
-      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
+   for _, sample1 := range b.Sample {
+      data, err = sample1.Append(data, b)
       if err != nil {
-         return 0, err
-      }
-      n += n1
-      s.Subsample = make([]Subsample, s.SubsampleCount)
-      for i, sample1 := range s.Subsample {
-         n1, err = binary.Decode(data[n:], binary.BigEndian, &sample1)
-         if err != nil {
-            return 0, err
-         }
-         n += n1
-         s.Subsample[i] = sample1
+         return nil, err
       }
    }
-   return n, nil
+   return data, nil
+}
+
+// senc_use_subsamples: flag mask is 0x000002.
+func (b *Box) senc_use_subsamples() bool {
+   return b.FullBoxHeader.GetFlags()&2 >= 1
+}
+
+type Subsample struct {
+   BytesOfClearData     uint16
+   BytesOfProtectedData uint32
+}
+
+func (s *Subsample) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, s)
+}
+
+func (s *Subsample) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, s)
+}
+
+// ISO/IEC 23001-7
+//
+// if the version of the SampleEncryptionBox is 0 and the flag
+// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
+//
+//   aligned(8) class SampleEncryptionBox extends FullBox(
+//      'senc', version, flags
+//   ) {
+//      unsigned int(32) sample_count;
+//      {
+//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
+//         if (UseSubSampleEncryption) {
+//            unsigned int(16) subsample_count;
+//            {
+//               unsigned int(16) BytesOfClearData;
+//               unsigned int(32) BytesOfProtectedData;
+//            } [subsample_count ]
+//         }
+//      }[ sample_count ]
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   SampleCount   uint32
+   Sample        []Sample
 }
 
 func (b *Box) Read(data []byte) error {
-   sofia.Debug.Print("senc.Box.Read")
    n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
       return err
@@ -43,8 +84,7 @@ func (b *Box) Read(data []byte) error {
    data = data[n:]
    b.Sample = make([]Sample, b.SampleCount)
    for i, sample1 := range b.Sample {
-      sample1.box = b
-      n, err = sample1.Decode(data)
+      n, err = sample1.Decode(data, b)
       if err != nil {
          return err
       }
@@ -52,6 +92,14 @@ func (b *Box) Read(data []byte) error {
       b.Sample[i] = sample1
    }
    return nil
+}
+
+///
+
+type Sample struct {
+   InitializationVector [8]uint8
+   SubsampleCount       uint16
+   Subsample            []Subsample
 }
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
@@ -82,80 +130,38 @@ func (s *Sample) Decrypt(data, key []byte) error {
    return nil
 }
 
-// ISO/IEC 23001-7
-//
-// if the version of the SampleEncryptionBox is 0 and the flag
-// senc_use_subsamples is set, UseSubSampleEncryption is set to 1
-//
-//   aligned(8) class SampleEncryptionBox extends FullBox(
-//      'senc', version, flags
-//   ) {
-//      unsigned int(32) sample_count;
-//      {
-//         unsigned int(Per_Sample_IV_Size*8) InitializationVector;
-//         if (UseSubSampleEncryption) {
-//            unsigned int(16) subsample_count;
-//            {
-//               unsigned int(16) BytesOfClearData;
-//               unsigned int(32) BytesOfProtectedData;
-//            } [subsample_count ]
-//         }
-//      }[ sample_count ]
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   SampleCount   uint32
-   Sample        []Sample
-}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   for _, sample1 := range b.Sample {
-      data, err = sample1.Append(data)
+func (s *Sample) Decode(data []byte, box1 *Box) (int, error) {
+   n := copy(s.InitializationVector[:], data)
+   if box1.senc_use_subsamples() {
+      n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
       if err != nil {
-         return nil, err
+         return 0, err
+      }
+      n += n1
+      s.Subsample = make([]Subsample, s.SubsampleCount)
+      for i, sample1 := range s.Subsample {
+         n1, err = sample1.Decode(data[n:])
+         if err != nil {
+            return 0, err
+         }
+         n += n1
+         s.Subsample[i] = sample1
       }
    }
-   return data, nil
+   return n, nil
 }
 
-// senc_use_subsamples: flag mask is 0x000002.
-func (b *Box) senc_use_subsamples() bool {
-   return b.FullBoxHeader.GetFlags()&2 >= 1
-}
-
-func (s *Sample) Append(data []byte) ([]byte, error) {
+func (s *Sample) Append(data []byte, box1 *Box) ([]byte, error) {
    data = append(data, s.InitializationVector[:]...)
-   if s.box.senc_use_subsamples() {
+   if box1.senc_use_subsamples() {
       data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
       for _, sample1 := range s.Subsample {
          var err error
-         data, err = binary.Append(data, binary.BigEndian, sample1)
+         data, err = sample1.Append(data)
          if err != nil {
             return nil, err
          }
       }
    }
    return data, nil
-}
-
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
-}
-
-type Sample struct {
-   InitializationVector [8]uint8
-   SubsampleCount       uint16
-   Subsample            []Subsample
-   box                  *Box
 }

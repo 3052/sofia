@@ -2,34 +2,6 @@ package tenc
 
 import "41.neocities.org/sofia"
 
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   b.FullBoxHeader.Version = data[0]
-   data = data[1:]
-   n = copy(b.FullBoxHeader.Flags[:], data)
-   data = data[n:]
-   data = data[1:] // reserved
-   b.ByteBlock = data[0]
-   data = data[1:]
-   b.DefaultIsProtected = data[0]
-   data = data[1:]
-   b.DefaultPerSampleIvSize = data[0]
-   data = data[1:]
-   n = copy(b.DefaultKid[:], data)
-   data = data[n:]
-   if b.DefaultPerSampleIvSize == 0 {
-      if b.DefaultIsProtected == 1 {
-         b.DefaultConstantIvSize, data = data[0], data[1:]
-         b.DefaultConstantIv = data[:b.DefaultConstantIvSize]
-      }
-   }
-   return nil
-}
-
 // ISO/IEC 23001-7
 //
 //   aligned(8) class TrackEncryptionBox extends FullBox('tenc', version, flags=0) {
@@ -58,6 +30,34 @@ type Box struct {
    DefaultKid             sofia.Uuid
    DefaultConstantIvSize  uint8
    DefaultConstantIv      []uint8
+}
+
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   b.FullBoxHeader.Version = data[0]
+   data = data[1:]
+   n = copy(b.FullBoxHeader.Flags[:], data)
+   data = data[n:]
+   data = data[1:] // reserved
+   b.ByteBlock = data[0]
+   data = data[1:]
+   b.DefaultIsProtected = data[0]
+   data = data[1:]
+   b.DefaultPerSampleIvSize = data[0]
+   data = data[1:]
+   n = copy(b.DefaultKid[:], data)
+   data = data[n:]
+   if b.DefaultPerSampleIvSize == 0 {
+      if b.DefaultIsProtected == 1 {
+         b.DefaultConstantIvSize, data = data[0], data[1:]
+         b.DefaultConstantIv = data[:b.DefaultConstantIvSize]
+      }
+   }
+   return nil
 }
 
 func (b *Box) Append(data []byte) ([]byte, error) {

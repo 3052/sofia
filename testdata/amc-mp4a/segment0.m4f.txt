@@ -10,6 +10,16 @@
      - baseMediaDecodeTime: 0
     [trun] size=2252 version=0 flags=000301
      - sampleCount: 279
+     - DataOffset: 6881
+     - sample[1]: dur=1024 size=17
+     - sample[2]: dur=1024 size=20
+     - sample[3]: dur=1024 size=10
+     - sample[4]: dur=1024 size=10
+     - sample[5]: dur=1024 size=10
+     - sample[6]: dur=1024 size=62
+     - sample[7]: dur=1024 size=464
+     - sample[8]: dur=1024 size=433
+     - sample[9]: dur=1024 size=416
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 8
      - sampleCount: 279
@@ -19,7 +29,19 @@
     [senc] size=2248 version=0 flags=000000
      - sampleCount: 279
      - perSampleIVSize: 8
+     - sample[1]: iv=43590454f3aaa18f
+     - sample[2]: iv=43590454f3aaa190
+     - sample[3]: iv=43590454f3aaa191
+     - sample[4]: iv=43590454f3aaa192
+     - sample[5]: iv=43590454f3aaa193
+     - sample[6]: iv=43590454f3aaa194
+     - sample[7]: iv=43590454f3aaa195
+     - sample[8]: iv=43590454f3aaa196
+     - sample[9]: iv=43590454f3aaa197
     [uuid] size=2264
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
-     - subType: unknown
+     - subType: senc
+        [senc] size=2248 version=0 flags=000000
+         - sampleCount: 279
+         - NOT YET PARSED, call ParseReadBox to parse it
 [mdat] size=91874

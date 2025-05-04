@@ -11,16 +11,57 @@
      - baseMediaDecodeTime: 0
     [trun] size=1752 version=0 flags=000b05
      - sampleCount: 144
+     - DataOffset: 6673
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=1001 size=97 compositionTimeOffset=2002
+     - sample[2]: dur=1001 size=2883 compositionTimeOffset=4004
+     - sample[3]: dur=1001 size=26 compositionTimeOffset=1001
+     - sample[4]: dur=1001 size=25 compositionTimeOffset=1001
+     - sample[5]: dur=1001 size=7242 compositionTimeOffset=5005
+     - sample[6]: dur=1001 size=26 compositionTimeOffset=2002
+     - sample[7]: dur=1001 size=24 compositionTimeOffset=0
+     - sample[8]: dur=1001 size=24 compositionTimeOffset=1001
+     - sample[9]: dur=1001 size=3015 compositionTimeOffset=4004
     [saiz] size=161 version=0 flags=000000
      - defaultSampleInfoSize: 0
      - sampleCount: 144
+     - sampleInfo[1]=16
+     - sampleInfo[2]=16
+     - sampleInfo[3]=16
+     - sampleInfo[4]=16
+     - sampleInfo[5]=16
+     - sampleInfo[6]=16
+     - sampleInfo[7]=16
+     - sampleInfo[8]=16
+     - sampleInfo[9]=16
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=2025
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
+     - sample[1]: iv=43590454f3aaa18f
+       - subSample[1]: nrBytesClear=97 nrBytesProtected=0
+     - sample[2]: iv=43590454f3aaa190
+       - subSample[1]: nrBytesClear=115 nrBytesProtected=2768
+     - sample[3]: iv=43590454f3aaa191
+       - subSample[1]: nrBytesClear=26 nrBytesProtected=0
+     - sample[4]: iv=43590454f3aaa192
+       - subSample[1]: nrBytesClear=25 nrBytesProtected=0
+     - sample[5]: iv=43590454f3aaa193
+       - subSample[1]: nrBytesClear=122 nrBytesProtected=7120
+     - sample[6]: iv=43590454f3aaa194
+       - subSample[1]: nrBytesClear=26 nrBytesProtected=0
+     - sample[7]: iv=43590454f3aaa195
+       - subSample[1]: nrBytesClear=24 nrBytesProtected=0
+     - sample[8]: iv=43590454f3aaa196
+       - subSample[1]: nrBytesClear=24 nrBytesProtected=0
+     - sample[9]: iv=43590454f3aaa197
+       - subSample[1]: nrBytesClear=119 nrBytesProtected=2896
     [uuid] size=2336
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: senc
+        [senc] size=2320 version=0 flags=000002
+         - sampleCount: 144
+         - NOT YET PARSED, call ParseReadBox to parse it
 [mdat] size=179944

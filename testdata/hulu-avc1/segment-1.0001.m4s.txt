@@ -24,9 +24,39 @@
     [uuid] size=1952
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: senc
+        [senc] size=1936 version=0 flags=000002
+         - sampleCount: 120
+         - perSampleIVSize: 8
+         - sample[1]: iv=ab6841d26e5b74fc
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=74
+         - sample[2]: iv=ab6841d26e5b74fd
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=15
+         - sample[3]: iv=ab6841d26e5b74fe
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=11
+         - sample[4]: iv=ab6841d26e5b74ff
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=11
+         - sample[5]: iv=ab6841d26e5b7500
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=11
+         - sample[6]: iv=ab6841d26e5b7501
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=11
+         - sample[7]: iv=ab6841d26e5b7502
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=20
+         - sample[8]: iv=ab6841d26e5b7503
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=12
+         - sample[9]: iv=ab6841d26e5b7504
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=11
     [saiz] size=137 version=0 flags=000000
      - defaultSampleInfoSize: 0
      - sampleCount: 120
+     - sampleInfo[1]=16
+     - sampleInfo[2]=16
+     - sampleInfo[3]=16
+     - sampleInfo[4]=16
+     - sampleInfo[5]=16
+     - sampleInfo[6]=16
+     - sampleInfo[7]=16
+     - sampleInfo[8]=16
+     - sampleInfo[9]=16
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=1564

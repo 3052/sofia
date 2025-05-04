@@ -10,6 +10,7 @@
  - timeScale: 12800
  - earliestPresentationTime: 0
  - firstOffset: 0
+ - reference[1]: type=0 size=115947 subSegmentDuration=25600 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
 [moof] size=957
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
@@ -24,6 +25,17 @@
      - baseMediaDecodeTime: 0
     [trun] size=424 version=1 flags=000a05
      - sampleCount: 50
+     - DataOffset: 965
+     - firstSampleFlags: 02400040 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=64)
+     - sample[1]: size=874 compositionTimeOffset=0
+     - sample[2]: size=32 compositionTimeOffset=1536
+     - sample[3]: size=30 compositionTimeOffset=0
+     - sample[4]: size=30 compositionTimeOffset=-1024
+     - sample[5]: size=30 compositionTimeOffset=-512
+     - sample[6]: size=840 compositionTimeOffset=1536
+     - sample[7]: size=62 compositionTimeOffset=0
+     - sample[8]: size=30 compositionTimeOffset=-1024
+     - sample[9]: size=136 compositionTimeOffset=-512
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 8
      - sampleCount: 50
@@ -33,4 +45,22 @@
     [senc] size=416 version=0 flags=000002
      - sampleCount: 50
      - perSampleIVSize: 0
+     - sample[1]:
+       - subSample[1]: nrBytesClear=785 nrBytesProtected=89
+     - sample[2]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=11
+     - sample[3]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=9
+     - sample[4]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=9
+     - sample[5]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=9
+     - sample[6]:
+       - subSample[1]: nrBytesClear=22 nrBytesProtected=818
+     - sample[7]:
+       - subSample[1]: nrBytesClear=23 nrBytesProtected=39
+     - sample[8]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=9
+     - sample[9]:
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=115
 [mdat] size=114990

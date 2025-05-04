@@ -7,41 +7,6 @@ import (
    "41.neocities.org/sofia/trun"
 )
 
-// ISO/IEC 14496-12
-//   aligned(8) class TrackFragmentBox extends Box('traf') {
-//   }
-type Box struct {
-   BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
-   Senc      *senc.Box
-   Tfhd      tfhd.Box
-   Trun      trun.Box
-}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   if b.Senc != nil {
-      data, err = b.Senc.Append(data)
-      if err != nil {
-         return nil, err
-      }
-   }
-   data, err = b.Tfhd.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   return b.Trun.Append(data)
-}
-
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
       var box1 sofia.Box
@@ -49,7 +14,7 @@ func (b *Box) Read(data []byte) error {
       if err != nil {
          return err
       }
-      sofia.Debug.Print(box1.BoxHeader)
+      sofia.Debug.Print(&box1.BoxHeader)
       data = data[box1.BoxHeader.Size:]
       switch box1.BoxHeader.Type.String() {
       case "senc":
@@ -100,4 +65,40 @@ func (b *Box) piff(box1 *sofia.Box) bool {
       }
    }
    return false
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class TrackFragmentBox extends Box('traf') {
+//   }
+type Box struct {
+   BoxHeader sofia.BoxHeader
+   Box       []*sofia.Box
+   Senc      *senc.Box
+   Tfhd      tfhd.Box
+   Trun      trun.Box
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, box1 := range b.Box {
+      data, err = box1.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   if b.Senc != nil {
+      data, err = b.Senc.Append(data)
+      if err != nil {
+         return nil, err
+      }
+   }
+   data, err = b.Tfhd.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   return b.Trun.Append(data)
 }

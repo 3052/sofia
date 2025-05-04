@@ -21,7 +21,7 @@ func (b *Box) Read(data []byte) error {
       if err != nil {
          return err
       }
-      sofia.Debug.Print(box1.BoxHeader)
+      sofia.Debug.Print(&box1.BoxHeader)
       data = data[box1.BoxHeader.Size:]
       switch box1.BoxHeader.Type.String() {
       case "mfhd", // Roku

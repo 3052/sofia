@@ -15,7 +15,7 @@ func (f *File) Read(data []byte) error {
       if err != nil {
          return err
       }
-      sofia.Debug.Print(box.BoxHeader)
+      sofia.Debug.Print(&box.BoxHeader)
       data = data[box.BoxHeader.Size:]
       switch box.BoxHeader.Type.String() {
       case "free", // Mubi

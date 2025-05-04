@@ -8,14 +8,13 @@ import (
    "log"
 )
 
-func (u *Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
-
-func (b *BoxError) Error() string {
-   return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
+func (b *BoxHeader) String() string {
+   data := fmt.Appendf(nil, "type:%q", b.Type)
+   data = fmt.Append(data, " size:", b.Size)
+   if b.UserType != nil {
+      data = fmt.Append(data, " usertype:", b.UserType)
+   }
+   return string(data)
 }
 
 // ISO/IEC 14496-12
@@ -39,6 +38,16 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType *Uuid
+}
+
+func (u *Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
+func (b *BoxError) Error() string {
+   return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
 }
 
 var Debug = log.New(io.Discard, "", 0)

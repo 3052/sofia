@@ -10,12 +10,53 @@
      - baseMediaDecodeTime: 0
     [trun] size=1176 version=0 flags=000b05
      - sampleCount: 96
+     - DataOffset: 2953
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=417083 size=76 compositionTimeOffset=834167
+     - sample[2]: dur=417084 size=32 compositionTimeOffset=4170834
+     - sample[3]: dur=417083 size=31 compositionTimeOffset=2085416
+     - sample[4]: dur=417083 size=32 compositionTimeOffset=0
+     - sample[5]: dur=417084 size=32 compositionTimeOffset=0
+     - sample[6]: dur=417083 size=32 compositionTimeOffset=0
+     - sample[7]: dur=417083 size=32 compositionTimeOffset=0
+     - sample[8]: dur=417084 size=31 compositionTimeOffset=417084
+     - sample[9]: dur=417083 size=32 compositionTimeOffset=417083
     [uuid] size=1568
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
      - subType: senc
+        [senc] size=1552 version=0 flags=000002
+         - sampleCount: 96
+         - perSampleIVSize: 8
+         - sample[1]: iv=e2582b98bdfaf263
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=71
+         - sample[2]: iv=e2582b98bdfaf264
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
+         - sample[3]: iv=e2582b98bdfaf265
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=26
+         - sample[4]: iv=e2582b98bdfaf266
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
+         - sample[5]: iv=e2582b98bdfaf267
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
+         - sample[6]: iv=e2582b98bdfaf268
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
+         - sample[7]: iv=e2582b98bdfaf269
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
+         - sample[8]: iv=e2582b98bdfaf26a
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=26
+         - sample[9]: iv=e2582b98bdfaf26b
+           - subSample[1]: nrBytesClear=5 nrBytesProtected=27
     [saiz] size=113 version=0 flags=000000
      - defaultSampleInfoSize: 0
      - sampleCount: 96
+     - sampleInfo[1]=16
+     - sampleInfo[2]=16
+     - sampleInfo[3]=16
+     - sampleInfo[4]=16
+     - sampleInfo[5]=16
+     - sampleInfo[6]=16
+     - sampleInfo[7]=16
+     - sampleInfo[8]=16
+     - sampleInfo[9]=16
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
      - offset[1]=1276

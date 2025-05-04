@@ -10,9 +10,32 @@
      - baseMediaDecodeTime: 0
     [trun] size=984 version=0 flags=000305
      - sampleCount: 120
+     - DataOffset: 2089
+     - firstSampleFlags: 02000000 (isLeading=0 dependsOn=2 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+     - sample[1]: dur=426667 size=342
+     - sample[2]: dur=426666 size=341
+     - sample[3]: dur=426667 size=341
+     - sample[4]: dur=426667 size=342
+     - sample[5]: dur=426666 size=341
+     - sample[6]: dur=426667 size=341
+     - sample[7]: dur=426667 size=342
+     - sample[8]: dur=426666 size=341
+     - sample[9]: dur=426667 size=341
     [uuid] size=992
      - uuid: a2394f52-5a9b-4f14-a244-6c427c648df4
-     - subType: unknown
+     - subType: senc
+        [senc] size=976 version=0 flags=000000
+         - sampleCount: 120
+         - perSampleIVSize: 8
+         - sample[1]: iv=3c1266f74c27a773
+         - sample[2]: iv=3c1266f74c27a774
+         - sample[3]: iv=3c1266f74c27a775
+         - sample[4]: iv=3c1266f74c27a776
+         - sample[5]: iv=3c1266f74c27a777
+         - sample[6]: iv=3c1266f74c27a778
+         - sample[7]: iv=3c1266f74c27a779
+         - sample[8]: iv=3c1266f74c27a77a
+         - sample[9]: iv=3c1266f74c27a77b
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 8
      - sampleCount: 120

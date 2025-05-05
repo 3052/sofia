@@ -11,6 +11,16 @@
      - baseMediaDecodeTime: 0
     [trun] size=1748 version=0 flags=000e01
      - sampleCount: 144
+     - DataOffset: 4185
+     - sample[1]: size=4914 flags=00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=2002
+     - sample[2]: size=97 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=5005
+     - sample[3]: size=19 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=2002
+     - sample[4]: size=19 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=0
+     - sample[5]: size=19 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=1001
+     - sample[6]: size=1755 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=5005
+     - sample[7]: size=27 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=2002
+     - sample[8]: size=26 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=0
+     - sample[9]: size=19 flags=00010000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=1001
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 144
@@ -20,4 +30,22 @@
     [senc] size=2320 version=0 flags=000002
      - sampleCount: 144
      - perSampleIVSize: 8
+     - sample[1]: iv=400715cdf153c601
+       - subSample[1]: nrBytesClear=850 nrBytesProtected=4064
+     - sample[2]: iv=400715cdf153c602
+       - subSample[1]: nrBytesClear=17 nrBytesProtected=80
+     - sample[3]: iv=400715cdf153c603
+       - subSample[1]: nrBytesClear=19 nrBytesProtected=0
+     - sample[4]: iv=400715cdf153c604
+       - subSample[1]: nrBytesClear=19 nrBytesProtected=0
+     - sample[5]: iv=400715cdf153c605
+       - subSample[1]: nrBytesClear=19 nrBytesProtected=0
+     - sample[6]: iv=400715cdf153c606
+       - subSample[1]: nrBytesClear=27 nrBytesProtected=1728
+     - sample[7]: iv=400715cdf153c607
+       - subSample[1]: nrBytesClear=27 nrBytesProtected=0
+     - sample[8]: iv=400715cdf153c608
+       - subSample[1]: nrBytesClear=26 nrBytesProtected=0
+     - sample[9]: iv=400715cdf153c609
+       - subSample[1]: nrBytesClear=19 nrBytesProtected=0
 [mdat] size=174954

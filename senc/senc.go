@@ -104,27 +104,6 @@ func (s *Sample) Decode(
    return n, nil
 }
 
-//Box.Append
-//for _, sample1 := range b.Sample {
-//   data, err = sample1.Append(data, b)
-//   if err != nil {
-//      return nil, err
-//   }
-//}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
-   if err != nil {
-      return nil, err
-   }
-   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
-   return append(data, b.Samples...), nil
-}
-
 // ISO/IEC 23001-7
 //
 // if the version of the SampleEncryptionBox is 0 and the flag
@@ -167,13 +146,15 @@ func (b *Box) Read(data []byte) error {
    return nil
 }
 
-//Box.Read
-//b.Sample = make([]Sample, b.SampleCount)
-//for i, sample1 := range b.Sample {
-//   n, err = sample1.Decode(data, b, tenc_box)
-//   if err != nil {
-//      return err
-//   }
-//   data = data[n:]
-//   b.Sample[i] = sample1
-//}
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   data, err = binary.Append(data, binary.BigEndian, b.FullBoxHeader)
+   if err != nil {
+      return nil, err
+   }
+   data = binary.BigEndian.AppendUint32(data, b.SampleCount)
+   return append(data, b.Samples...), nil
+}

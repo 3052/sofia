@@ -7,6 +7,41 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Read(data []byte) error {
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.DataOffset)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   if b.first_sample_flags_present() {
+      n, err = binary.Decode(data, binary.BigEndian, &b.FirstSampleFlags)
+      if err != nil {
+         return err
+      }
+      data = data[n:]
+   }
+   b.Sample = make([]Sample, 0, b.SampleCount)
+   for _, sample1 := range b.Sample {
+      n, err = sample1.Decode(b, data)
+      if err != nil {
+         return err
+      }
+      data = data[n:]
+      b.Sample = append(b.Sample, sample1)
+   }
+   return nil
+}
+
 func (s *Sample) Bandwidth(track *tfhd.Box, media *mdhd.Box) uint64 {
    if s.Duration == 0 {
       s.Duration = track.DefaultSampleDuration
@@ -48,41 +83,6 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
-}
-
-func (b *Box) Read(data []byte) error {
-   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.SampleCount)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.DataOffset)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   if b.first_sample_flags_present() {
-      n, err = binary.Decode(data, binary.BigEndian, &b.FirstSampleFlags)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-   }
-   b.Sample = make([]Sample, b.SampleCount)
-   for i, sample1 := range b.Sample {
-      n, err = sample1.Decode(b, data)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-      b.Sample[i] = sample1
-   }
-   return nil
 }
 
 // ISO/IEC 14496-12

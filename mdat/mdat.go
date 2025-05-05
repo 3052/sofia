@@ -13,12 +13,12 @@ type Box [1]sofia.Box
 
 // BE CAREFUL WITH THE RECEIVER
 func (b Box) Data(track *traf.Box) [][]byte {
-   data := make([][]byte, track.Trun.SampleCount)
-   for i, sample := range track.Trun.Sample {
+   data := make([][]byte, 0, track.Trun.SampleCount)
+   for _, sample := range track.Trun.Sample {
       if sample.Size == 0 {
          sample.Size = track.Tfhd.DefaultSampleSize
       }
-      data[i] = b[0].Payload[:sample.Size]
+      data = append(data, b[0].Payload[:sample.Size])
       b[0].Payload = b[0].Payload[sample.Size:]
    }
    return data

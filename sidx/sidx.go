@@ -5,6 +5,49 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Read(data []byte) error {
+   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceId)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &b.Timescale)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   if b.FullBoxHeader.Version == 0 {
+      n = 4
+   } else {
+      n = 8
+   }
+   b.EarliestPresentationTime = data[:n]
+   data = data[n:]
+   b.FirstOffset = data[:n]
+   data = data[n:]
+   data = data[2:] // reserved
+   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceCount)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   b.Reference = make([]Reference, 0, b.ReferenceCount)
+   for _, refer := range b.Reference {
+      n, err = refer.Decode(data)
+      if err != nil {
+         return err
+      }
+      data = data[n:]
+      b.Reference = append(b.Reference, refer)
+   }
+   return nil
+}
+
 func (r *Reference) SetSize(size uint32) {
    r[0] &= ^r.mask()
    r[0] |= size
@@ -86,47 +129,4 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
-}
-
-func (b *Box) Read(data []byte) error {
-   n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceId)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &b.Timescale)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   if b.FullBoxHeader.Version == 0 {
-      n = 4
-   } else {
-      n = 8
-   }
-   b.EarliestPresentationTime = data[:n]
-   data = data[n:]
-   b.FirstOffset = data[:n]
-   data = data[n:]
-   data = data[2:] // reserved
-   n, err = binary.Decode(data, binary.BigEndian, &b.ReferenceCount)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   b.Reference = make([]Reference, b.ReferenceCount)
-   for i, refer := range b.Reference {
-      n, err = refer.Decode(data)
-      if err != nil {
-         return err
-      }
-      data = data[n:]
-      b.Reference[i] = refer
-   }
-   return nil
 }

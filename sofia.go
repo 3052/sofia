@@ -8,6 +8,10 @@ import (
    "log"
 )
 
+func (b *BoxError) Error() string {
+   return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
+}
+
 func (b *BoxHeader) String() string {
    data := fmt.Appendf(nil, "type:%q", b.Type)
    data = fmt.Append(data, " size:", b.Size)
@@ -46,9 +50,7 @@ func (u *Uuid) String() string {
 
 type Uuid [16]uint8
 
-func (b *BoxError) Error() string {
-   return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
-}
+///
 
 var Debug = log.New(io.Discard, "", 0)
 

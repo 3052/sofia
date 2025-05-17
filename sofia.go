@@ -8,6 +8,8 @@ import (
    "log"
 )
 
+var Debug = log.New(io.Discard, "", 0)
+
 func (b *BoxError) Error() string {
    return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
 }
@@ -51,8 +53,6 @@ func (u *Uuid) String() string {
 type Uuid [16]uint8
 
 ///
-
-var Debug = log.New(io.Discard, "", 0)
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 

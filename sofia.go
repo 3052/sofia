@@ -12,6 +12,37 @@ const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 
 var Debug = log.New(io.Discard, "", 0)
 
+// ISO/IEC 14496-12
+//
+//   aligned(8) class Box(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
+func (b *Box) Append(data []byte) ([]byte, error) {
+   data, err := b.BoxHeader.Append(data)
+   if err != nil {
+      return nil, err
+   }
+   return append(data, b.Payload...), nil
+}
+
+func (b *Box) Read(data []byte) error {
+   n, err := b.BoxHeader.Decode(data)
+   if err != nil {
+      return err
+   }
+   b.Payload = data[n:b.BoxHeader.Size]
+   return nil
+}
+
 func (b *BoxError) Error() string {
    return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
 }
@@ -55,37 +86,6 @@ func (u *Uuid) String() string {
 type Uuid [16]uint8
 
 ///
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box(
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
-}
-
-func (b *Box) Append(data []byte) ([]byte, error) {
-   data, err := b.BoxHeader.Append(data)
-   if err != nil {
-      return nil, err
-   }
-   return append(data, b.Payload...), nil
-}
-
-func (b *Box) Read(data []byte) error {
-   n, err := b.BoxHeader.Decode(data)
-   if err != nil {
-      return err
-   }
-   b.Payload = data[n:b.BoxHeader.Size]
-   return nil
-}
 
 type BoxError struct {
    Container BoxHeader

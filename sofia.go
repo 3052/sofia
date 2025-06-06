@@ -47,6 +47,11 @@ func (b *BoxError) Error() string {
    return fmt.Sprintf("container:%q box:%q", b.Container.Type, b.Box.Type)
 }
 
+type BoxError struct {
+   Container BoxHeader
+   Box       BoxHeader
+}
+
 func (b *BoxHeader) String() string {
    data := fmt.Appendf(nil, "type:%q", b.Type)
    data = fmt.Append(data, " size:", b.Size)
@@ -86,11 +91,6 @@ func (u *Uuid) String() string {
 type Uuid [16]uint8
 
 ///
-
-type BoxError struct {
-   Container BoxHeader
-   Box       BoxHeader
-}
 
 // ISO/IEC 14496-12
 //

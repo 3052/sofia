@@ -8,6 +8,30 @@ import (
    "log"
 )
 
+func (s *SampleEntry) Decode(data []byte) (int, error) {
+   n := 6 // reserved
+   data = data[n:]
+   n1, err := binary.Decode(data, binary.BigEndian, &s.DataReferenceIndex)
+   if err != nil {
+      return 0, err
+   }
+   return n + n1, nil
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) abstract class SampleEntry(
+//      unsigned int(32) format
+//   ) extends Box(format) {
+//      const unsigned int(8)[6] reserved = 0;
+//      unsigned int(16) data_reference_index;
+//   }
+type SampleEntry struct {
+   BoxHeader          BoxHeader
+   _                  [6]uint8
+   DataReferenceIndex uint16
+}
+
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 
 var Debug = log.New(io.Discard, "", 0)
@@ -107,30 +131,6 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    var flag [4]byte
    copy(flag[1:], f.Flags[:])
    return binary.BigEndian.Uint32(flag[:])
-}
-
-func (s *SampleEntry) Decode(data []byte) (int, error) {
-   n := 6 // reserved
-   data = data[n:]
-   n1, err := binary.Decode(data, binary.BigEndian, &s.DataReferenceIndex)
-   if err != nil {
-      return 0, err
-   }
-   return n + n1, nil
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) abstract class SampleEntry(
-//      unsigned int(32) format
-//   ) extends Box(format) {
-//      const unsigned int(8)[6] reserved = 0;
-//      unsigned int(16) data_reference_index;
-//   }
-type SampleEntry struct {
-   BoxHeader          BoxHeader
-   _                  [6]uint8
-   DataReferenceIndex uint16
 }
 
 func (s *SampleEntry) Append(data []byte) ([]byte, error) {

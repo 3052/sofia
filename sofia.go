@@ -10,12 +10,12 @@ import (
 
 func (s *SampleEntry) Decode(data []byte) (int, error) {
    n := 6 // reserved
-   data = data[n:]
-   n1, err := binary.Decode(data, binary.BigEndian, &s.DataReferenceIndex)
+   n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
    if err != nil {
       return 0, err
    }
-   return n + n1, nil
+   n += n1
+   return n, nil
 }
 
 // ISO/IEC 14496-12

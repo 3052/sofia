@@ -103,6 +103,7 @@ func (s *Subsample) Append(data []byte) ([]byte, error) {
 func (s *Subsample) Decode(data []byte) (int, error) {
    return binary.Decode(data, binary.BigEndian, s)
 }
+
 type Subsample struct {
    BytesOfClearData     uint16
    BytesOfProtectedData uint32
@@ -159,4 +160,3 @@ func (s *Sample) Append(data []byte, box1 *Box) ([]byte, error) {
    }
    return data, nil
 }
-

@@ -157,7 +157,7 @@ func (s *senc_test) encode_init() ([]byte, error) {
       copy(sinf.BoxHeader.Type[:], "free")
       if sample, ok := description.SampleEntry(); ok {
          // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+         sample.BoxHeader.Type = sinf.Frma.DataFormat
       }
    }
    return file1.Append(nil)

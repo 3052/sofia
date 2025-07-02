@@ -8,6 +8,12 @@ import (
    "log"
 )
 
+func (u *Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
 func (s *SampleEntry) Decode(data []byte) (int, error) {
    n := 6 // reserved
    n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
@@ -107,14 +113,6 @@ type BoxHeader struct {
    Type     Type
    UserType *Uuid
 }
-
-func (u *Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
-
-///
 
 // ISO/IEC 14496-12
 //

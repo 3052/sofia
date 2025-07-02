@@ -23,6 +23,6 @@ func (b *Box) Append(data []byte) ([]byte, error) {
 }
 
 func (b *Box) Read(data []byte) error {
-   copy(b.DataFormat[:], data)
+   b.DataFormat = [4]byte(data)
    return nil
 }

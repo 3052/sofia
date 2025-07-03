@@ -8,6 +8,23 @@ import (
    "log"
 )
 
+// ISO/IEC 14496-12
+//
+//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
+//      unsigned int(8) version = v;
+//      bit(24) flags = f;
+//   }
+type FullBoxHeader struct {
+   Version uint8
+   Flags   [3]byte
+}
+
+func (f *FullBoxHeader) GetFlags() uint32 {
+   var flag [4]byte
+   copy(flag[1:], f.Flags[:])
+   return binary.BigEndian.Uint32(flag[:])
+}
+
 func (u *Uuid) String() string {
    return hex.EncodeToString(u[:])
 }
@@ -112,23 +129,6 @@ type BoxHeader struct {
    Size     uint32
    Type     Type
    UserType *Uuid
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
-//      unsigned int(8) version = v;
-//      bit(24) flags = f;
-//   }
-type FullBoxHeader struct {
-   Version uint8
-   Flags   [3]byte
-}
-
-func (f *FullBoxHeader) GetFlags() uint32 {
-   var flag [4]byte
-   copy(flag[1:], f.Flags[:])
-   return binary.BigEndian.Uint32(flag[:])
 }
 
 func (s *SampleEntry) Append(data []byte) ([]byte, error) {

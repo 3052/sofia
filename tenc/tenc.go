@@ -40,8 +40,8 @@ func (b *Box) Read(data []byte) error {
    data = data[n:]
    b.FullBoxHeader.Version = data[0]
    data = data[1:]
-   n = copy(b.FullBoxHeader.Flags[:], data)
-   data = data[n:]
+   b.FullBoxHeader.Flags = [3]byte(data)
+   data = data[3:]
    data = data[1:] // reserved
    b.ByteBlock = data[0]
    data = data[1:]
@@ -49,8 +49,8 @@ func (b *Box) Read(data []byte) error {
    data = data[1:]
    b.DefaultPerSampleIvSize = data[0]
    data = data[1:]
-   n = copy(b.DefaultKid[:], data)
-   data = data[n:]
+   b.DefaultKid = [16]byte(data)
+   data = data[16:]
    if b.DefaultPerSampleIvSize == 0 {
       if b.DefaultIsProtected == 1 {
          b.DefaultConstantIvSize, data = data[0], data[1:]

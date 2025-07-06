@@ -79,4 +79,3 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    data = binary.BigEndian.AppendUint32(data, b.DataSize)
    return append(data, b.Data...), nil
 }
-

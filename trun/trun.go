@@ -7,50 +7,51 @@ import (
    "encoding/binary"
 )
 
-func (s *Sample) Decode(box1 *Box, data []byte) (int, error) {
+func (s *Sample) Decode(boxVar *Box, data []byte) (int, error) {
    var n int
-   if box1.sample_duration_present() {
+   if boxVar.sample_duration_present() {
       n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Duration)
       if err != nil {
          return 0, err
       }
       n += n1
    }
-   if box1.sample_size_present() {
+   if boxVar.sample_size_present() {
       n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Size)
       if err != nil {
          return 0, err
       }
       n += n1
    }
-   if box1.sample_flags_present() {
+   if boxVar.sample_flags_present() {
       n1, err := binary.Decode(data[n:], binary.BigEndian, &s.Flags)
       if err != nil {
          return 0, err
       }
       n += n1
    }
-   if box1.sample_composition_time_offsets_present() {
+   if boxVar.sample_composition_time_offsets_present() {
       n += copy(s.CompositionTimeOffset[:], data[n:])
    }
    return n, nil
 }
 
-func (s *Sample) Append(box1 *Box, data []byte) ([]byte, error) {
-   if box1.sample_duration_present() {
+func (s *Sample) Append(boxVar *Box, data []byte) ([]byte, error) {
+   if boxVar.sample_duration_present() {
       data = binary.BigEndian.AppendUint32(data, s.Duration)
    }
-   if box1.sample_size_present() {
+   if boxVar.sample_size_present() {
       data = binary.BigEndian.AppendUint32(data, s.Size)
    }
-   if box1.sample_flags_present() {
+   if boxVar.sample_flags_present() {
       data = binary.BigEndian.AppendUint32(data, s.Flags)
    }
-   if box1.sample_composition_time_offsets_present() {
+   if boxVar.sample_composition_time_offsets_present() {
       data = append(data, s.CompositionTimeOffset[:]...)
    }
    return data, nil
 }
+
 func (b *Box) Read(data []byte) error {
    n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
@@ -75,13 +76,13 @@ func (b *Box) Read(data []byte) error {
       data = data[n:]
    }
    b.Sample = make([]Sample, 0, b.SampleCount)
-   for _, sample1 := range b.Sample {
-      n, err = sample1.Decode(b, data)
+   for _, sampleVar := range b.Sample {
+      n, err = sampleVar.Decode(b, data)
       if err != nil {
          return err
       }
       data = data[n:]
-      b.Sample = append(b.Sample, sample1)
+      b.Sample = append(b.Sample, sampleVar)
    }
    return nil
 }
@@ -120,8 +121,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if b.first_sample_flags_present() {
       data = binary.BigEndian.AppendUint32(data, b.FirstSampleFlags)
    }
-   for _, sample1 := range b.Sample {
-      data, err = sample1.Append(b, data)
+   for _, sampleVar := range b.Sample {
+      data, err = sampleVar.Append(b, data)
       if err != nil {
          return nil, err
       }

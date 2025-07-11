@@ -30,12 +30,12 @@ func (s *Sample) Decrypt(data, key []byte, tenc_box *tenc.Box) error {
    stream := cipher.NewCTR(block, iv[:])
    if len(s.Subsample) >= 1 {
       var i uint32
-      for _, sample1 := range s.Subsample {
-         clear := uint32(sample1.BytesOfClearData)
+      for _, sampleVar := range s.Subsample {
+         clear := uint32(sampleVar.BytesOfClearData)
          if clear >= 1 {
             i += clear
          }
-         protected := sample1.BytesOfProtectedData
+         protected := sampleVar.BytesOfProtectedData
          if protected >= 1 {
             stream.XORKeyStream(data[i:i+protected], data[i:i+protected])
             i += protected
@@ -52,13 +52,13 @@ func (b *Box) senc_use_subsamples() bool {
    return b.FullBoxHeader.GetFlags()&2 >= 1
 }
 
-func (s *Sample) Append(data []byte, box1 *Box) ([]byte, error) {
+func (s *Sample) Append(data []byte, boxVar *Box) ([]byte, error) {
    data = append(data, s.InitializationVector...)
-   if box1.senc_use_subsamples() {
+   if boxVar.senc_use_subsamples() {
       data = binary.BigEndian.AppendUint16(data, s.SubsampleCount)
-      for _, sample1 := range s.Subsample {
+      for _, sampleVar := range s.Subsample {
          var err error
-         data, err = sample1.Append(data)
+         data, err = sampleVar.Append(data)
          if err != nil {
             return nil, err
          }
@@ -66,25 +66,26 @@ func (s *Sample) Append(data []byte, box1 *Box) ([]byte, error) {
    }
    return data, nil
 }
+
 func (s *Sample) Decode(
-   data []byte, box1 *Box, tenc_box *tenc.Box,
+   data []byte, boxVar *Box, tenc_box *tenc.Box,
 ) (int, error) {
    n := int(tenc_box.DefaultPerSampleIvSize)
    s.InitializationVector = data[:n]
-   if box1.senc_use_subsamples() {
+   if boxVar.senc_use_subsamples() {
       n1, err := binary.Decode(data[n:], binary.BigEndian, &s.SubsampleCount)
       if err != nil {
          return 0, err
       }
       n += n1
       s.Subsample = make([]Subsample, 0, s.SubsampleCount)
-      for _, sample1 := range s.Subsample {
-         n1, err = sample1.Decode(data[n:])
+      for _, sampleVar := range s.Subsample {
+         n1, err = sampleVar.Decode(data[n:])
          if err != nil {
             return 0, err
          }
          n += n1
-         s.Subsample = append(s.Subsample, sample1)
+         s.Subsample = append(s.Subsample, sampleVar)
       }
    }
    return n, nil

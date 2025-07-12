@@ -11,12 +11,12 @@ func TestSidx(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   var file1 File
-   err = file1.Read(data)
+   var fileVar File
+   err = fileVar.Read(data)
    if err != nil {
       t.Fatal(err)
    }
-   for _, reference := range file1.Sidx.Reference {
+   for _, reference := range fileVar.Sidx.Reference {
       fmt.Println(reference.Size())
    }
 }

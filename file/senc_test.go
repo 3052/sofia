@@ -13,24 +13,24 @@ func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   var file1 File
-   err = file1.Read(segment)
+   var fileVar File
+   err = fileVar.Read(segment)
    if err != nil {
       return nil, err
    }
-   if senc := file1.Moof.Traf.Senc; senc != nil {
+   if senc := fileVar.Moof.Traf.Senc; senc != nil {
       key, err := hex.DecodeString(s.key)
       if err != nil {
          return nil, err
       }
-      for i, data := range file1.Mdat.Data(&file1.Moof.Traf) {
+      for i, data := range fileVar.Mdat.Data(&fileVar.Moof.Traf) {
          err := senc.Sample[i].Decrypt(data, key)
          if err != nil {
             return nil, err
          }
       }
    }
-   return file1.Append(data)
+   return fileVar.Append(data)
 }
 
 func TestSenc(t *testing.T) {
@@ -143,15 +143,15 @@ func (s *senc_test) encode_init() ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   var file1 File
-   err = file1.Read(data)
+   var fileVar File
+   err = fileVar.Read(data)
    if err != nil {
       return nil, err
    }
-   for _, pssh := range file1.Moov.Pssh {
+   for _, pssh := range fileVar.Moov.Pssh {
       copy(pssh.BoxHeader.Type[:], "free") // Firefox
    }
-   description := file1.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
    if sinf, ok := description.Sinf(); ok {
       // Firefox
       copy(sinf.BoxHeader.Type[:], "free")
@@ -160,5 +160,5 @@ func (s *senc_test) encode_init() ([]byte, error) {
          sample.BoxHeader.Type = sinf.Frma.DataFormat
       }
    }
-   return file1.Append(nil)
+   return fileVar.Append(nil)
 }

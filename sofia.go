@@ -25,12 +25,6 @@ func (f *FullBoxHeader) GetFlags() uint32 {
    return binary.BigEndian.Uint32(flag[:])
 }
 
-func (u *Uuid) String() string {
-   return hex.EncodeToString(u[:])
-}
-
-type Uuid [16]uint8
-
 func (s *SampleEntry) Decode(data []byte) (int, error) {
    n := 6 // reserved
    n1, err := binary.Decode(data[n:], binary.BigEndian, &s.DataReferenceIndex)
@@ -54,6 +48,14 @@ type SampleEntry struct {
    _                  [6]uint8
    DataReferenceIndex uint16
 }
+
+func (u *Uuid) String() string {
+   return hex.EncodeToString(u[:])
+}
+
+type Uuid [16]uint8
+
+///
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 

@@ -8,6 +8,8 @@ import (
    "log"
 )
 
+const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class FullBoxHeader(unsigned int(8) v, bit(24) f) {
@@ -56,8 +58,6 @@ func (u *Uuid) String() string {
 type Uuid [16]uint8
 
 ///
-
-const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"
 
 var Debug = log.New(io.Discard, "", 0)
 

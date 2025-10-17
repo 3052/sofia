@@ -12,6 +12,10 @@
     [senc] size=400 version=0 flags=000002
      - sampleCount: 24
      - perSampleIVSize: 8
+     - sample[1]: iv=4710228659aaf320
+       - subSample[1]: nrBytesClear=34 nrBytesProtected=86
+     - sample[2]: iv=4710228659aaf321
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=16
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 24
@@ -21,6 +25,9 @@
      - offset[1]=92
     [trun] size=308 version=1 flags=000e01
      - sampleCount: 24
+     - DataOffset: 837
+     - sample[1]: size=120 flags=02400000 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=0
+     - sample[2]: size=37 flags=01410000 (isLeading=0 dependsOn=1 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=6006
 [mdat] size=987
 [moof] size=1501
   [mfhd] size=16 version=0 flags=000000
@@ -36,6 +43,10 @@
     [senc] size=784 version=0 flags=000002
      - sampleCount: 48
      - perSampleIVSize: 8
+     - sample[1]: iv=4710228659aaf338
+       - subSample[1]: nrBytesClear=35 nrBytesProtected=3400
+     - sample[2]: iv=4710228659aaf339
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=1334
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 48
@@ -45,6 +56,9 @@
      - offset[1]=92
     [trun] size=596 version=1 flags=000e01
      - sampleCount: 48
+     - DataOffset: 1509
+     - sample[1]: size=3435 flags=02400000 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=0
+     - sample[2]: size=1355 flags=01410000 (isLeading=0 dependsOn=1 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=6006
 [mdat] size=8735
 [moof] size=829
   [mfhd] size=16 version=0 flags=000000
@@ -60,6 +74,10 @@
     [senc] size=400 version=0 flags=000002
      - sampleCount: 24
      - perSampleIVSize: 8
+     - sample[1]: iv=4710228659aaf368
+       - subSample[1]: nrBytesClear=35 nrBytesProtected=5367
+     - sample[2]: iv=4710228659aaf369
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=18
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 24
@@ -69,6 +87,9 @@
      - offset[1]=92
     [trun] size=308 version=1 flags=000e01
      - sampleCount: 24
+     - DataOffset: 837
+     - sample[1]: size=5402 flags=02400000 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=0
+     - sample[2]: size=39 flags=01410000 (isLeading=0 dependsOn=1 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=6006
 [mdat] size=7429
 [moof] size=829
   [mfhd] size=16 version=0 flags=000000
@@ -84,6 +105,10 @@
     [senc] size=400 version=0 flags=000002
      - sampleCount: 24
      - perSampleIVSize: 8
+     - sample[1]: iv=4710228659aaf380
+       - subSample[1]: nrBytesClear=35 nrBytesProtected=5363
+     - sample[2]: iv=4710228659aaf381
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=18
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 24
@@ -93,6 +118,9 @@
      - offset[1]=92
     [trun] size=308 version=1 flags=000e01
      - sampleCount: 24
+     - DataOffset: 837
+     - sample[1]: size=5398 flags=02400000 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=0
+     - sample[2]: size=39 flags=01410000 (isLeading=0 dependsOn=1 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=6006
 [mdat] size=6773
 [moof] size=2173
   [mfhd] size=16 version=0 flags=000000
@@ -108,6 +136,10 @@
     [senc] size=1168 version=0 flags=000002
      - sampleCount: 72
      - perSampleIVSize: 8
+     - sample[1]: iv=4710228659aaf398
+       - subSample[1]: nrBytesClear=35 nrBytesProtected=22832
+     - sample[2]: iv=4710228659aaf399
+       - subSample[1]: nrBytesClear=21 nrBytesProtected=5196
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
      - sampleCount: 72
@@ -117,4 +149,7 @@
      - offset[1]=92
     [trun] size=884 version=1 flags=000e01
      - sampleCount: 72
+     - DataOffset: 2181
+     - sample[1]: size=22867 flags=02400000 (isLeading=0 dependsOn=2 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0) compositionTimeOffset=0
+     - sample[2]: size=5217 flags=01410000 (isLeading=0 dependsOn=1 isDependedOn=1 hasRedundancy=0 padding=0 isNonSync=true degradationPriority=0) compositionTimeOffset=0
 [mdat] size=253741

@@ -3,8 +3,8 @@ package mp4parser
 // MoovChildBox can hold any of the parsed child types or a raw box.
 type MoovChildBox struct {
 	Trak *TrakBox
-	// Pssh is no longer a special type; it will be handled by RawBox.
-	Raw *RawBox
+	Pssh *PsshBox
+	Raw  *RawBox
 }
 
 // Size calculates the size of the contained child.
@@ -12,6 +12,8 @@ func (c *MoovChildBox) Size() uint64 {
 	switch {
 	case c.Trak != nil:
 		return c.Trak.Size()
+	case c.Pssh != nil:
+		return c.Pssh.Size()
 	case c.Raw != nil:
 		return c.Raw.Size()
 	}
@@ -23,6 +25,8 @@ func (c *MoovChildBox) Format(dst []byte, offset int) int {
 	switch {
 	case c.Trak != nil:
 		return c.Trak.Format(dst, offset)
+	case c.Pssh != nil:
+		return c.Pssh.Format(dst, offset)
 	case c.Raw != nil:
 		return c.Raw.Format(dst, offset)
 	}
@@ -52,7 +56,8 @@ func ParseMoovBox(data []byte) (*MoovBox, error) {
 		switch header.Type {
 		case "trak":
 			child.Trak, err = ParseTrakBox(content)
-		// REMOVED: case "pssh" - This now falls through to the default.
+		case "pssh":
+			child.Pssh, err = ParsePsshBox(content)
 		default:
 			child.Raw, err = ParseRawBox(header.Type, content)
 		}

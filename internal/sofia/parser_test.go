@@ -63,7 +63,7 @@ func TestRoundtrip(t *testing.T) {
       }
       parser := NewParser(sampleFMP4)
       var (
-         parsedBoxes []*Box
+         parsedBoxes     []*Box
          totalParsedSize uint64
       )
       for parser.HasMore() {

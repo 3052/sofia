@@ -8,14 +8,6 @@ import (
 
 var ErrUnexpectedEOF = errors.New("unexpected end of data")
 
-func readUint16(data []byte, offset int) (uint16, int, error) {
-   if offset+2 > len(data) {
-      return 0, offset, ErrUnexpectedEOF
-   }
-   val := binary.BigEndian.Uint16(data[offset:])
-   return val, offset + 2, nil
-}
-
 func readUint32(data []byte, offset int) (uint32, int, error) {
    if offset+4 > len(data) {
       return 0, offset, ErrUnexpectedEOF

@@ -30,10 +30,7 @@ func (c *EncvChildBox) Format(dst []byte, offset int) int {
 
 // EncvBox (Encrypted Video Sample Entry)
 type EncvBox struct {
-   // Type allows the box to be renamed on format (e.g., to "avc1").
-   // It is initialized to "encv" on parse.
    Type string
-
    // The 78 bytes of the VisualSampleEntry prefix.
    Prefix   []byte
    Children []*EncvChildBox
@@ -51,6 +48,7 @@ func ParseEncvBox(data []byte) (*EncvBox, error) {
    }
    b.Prefix = data[:prefixSize]
 
+   // Child boxes start AFTER the prefix.
    offset := prefixSize
    for offset < len(data) {
       header, headerEndOffset, err := ParseBoxHeader(data, offset)
@@ -90,7 +88,7 @@ func (b *EncvBox) Size() uint64 {
 // Format serializes the EncvBox into the destination slice using its Type field.
 func (b *EncvBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
-   offset = writeString(dst, offset, b.Type) // Use the mutable Type field here
+   offset = writeString(dst, offset, b.Type)
    offset = writeBytes(dst, offset, b.Prefix)
    for _, child := range b.Children {
       offset = child.Format(dst, offset)

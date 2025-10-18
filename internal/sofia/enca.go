@@ -1,4 +1,3 @@
-// File: enca_box.go
 package mp4parser
 
 // EncaChildBox can hold any of the parsed child types or a raw box.
@@ -31,10 +30,7 @@ func (c *EncaChildBox) Format(dst []byte, offset int) int {
 
 // EncaBox (Encrypted Audio Sample Entry)
 type EncaBox struct {
-   // Type allows the box to be renamed on format (e.g., to "mp4a").
-   // It is initialized to "enca" on parse.
    Type string
-
    // The 28 bytes of the AudioSampleEntry prefix.
    Prefix   []byte
    Children []*EncaChildBox
@@ -48,21 +44,15 @@ func ParseEncaBox(data []byte) (*EncaBox, error) {
    // AudioSampleEntry has a 28-byte prefix before its child boxes.
    const prefixSize = 28
    if len(data) < prefixSize {
-      // Some files might have a shorter prefix, handle gracefully.
-      // For roundtrip, we just store what's there before the first child box.
-      // A more robust solution would be to find the first child box offset.
-      // For now, let's assume it's always at least 28 for encrypted media.
       return nil, ErrUnexpectedEOF
    }
    b.Prefix = data[:prefixSize]
 
+   // Child boxes start AFTER the prefix.
    offset := prefixSize
    for offset < len(data) {
       header, headerEndOffset, err := ParseBoxHeader(data, offset)
       if err != nil {
-         // If we can't parse a header, assume the rest is part of the prefix.
-         // This can happen with malformed files, but makes the parser more robust.
-         // For this implementation, we'll stick to a strict format.
          return nil, err
       }
       contentEndOffset := offset + int(header.Size)
@@ -98,7 +88,7 @@ func (b *EncaBox) Size() uint64 {
 // Format serializes the EncaBox into the destination slice using its Type field.
 func (b *EncaBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
-   offset = writeString(dst, offset, b.Type) // Use the mutable Type field here
+   offset = writeString(dst, offset, b.Type)
    offset = writeBytes(dst, offset, b.Prefix)
    for _, child := range b.Children {
       offset = child.Format(dst, offset)

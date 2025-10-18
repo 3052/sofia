@@ -8,6 +8,16 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) Sinf() (*sinf.Box, bool) {
+   if as := b.AudioSample; as != nil {
+      return &as.Sinf, true
+   }
+   if vs := b.VisualSample; vs != nil {
+      return &vs.Sinf, true
+   }
+   return nil, false
+}
+
 func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
    if as := b.AudioSample; as != nil {
       return &as.SampleEntry, true
@@ -109,14 +119,4 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
-}
-
-func (b *Box) Sinf() (*sinf.Box, bool) {
-   if as := b.AudioSample; as != nil {
-      return &as.Sinf, true
-   }
-   if vs := b.VisualSample; vs != nil {
-      return &vs.Sinf, true
-   }
-   return nil, false
 }

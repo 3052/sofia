@@ -4,7 +4,8 @@ package mp4parser
 type TrafChildBox struct {
    Tfhd *TfhdBox
    Trun *TrunBox
-   // Note: senc, tfdt, saiz, saio, free are not in the parse list, so they become RawBox
+   // Note: senc, tfdt, saiz, saio, free are not in the parse list, so they
+   // become RawBox
    Raw *RawBox
 }
 

@@ -1,3 +1,4 @@
+// File: binary_reader.go
 package mp4parser
 
 import (
@@ -6,13 +7,6 @@ import (
 )
 
 var ErrUnexpectedEOF = errors.New("unexpected end of data")
-
-func readUint8(data []byte, offset int) (uint8, int, error) {
-   if offset+1 > len(data) {
-      return 0, offset, ErrUnexpectedEOF
-   }
-   return data[offset], offset + 1, nil
-}
 
 func readUint16(data []byte, offset int) (uint16, int, error) {
    if offset+2 > len(data) {

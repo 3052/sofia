@@ -35,7 +35,7 @@ func ParseSencBox(data []byte) (*SencBox, error) {
 	b.InitializationVectors = make([]InitializationVector, b.SampleCount)
 	for i := 0; i < int(b.SampleCount); i++ {
 		iv := InitializationVector{}
-		ivSize := 8
+		ivSize := 8 // Assuming 8-byte IV based on tenc box
 		if offset+ivSize > len(data) {
 			return nil, ErrUnexpectedEOF
 		}
@@ -81,7 +81,7 @@ func (b *SencBox) Size() uint64 {
 		size += uint64(len(iv.IV))
 		if hasSubsamples {
 			size += 2 // Subsample count
-			size += uint64(len(iv.Subsamples) * (2 + 4)) // clear + protected
+			size += uint64(len(iv.Subsamples) * (2 + 4)) // bytes_of_clear_data + bytes_of_protected_data
 		}
 	}
 	return size

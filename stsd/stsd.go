@@ -8,6 +8,16 @@ import (
    "encoding/binary"
 )
 
+func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
+   if as := b.AudioSample; as != nil {
+      return &as.SampleEntry, true
+   }
+   if vs := b.VisualSample; vs != nil {
+      return &vs.SampleEntry, true
+   }
+   return nil, false
+}
+
 // ISO/IEC 14496-12
 //
 //   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
@@ -99,16 +109,6 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
-}
-
-func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if as := b.AudioSample; as != nil {
-      return &as.SampleEntry, true
-   }
-   if vs := b.VisualSample; vs != nil {
-      return &vs.SampleEntry, true
-   }
-   return nil, false
 }
 
 func (b *Box) Sinf() (*sinf.Box, bool) {

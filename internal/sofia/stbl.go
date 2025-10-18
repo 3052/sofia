@@ -1,4 +1,3 @@
-// File: stbl_box.go
 package mp4parser
 
 type StblChildBox struct {

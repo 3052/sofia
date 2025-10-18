@@ -1,4 +1,3 @@
-// File: full_box.go
 package mp4parser
 
 // FullBox is a base struct for boxes that contain a version and flags.

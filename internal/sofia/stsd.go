@@ -1,8 +1,9 @@
 package mp4parser
 
-// StsdChildBox now only specifically handles encv, as enca will be a RawBox.
+// StsdChildBox now explicitly handles both encv and enca.
 type StsdChildBox struct {
    Encv *EncvBox
+   Enca *EncaBox
    Raw  *RawBox
 }
 
@@ -10,6 +11,9 @@ type StsdChildBox struct {
 func (c *StsdChildBox) Size() uint64 {
    if c.Encv != nil {
       return c.Encv.Size()
+   }
+   if c.Enca != nil {
+      return c.Enca.Size()
    }
    if c.Raw != nil {
       return c.Raw.Size()
@@ -21,6 +25,9 @@ func (c *StsdChildBox) Size() uint64 {
 func (c *StsdChildBox) Format(dst []byte, offset int) int {
    if c.Encv != nil {
       return c.Encv.Format(dst, offset)
+   }
+   if c.Enca != nil {
+      return c.Enca.Format(dst, offset)
    }
    if c.Raw != nil {
       return c.Raw.Format(dst, offset)
@@ -60,7 +67,8 @@ func ParseStsdBox(data []byte) (*StsdBox, error) {
       switch header.Type {
       case "encv":
          child.Encv, err = ParseEncvBox(content)
-      // REMOVED: `case "enca"` now falls through to the default case.
+      case "enca":
+         child.Enca, err = ParseEncaBox(content)
       default:
          child.Raw, err = ParseRawBox(header.Type, content)
       }

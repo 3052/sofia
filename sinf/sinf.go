@@ -6,6 +6,36 @@ import (
    "41.neocities.org/sofia/schi"
 )
 
+func (b *Box) Read(data []byte) error {
+   for len(data) >= 1 {
+      var boxVar sofia.Box
+      err := boxVar.Read(data)
+      if err != nil {
+         return err
+      }
+      data = data[boxVar.BoxHeader.Size:]
+      switch boxVar.BoxHeader.Type.String() {
+      case "frma":
+         b.Frma.BoxHeader = boxVar.BoxHeader
+         err := b.Frma.Read(boxVar.Payload)
+         if err != nil {
+            return err
+         }
+      case "schi":
+         err := b.Schi.Read(boxVar.Payload)
+         if err != nil {
+            return err
+         }
+         b.Schi.BoxHeader = boxVar.BoxHeader
+      case "schm": // Roku
+         b.Box = append(b.Box, boxVar)
+      default:
+         return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
+      }
+   }
+   return nil
+}
+
 // ISO/IEC 14496-12
 //   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
 //      OriginalFormatBox(fmt) original_format;
@@ -24,8 +54,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
+   for _, boxVar := range b.Box {
+      data, err = boxVar.Append(data)
       if err != nil {
          return nil, err
       }
@@ -35,34 +65,4 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    return b.Schi.Append(data)
-}
-
-func (b *Box) Read(data []byte) error {
-   for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
-      if err != nil {
-         return err
-      }
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
-      case "frma":
-         b.Frma.BoxHeader = box1.BoxHeader
-         err := b.Frma.Read(box1.Payload)
-         if err != nil {
-            return err
-         }
-      case "schi":
-         err := b.Schi.Read(box1.Payload)
-         if err != nil {
-            return err
-         }
-         b.Schi.BoxHeader = box1.BoxHeader
-      case "schm": // Roku
-         b.Box = append(b.Box, box1)
-      default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
-      }
-   }
-   return nil
 }

@@ -2,13 +2,79 @@ package mp4parser
 
 import (
    "bytes"
+   "errors"
+   "fmt"
+   "log"
    "os"
    "testing"
 )
 
+func do_parse(name string) error {
+   name = folder + name
+   log.Print(name)
+   sampleFMP4, err := os.ReadFile(name)
+   if err != nil {
+      return err
+   }
+   parser := NewParser(sampleFMP4)
+   var (
+      parsedBoxes     []*Box
+      totalParsedSize uint64
+   )
+   for parser.HasMore() {
+      box, err := parser.ParseNextBox()
+      if err != nil {
+         return fmt.Errorf("Failed to parse box: %v", err)
+      }
+      if box == nil {
+         break
+      }
+      parsedBoxes = append(parsedBoxes, box)
+      totalParsedSize += box.Header.Size
+   }
+   if totalParsedSize != uint64(len(sampleFMP4)) {
+      return fmt.Errorf(
+         "did not consume the entire file: got %d bytes, want %d bytes",
+         totalParsedSize, len(sampleFMP4),
+      )
+   }
+   formattedBuffer := new(bytes.Buffer)
+   for _, box := range parsedBoxes {
+      formattedBytes, err := box.Format()
+      if err != nil {
+         return fmt.Errorf("format box of type '%s': %v", box.Header.Type, err)
+      }
+      formattedBuffer.Write(formattedBytes)
+   }
+   formattedData := formattedBuffer.Bytes()
+   if len(sampleFMP4) != len(formattedData) {
+      return fmt.Errorf(
+         "original is %d bytes, formatted is %d bytes",
+         len(sampleFMP4), len(formattedData),
+      )
+   }
+   if !bytes.Equal(sampleFMP4, formattedData) {
+      return errors.New("formatted data does not match original data")
+   }
+   return nil
+}
+
+func TestParser(t *testing.T) {
+   for _, test := range parser_tests {
+      err := do_parse(test.init)
+      if err != nil {
+         t.Fatal(err)
+      }
+      err = do_parse(test.segment)
+      if err != nil {
+         t.Fatal(err)
+      }
+   }
+}
+
 const folder = "../../testdata/"
 
-var parser_names = []struct{
+var parser_tests = []struct{
    init string
    segment string
 }{
@@ -73,69 +139,19 @@ var parser_names = []struct{
       "roku-mp4a/index_audio_2_0_init.mp4",
    },
    {
-      "../../testdata/criterion-mp4a/sid=0.mp4",
+      "criterion-mp4a/sid=0.mp4",
       "",
    },
    {
-      "../../testdata/criterion-avc1/0-804.mp4",
+      "criterion-avc1/0-804.mp4",
       "",
    },
    {
       "",
-      "../../testdata/hulu-avc1/pts_0.mp4",
+      "hulu-avc1/pts_0.mp4",
    },
    {
-      "../../testdata/rtbf/vod-idx-video=4000000.dash",
+      "rtbf/vod-idx-video=4000000.dash",
       "",
    },
-}
-
-func TestParser(t *testing.T) {
-   for _, name := range parser_names {
-      t.Log(name)
-      sampleFMP4, err := os.ReadFile(name)
-      if err != nil {
-         t.Fatal(err)
-      }
-      parser := NewParser(sampleFMP4)
-      var (
-         parsedBoxes     []*Box
-         totalParsedSize uint64
-      )
-      for parser.HasMore() {
-         box, err := parser.ParseNextBox()
-         if err != nil {
-            t.Fatalf("Failed to parse box: %v", err)
-         }
-         if box == nil {
-            break
-         }
-         parsedBoxes = append(parsedBoxes, box)
-         totalParsedSize += box.Header.Size
-      }
-      if totalParsedSize != uint64(len(sampleFMP4)) {
-         t.Errorf(
-            "did not consume the entire file: got %d bytes, want %d bytes",
-            totalParsedSize, len(sampleFMP4),
-         )
-      }
-      formattedBuffer := new(bytes.Buffer)
-      for _, box := range parsedBoxes {
-         formattedBytes, err := box.Format()
-         if err != nil {
-            t.Fatalf("format box of type '%s': %v", box.Header.Type, err)
-         }
-         formattedBuffer.Write(formattedBytes)
-      }
-      formattedData := formattedBuffer.Bytes()
-      if len(sampleFMP4) != len(formattedData) {
-         t.Fatalf(
-            "original is %d bytes, formatted is %d bytes",
-            len(sampleFMP4), len(formattedData),
-         )
-      }
-      if !bytes.Equal(sampleFMP4, formattedData) {
-         t.Errorf("formatted data does not match original data")
-      }
-   }
 }

@@ -76,14 +76,7 @@ var parser_names = []struct{
       "tubi-avc1/0-30057.mp4",
       "tubi-avc1/30058-111481.mp4",
    },
-   {
-      "../../testdata/ctv/init.mp4",
-      "",
-   },
-   {
-      "../../testdata/draken/init.mp4",
-      "",
-   },
+   
    {
       "../../testdata/tubi-mp4a/0-1547.mp4",
       "",

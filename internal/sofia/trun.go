@@ -1,23 +1,20 @@
+// File: trun_box.go
 package mp4parser
 
-// TrunBox (Track Run Box)
 type TrunBox struct {
    FullBox
    SampleCount      uint32
-   DataOffset       int32  // optional
-   FirstSampleFlags uint32 // optional
+   DataOffset       int32
+   FirstSampleFlags uint32
    Samples          []TrunSample
 }
-
-// TrunSample holds information for a single sample in a track run.
 type TrunSample struct {
-   SampleDuration              uint32 // optional
-   SampleSize                  uint32 // optional
-   SampleFlags                 uint32 // optional
-   SampleCompositionTimeOffset int32  // optional, signed
+   SampleDuration              uint32
+   SampleSize                  uint32
+   SampleFlags                 uint32
+   SampleCompositionTimeOffset int32
 }
 
-// ParseTrunBox parses the TrunBox from its content slice.
 func ParseTrunBox(data []byte) (*TrunBox, error) {
    b := &TrunBox{}
    offset, err := b.FullBox.Parse(data, 0)
@@ -32,10 +29,10 @@ func ParseTrunBox(data []byte) (*TrunBox, error) {
    if flags&0x000001 != 0 {
       var val uint32
       val, offset, err = readUint32(data, offset)
-      b.DataOffset = int32(val)
       if err != nil {
          return nil, err
       }
+      b.DataOffset = int32(val)
    }
    if flags&0x000004 != 0 {
       b.FirstSampleFlags, offset, err = readUint32(data, offset)
@@ -67,28 +64,24 @@ func ParseTrunBox(data []byte) (*TrunBox, error) {
       if flags&0x000800 != 0 {
          var val uint32
          val, offset, err = readUint32(data, offset)
-         sample.SampleCompositionTimeOffset = int32(val)
          if err != nil {
             return nil, err
          }
+         sample.SampleCompositionTimeOffset = int32(val)
       }
       b.Samples[i] = sample
    }
    return b, nil
 }
-
-// Size calculates the total byte size of the TrunBox.
 func (b *TrunBox) Size() uint64 {
-   size := uint64(8) // Header
-   size += b.FullBox.Size()
-   size += 4 // SampleCount
+   size := uint64(8) + b.FullBox.Size() + 4
    flags := uint32(b.Flags[0])<<16 | uint32(b.Flags[1])<<8 | uint32(b.Flags[2])
    if flags&0x000001 != 0 {
       size += 4
-   } // DataOffset
+   }
    if flags&0x000004 != 0 {
       size += 4
-   } // FirstSampleFlags
+   }
    sampleSize := uint64(0)
    if flags&0x000100 != 0 {
       sampleSize += 4
@@ -105,8 +98,6 @@ func (b *TrunBox) Size() uint64 {
    size += uint64(len(b.Samples)) * sampleSize
    return size
 }
-
-// Format serializes the TrunBox into the destination slice and returns the new offset.
 func (b *TrunBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
    offset = writeString(dst, offset, "trun")

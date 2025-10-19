@@ -1,15 +1,9 @@
 // File: mdat_box.go
 package mp4parser
 
-// MdatBox (Media Data Box)
-type MdatBox struct {
-   Data []byte
-}
+type MdatBox struct{ Data []byte }
 
-func ParseMdatBox(data []byte) (*MdatBox, error) {
-   return &MdatBox{Data: data}, nil
-}
-
+func ParseMdatBox(data []byte) (*MdatBox, error) { return &MdatBox{Data: data}, nil }
 func (b *MdatBox) Size() uint64 {
    size := uint64(8 + len(b.Data))
    if size > 0xFFFFFFFF {
@@ -17,7 +11,6 @@ func (b *MdatBox) Size() uint64 {
    }
    return size
 }
-
 func (b *MdatBox) Format(dst []byte, offset int) int {
    totalSize := uint64(8 + len(b.Data))
    if totalSize > 0xFFFFFFFF {

@@ -1,3 +1,4 @@
+// File: trak_box.go
 package mp4parser
 
 type TrakChildBox struct {
@@ -14,7 +15,6 @@ func (c *TrakChildBox) Size() uint64 {
    }
    return 0
 }
-
 func (c *TrakChildBox) Format(dst []byte, offset int) int {
    if c.Mdia != nil {
       return c.Mdia.Format(dst, offset)
@@ -55,7 +55,6 @@ func ParseTrakBox(data []byte) (*TrakBox, error) {
    }
    return b, nil
 }
-
 func (b *TrakBox) Size() uint64 {
    size := uint64(8)
    for _, child := range b.Children {
@@ -63,7 +62,6 @@ func (b *TrakBox) Size() uint64 {
    }
    return size
 }
-
 func (b *TrakBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
    offset = writeString(dst, offset, "trak")

@@ -1,13 +1,12 @@
+// File: moov_box.go
 package mp4parser
 
-// MoovChildBox can hold any of the parsed child types or a raw box.
 type MoovChildBox struct {
    Trak *TrakBox
    Pssh *PsshBox
    Raw  *RawBox
 }
 
-// Size calculates the size of the contained child.
 func (c *MoovChildBox) Size() uint64 {
    switch {
    case c.Trak != nil:
@@ -19,8 +18,6 @@ func (c *MoovChildBox) Size() uint64 {
    }
    return 0
 }
-
-// Format formats the contained child.
 func (c *MoovChildBox) Format(dst []byte, offset int) int {
    switch {
    case c.Trak != nil:
@@ -33,12 +30,8 @@ func (c *MoovChildBox) Format(dst []byte, offset int) int {
    return offset
 }
 
-// MoovBox (Movie Box)
-type MoovBox struct {
-   Children []*MoovChildBox
-}
+type MoovBox struct{ Children []*MoovChildBox }
 
-// ParseMoovBox parses the MoovBox from its content slice.
 func ParseMoovBox(data []byte) (*MoovBox, error) {
    b := &MoovBox{}
    offset := 0
@@ -69,8 +62,6 @@ func ParseMoovBox(data []byte) (*MoovBox, error) {
    }
    return b, nil
 }
-
-// Size calculates the total byte size of the MoovBox.
 func (b *MoovBox) Size() uint64 {
    size := uint64(8)
    for _, child := range b.Children {
@@ -78,8 +69,6 @@ func (b *MoovBox) Size() uint64 {
    }
    return size
 }
-
-// Format serializes the MoovBox into the destination slice.
 func (b *MoovBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
    offset = writeString(dst, offset, "moov")

@@ -25,16 +25,16 @@ var parser_names = []struct{
       "cineMember-avc1/video_eng=108536-0.dash",
    },
    {
-      "max-dvh1/init.mp4",
-      "max-dvh1/segment-1.0001.m4s",
+      "hboMax-dvh1/init.mp4",
+      "hboMax-dvh1/segment-1.0001.m4s",
    },
    {
-      "max-ec-3/bytes=0-19985.mp4",
-      "max-ec-3/bytes=19986-149146.mp4",
+      "hboMax-ec-3/bytes=0-19985.mp4",
+      "hboMax-ec-3/bytes=19986-149146.mp4",
    },
    {
-      "max-hvc1/init.mp4",
-      "max-hvc1/segment-1.0001.m4s",
+      "hboMax-hvc1/init.mp4",
+      "hboMax-hvc1/segment-1.0001.m4s",
    },
    {
       "mubi-avc1/video=300168-0.dash",
@@ -72,21 +72,12 @@ var parser_names = []struct{
       "roku-mp4a/index_audio_2_0_1.mp4",
       "roku-mp4a/index_audio_2_0_init.mp4",
    },
-   
    {
-      "tubi-avc1/0-30057.mp4",
-      "tubi-avc1/30058-111481.mp4",
-   },
-   {
-      "../../testdata/tubi-mp4a/0-1547.mp4",
+      "../../testdata/criterion-mp4a/sid=0.mp4",
       "",
    },
    {
       "../../testdata/criterion-avc1/0-804.mp4",
-      "",
-   },
-   {
-      "../../testdata/criterion-mp4a/sid=0.mp4",
       "",
    },
    {

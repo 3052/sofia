@@ -6,8 +6,8 @@ import (
 )
 
 var mdat_tests = []string{
-   "../testdata/max-ec-3/segment-1024.m4s",
-   "../testdata/max-ec-3/segment-512.m4s",
+   "../testdata/hboMax-ec-3/segment-1024.m4s",
+   "../testdata/hboMax-ec-3/segment-512.m4s",
 }
 
 func TestMdat(t *testing.T) {

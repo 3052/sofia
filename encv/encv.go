@@ -82,15 +82,40 @@ func (s *SampleEntry) Read(data []byte) error {
       }
       data = data[box.BoxHeader.Size:]
       switch box.BoxHeader.Type.String() {
-      case "avcC", // Roku
-         "btrt", // Mubi
-         "clli", // Max
-         "colr", // Paramount
-         "dvcC", // Max
-         "dvvC", // Max
-         "hvcC", // Hulu
-         "mdcv", // Max
-         "pasp": // Roku
+      case
+         // hboMax-hvc1
+         "clli",
+         // hboMax-dvh1
+         "dvcC",
+         // hboMax-hvc1
+         "dvvC",
+         // hboMax-hvc1
+         "mdcv",
+         // amc-avc1
+         // cineMember-avc1
+         // criterion-avc1
+         // mubi-avc1
+         // nbc-avc1
+         // paramount-avc1
+         // plex-avc1
+         // roku-avc1
+         // rtbf-avc1
+         // tubi-avc1
+         "avcC",
+         // cineMember-avc1
+         // criterion-mp4a
+         // mubi-avc1
+         // rtbf-avc1
+         "btrt",
+         // criterion-avc1
+         // paramount-avc1
+         "colr",
+         // hboMax-dvh1
+         // hboMax-hvc1
+         "hvcC",
+         // nbc-avc1
+         // roku-avc1
+         "pasp":
          s.Box = append(s.Box, &box)
       case "sinf":
          s.Sinf.BoxHeader = box.BoxHeader

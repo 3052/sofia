@@ -28,7 +28,7 @@ func (b *Box) Read(data []byte) error {
       data = data[box1.BoxHeader.Size:]
       switch box1.BoxHeader.Type.String() {
       case "avc1", // Roku
-         "ec-3", // Max
+         "ec-3", // hboMax-ec-3
          "mp4a": // Roku
          b.Box = append(b.Box, box1)
       case "enca":

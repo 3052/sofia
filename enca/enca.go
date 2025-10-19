@@ -6,6 +6,54 @@ import (
    "encoding/binary"
 )
 
+func (s *SampleEntry) Read(data []byte) error {
+   n, err := s.SampleEntry.Decode(data)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   n, err = binary.Decode(data, binary.BigEndian, &s.S)
+   if err != nil {
+      return err
+   }
+   data = data[n:]
+   for len(data) > 1 {
+      var box sofia.Box
+      err := box.Read(data)
+      if err != nil {
+         return err
+      }
+      data = data[box.BoxHeader.Size:]
+      switch box.BoxHeader.Type.String() {
+      case
+         // cineMember-avc1
+         // criterion-mp4a
+         // mubi-avc1
+         // rtbf-avc1
+         "btrt",
+         // hbomax-ec-3
+         "dec3",
+         // amc-mp4a
+         // criterion-mp4a
+         // mubi-mp4a
+         // nbc-mp4a
+         // paramount-mp4a
+         // roku-mp4a
+         "esds":
+         s.Box = append(s.Box, &box)
+      case "sinf":
+         s.Sinf.BoxHeader = box.BoxHeader
+         err = s.Sinf.Read(box.Payload)
+         if err != nil {
+            return err
+         }
+      default:
+         return &sofia.BoxError{s.SampleEntry.BoxHeader, box.BoxHeader}
+      }
+   }
+   return nil
+}
+
 // ISO/IEC 14496-12
 //
 //   class AudioSampleEntry(codingname) extends SampleEntry(codingname) {
@@ -46,40 +94,4 @@ func (s *SampleEntry) Append(data []byte) ([]byte, error) {
       }
    }
    return s.Sinf.Append(data)
-}
-
-func (s *SampleEntry) Read(data []byte) error {
-   n, err := s.SampleEntry.Decode(data)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   n, err = binary.Decode(data, binary.BigEndian, &s.S)
-   if err != nil {
-      return err
-   }
-   data = data[n:]
-   for len(data) > 1 {
-      var box sofia.Box
-      err := box.Read(data)
-      if err != nil {
-         return err
-      }
-      data = data[box.BoxHeader.Size:]
-      switch box.BoxHeader.Type.String() {
-      case "btrt", // Criterion
-         "dec3", // Hulu
-         "esds": // Roku
-         s.Box = append(s.Box, &box)
-      case "sinf":
-         s.Sinf.BoxHeader = box.BoxHeader
-         err = s.Sinf.Read(box.Payload)
-         if err != nil {
-            return err
-         }
-      default:
-         return &sofia.BoxError{s.SampleEntry.BoxHeader, box.BoxHeader}
-      }
-   }
-   return nil
 }

@@ -10,17 +10,17 @@ import (
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
+      var boxVar sofia.Box
+      err := boxVar.Read(data)
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", box1.BoxHeader)
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
+      slog.Debug("box", "header", boxVar.BoxHeader)
+      data = data[boxVar.BoxHeader.Size:]
+      switch boxVar.BoxHeader.Type.String() {
       case "senc":
-         b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
-         err := b.Senc.Read(box1.Payload)
+         b.Senc = &senc.Box{BoxHeader: boxVar.BoxHeader}
+         err := b.Senc.Read(boxVar.Payload)
          if err != nil {
             return err
          }
@@ -42,35 +42,76 @@ func (b *Box) Read(data []byte) error {
          // roku-avc1
          // roku-mp4a
          "saio",
-         "saiz", // Roku
-         "sbgp", // Roku
-         "sgpd", // Roku
-         "tfdt": // Roku
-         b.Box = append(b.Box, &box1)
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // hulu-avc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         "saiz",
+         // criterion-avc1
+         // paramount-mp4a
+         // roku-avc1
+         // roku-mp4a
+         "sbgp",
+         // criterion-avc1
+         // paramount-mp4a
+         // roku-avc1
+         // roku-mp4a
+         "sgpd",
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // hulu-avc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         // tubi-avc1
+         "tfdt":
+         b.Box = append(b.Box, &boxVar)
       case "tfhd":
-         b.Tfhd.BoxHeader = box1.BoxHeader
-         err := b.Tfhd.Read(box1.Payload)
+         b.Tfhd.BoxHeader = boxVar.BoxHeader
+         err := b.Tfhd.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       case "trun":
-         b.Trun.BoxHeader = box1.BoxHeader
-         err := b.Trun.Read(box1.Payload)
+         b.Trun.BoxHeader = boxVar.BoxHeader
+         err := b.Trun.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       case "uuid":
-         if b.piff(&box1) {
-            b.Senc = &senc.Box{BoxHeader: box1.BoxHeader}
-            err := b.Senc.Read(box1.Payload)
+         if b.piff(&boxVar) {
+            b.Senc = &senc.Box{BoxHeader: boxVar.BoxHeader}
+            err := b.Senc.Read(boxVar.Payload)
             if err != nil {
                return err
             }
          } else {
-            b.Box = append(b.Box, &box1)
+            b.Box = append(b.Box, &boxVar)
          }
       default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
       }
    }
    return nil
@@ -92,8 +133,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
+   for _, boxVar := range b.Box {
+      data, err = boxVar.Append(data)
       if err != nil {
          return nil, err
       }
@@ -111,8 +152,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    return b.Trun.Append(data)
 }
 
-func (b *Box) piff(box1 *sofia.Box) bool {
-   if box1.BoxHeader.UserType.String() == sofia.PiffExtendedType {
+func (b *Box) piff(boxVar *sofia.Box) bool {
+   if boxVar.BoxHeader.UserType.String() == sofia.PiffExtendedType {
       if b.Senc == nil {
          return true
       }

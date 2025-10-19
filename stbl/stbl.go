@@ -20,8 +20,9 @@ func (b *Box) Read(data []byte) error {
          if err != nil {
             return err
          }
-      case "ctts", // FFmpeg
-         "sbgp", // Criterion
+      case
+         // criterion-avc1
+         "sbgp",
          "sgpd", // Paramount
          "stco", // Roku
          "stsc", // Roku

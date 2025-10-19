@@ -20,33 +20,36 @@ func (b *Box) Read(data []byte) error {
    }
    data = data[n:]
    for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
+      var boxVar sofia.Box
+      err := boxVar.Read(data)
       if err != nil {
          return err
       }
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
-      case "avc1", // Roku
-         "ec-3", // hboMax-ec-3
-         "mp4a": // Roku
-         b.Box = append(b.Box, box1)
+      data = data[boxVar.BoxHeader.Size:]
+      switch boxVar.BoxHeader.Type.String() {
+      case
+         // rtbf-avc1
+         // tubi-avc1
+         "avc1",
+         // hboMax-ec-3
+         "ec-3":
+         b.Box = append(b.Box, boxVar)
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
-         b.AudioSample.SampleEntry.BoxHeader = box1.BoxHeader
-         err := b.AudioSample.Read(box1.Payload)
+         b.AudioSample.SampleEntry.BoxHeader = boxVar.BoxHeader
+         err := b.AudioSample.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       case "encv":
          b.VisualSample = &encv.SampleEntry{}
-         b.VisualSample.SampleEntry.BoxHeader = box1.BoxHeader
-         err := b.VisualSample.Read(box1.Payload)
+         b.VisualSample.SampleEntry.BoxHeader = boxVar.BoxHeader
+         err := b.VisualSample.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
       }
    }
    return nil
@@ -62,8 +65,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       return nil, err
    }
    data = binary.BigEndian.AppendUint32(data, b.EntryCount)
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
+   for _, boxVar := range b.Box {
+      data, err = boxVar.Append(data)
       if err != nil {
          return nil, err
       }

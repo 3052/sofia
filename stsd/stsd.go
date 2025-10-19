@@ -8,44 +8,6 @@ import (
    "encoding/binary"
 )
 
-func (b *Box) Sinf() (*sinf.Box, bool) {
-   if as := b.AudioSample; as != nil {
-      return &as.Sinf, true
-   }
-   if vs := b.VisualSample; vs != nil {
-      return &vs.Sinf, true
-   }
-   return nil, false
-}
-
-func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
-   if as := b.AudioSample; as != nil {
-      return &as.SampleEntry, true
-   }
-   if vs := b.VisualSample; vs != nil {
-      return &vs.SampleEntry, true
-   }
-   return nil, false
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
-//      int i ;
-//      unsigned int(32) entry_count;
-//      for (i = 1 ; i <= entry_count ; i++){
-//         SampleEntry(); // an instance of a class derived from SampleEntry
-//      }
-//   }
-type Box struct {
-   BoxHeader     sofia.BoxHeader
-   FullBoxHeader sofia.FullBoxHeader
-   EntryCount    uint32
-   Box           []sofia.Box
-   AudioSample   *enca.SampleEntry
-   VisualSample  *encv.SampleEntry
-}
-
 func (b *Box) Read(data []byte) error {
    n, err := binary.Decode(data, binary.BigEndian, &b.FullBoxHeader)
    if err != nil {
@@ -65,9 +27,9 @@ func (b *Box) Read(data []byte) error {
       }
       data = data[box1.BoxHeader.Size:]
       switch box1.BoxHeader.Type.String() {
-      case "avc1", // Tubi
+      case "avc1", // Roku
          "ec-3", // Max
-         "mp4a": // Tubi
+         "mp4a": // Roku
          b.Box = append(b.Box, box1)
       case "enca":
          b.AudioSample = &enca.SampleEntry{}
@@ -119,4 +81,41 @@ func (b *Box) Append(data []byte) ([]byte, error) {
       }
    }
    return data, nil
+}
+func (b *Box) Sinf() (*sinf.Box, bool) {
+   if as := b.AudioSample; as != nil {
+      return &as.Sinf, true
+   }
+   if vs := b.VisualSample; vs != nil {
+      return &vs.Sinf, true
+   }
+   return nil, false
+}
+
+func (b *Box) SampleEntry() (*sofia.SampleEntry, bool) {
+   if as := b.AudioSample; as != nil {
+      return &as.SampleEntry, true
+   }
+   if vs := b.VisualSample; vs != nil {
+      return &vs.SampleEntry, true
+   }
+   return nil, false
+}
+
+// ISO/IEC 14496-12
+//
+//   aligned(8) class SampleDescriptionBox() extends FullBox('stsd', version, 0) {
+//      int i ;
+//      unsigned int(32) entry_count;
+//      for (i = 1 ; i <= entry_count ; i++){
+//         SampleEntry(); // an instance of a class derived from SampleEntry
+//      }
+//   }
+type Box struct {
+   BoxHeader     sofia.BoxHeader
+   FullBoxHeader sofia.FullBoxHeader
+   EntryCount    uint32
+   Box           []sofia.Box
+   AudioSample   *enca.SampleEntry
+   VisualSample  *encv.SampleEntry
 }

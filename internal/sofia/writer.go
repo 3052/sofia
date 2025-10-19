@@ -8,6 +8,11 @@ func writeUint8(dst []byte, offset int, val uint8) int {
    return offset + 1
 }
 
+func writeUint16(dst []byte, offset int, val uint16) int {
+   binary.BigEndian.PutUint16(dst[offset:], val)
+   return offset + 2
+}
+
 func writeUint32(dst []byte, offset int, val uint32) int {
    binary.BigEndian.PutUint32(dst[offset:], val)
    return offset + 4

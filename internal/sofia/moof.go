@@ -1,3 +1,4 @@
+// File: moof_box.go
 package mp4parser
 
 type MoofChildBox struct {

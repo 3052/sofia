@@ -36,16 +36,20 @@ func ParseSchiBox(data []byte) (*SchiBox, error) {
          return nil, err
       }
       contentEndOffset := offset + int(header.Size)
+      if contentEndOffset > len(data) {
+         return nil, ErrUnexpectedEOF
+      }
       content := data[headerEndOffset:contentEndOffset]
       child := &SchiChildBox{}
+      var errParse error
       switch header.Type {
       case "tenc":
-         child.Tenc, err = ParseTencBox(content)
+         child.Tenc, errParse = ParseTencBox(content)
       default:
-         child.Raw, err = ParseRawBox(header.Type, content)
+         child.Raw, errParse = ParseRawBox(header.Type, content)
       }
-      if err != nil {
-         return nil, err
+      if errParse != nil {
+         return nil, errParse
       }
       b.Children = append(b.Children, child)
       offset = contentEndOffset

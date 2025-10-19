@@ -1,12 +1,11 @@
+// File: enca_box.go
 package mp4parser
 
-// EncaChildBox can hold any of the parsed child types or a raw box.
 type EncaChildBox struct {
    Sinf *SinfBox
    Raw  *RawBox
 }
 
-// Size calculates the size of the contained child.
 func (c *EncaChildBox) Size() uint64 {
    if c.Sinf != nil {
       return c.Sinf.Size()
@@ -16,8 +15,6 @@ func (c *EncaChildBox) Size() uint64 {
    }
    return 0
 }
-
-// Format formats the contained child.
 func (c *EncaChildBox) Format(dst []byte, offset int) int {
    if c.Sinf != nil {
       return c.Sinf.Format(dst, offset)
@@ -28,27 +25,19 @@ func (c *EncaChildBox) Format(dst []byte, offset int) int {
    return offset
 }
 
-// EncaBox (Encrypted Audio Sample Entry)
 type EncaBox struct {
-   Type string
-   // The 28 bytes of the AudioSampleEntry prefix.
+   Type     string
    Prefix   []byte
    Children []*EncaChildBox
 }
 
-// ParseEncaBox parses the EncaBox from its content slice.
 func ParseEncaBox(data []byte) (*EncaBox, error) {
-   b := &EncaBox{}
-   b.Type = "enca" // Default to the parsed type.
-
-   // AudioSampleEntry has a 28-byte prefix before its child boxes.
+   b := &EncaBox{Type: "enca"}
    const prefixSize = 28
    if len(data) < prefixSize {
       return nil, ErrUnexpectedEOF
    }
    b.Prefix = data[:prefixSize]
-
-   // Child boxes start AFTER the prefix.
    offset := prefixSize
    for offset < len(data) {
       header, headerEndOffset, err := ParseBoxHeader(data, offset)
@@ -75,8 +64,6 @@ func ParseEncaBox(data []byte) (*EncaBox, error) {
    }
    return b, nil
 }
-
-// Size calculates the total byte size of the EncaBox.
 func (b *EncaBox) Size() uint64 {
    size := uint64(8 + len(b.Prefix))
    for _, child := range b.Children {
@@ -84,8 +71,6 @@ func (b *EncaBox) Size() uint64 {
    }
    return size
 }
-
-// Format serializes the EncaBox into the destination slice using its Type field.
 func (b *EncaBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
    offset = writeString(dst, offset, b.Type)

@@ -3,17 +3,15 @@ package mp4parser
 
 import "fmt"
 
-// Box is a container for a parsed top-level MP4 box.
 type Box struct {
    Header *BoxHeader
    Moov   *MoovBox
    Moof   *MoofBox
    Mdat   *MdatBox
    Sidx   *SidxBox
-   Raw    *RawBox // For ftyp and any other non-parsed top-level boxes
+   Raw    *RawBox
 }
 
-// Size calculates the total size of the contained top-level box.
 func (b *Box) Size() uint64 {
    switch {
    case b.Moov != nil:
@@ -26,12 +24,9 @@ func (b *Box) Size() uint64 {
       return b.Sidx.Size()
    case b.Raw != nil:
       return b.Raw.Size()
-   default:
-      return 0
    }
+   return 0
 }
-
-// Format serializes the top-level box into a new byte slice.
 func (b *Box) Format() ([]byte, error) {
    size := b.Size()
    if size == 0 {

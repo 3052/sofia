@@ -23,12 +23,91 @@ func (b *Box) Read(data []byte) error {
       case
          // criterion-avc1
          "sbgp",
-         "sgpd", // Paramount
-         "stco", // Roku
-         "stsc", // Roku
-         "stss", // CineMember
-         "stsz", // Roku
-         "stts": // Roku
+         // criterion-avc1
+         // paramount-mp4a
+         "sgpd",
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // criterion-avc1
+         // criterion-mp4a
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         // rtbf-avc1
+         // tubi-avc1
+         "stco",
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // criterion-avc1
+         // criterion-mp4a
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         // rtbf-avc1
+         // tubi-avc1
+         "stsc",
+         // cineMember-avc1
+         "stss",
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // criterion-avc1
+         // criterion-mp4a
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         // rtbf-avc1
+         // tubi-avc1
+         "stsz",
+         // amc-avc1
+         // amc-mp4a
+         // cineMember-avc1
+         // criterion-avc1
+         // criterion-mp4a
+         // hboMax-dvh1
+         // hboMax-ec-3
+         // hboMax-hvc1
+         // mubi-avc1
+         // mubi-mp4a
+         // nbc-avc1
+         // nbc-mp4a
+         // paramount-avc1
+         // paramount-mp4a
+         // plex-avc1
+         // roku-avc1
+         // roku-mp4a
+         // rtbf-avc1
+         // tubi-avc1
+         "stts":
          b.Box = append(b.Box, box1)
       default:
          return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}

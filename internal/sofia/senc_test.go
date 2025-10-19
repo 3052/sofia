@@ -1,4 +1,3 @@
-// File: senc_test.go
 package mp4parser
 
 import (
@@ -8,7 +7,6 @@ import (
 
 // buildTestInitSegment programmatically creates a valid init segment byte slice.
 func buildTestInitSegment() []byte {
-   // Build the box structure from the inside out.
    tencBox := &TencBox{
       RemainingData: []byte{
          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08,
@@ -25,12 +23,7 @@ func buildTestInitSegment() []byte {
    mdhdBox := &MdhdBox{RemainingData: make([]byte, 24)}
    minfBox := &MinfBox{Children: []*MinfChildBox{{Stbl: stblBox}}}
    mdiaBox := &MdiaBox{Children: []*MdiaChildBox{{Mdhd: mdhdBox}, {Minf: minfBox}}}
-
-   // THIS IS THE CORRECTED PART
-   trakBox := &TrakBox{
-      Children: []*TrakChildBox{{Mdia: mdiaBox}}, // Correctly use []*TrakChildBox
-   }
-
+   trakBox := &TrakBox{Children: []*TrakChildBox{{Mdia: mdiaBox}}}
    moovBox := &MoovBox{Children: []*MoovChildBox{{Trak: trakBox}}}
    topLevelBox := Box{Moov: moovBox}
    finalBytes, err := topLevelBox.Format()
@@ -49,66 +42,138 @@ var sampleSegmentWithSenc = []byte{
    0x00, 0x00, 0x00, 0x32, 't', 'r', 'a', 'f',
    // senc box (raw)
    0x00, 0x00, 0x00, 0x2A, 's', 'e', 'n', 'c',
-   0x00, 0x00, 0x00, 0x02,
-   0x00, 0x00, 0x00, 0x02,
+   0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02,
    0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
-   0x00, 0x01,
-   0x12, 0x34,
-   0x00, 0x00, 0x56, 0x78,
+   0x00, 0x01, 0x12, 0x34, 0x00, 0x00, 0x56, 0x78,
    0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
    0x00, 0x00,
 }
 
-func TestParseSencWithContext(t *testing.T) {
-   var perSampleIVSize uint8
-   initParser := NewParser(sampleInitWithTenc)
+// --- Navigation Helper Functions ---
 
-   moovBox, err := initParser.ParseNextBox()
-   if err != nil || moovBox.Moov == nil {
+func findTrak(moov *MoovBox) *TrakBox {
+   for _, child := range moov.Children {
+      if child.Trak != nil {
+         return child.Trak
+      }
+   }
+   return nil
+}
+
+func findMdia(trak *TrakBox) *MdiaBox {
+   for _, child := range trak.Children {
+      if child.Mdia != nil {
+         return child.Mdia
+      }
+   }
+   return nil
+}
+
+func findMinf(mdia *MdiaBox) *MinfBox {
+   for _, child := range mdia.Children {
+      if child.Minf != nil {
+         return child.Minf
+      }
+   }
+   return nil
+}
+
+func findStbl(minf *MinfBox) *StblBox {
+   for _, child := range minf.Children {
+      if child.Stbl != nil {
+         return child.Stbl
+      }
+   }
+   return nil
+}
+
+func findStsd(stbl *StblBox) *StsdBox {
+   for _, child := range stbl.Children {
+      if child.Stsd != nil {
+         return child.Stsd
+      }
+   }
+   return nil
+}
+
+func findEncv(stsd *StsdBox) *EncvBox {
+   for _, child := range stsd.Children {
+      if child.Encv != nil {
+         return child.Encv
+      }
+   }
+   return nil
+}
+
+func findSinf(encv *EncvBox) *SinfBox {
+   for _, child := range encv.Children {
+      if child.Sinf != nil {
+         return child.Sinf
+      }
+   }
+   return nil
+}
+
+func findSchi(sinf *SinfBox) *SchiBox {
+   for _, child := range sinf.Children {
+      if child.Schi != nil {
+         return child.Schi
+      }
+   }
+   return nil
+}
+
+func findTenc(schi *SchiBox) *TencBox {
+   for _, child := range schi.Children {
+      if child.Tenc != nil {
+         return child.Tenc
+      }
+   }
+   return nil
+}
+
+func TestParseSencWithContext(t *testing.T) {
+   // --- Step 1: Parse the Initialization Segment and navigate to 'tenc' ---
+   initParser := NewParser(sampleInitWithTenc)
+   initBox, err := initParser.ParseNextBox()
+   if err != nil || initBox.Moov == nil {
       t.Fatalf("Failed to parse moov box from init segment: %v", err)
    }
 
-   var tencBox *TencBox
-   // Robustly navigate to the 'tenc' box
-   for _, moovChild := range moovBox.Moov.Children {
-      if moovChild.Trak != nil {
-         for _, trakChild := range moovChild.Trak.Children {
-            if trakChild.Mdia != nil {
-               for _, mdiaChild := range trakChild.Mdia.Children {
-                  if mdiaChild.Minf != nil {
-                     for _, minfChild := range mdiaChild.Minf.Children {
-                        if minfChild.Stbl != nil {
-                           for _, stblChild := range minfChild.Stbl.Children {
-                              if stblChild.Stsd != nil {
-                                 for _, stsdChild := range stblChild.Stsd.Children {
-                                    if stsdChild.Encv != nil {
-                                       for _, encvChild := range stsdChild.Encv.Children {
-                                          if encvChild.Sinf != nil {
-                                             for _, sinfChild := range encvChild.Sinf.Children {
-                                                if sinfChild.Schi != nil {
-                                                   for _, schiChild := range sinfChild.Schi.Children {
-                                                      if schiChild.Tenc != nil {
-                                                         tencBox = schiChild.Tenc
-                                                         break
-                                                      }
-                                                   }
-                                                }
-                                             }
-                                          }
-                                       }
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
+   // Use the helper functions to navigate cleanly, checking for errors at each step.
+   trak := findTrak(initBox.Moov)
+   if trak == nil {
+      t.Fatal("Failed to find 'trak' box")
    }
-
+   mdia := findMdia(trak)
+   if mdia == nil {
+      t.Fatal("Failed to find 'mdia' box")
+   }
+   minf := findMinf(mdia)
+   if minf == nil {
+      t.Fatal("Failed to find 'minf' box")
+   }
+   stbl := findStbl(minf)
+   if stbl == nil {
+      t.Fatal("Failed to find 'stbl' box")
+   }
+   stsd := findStsd(stbl)
+   if stsd == nil {
+      t.Fatal("Failed to find 'stsd' box")
+   }
+   encv := findEncv(stsd)
+   if encv == nil {
+      t.Fatal("Failed to find 'encv' box")
+   }
+   sinf := findSinf(encv)
+   if sinf == nil {
+      t.Fatal("Failed to find 'sinf' box")
+   }
+   schi := findSchi(sinf)
+   if schi == nil {
+      t.Fatal("Failed to find 'schi' box")
+   }
+   tencBox := findTenc(schi)
    if tencBox == nil {
       t.Fatal("Failed to find 'tenc' box in the init segment")
    }
@@ -116,14 +181,13 @@ func TestParseSencWithContext(t *testing.T) {
    if len(tencBox.RemainingData) < 8 {
       t.Fatalf("tenc box content is too short: got %d bytes, want at least 8", len(tencBox.RemainingData))
    }
-   perSampleIVSize = tencBox.RemainingData[7]
+   perSampleIVSize := tencBox.RemainingData[7]
    if perSampleIVSize != 8 {
       t.Fatalf("Extracted incorrect perSampleIVSize: got %d, want 8", perSampleIVSize)
    }
    t.Logf("Successfully extracted perSampleIVSize = %d from init segment.", perSampleIVSize)
 
    // --- Step 2: Parse the Media Segment to find the raw 'senc' box ---
-   var rawSenc *RawBox
    mediaParser := NewParser(sampleSegmentWithSenc)
    mediaBox, err := mediaParser.ParseNextBox()
    if err != nil || mediaBox.Moof == nil {
@@ -141,6 +205,7 @@ func TestParseSencWithContext(t *testing.T) {
       t.Fatal("Failed to find 'traf' box in media segment")
    }
 
+   var rawSenc *RawBox
    for _, child := range traf.Children {
       if child.Raw != nil && child.Raw.Type == "senc" {
          rawSenc = child.Raw
@@ -161,10 +226,10 @@ func TestParseSencWithContext(t *testing.T) {
       t.Fatal("ParseSencContent returned a nil box")
    }
 
+   // Assertions
    if parsedSenc.SampleCount != 2 {
       t.Errorf("Incorrect sample count: got %d, want 2", parsedSenc.SampleCount)
    }
-
    expectedIV1 := []byte{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
    if !bytes.Equal(parsedSenc.InitializationVectors[0].IV, expectedIV1) {
       t.Errorf("Incorrect IV for sample 1: got %x, want %x", parsedSenc.InitializationVectors[0].IV, expectedIV1)
@@ -172,7 +237,6 @@ func TestParseSencWithContext(t *testing.T) {
    if len(parsedSenc.InitializationVectors[0].Subsamples) != 1 {
       t.Fatalf("Incorrect subsample count for sample 1: got %d, want 1", len(parsedSenc.InitializationVectors[0].Subsamples))
    }
-
    expectedIV2 := []byte{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
    if !bytes.Equal(parsedSenc.InitializationVectors[1].IV, expectedIV2) {
       t.Errorf("Incorrect IV for sample 2: got %x, want %x", parsedSenc.InitializationVectors[1].IV, expectedIV2)

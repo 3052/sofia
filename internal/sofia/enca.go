@@ -64,6 +64,7 @@ func ParseEncaBox(data []byte) (*EncaBox, error) {
    }
    return b, nil
 }
+
 func (b *EncaBox) Size() uint64 {
    size := uint64(8 + len(b.Prefix))
    for _, child := range b.Children {
@@ -71,6 +72,7 @@ func (b *EncaBox) Size() uint64 {
    }
    return size
 }
+
 func (b *EncaBox) Format(dst []byte, offset int) int {
    offset = writeUint32(dst, offset, uint32(b.Size()))
    offset = writeString(dst, offset, b.Type)

@@ -38,12 +38,12 @@ var parser_tests = []struct {
       "hboMax-hvc1/segment-1.0001.m4s",
    },
    {
-      "mubi-avc1/video=300168-0.dash",
       "mubi-avc1/video=300168.dash",
+      "mubi-avc1/video=300168-0.dash",
    },
    {
-      "mubi-mp4a/audio_eng=268840-0.dash",
       "mubi-mp4a/audio_eng=268840.dash",
+      "mubi-mp4a/audio_eng=268840-0.dash",
    },
    {
       "nbc-avc1/_227156876_5.mp4",
@@ -62,24 +62,24 @@ var parser_tests = []struct {
       "paramount-mp4a/seg_1.m4s",
    },
    {
-      "plex-avc1/video_1.m4s",
       "plex-avc1/video_init.mp4",
+      "plex-avc1/video_1.m4s",
    },
    {
-      "roku-avc1/index_video_8_0_1.mp4",
       "roku-avc1/index_video_8_0_init.mp4",
+      "roku-avc1/index_video_8_0_1.mp4",
    },
    {
-      "roku-mp4a/index_audio_2_0_1.mp4",
       "roku-mp4a/index_audio_2_0_init.mp4",
-   },
-   {
-      "criterion-mp4a/sid=0.mp4",
-      "",
+      "roku-mp4a/index_audio_2_0_1.mp4",
    },
    {
       "criterion-avc1/0-804.mp4",
-      "",
+      "criterion-avc1/13845-168166.mp4",
+   },
+   {
+      "criterion-mp4a/0-677.mp4",
+      "criterion-mp4a/13730-159186.mp4",
    },
    {
       "",

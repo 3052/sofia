@@ -9,14 +9,14 @@
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 24000
    - duration: 0
-   - creation time: 2024-11-20T09:01:43Z
-   - modification time: 2024-11-20T09:01:43Z
+   - creation time: 2024-12-13T23:31:09Z
+   - modification time: 2024-12-13T23:31:09Z
   [trak] size=677
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
-     - creation time: 2024-11-20T09:01:43Z
-     - modification time: 2024-11-20T09:01:43Z
+     - creation time: 2024-12-13T23:31:09Z
+     - modification time: 2024-12-13T23:31:09Z
      - Width: 426.0, Height: 240.0
     [edts] size=36
       [elst] size=28 version=0 flags=000000
@@ -24,8 +24,8 @@
     [mdia] size=541
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 24000
-       - creation time: 2024-11-20T09:01:43Z
-       - modification time: 2024-11-20T09:01:43Z
+       - creation time: 2024-12-13T23:31:09Z
+       - modification time: 2024-12-13T23:31:09Z
        - language: und
       [hdlr] size=59 version=0 flags=000000
        - handlerType: vide
@@ -60,7 +60,7 @@
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 71daff53-b5e1-5376-01d0-26f82d21a871
+                   - defaultKID: 70c108dd-0a77-b48f-8738-a37ed402d1e3
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000
@@ -74,7 +74,7 @@
            - entryCount: 0
   [mvex] size=60
     [mehd] size=20 version=1 flags=000000
-     - fragmentDuration: 163408245
+     - fragmentDuration: 156117962
     [trex] size=32 version=0 flags=000000
      - trackID: 1
      - defaultSampleDescriptionIndex: 1

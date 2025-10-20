@@ -17,7 +17,8 @@ func (f *File) Read(data []byte) error {
       }
       data = data[box.BoxHeader.Size:]
       switch box.BoxHeader.Type.String() {
-      case "free", // Mubi
+      case
+         "free", // Mubi
          "ftyp", // Roku
          "styp": // Roku
          f.Box = append(f.Box, box)

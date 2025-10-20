@@ -6,7 +6,6 @@ import (
    "41.neocities.org/sofia/moof"
    "41.neocities.org/sofia/moov"
    "41.neocities.org/sofia/sidx"
-   "log/slog"
 )
 
 func (f *File) Read(data []byte) error {
@@ -16,7 +15,6 @@ func (f *File) Read(data []byte) error {
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", box.BoxHeader)
       data = data[box.BoxHeader.Size:]
       switch box.BoxHeader.Type.String() {
       case "free", // Mubi

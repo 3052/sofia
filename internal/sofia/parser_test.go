@@ -9,73 +9,8 @@ import (
    "testing"
 )
 
-func do_parse(name string) error {
-   name = folder + name
-   log.Print(name)
-   sampleFMP4, err := os.ReadFile(name)
-   if err != nil {
-      return err
-   }
-   parser := NewParser(sampleFMP4)
-   var (
-      parsedBoxes     []*Box
-      totalParsedSize uint64
-   )
-   for parser.HasMore() {
-      box, err := parser.ParseNextBox()
-      if err != nil {
-         return fmt.Errorf("Failed to parse box: %v", err)
-      }
-      if box == nil {
-         break
-      }
-      parsedBoxes = append(parsedBoxes, box)
-      totalParsedSize += box.Header.Size
-   }
-   if totalParsedSize != uint64(len(sampleFMP4)) {
-      return fmt.Errorf(
-         "did not consume the entire file: got %d bytes, want %d bytes",
-         totalParsedSize, len(sampleFMP4),
-      )
-   }
-   formattedBuffer := new(bytes.Buffer)
-   for _, box := range parsedBoxes {
-      formattedBytes, err := box.Format()
-      if err != nil {
-         return fmt.Errorf("format box of type '%s': %v", box.Header.Type, err)
-      }
-      formattedBuffer.Write(formattedBytes)
-   }
-   formattedData := formattedBuffer.Bytes()
-   if len(sampleFMP4) != len(formattedData) {
-      return fmt.Errorf(
-         "original is %d bytes, formatted is %d bytes",
-         len(sampleFMP4), len(formattedData),
-      )
-   }
-   if !bytes.Equal(sampleFMP4, formattedData) {
-      return errors.New("formatted data does not match original data")
-   }
-   return nil
-}
-
-func TestParser(t *testing.T) {
-   for _, test := range parser_tests {
-      err := do_parse(test.init)
-      if err != nil {
-         t.Fatal(err)
-      }
-      err = do_parse(test.segment)
-      if err != nil {
-         t.Fatal(err)
-      }
-   }
-}
-
-const folder = "../../testdata/"
-
-var parser_tests = []struct{
-   init string
+var parser_tests = []struct {
+   init    string
    segment string
 }{
    {
@@ -155,3 +90,68 @@ var parser_tests = []struct{
       "",
    },
 }
+
+func do_parse(name string) error {
+   name = folder + name
+   log.Print(name)
+   sampleFMP4, err := os.ReadFile(name)
+   if err != nil {
+      return err
+   }
+   parser := NewParser(sampleFMP4)
+   var (
+      parsedBoxes     []*Box
+      totalParsedSize uint64
+   )
+   for parser.HasMore() {
+      box, err := parser.ParseNextBox()
+      if err != nil {
+         return fmt.Errorf("Failed to parse box: %v", err)
+      }
+      if box == nil {
+         break
+      }
+      parsedBoxes = append(parsedBoxes, box)
+      totalParsedSize += box.Header.Size
+   }
+   if totalParsedSize != uint64(len(sampleFMP4)) {
+      return fmt.Errorf(
+         "did not consume the entire file: got %d bytes, want %d bytes",
+         totalParsedSize, len(sampleFMP4),
+      )
+   }
+   formattedBuffer := new(bytes.Buffer)
+   for _, box := range parsedBoxes {
+      formattedBytes, err := box.Format()
+      if err != nil {
+         return fmt.Errorf("format box of type '%s': %v", box.Header.Type, err)
+      }
+      formattedBuffer.Write(formattedBytes)
+   }
+   formattedData := formattedBuffer.Bytes()
+   if len(sampleFMP4) != len(formattedData) {
+      return fmt.Errorf(
+         "original is %d bytes, formatted is %d bytes",
+         len(sampleFMP4), len(formattedData),
+      )
+   }
+   if !bytes.Equal(sampleFMP4, formattedData) {
+      return errors.New("formatted data does not match original data")
+   }
+   return nil
+}
+
+func TestParser(t *testing.T) {
+   for _, test := range parser_tests {
+      err := do_parse(test.init)
+      if err != nil {
+         t.Fatal(err)
+      }
+      err = do_parse(test.segment)
+      if err != nil {
+         t.Fatal(err)
+      }
+   }
+}
+
+const folder = "../../testdata/"

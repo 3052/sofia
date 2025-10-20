@@ -7,16 +7,16 @@ import (
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
+      var boxVar sofia.Box
+      err := boxVar.Read(data)
       if err != nil {
          return err
       }
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
+      data = data[boxVar.BoxHeader.Size:]
+      switch boxVar.BoxHeader.Type.String() {
       case "stsd":
-         b.Stsd.BoxHeader = box1.BoxHeader
-         err := b.Stsd.Read(box1.Payload)
+         b.Stsd.BoxHeader = boxVar.BoxHeader
+         err := b.Stsd.Read(boxVar.Payload)
          if err != nil {
             return err
          }
@@ -108,9 +108,9 @@ func (b *Box) Read(data []byte) error {
          // rtbf-avc1
          // tubi-avc1
          "stts":
-         b.Box = append(b.Box, box1)
+         b.Box = append(b.Box, boxVar)
       default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
       }
    }
    return nil
@@ -131,8 +131,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
+   for _, boxVar := range b.Box {
+      data, err = boxVar.Append(data)
       if err != nil {
          return nil, err
       }

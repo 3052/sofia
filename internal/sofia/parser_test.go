@@ -82,12 +82,12 @@ var parser_tests = []struct {
       "criterion-mp4a/13730-159186.mp4",
    },
    {
-      "",
+      "hulu-avc1/map.mp4",
       "hulu-avc1/pts_0.mp4",
    },
    {
-      "rtbf/vod-idx-video=4000000.dash",
-      "",
+      "rtbf-avc1/vod-idx-2-video=300000.dash",
+      "rtbf-avc1/vod-idx-2-video=300000-0.dash",
    },
 }
 

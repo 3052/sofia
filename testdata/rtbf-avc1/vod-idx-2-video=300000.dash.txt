@@ -4,23 +4,24 @@
  - compatibleBrand: iso6
  - compatibleBrand: dash
 [free] size=40
-[moov] size=735
+[moov] size=1637
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 1
    - duration: 0
    - creation time: 0
    - modification time: 0
-  [trak] size=579
+  [pssh] size=744 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [pssh] size=92 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+  [trak] size=645
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
      - creation time: 0
      - modification time: 0
-     - Width: 1920.0, Height: 1080.0
-    [tref] size=20
-      [tmcd] size=12
-       - not implemented or unknown box
-    [mdia] size=410
+     - Width: 480.0, Height: 270.0
+    [mdia] size=496
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 600
        - creation time: 0
@@ -29,32 +30,43 @@
       [hdlr] size=50 version=0 flags=000000
        - handlerType: vide
        - handlerName: "USP Video Handler"
-      [minf] size=320
+      [minf] size=406
         [vmhd] size=20 version=0 flags=000001
         [dinf] size=36
           [dref] size=28 version=0 flags=000000
-            [url ] size=12
-             - location: ""
-        [stbl] size=256
-          [stsd] size=180 version=0 flags=000000
-            [avc1] size=164
-             - width: 1920
-             - height: 1080
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=342
+          [stsd] size=250 version=0 flags=000000
+            [encv] size=234
+             - width: 480
+             - height: 270
              - compressorName: "AVC Coding"
-              [avcC] size=58
-               - AVCProfileIndication: 100
-               - profileCompatibility: 00
-               - AVCLevelIndication: 42
-               - SPS: 6764002aac2b403c0113f2e022000007d000030d41c0000016e3600001e84817797050
-               - PPS: 68ee3cb0
+              [avcC] size=48
+               - AVCProfileIndication: 77
+               - profileCompatibility: 40
+               - AVCLevelIndication: 21
+               - SPS: 674d4015eca0f047f580880000030008000003019478b16cb0
+               - PPS: 68ebecb2
               [btrt] size=20
-               - bufferSizeDB: 0
-               - maxBitrate: 10826640
-               - AvgBitrate: 4000000
+               - bufferSizeDB: 54557
+               - maxBitrate: 1375872
+               - AvgBitrate: 300000
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 4b7e6a14-ef1c-45e2-a122-78a13cdad5de
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000
           [stco] size=16 version=0 flags=000000
+          [stss] size=16 version=0 flags=000000
     [udta] size=49
       [kind] size=41 version=0 flags=000000
        - schemeURI: urn:mpeg:dash:role:2011

@@ -19,29 +19,29 @@ type Box struct {
 
 func (b *Box) Read(data []byte) error {
    for len(data) >= 1 {
-      var box1 sofia.Box
-      err := box1.Read(data)
+      var boxVar sofia.Box
+      err := boxVar.Read(data)
       if err != nil {
          return err
       }
-      data = data[box1.BoxHeader.Size:]
-      switch box1.BoxHeader.Type.String() {
+      data = data[boxVar.BoxHeader.Size:]
+      switch boxVar.BoxHeader.Type.String() {
       case "minf":
-         b.Minf.BoxHeader = box1.BoxHeader
-         err := b.Minf.Read(box1.Payload)
+         b.Minf.BoxHeader = boxVar.BoxHeader
+         err := b.Minf.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       case "mdhd":
-         b.Mdhd.BoxHeader = box1.BoxHeader
-         err := b.Mdhd.Read(box1.Payload)
+         b.Mdhd.BoxHeader = boxVar.BoxHeader
+         err := b.Mdhd.Read(boxVar.Payload)
          if err != nil {
             return err
          }
       case "hdlr": // Roku
-         b.Box = append(b.Box, box1)
+         b.Box = append(b.Box, boxVar)
       default:
-         return &sofia.BoxError{b.BoxHeader, box1.BoxHeader}
+         return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
       }
    }
    return nil
@@ -52,8 +52,8 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    if err != nil {
       return nil, err
    }
-   for _, box1 := range b.Box {
-      data, err = box1.Append(data)
+   for _, boxVar := range b.Box {
+      data, err = boxVar.Append(data)
       if err != nil {
          return nil, err
       }

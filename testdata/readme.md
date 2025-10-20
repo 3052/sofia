@@ -5,17 +5,15 @@
 I need to solve the set covering problem for these files. what parents do I
 care about? these:
 
-~~~
-top-level boxes
-enca
-encv
-mdia
-minf
-moof
-moov
-sinf
-stbl
-stsd
-traf
-trak
-~~~
+- top-level boxes
+- enca
+- encv
+- mdia
+- minf
+- moof
+- moov
+- sinf
+- stbl
+- stsd
+- traf
+- trak

@@ -5,7 +5,6 @@ import (
    "41.neocities.org/sofia/senc"
    "41.neocities.org/sofia/tfhd"
    "41.neocities.org/sofia/trun"
-   "log/slog"
 )
 
 func (b *Box) Read(data []byte) error {
@@ -15,7 +14,6 @@ func (b *Box) Read(data []byte) error {
       if err != nil {
          return err
       }
-      slog.Debug("box", "header", boxVar.BoxHeader)
       data = data[boxVar.BoxHeader.Size:]
       switch boxVar.BoxHeader.Type.String() {
       case "senc":

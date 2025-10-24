@@ -1,0 +1,101 @@
+[ftyp] size=40
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: avc1
+ - compatibleBrand: cmfc
+[moov] size=1642
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 90000
+   - duration: 0
+   - creation time: 2023-07-11T15:12:22Z
+   - modification time: 2023-07-11T15:12:22Z
+  [meta] size=141 version=0 flags=000000
+    [hdlr] size=32 version=0 flags=000000
+     - handlerType: ID32
+     - handlerName: ""
+    [ID32] size=97
+     - not implemented or unknown box
+  [trak] size=723
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2023-07-11T15:12:22Z
+     - modification time: 2023-07-11T15:12:22Z
+     - Width: 640.0, Height: 360.0
+    [mdia] size=587
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 90000
+       - creation time: 2023-07-11T15:12:22Z
+       - modification time: 2023-07-11T15:12:22Z
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "VideoHandler"
+      [minf] size=502
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12
+             - location: ""
+        [stbl] size=438
+          [stsd] size=362 version=0 flags=000000
+            [encv] size=213
+             - width: 640
+             - height: 360
+             - compressorName: "AVC Coding"
+              [avcC] size=47
+               - AVCProfileIndication: 77
+               - profileCompatibility: 40
+               - AVCLevelIndication: 30
+               - SPS: 674d401eeca05017fcb808800001f480005dc0078b16cb
+               - PPS: 68e9386cb2
+              [sinf] size=80
+                [frma] size=12
+                 - dataFormat: avc1
+                [schm] size=20 version=0 flags=000000
+                 - schemeType: cenc
+                 - schemeVersion: 65536  (1.0)
+                [schi] size=40
+                  [tenc] size=32 version=0 flags=000000
+                   - defaultIsProtected: 1
+                   - defaultPerSampleIVSize: 8
+                   - defaultKID: 75d1cece-f458-4683-b7f8-abb03bcb1b41
+            [avc1] size=133
+             - width: 640
+             - height: 360
+             - compressorName: "AVC Coding"
+              [avcC] size=47
+               - AVCProfileIndication: 77
+               - profileCompatibility: 40
+               - AVCLevelIndication: 30
+               - SPS: 674d401eeca05017fcb808800001f480005dc0078b16cb
+               - PPS: 68e9386cb2
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+        [vmhd] size=20 version=0 flags=000001
+    [edts] size=36
+      [elst] size=28 version=0 flags=000000
+      - entry[1]: segmentDuration=0 mediaTime=7508, mediaRateInteger=1 mediaRateFraction=0
+  [mvex] size=56
+    [mehd] size=16 version=0 flags=000000
+     - fragmentDuration: 709413704
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 3754
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
+  [pssh] size=550 version=0 flags=000000
+   - systemID: 9a04f079-9840-4286-ab92-e65be0885f95 (PlayReady)
+  [pssh] size=56 version=0 flags=000000
+   - systemID: edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine)
+[sidx] size=28376 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 90000
+ - earliestPresentationTime: 0
+ - firstOffset: 0

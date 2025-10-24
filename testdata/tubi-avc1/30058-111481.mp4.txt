@@ -1,0 +1,13 @@
+[moof] size=1384
+  [mfhd] size=16 version=0 flags=000000
+   - sequenceNumber: 1
+  [traf] size=1360
+    [tfhd] size=20 version=0 flags=020002
+     - trackID: 1
+     - defaultBaseIsMoof: true
+     - sampleDescriptionIndex: 2
+    [tfdt] size=16 version=0 flags=000000
+     - baseMediaDecodeTime: 0
+    [trun] size=1316 version=0 flags=000f01
+     - sampleCount: 81
+[mdat] size=80040

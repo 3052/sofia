@@ -10,19 +10,19 @@
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 48000
    - duration: 0
-   - creation time: 2024-11-09T22:12:17Z
-   - modification time: 2024-11-09T22:12:17Z
+   - creation time: 2025-10-18T04:45:17Z
+   - modification time: 2025-10-18T04:45:17Z
   [trak] size=466
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
-     - creation time: 2024-11-09T22:12:17Z
-     - modification time: 2024-11-09T22:12:17Z
+     - creation time: 2025-10-18T04:45:17Z
+     - modification time: 2025-10-18T04:45:17Z
     [mdia] size=366
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 48000
-       - creation time: 2024-11-09T22:12:17Z
-       - modification time: 2024-11-09T22:12:17Z
+       - creation time: 2025-10-18T04:45:17Z
+       - modification time: 2025-10-18T04:45:17Z
        - language: eng
       [hdlr] size=45 version=0 flags=000000
        - handlerType: soun
@@ -51,7 +51,7 @@
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 010049f1-5029-41c1-b9a8-26ee66f8a78e
+                   - defaultKID: 01004ece-59b2-b935-7e8c-4b5a6c168a34
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000
@@ -63,17 +63,3 @@
      - defaultSampleDuration: 1536
      - defaultSampleSize: 0
      - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
-[sidx] size=19328 version=0 flags=000000
- - referenceID: 1
- - timeScale: 48000
- - earliestPresentationTime: 0
- - firstOffset: 0
- - reference[1]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[2]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[3]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[4]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[5]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[6]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[7]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[8]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0
- - reference[9]: type=0 size=129161 subSegmentDuration=192000 startsWithSAP=1 SAPType=1 SAPDeltaTime=0

@@ -7,48 +7,44 @@ import (
    "testing"
 )
 
+const folder = "../testdata/"
+
 var senc_tests = []senc_test{
    {
-      "../testdata/amc-avc1/init.m4f",
-      "../testdata/amc-avc1/segment0.m4f",
-      "c58d3308ed18d43776a78232f552dbe0",
-      "amc-avc1.mp4",
-   },
-   // cineMember-avc1\video_eng=108536-0.dash
-   // cineMember-avc1\video_eng=108536.dash
-   // 
-   // hbomax-dvh1\init.mp4
-   // hbomax-dvh1\segment-1.0001.m4s
-   // 
-   // hbomax-ec-3\bytes=0-19985.mp4
-   // hbomax-ec-3\bytes=19986-149146.mp4
-   // 
-   // hbomax-hvc1\init.mp4
-   // hbomax-hvc1\segment-1.0001.m4s
-   {
-      "../testdata/hulu-avc1/init.mp4",
-      "../testdata/hulu-avc1/segment-1.0001.m4s",
-      "602a9289bfb9b1995b75ac63f123fc86",
-      "hulu-avc1.mp4",
+      "criterion-avc1/0-804.mp4",
+      "criterion-avc1/13845-168166.mp4",
+      "377772323b0f45efb2c53c603749d834",
+      "criterion-avc1.mp4",
    },
    {
-      "../testdata/mubi-mp4a/audio_eng=268840.dash",
-      "../testdata/mubi-mp4a/audio_eng=268840-0.dash",
-      "2556f746e8db3ee7f66fc22f5a28752a",
-      "mubi-mp4a.mp4",
+      "hboMax-dvh1/0-902.mp4"
+      "hboMax-dvh1/903-28882.mp4",
+      "ee0d569c019057569eaf28b988c206f6",
+      "hboMax-dvh1.mp4",
    },
+   // hboMax-ec-3\bytes=0-19985.mp4
+   // hboMax-ec-3\bytes=19986-149146.mp4
+   // 
+   // hboMax-hvc1\init.mp4
+   // hboMax-hvc1\segment-1.0001.m4s
+   //
+   // hulu-avc1\map.mp4
+   // hulu-avc1\pts_0.mp4
    {
-      "../testdata/paramount-mp4a/init.m4v",
-      "../testdata/paramount-mp4a/seg_1.m4s",
+      "paramount-mp4a/init.m4v",
+      "paramount-mp4a/seg_1.m4s",
       "d98277ff6d7406ec398b49bbd52937d4",
       "paramount-mp4a.mp4",
    },
    {
-      "../testdata/roku-avc1/index_video_8_0_init.mp4",
-      "../testdata/roku-avc1/index_video_8_0_1.mp4",
+      "roku-avc1/index_video_8_0_init.mp4",
+      "roku-avc1/index_video_8_0_1.mp4",
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-avc1.mp4",
    },
+   // rtbf-avc1\vod-idx-2-video=300000-0.dash
+   // rtbf-avc1\vod-idx-2-video=300000.dash
+   //
    // tubi-avc1\0-30057.mp4
    // tubi-avc1\30058-111481.mp4
 }

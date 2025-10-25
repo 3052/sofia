@@ -7,48 +7,48 @@
  - compatibleBrand: dash
  - compatibleBrand: dvh1
  - compatibleBrand: cmfc
-[moov] size=823
+[moov] size=863
   [mvhd] size=108 version=0 flags=000000
    - timeScale: 24000
    - duration: 0
-   - creation time: 2023-10-21T23:41:51Z
-   - modification time: 2023-10-21T23:41:51Z
-  [trak] size=667
+   - creation time: 2025-10-18T04:45:16Z
+   - modification time: 2025-10-18T04:45:16Z
+  [trak] size=707
     [tkhd] size=92 version=0 flags=000007
      - trackID: 1
      - duration: 0
-     - creation time: 2023-10-21T23:41:51Z
-     - modification time: 2023-10-21T23:41:51Z
-     - Width: 448.0, Height: 252.0
-    [mdia] size=567
+     - creation time: 2025-10-18T04:45:16Z
+     - modification time: 2025-10-18T04:45:16Z
+     - Width: 1272.0, Height: 530.0
+    [mdia] size=571
       [mdhd] size=32 version=0 flags=000000
        - timeScale: 24000
-       - creation time: 2023-10-21T23:41:51Z
-       - modification time: 2023-10-21T23:41:51Z
+       - creation time: 2025-10-18T04:45:16Z
+       - modification time: 2025-10-18T04:45:16Z
        - language: und
       [hdlr] size=45 version=0 flags=000000
        - handlerType: vide
        - handlerName: "VideoHandler"
-      [minf] size=482
+      [minf] size=486
         [vmhd] size=20 version=0 flags=000001
         [dinf] size=36
           [dref] size=28 version=0 flags=000000
             [url ] size=12 version=0 flags=000001
-        [stbl] size=418
-          [stsd] size=342 version=0 flags=000000
-            [encv] size=326
-             - width: 448
-             - height: 252
+        [stbl] size=422
+          [stsd] size=346 version=0 flags=000000
+            [encv] size=330
+             - width: 1272
+             - height: 530
              - compressorName: "DOVI Coding"
-              [hvcC] size=128
+              [hvcC] size=132
                - GeneralProfileSpace: 0
                - GeneralTierFlag: false
                - GeneralProfileIDC: 2
                - GeneralProfileCompatibilityFlags: 20000000
                - GeneralConstraintIndicatorFlags: 900000000000
-               - GeneralLevelIDC: 60
+               - GeneralLevelIDC: 93
                - MinSpatialSegmentationIDC: 0
-               - ParallellismType: 3
+               - ParallellismType: 0
                - ChromaFormatIDC: 1
                - BitDepthLuma: 10
                - BitDepthChroma: 10
@@ -57,11 +57,11 @@
                - NumTemporalLayers: 1
                - temporalIDNested: 1
                  - VPS_32 complete: 1
-                  40010c01ffff02200000030090000003000003003c959809
+                  40010c01ffff02200000030090000003000003005d999809
                  - SPS_33 complete: 1
-                  42010102200000030090000003000003003ca00e080407db65959a4932bc05b02000007d20000bb80c15a28bc0061a800c3510
+                  42010102200000030090000003000003005da0027c80219f2365999a4932bc05b02000007d20000bb80c01928dc00249e000927c40
                  - PPS_34 complete: 1
-                  4401c172b66240
+                  4401c1728221146240
               [dvcC] size=32
                - not implemented or unknown box
               [sinf] size=80
@@ -74,11 +74,14 @@
                   [tenc] size=32 version=0 flags=000000
                    - defaultIsProtected: 1
                    - defaultPerSampleIVSize: 8
-                   - defaultKID: 01032b5a-e0d4-037e-e6e6-76a507080133
+                   - defaultKID: 01038786-b77f-b6ca-14eb-864155de730e
           [stts] size=16 version=0 flags=000000
           [stsc] size=16 version=0 flags=000000
           [stsz] size=20 version=0 flags=000000
           [stco] size=16 version=0 flags=000000
+    [edts] size=36
+      [elst] size=28 version=0 flags=000000
+      - entry[1]: segmentDuration=0 mediaTime=2002, mediaRateInteger=1 mediaRateFraction=0
   [mvex] size=40
     [trex] size=32 version=0 flags=000000
      - trackID: 1
@@ -86,8 +89,3 @@
      - defaultSampleDuration: 1001
      - defaultSampleSize: 0
      - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)
-[sidx] size=11072 version=0 flags=000000
- - referenceID: 1
- - timeScale: 24000
- - earliestPresentationTime: 0
- - firstOffset: 0

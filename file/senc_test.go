@@ -7,39 +7,6 @@ import (
    "testing"
 )
 
-func (s *senc_test) encode_init() ([]byte, error) {
-   log.Print(s.initial)
-   data, err := os.ReadFile(folder + s.initial)
-   if err != nil {
-      return nil, err
-   }
-   var fileVar File
-   err = fileVar.Read(data)
-   if err != nil {
-      return nil, err
-   }
-   for _, pssh := range fileVar.Moov.Pssh {
-      copy(pssh.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   if sinf, ok := description.Sinf(); ok {
-      // Firefox
-      copy(sinf.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
-      }
-   }
-   return fileVar.Append(nil)
-}
-
-type senc_test struct {
-   initial string
-   key     string
-   out     string
-   segment string
-}
-
 var senc_tests = []senc_test{
    {
       initial: "criterion-avc1/0-804.mp4",
@@ -48,10 +15,10 @@ var senc_tests = []senc_test{
       segment: "criterion-avc1/13845-168166.mp4",
    },
    {
-      initial: "hboMax-dvh1/0-902.mp4",
-      key:     "ee0d569c019057569eaf28b988c206f6",
+      initial: "hboMax-dvh1/0-862.mp4",
+      key:     "8ea21645755811ecb84b1f7c39bbbff3",
       out:     "hboMax-dvh1.mp4",
-      segment: "hboMax-dvh1/28883-59832.mp4",
+      segment: "hboMax-dvh1/19579-78380.mp4",
    },
    {
       initial: "hboMax-ec-3/0-657.mp4",
@@ -60,10 +27,10 @@ var senc_tests = []senc_test{
       segment: "hboMax-ec-3/28710-157870.mp4",
    },
    {
-      initial: "hboMax-hvc1/0-938.mp4",
-      key:     "ee0d569c019057569eaf28b988c206f6",
+      initial: "hboMax-hvc1/0-834.mp4",
+      key:     "a269d5aebc114fd167c380f801437f49",
       out:     "hboMax-hvc1.mp4",
-      segment: "hboMax-hvc1/28919-60120.mp4",
+      segment: "hboMax-hvc1/19551-35438.mp4",
    },
    {
       initial: "hulu-avc1/map.mp4",
@@ -142,3 +109,36 @@ func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
 }
 
 const folder = "../testdata/"
+
+func (s *senc_test) encode_init() ([]byte, error) {
+   log.Print(s.initial)
+   data, err := os.ReadFile(folder + s.initial)
+   if err != nil {
+      return nil, err
+   }
+   var fileVar File
+   err = fileVar.Read(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, pssh := range fileVar.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return fileVar.Append(nil)
+}
+
+type senc_test struct {
+   initial string
+   key     string
+   out     string
+   segment string
+}

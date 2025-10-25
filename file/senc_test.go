@@ -31,7 +31,7 @@ var senc_tests = []senc_test{
       initial: "hboMax-ec-3/0-657.mp4",
       key:     "acaec99945a3615c9ef7b1b04727022a",
       out:     "hboMax-ec-3.mp4",
-      segment: "hboMax-ec-3/658-28709.mp4",
+      segment: "hboMax-ec-3/28710-157870.mp4",
    },
    {
       initial: "hboMax-hvc1/0-793.mp4",

@@ -23,6 +23,8 @@ func (b *Box) Read(data []byte) error {
             return err
          }
       case
+         // hulu-avc1
+         "free",
          // amc-avc1
          // amc-mp4a
          // cineMember-avc1

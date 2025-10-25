@@ -10,26 +10,26 @@
  - timeScale: 600
  - earliestPresentationTime: 0
  - firstOffset: 0
-[moof] size=4181
+[moof] size=8213
   [mfhd] size=16 version=0 flags=000000
    - sequenceNumber: 1
-  [traf] size=4157
+  [traf] size=8189
     [tfhd] size=24 version=0 flags=02000a
      - trackID: 1
      - defaultBaseIsMoof: true
      - sampleDescriptionIndex: 1
-     - defaultSampleDuration: 24
+     - defaultSampleDuration: 12
     [tfdt] size=20 version=1 flags=000000
      - baseMediaDecodeTime: 0
-    [trun] size=1748 version=1 flags=000e01
-     - sampleCount: 144
+    [trun] size=3476 version=1 flags=000e01
+     - sampleCount: 288
     [saiz] size=17 version=0 flags=000000
      - defaultSampleInfoSize: 16
-     - sampleCount: 144
+     - sampleCount: 288
     [saio] size=20 version=0 flags=000000
      - sampleCount: 1
-     - offset[1]=1877
-    [senc] size=2320 version=0 flags=000002
-     - sampleCount: 144
+     - offset[1]=3605
+    [senc] size=4624 version=0 flags=000002
+     - sampleCount: 288
      - perSampleIVSize: 8
-[mdat] size=263723
+[mdat] size=482686

@@ -12,8 +12,8 @@ func TestFile(t *testing.T) {
    if err != nil {
       t.Fatal(err)
    }
-   var file1 File
-   err = file1.Read(data)
+   var fileVar File
+   err = fileVar.Read(data)
    if err != nil {
       t.Fatal(err)
    }

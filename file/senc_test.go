@@ -7,6 +7,32 @@ import (
    "testing"
 )
 
+func (s *senc_test) encode_init() ([]byte, error) {
+   log.Print(s.initial)
+   data, err := os.ReadFile(folder + s.initial)
+   if err != nil {
+      return nil, err
+   }
+   var fileVar File
+   err = fileVar.Read(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, pssh := range fileVar.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return fileVar.Append(nil)
+}
+
 type senc_test struct {
    initial string
    key     string
@@ -34,10 +60,10 @@ var senc_tests = []senc_test{
       segment: "hboMax-ec-3/28710-157870.mp4",
    },
    {
-      initial: "hboMax-hvc1/0-793.mp4",
-      key:     "bd691b57ac7c0620482c724b953a8e87",
+      initial: "hboMax-hvc1/0-938.mp4",
+      key:     "ee0d569c019057569eaf28b988c206f6",
       out:     "hboMax-hvc1.mp4",
-      segment: "hboMax-hvc1/794-28773.mp4",
+      segment: "hboMax-hvc1/28919-60120.mp4",
    },
    {
       initial: "hulu-avc1/map.mp4",
@@ -67,33 +93,8 @@ var senc_tests = []senc_test{
       initial: "tubi-avc1/0-1683.mp4",
       key:     "8109222ffe94120d61f887d40d0257ed",
       out:     "tubi-avc1.mp4",
-      segment: "tubi-avc1/1684-16523.mp4",
+      segment: "tubi-avc1/16524-27006.mp4",
    },
-}
-
-func (s *senc_test) encode_init() ([]byte, error) {
-   data, err := os.ReadFile(folder + s.initial)
-   if err != nil {
-      return nil, err
-   }
-   var fileVar File
-   err = fileVar.Read(data)
-   if err != nil {
-      return nil, err
-   }
-   for _, pssh := range fileVar.Moov.Pssh {
-      copy(pssh.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   if sinf, ok := description.Sinf(); ok {
-      // Firefox
-      copy(sinf.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
-      }
-   }
-   return fileVar.Append(nil)
 }
 
 func TestSenc(t *testing.T) {
@@ -114,7 +115,7 @@ func TestSenc(t *testing.T) {
 }
 
 func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
-   log.Print(folder + s.segment)
+   log.Print(s.segment)
    segment, err := os.ReadFile(folder + s.segment)
    if err != nil {
       return nil, err

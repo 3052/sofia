@@ -22,9 +22,12 @@ var senc_tests = []senc_test{
       "ee0d569c019057569eaf28b988c206f6",
       "hboMax-dvh1.mp4",
    },
-   // hboMax-ec-3\bytes=0-19985.mp4
-   // hboMax-ec-3\bytes=19986-149146.mp4
-   // 
+   {
+      "hboMax-ec-3/0-657.mp4",
+      "hboMax-ec-3/658-28709.mp4",
+      "acaec99945a3615c9ef7b1b04727022a",
+      "hboMax-ec-3.mp4",
+   },
    // hboMax-hvc1\init.mp4
    // hboMax-hvc1\segment-1.0001.m4s
    //

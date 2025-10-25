@@ -2,7 +2,7 @@ package file
 
 import (
    "encoding/hex"
-   "fmt"
+   "log"
    "os"
    "testing"
 )
@@ -17,7 +17,7 @@ var senc_tests = []senc_test{
       "criterion-avc1.mp4",
    },
    {
-      "hboMax-dvh1/0-902.mp4"
+      "hboMax-dvh1/0-902.mp4",
       "hboMax-dvh1/903-28882.mp4",
       "ee0d569c019057569eaf28b988c206f6",
       "hboMax-dvh1.mp4",
@@ -28,11 +28,18 @@ var senc_tests = []senc_test{
       "acaec99945a3615c9ef7b1b04727022a",
       "hboMax-ec-3.mp4",
    },
-   // hboMax-hvc1\init.mp4
-   // hboMax-hvc1\segment-1.0001.m4s
-   //
-   // hulu-avc1\map.mp4
-   // hulu-avc1\pts_0.mp4
+   {
+      "hboMax-hvc1/0-793.mp4",
+      "hboMax-hvc1/794-28773.mp4",
+      "bd691b57ac7c0620482c724b953a8e87",
+      "hboMax-hvc1.mp4",
+   },
+   {
+      "hulu-avc1/map.mp4",
+      "hulu-avc1/pts_0.mp4",
+      "33a7ef13ee16fa6a3d1467c0cc59a84f",
+      "hulu-avc1.mp4",
+   },
    {
       "paramount-mp4a/init.m4v",
       "paramount-mp4a/seg_1.m4s",
@@ -45,15 +52,22 @@ var senc_tests = []senc_test{
       "1ba08384626f9523e37b9db17f44da2b",
       "roku-avc1.mp4",
    },
-   // rtbf-avc1\vod-idx-2-video=300000-0.dash
-   // rtbf-avc1\vod-idx-2-video=300000.dash
-   //
-   // tubi-avc1\0-30057.mp4
-   // tubi-avc1\30058-111481.mp4
+   {
+      "rtbf-avc1/vod-idx-3-video=300000.dash",
+      "rtbf-avc1/vod-idx-3-video=300000-0.dash",
+      "553b091b257584d3938c35dd202531f8",
+      "rtbf-avc1.mp4",
+   },
+   {
+      "tubi-avc1/0-1683.mp4",
+      "tubi-avc1/1684-16523.mp4",
+      "8109222ffe94120d61f887d40d0257ed",
+      "tubi-avc1.mp4",
+   },
 }
 
 func (s *senc_test) encode_init() ([]byte, error) {
-   data, err := os.ReadFile(s.init)
+   data, err := os.ReadFile(folder + s.initial)
    if err != nil {
       return nil, err
    }
@@ -78,8 +92,8 @@ func (s *senc_test) encode_init() ([]byte, error) {
 }
 
 func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
-   fmt.Println(s.segment)
-   segment, err := os.ReadFile(s.segment)
+   log.Print(folder + s.segment)
+   segment, err := os.ReadFile(folder + s.segment)
    if err != nil {
       return nil, err
    }
@@ -114,7 +128,7 @@ func TestSenc(t *testing.T) {
       if err != nil {
          t.Fatal(err)
       }
-      err = os.WriteFile(test.dst, data, os.ModePerm)
+      err = os.WriteFile(test.out, data, os.ModePerm)
       if err != nil {
          t.Fatal(err)
       }
@@ -122,8 +136,8 @@ func TestSenc(t *testing.T) {
 }
 
 type senc_test struct {
-   init    string
+   initial string
    segment string
    key     string
-   dst     string
+   out     string
 }

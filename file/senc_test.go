@@ -7,32 +7,6 @@ import (
    "testing"
 )
 
-func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
-   log.Print(s.segment)
-   segment, err := os.ReadFile(folder + s.segment)
-   if err != nil {
-      return nil, err
-   }
-   var fileVar File
-   err = fileVar.Read(segment)
-   if err != nil {
-      return nil, err
-   }
-   if senc := fileVar.Moof.Traf.Senc; senc != nil {
-      key, err := hex.DecodeString(s.key)
-      if err != nil {
-         return nil, err
-      }
-      for i, data := range fileVar.Mdat.Data(&fileVar.Moof.Traf) {
-         err := senc.Sample[i].Decrypt(data, key)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return fileVar.Append(data)
-}
-
 func (s *senc_test) encode_init() ([]byte, error) {
    log.Print(s.initial)
    data, err := os.ReadFile(folder + s.initial)
@@ -57,6 +31,32 @@ func (s *senc_test) encode_init() ([]byte, error) {
       }
    }
    return fileVar.Append(nil)
+}
+
+func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
+   log.Print(s.segment)
+   segment, err := os.ReadFile(folder + s.segment)
+   if err != nil {
+      return nil, err
+   }
+   var fileVar File
+   err = fileVar.Read(segment)
+   if err != nil {
+      return nil, err
+   }
+   if senc := fileVar.Moof.Traf.Senc; senc != nil {
+      key, err := hex.DecodeString(s.key)
+      if err != nil {
+         return nil, err
+      }
+      for i, data := range fileVar.Mdat.Data(&fileVar.Moof.Traf) {
+         err := senc.Sample[i].Decrypt(data, key)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return fileVar.Append(data)
 }
 
 const folder = "../testdata/"

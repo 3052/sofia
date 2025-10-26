@@ -4,6 +4,7 @@ import (
    "bytes"
    "encoding/binary"
    "encoding/hex"
+   "errors"
    "os"
    "path/filepath"
    "testing"
@@ -63,13 +64,109 @@ func TestRoundTrip(t *testing.T) {
 
 // createMdatBox is a helper to construct a valid mdat box from a data payload.
 func createMdatBox(payload []byte) []byte {
-   // The size includes the 8-byte header (4 for size, 4 for type).
    size := uint32(len(payload) + 8)
    mdatBox := make([]byte, size)
    binary.BigEndian.PutUint32(mdatBox[0:4], size)
    copy(mdatBox[4:8], "mdat")
    copy(mdatBox[8:], payload)
    return mdatBox
+}
+
+// removeEncryption traverses a moov box and replaces encrypted sample entries
+// (encv, enca) with their unencrypted counterparts (e.g., avc1, mp4a).
+func removeEncryption(moov *MoovBox) error {
+   for _, trak := range moov.GetAllTraks() {
+      stsd := trak.GetStsd()
+      if stsd == nil {
+         continue
+      }
+
+      // Iterate over a copy, as we may modify the underlying slice
+      for i, child := range stsd.Children {
+         var encBoxHeader []byte
+         var encChildren []interface{} // Can hold EncvChild or EncaChild
+         var isVideo bool
+
+         if child.Encv != nil {
+            encBoxHeader = child.Encv.EntryHeader
+            for _, c := range child.Encv.Children {
+               encChildren = append(encChildren, c)
+            }
+            isVideo = true
+         } else if child.Enca != nil {
+            encBoxHeader = child.Enca.EntryHeader
+            for _, c := range child.Enca.Children {
+               encChildren = append(encChildren, c)
+            }
+         } else {
+            continue // Not an encrypted entry
+         }
+
+         var sinf *SinfBox
+         for _, c := range encChildren {
+            if isVideo {
+               if s := c.(EncvChild).Sinf; s != nil {
+                  sinf = s
+                  break
+               }
+            } else {
+               if s := c.(EncaChild).Sinf; s != nil {
+                  sinf = s
+                  break
+               }
+            }
+         }
+         if sinf == nil {
+            return errors.New("could not find 'sinf' box in encrypted entry")
+         }
+
+         var frma *FrmaBox
+         for _, sinfChild := range sinf.Children {
+            if f := sinfChild.Frma; f != nil {
+               frma = f
+               break
+            }
+         }
+         if frma == nil {
+            return errors.New("could not find 'frma' box in 'sinf' entry")
+         }
+
+         newFormatType := frma.DataFormat
+
+         // Rebuild the sample entry without the 'sinf' box.
+         var newContent bytes.Buffer
+         newContent.Write(encBoxHeader)
+         for _, c := range encChildren {
+            var childSinf *SinfBox
+            if isVideo {
+               childSinf = c.(EncvChild).Sinf
+            } else {
+               childSinf = c.(EncaChild).Sinf
+            }
+
+            // Append all children EXCEPT the sinf box.
+            if childSinf == nil {
+               if isVideo {
+                  newContent.Write(c.(EncvChild).Raw)
+               } else {
+                  newContent.Write(c.(EncaChild).Raw)
+               }
+            }
+         }
+
+         newBoxSize := uint32(8 + newContent.Len())
+         newBoxData := make([]byte, newBoxSize)
+         binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
+         copy(newBoxData[4:8], newFormatType[:])
+         copy(newBoxData[8:], newContent.Bytes())
+
+         // Replace the old encrypted entry with the new raw, unencrypted one.
+         stsd.Children[i].Encv = nil
+         stsd.Children[i].Enca = nil
+         stsd.Children[i].Raw = newBoxData
+      }
+   }
+   return nil
 }
 
 // TestDecryption now assembles and writes a complete, playable MP4 file.
@@ -88,10 +185,13 @@ func TestDecryption(t *testing.T) {
       t.Fatalf("Failed to parse init file: %v", err)
    }
    var moov *MoovBox
-   for _, box := range parsedInit {
-      if box.Moov != nil {
-         moov = box.Moov
-         break
+   var ftyp *Box // Find ftyp if it exists
+   for i := range parsedInit {
+      if parsedInit[i].Moov != nil {
+         moov = parsedInit[i].Moov
+      }
+      if parsedInit[i].Raw != nil && string(parsedInit[i].Raw[4:8]) == "ftyp" {
+         ftyp = &parsedInit[i]
       }
    }
    if moov == nil {
@@ -105,7 +205,7 @@ func TestDecryption(t *testing.T) {
    }
    tenc := trak.GetTenc()
    if tenc == nil {
-      t.Fatal("Could not find 'tenc' (encryption) box in track. Is the content actually encrypted?")
+      t.Fatal("Could not find 'tenc' box. Is the content actually encrypted?")
    }
    kidFromFile := hex.EncodeToString(tenc.DefaultKID[:])
    t.Logf("Successfully extracted KID from file: %s", kidFromFile)
@@ -144,31 +244,21 @@ func TestDecryption(t *testing.T) {
       t.Fatalf("Decryption failed: %v", err)
    }
 
-   // --- NEW: Assemble and write a valid, playable MP4 file ---
-   t.Log("Assembling final MP4 file...")
-
-   // 1. Get the raw bytes of the moof box from the parsed segment.
-   var moofBoxData []byte
-   for _, box := range parsedSegment {
-      if box.Moof != nil {
-         moofBoxData = box.Moof.Encode()
-         break
-      }
+   // --- NEW: Modify the moov box to remove encryption signaling ---
+   if err := removeEncryption(moov); err != nil {
+      t.Fatalf("Failed to remove encryption metadata from moov box: %v", err)
    }
-   if moofBoxData == nil {
-      t.Fatal("Could not extract moof box data for reassembly.")
-   }
+   t.Log("Successfully updated moov box to signal unencrypted content.")
 
-   // 2. Create a new mdat box with the decrypted payload.
-   newMdatBoxData := createMdatBox(decryptedPayload)
-
-   // 3. Concatenate all parts: Init Segment + moof + decrypted mdat
+   // --- Assemble and write a valid, playable MP4 file ---
    var finalMP4Data bytes.Buffer
-   finalMP4Data.Write(initData)
-   finalMP4Data.Write(moofBoxData)
-   finalMP4Data.Write(newMdatBoxData)
+   if ftyp != nil {
+      finalMP4Data.Write(ftyp.Encode())
+   }
+   finalMP4Data.Write(moov.Encode())
+   finalMP4Data.Write(moof.Encode())
+   finalMP4Data.Write(createMdatBox(decryptedPayload))
 
-   // 4. Write the final file to disk.
    outputFilePath := "roku-avc1.mp4"
    if err := os.WriteFile(outputFilePath, finalMP4Data.Bytes(), 0644); err != nil {
       t.Fatalf("Failed to write final MP4 file to disk: %v", err)
@@ -179,12 +269,7 @@ func TestDecryption(t *testing.T) {
    if finalMP4Data.Len() == 0 {
       t.Error("Final assembled MP4 data is zero-length.")
    }
-   if !bytes.Contains(finalMP4Data.Bytes(), []byte("moov")) {
-      t.Error("Final MP4 is missing 'moov' box.")
+   if !bytes.Contains(finalMP4Data.Bytes(), []byte("avc1")) {
+      t.Error("Final MP4 is missing 'avc1' box, replacement failed.")
    }
-   if !bytes.Contains(finalMP4Data.Bytes(), []byte("moof")) {
-      t.Error("Final MP4 is missing 'moof' box.")
-   }
-
-   t.Log("Decryption and file assembly complete.")
 }

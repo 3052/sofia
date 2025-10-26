@@ -1,9 +1,12 @@
 package mp4
 
-// FrmaBox represents the 'frma' box.
+import "fmt"
+
+// FrmaBox represents the 'frma' box (Original Format Box).
 type FrmaBox struct {
-   Header BoxHeader
-   Data   []byte
+   Header     BoxHeader
+   RawData    []byte // Stores the original box data for a perfect round trip
+   DataFormat [4]byte
 }
 
 // ParseFrma parses the 'frma' box from a byte slice.
@@ -12,13 +15,20 @@ func ParseFrma(data []byte) (FrmaBox, error) {
    if err != nil {
       return FrmaBox{}, err
    }
-   return FrmaBox{
-      Header: header,
-      Data:   data[:header.Size],
-   }, nil
+   var frma FrmaBox
+   frma.Header = header
+   frma.RawData = data[:header.Size]
+
+   // The dataFormat is the 4 bytes immediately following the box header.
+   if len(data) < 12 {
+      return FrmaBox{}, fmt.Errorf("frma box is too small: %d bytes", len(data))
+   }
+   copy(frma.DataFormat[:], data[8:12])
+
+   return frma, nil
 }
 
-// Encode encodes the 'frma' box to a byte slice.
+// Encode returns the raw byte data to ensure a perfect round trip.
 func (b *FrmaBox) Encode() []byte {
-   return b.Data
+   return b.RawData
 }

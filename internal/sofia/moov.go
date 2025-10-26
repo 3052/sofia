@@ -1,5 +1,15 @@
 package mp4
 
+func (b *MoovBox) GetAllTraks() []*TrakBox {
+   var traks []*TrakBox
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         traks = append(traks, child.Trak)
+      }
+   }
+   return traks
+}
+
 func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
    for _, child := range b.Children {
       if child.Trak != nil {

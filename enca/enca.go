@@ -40,7 +40,7 @@ func (s *SampleEntry) Read(data []byte) error {
          // paramount-mp4a
          // roku-mp4a
          "esds":
-         s.Box = append(s.Box, &box)
+         s.Box = append(s.Box, box)
       case "sinf":
          s.Sinf.BoxHeader = box.BoxHeader
          err = s.Sinf.Read(box.Payload)
@@ -74,7 +74,7 @@ type SampleEntry struct {
       _            uint16
       SampleRate   uint32
    }
-   Box  []*sofia.Box
+   Box  []sofia.Box
    Sinf sinf.Box
 }
 

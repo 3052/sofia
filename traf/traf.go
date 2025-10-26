@@ -87,7 +87,7 @@ func (b *Box) Read(data []byte) error {
          // roku-mp4a
          // tubi-avc1
          "tfdt":
-         b.Box = append(b.Box, &boxVar)
+         b.Box = append(b.Box, boxVar)
       case "tfhd":
          b.Tfhd.BoxHeader = boxVar.BoxHeader
          err := b.Tfhd.Read(boxVar.Payload)
@@ -108,7 +108,7 @@ func (b *Box) Read(data []byte) error {
                return err
             }
          } else {
-            b.Box = append(b.Box, &boxVar)
+            b.Box = append(b.Box, boxVar)
          }
       default:
          return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
@@ -122,7 +122,7 @@ func (b *Box) Read(data []byte) error {
 //   }
 type Box struct {
    BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
+   Box       []sofia.Box
    Senc      *senc.Box
    Tfhd      tfhd.Box
    Trun      trun.Box

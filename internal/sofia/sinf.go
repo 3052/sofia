@@ -1,19 +1,18 @@
 package mp4
 
-// SinfChild holds either a parsed box or raw data for a child of a 'sinf' box.
+import "fmt"
+
 type SinfChild struct {
    Frma *FrmaBox
    Schi *SchiBox
    Raw  []byte
 }
-
-// SinfBox represents the 'sinf' box (Protection Scheme Information Box).
 type SinfBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []SinfChild
 }
 
-// ParseSinf parses the 'sinf' box from a byte slice.
 func ParseSinf(data []byte) (SinfBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -21,17 +20,23 @@ func ParseSinf(data []byte) (SinfBox, error) {
    }
    var sinf SinfBox
    sinf.Header = header
+   sinf.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return SinfBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return SinfBox{}, fmt.Errorf("invalid child box size in sinf")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child SinfChild
-
       switch string(h.Type[:]) {
       case "frma":
          frma, err := ParseFrma(childData)
@@ -49,12 +54,13 @@ func ParseSinf(data []byte) (SinfBox, error) {
          child.Raw = childData
       }
       sinf.Children = append(sinf.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return sinf, nil
 }
-
-// Encode encodes the 'sinf' box to a byte slice.
 func (b *SinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -66,7 +72,6 @@ func (b *SinfBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)

@@ -1,24 +1,22 @@
 package mp4
 
-import "encoding/binary"
+import (
+   "encoding/binary"
+   "fmt"
+)
 
-// StsdChild holds either a parsed box or raw data for a sample entry in an 'stsd' box.
 type StsdChild struct {
    Encv *EncvBox
    Enca *EncaBox
    Raw  []byte
 }
 
-// StsdBox represents the 'stsd' box (Sample Description Box).
 type StsdBox struct {
-   Header     BoxHeader
-   Version    byte
-   Flags      [3]byte
-   EntryCount uint32
-   Children   []StsdChild
+   Header   BoxHeader
+   RawData  []byte
+   Children []StsdChild
 }
 
-// ParseStsd parses the 'stsd' box from a byte slice.
 func ParseStsd(data []byte) (StsdBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -26,24 +24,24 @@ func ParseStsd(data []byte) (StsdBox, error) {
    }
    var stsd StsdBox
    stsd.Header = header
-
-   // stsd is a FullBox; it has version, flags, and an entry count.
-   stsd.Version = data[8]
-   copy(stsd.Flags[:], data[9:12])
-   stsd.EntryCount = binary.BigEndian.Uint32(data[12:16])
-
+   stsd.RawData = data[:header.Size]
+   entryCount := binary.BigEndian.Uint32(data[12:16])
    boxData := data[16:header.Size]
    offset := 0
-   // Loop over the number of entries specified in the stsd header
-   for i := uint32(0); i < stsd.EntryCount && offset < len(boxData); i++ {
+   for i := uint32(0); i < entryCount && offset < len(boxData); i++ {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return StsdBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return StsdBox{}, fmt.Errorf("invalid child box size in stsd")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child StsdChild
-
       switch string(h.Type[:]) {
       case "encv":
          encv, err := ParseEncv(childData)
@@ -58,16 +56,17 @@ func ParseStsd(data []byte) (StsdBox, error) {
          }
          child.Enca = &enca
       default:
-         // Any other sample entry type is stored as raw data.
          child.Raw = childData
       }
       stsd.Children = append(stsd.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return stsd, nil
 }
 
-// Encode encodes the 'stsd' box to a byte slice.
 func (b *StsdBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -79,21 +78,11 @@ func (b *StsdBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
-   // Total size is box header(8) + full box header(8) + children content length
-   b.Header.Size = uint32(8 + 8 + len(content))
+   headerData := b.RawData[8:16] // Get original version, flags, and entry count
+   fullContent := append(headerData, content...)
+   b.Header.Size = uint32(8 + len(fullContent))
    encoded := make([]byte, b.Header.Size)
-
-   // Write box header
    b.Header.Write(encoded)
-
-   // Write version, flags, and entry count
-   encoded[8] = b.Version
-   copy(encoded[9:12], b.Flags[:])
-   binary.BigEndian.PutUint32(encoded[12:16], b.EntryCount)
-
-   // Write children content
-   copy(encoded[16:], content)
-
+   copy(encoded[8:], fullContent)
    return encoded
 }

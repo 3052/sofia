@@ -1,18 +1,17 @@
 package mp4
 
-// SchiChild holds either a parsed box or raw data for a child of a 'schi' box.
+import "fmt"
+
 type SchiChild struct {
    Tenc *TencBox
    Raw  []byte
 }
-
-// SchiBox represents the 'schi' box (Scheme Information Box).
 type SchiBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []SchiChild
 }
 
-// ParseSchi parses the 'schi' box from a byte slice.
 func ParseSchi(data []byte) (SchiBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -20,17 +19,23 @@ func ParseSchi(data []byte) (SchiBox, error) {
    }
    var schi SchiBox
    schi.Header = header
+   schi.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return SchiBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return SchiBox{}, fmt.Errorf("invalid child box size in schi")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child SchiChild
-
       switch string(h.Type[:]) {
       case "tenc":
          tenc, err := ParseTenc(childData)
@@ -42,12 +47,13 @@ func ParseSchi(data []byte) (SchiBox, error) {
          child.Raw = childData
       }
       schi.Children = append(schi.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return schi, nil
 }
-
-// Encode encodes the 'schi' box to a byte slice.
 func (b *SchiBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -57,7 +63,6 @@ func (b *SchiBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)

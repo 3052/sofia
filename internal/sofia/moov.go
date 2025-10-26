@@ -1,42 +1,18 @@
 package mp4
 
-func (b *MoovBox) GetAllTraks() []*TrakBox {
-   var traks []*TrakBox
-   for _, child := range b.Children {
-      if child.Trak != nil {
-         traks = append(traks, child.Trak)
-      }
-   }
-   return traks
-}
+import "fmt"
 
-func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
-   for _, child := range b.Children {
-      if child.Trak != nil {
-         // A full implementation would parse tkhd to get track ID.
-         // For these samples, we assume track ID 1 is the first trak.
-         if trackID == 1 { // Simplified assumption
-            return child.Trak
-         }
-      }
-   }
-   return nil
-}
-
-// MoovChild holds either a parsed box or raw data for a child of a 'moov' box.
 type MoovChild struct {
    Trak *TrakBox
    Pssh *PsshBox
    Raw  []byte
 }
-
-// MoovBox represents the 'moov' box (Movie Box).
 type MoovBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []MoovChild
 }
 
-// ParseMoov parses the 'moov' box from a byte slice.
 func ParseMoov(data []byte) (MoovBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -44,17 +20,23 @@ func ParseMoov(data []byte) (MoovBox, error) {
    }
    var moov MoovBox
    moov.Header = header
+   moov.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return MoovBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return MoovBox{}, fmt.Errorf("invalid child box size in moov")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child MoovChild
-
       switch string(h.Type[:]) {
       case "trak":
          trak, err := ParseTrak(childData)
@@ -72,12 +54,13 @@ func ParseMoov(data []byte) (MoovBox, error) {
          child.Raw = childData
       }
       moov.Children = append(moov.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return moov, nil
 }
-
-// Encode encodes the 'moov' box to a byte slice.
 func (b *MoovBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -89,10 +72,28 @@ func (b *MoovBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)
    return encoded
+}
+func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         if trackID == 1 {
+            return child.Trak
+         }
+      }
+   }
+   return nil
+}
+func (b *MoovBox) GetAllTraks() []*TrakBox {
+   var traks []*TrakBox
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         traks = append(traks, child.Trak)
+      }
+   }
+   return traks
 }

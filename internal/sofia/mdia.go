@@ -1,19 +1,19 @@
 package mp4
 
-// MdiaChild holds either a parsed box or raw data for a child of an 'mdia' box.
+import "fmt"
+
 type MdiaChild struct {
    Mdhd *MdhdBox
    Minf *MinfBox
    Raw  []byte
 }
 
-// MdiaBox represents the 'mdia' box (Media Box).
 type MdiaBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []MdiaChild
 }
 
-// ParseMdia parses the 'mdia' box from a byte slice.
 func ParseMdia(data []byte) (MdiaBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -21,17 +21,23 @@ func ParseMdia(data []byte) (MdiaBox, error) {
    }
    var mdia MdiaBox
    mdia.Header = header
+   mdia.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return MdiaBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return MdiaBox{}, fmt.Errorf("invalid child box size in mdia")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child MdiaChild
-
       switch string(h.Type[:]) {
       case "mdhd":
          mdhd, err := ParseMdhd(childData)
@@ -49,12 +55,14 @@ func ParseMdia(data []byte) (MdiaBox, error) {
          child.Raw = childData
       }
       mdia.Children = append(mdia.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return mdia, nil
 }
 
-// Encode encodes the 'mdia' box to a byte slice.
 func (b *MdiaBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -66,7 +74,6 @@ func (b *MdiaBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)

@@ -7,6 +7,7 @@ type MoofChild struct {
    Pssh *PsshBox
    Raw  []byte
 }
+
 type MoofBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -61,6 +62,7 @@ func ParseMoof(data []byte) (MoofBox, error) {
    }
    return moof, nil
 }
+
 func (b *MoofBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

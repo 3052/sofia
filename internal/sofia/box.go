@@ -19,6 +19,7 @@ func ReadBoxHeader(data []byte) (BoxHeader, int, error) {
    copy(h.Type[:], data[4:8])
    return h, 8, nil
 }
+
 func (h BoxHeader) Write(data []byte) int {
    binary.BigEndian.PutUint32(data[0:4], h.Size)
    copy(data[4:8], h.Type[:])

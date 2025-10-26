@@ -7,6 +7,58 @@ import (
    "testing"
 )
 
+func (s *senc_test) encode_init() ([]byte, error) {
+   log.Print(s.initial)
+   data, err := os.ReadFile(folder + s.initial)
+   if err != nil {
+      return nil, err
+   }
+   var fileVar File
+   err = fileVar.Read(data)
+   if err != nil {
+      return nil, err
+   }
+   for _, pssh := range fileVar.Moov.Pssh {
+      copy(pssh.BoxHeader.Type[:], "free") // Firefox
+   }
+   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
+   if sinf, ok := description.Sinf(); ok {
+      // Firefox
+      copy(sinf.BoxHeader.Type[:], "free")
+      if sample, ok := description.SampleEntry(); ok {
+         // Firefox
+         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
+      }
+   }
+   return fileVar.Append(nil)
+}
+
+func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
+   log.Print(s.segment)
+   segment, err := os.ReadFile(folder + s.segment)
+   if err != nil {
+      return nil, err
+   }
+   var fileVar File
+   err = fileVar.Read(segment)
+   if err != nil {
+      return nil, err
+   }
+   if senc := fileVar.Moof.Traf.Senc; senc != nil {
+      key, err := hex.DecodeString(s.key)
+      if err != nil {
+         return nil, err
+      }
+      for i, data := range fileVar.Mdat.Data(&fileVar.Moof.Traf) {
+         err := senc.Sample[i].Decrypt(data, key)
+         if err != nil {
+            return nil, err
+         }
+      }
+   }
+   return fileVar.Append(data)
+}
+
 type senc_test struct {
    initial string
    key     string
@@ -69,58 +121,6 @@ var senc_tests = []senc_test{
       out:     "tubi-avc1.mp4",
       segment: "tubi-avc1/16524-27006.mp4",
    },
-}
-
-func (s *senc_test) encode_init() ([]byte, error) {
-   log.Print(s.initial)
-   data, err := os.ReadFile(folder + s.initial)
-   if err != nil {
-      return nil, err
-   }
-   var fileVar File
-   err = fileVar.Read(data)
-   if err != nil {
-      return nil, err
-   }
-   for _, pssh := range fileVar.Moov.Pssh {
-      copy(pssh.BoxHeader.Type[:], "free") // Firefox
-   }
-   description := fileVar.Moov.Trak.Mdia.Minf.Stbl.Stsd
-   if sinf, ok := description.Sinf(); ok {
-      // Firefox
-      copy(sinf.BoxHeader.Type[:], "free")
-      if sample, ok := description.SampleEntry(); ok {
-         // Firefox
-         copy(sample.BoxHeader.Type[:], sinf.Frma.DataFormat[:])
-      }
-   }
-   return fileVar.Append(nil)
-}
-
-func (s *senc_test) encode_segment(data []byte) ([]byte, error) {
-   log.Print(s.segment)
-   segment, err := os.ReadFile(folder + s.segment)
-   if err != nil {
-      return nil, err
-   }
-   var fileVar File
-   err = fileVar.Read(segment)
-   if err != nil {
-      return nil, err
-   }
-   if senc := fileVar.Moof.Traf.Senc; senc != nil {
-      key, err := hex.DecodeString(s.key)
-      if err != nil {
-         return nil, err
-      }
-      for i, data := range fileVar.Mdat.Data(&fileVar.Moof.Traf) {
-         err := senc.Sample[i].Decrypt(data, key)
-         if err != nil {
-            return nil, err
-         }
-      }
-   }
-   return fileVar.Append(data)
 }
 
 const folder = "../testdata/"

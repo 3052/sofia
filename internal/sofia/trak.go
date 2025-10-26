@@ -2,7 +2,6 @@ package mp4
 
 import "fmt"
 
-// TrakChild now includes a field for the EdtsBox.
 type TrakChild struct {
    Edts *EdtsBox
    Mdia *MdiaBox
@@ -15,7 +14,6 @@ type TrakBox struct {
    Children []TrakChild
 }
 
-// ParseTrak is updated to handle the 'edts' case.
 func ParseTrak(data []byte) (TrakBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -41,7 +39,7 @@ func ParseTrak(data []byte) (TrakBox, error) {
       childData := boxData[offset : offset+boxSize]
       var child TrakChild
       switch string(h.Type[:]) {
-      case "edts": // Added case for 'edts'
+      case "edts":
          edts, err := ParseEdts(childData)
          if err != nil {
             return TrakBox{}, err
@@ -65,7 +63,6 @@ func ParseTrak(data []byte) (TrakBox, error) {
    return trak, nil
 }
 
-// Encode is updated to handle the new Edts field.
 func (b *TrakBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -84,7 +81,6 @@ func (b *TrakBox) Encode() []byte {
    return encoded
 }
 
-// GetStbl finds and returns the stbl box from within a trak box.
 func (b *TrakBox) GetStbl() *StblBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -102,7 +98,6 @@ func (b *TrakBox) GetStbl() *StblBox {
    return nil
 }
 
-// GetStsd finds and returns the stsd box from within a trak box.
 func (b *TrakBox) GetStsd() *StsdBox {
    stbl := b.GetStbl()
    if stbl == nil {
@@ -116,7 +111,6 @@ func (b *TrakBox) GetStsd() *StsdBox {
    return nil
 }
 
-// GetTenc finds the tenc box by traversing the sample description.
 func (b *TrakBox) GetTenc() *TencBox {
    stsd := b.GetStsd()
    if stsd == nil {

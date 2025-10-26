@@ -7,6 +7,7 @@ type MoovChild struct {
    Pssh *PsshBox
    Raw  []byte
 }
+
 type MoovBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -61,6 +62,7 @@ func ParseMoov(data []byte) (MoovBox, error) {
    }
    return moov, nil
 }
+
 func (b *MoovBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -78,6 +80,7 @@ func (b *MoovBox) Encode() []byte {
    copy(encoded[8:], content)
    return encoded
 }
+
 func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
    for _, child := range b.Children {
       if child.Trak != nil {
@@ -88,6 +91,7 @@ func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
    }
    return nil
 }
+
 func (b *MoovBox) GetAllTraks() []*TrakBox {
    var traks []*TrakBox
    for _, child := range b.Children {

@@ -244,34 +244,71 @@ func createMdatBox(payload []byte) []byte {
 func removeEncryption(moov *MoovBox) error {
    for _, trak := range moov.GetAllTraks() {
       stsd := trak.GetStsd()
-      if stsd == nil { continue }
+      if stsd == nil {
+         continue
+      }
       for i, child := range stsd.Children {
-         var encBoxHeader []byte; var encChildren []interface{}; var isVideo bool
+         var encBoxHeader []byte
+         var encChildren []interface{}
+         var isVideo bool
          if child.Encv != nil {
             encBoxHeader, isVideo = child.Encv.EntryHeader, true
-            for _, c := range child.Encv.Children { encChildren = append(encChildren, c) }
+            for _, c := range child.Encv.Children {
+               encChildren = append(encChildren, c)
+            }
          } else if child.Enca != nil {
             encBoxHeader = child.Enca.EntryHeader
-            for _, c := range child.Enca.Children { encChildren = append(encChildren, c) }
-         } else { continue }
+            for _, c := range child.Enca.Children {
+               encChildren = append(encChildren, c)
+            }
+         } else {
+            continue
+         }
          var sinf *SinfBox
          if isVideo {
-            for _, c := range encChildren { if s := c.(EncvChild).Sinf; s != nil { sinf = s; break } }
+            for _, c := range encChildren {
+               if s := c.(EncvChild).Sinf; s != nil {
+                  sinf = s
+                  break
+               }
+            }
          } else {
-            for _, c := range encChildren { if s := c.(EncaChild).Sinf; s != nil { sinf = s; break } }
+            for _, c := range encChildren {
+               if s := c.(EncaChild).Sinf; s != nil {
+                  sinf = s
+                  break
+               }
+            }
          }
-         if sinf == nil { return errors.New("could not find 'sinf' box") }
+         if sinf == nil {
+            return errors.New("could not find 'sinf' box")
+         }
          var frma *FrmaBox
-         for _, sinfChild := range sinf.Children { if f := sinfChild.Frma; f != nil { frma = f; break } }
-         if frma == nil { return errors.New("could not find 'frma' box") }
+         for _, sinfChild := range sinf.Children {
+            if f := sinfChild.Frma; f != nil {
+               frma = f
+               break
+            }
+         }
+         if frma == nil {
+            return errors.New("could not find 'frma' box")
+         }
          newFormatType := frma.DataFormat
          var newContent bytes.Buffer
          newContent.Write(encBoxHeader)
          for _, c := range encChildren {
             var childSinf *SinfBox
-            if isVideo { childSinf = c.(EncvChild).Sinf } else { childSinf = c.(EncaChild).Sinf }
+            if isVideo {
+               childSinf = c.(EncvChild).Sinf
+            } else {
+               childSinf = c.(EncaChild).Sinf
+            }
             if childSinf == nil {
-               if isVideo { newContent.Write(c.(EncvChild).Raw) } else { newContent.Write(c.(EncaChild).Raw) }
+               if isVideo {
+                  newContent.Write(c.(EncvChild).Raw)
+               } else {
+                  newContent.Write(c.(EncaChild).Raw)
+               }
             }
          }
          newBoxSize := uint32(8 + newContent.Len())
@@ -290,8 +327,11 @@ func removeDRM(moov *MoovBox, moof *MoofBox) {
       for i := range moov.Children {
          child := &moov.Children[i]
          if child.Pssh != nil {
-            freeBoxData := make([]byte, len(child.Pssh.RawData)); copy(freeBoxData, child.Pssh.RawData)
-            copy(freeBoxData[4:8], "free"); child.Pssh = nil; child.Raw = freeBoxData
+            freeBoxData := make([]byte, len(child.Pssh.RawData))
+            copy(freeBoxData, child.Pssh.RawData)
+            copy(freeBoxData[4:8], "free")
+            child.Pssh = nil
+            child.Raw = freeBoxData
          }
       }
    }
@@ -299,21 +339,29 @@ func removeDRM(moov *MoovBox, moof *MoofBox) {
       for i := range moof.Children {
          child := &moof.Children[i]
          if child.Pssh != nil {
-            freeBoxData := make([]byte, len(child.Pssh.RawData)); copy(freeBoxData, child.Pssh.RawData)
-            copy(freeBoxData[4:8], "free"); child.Pssh = nil; child.Raw = freeBoxData
+            freeBoxData := make([]byte, len(child.Pssh.RawData))
+            copy(freeBoxData, child.Pssh.RawData)
+            copy(freeBoxData[4:8], "free")
+            child.Pssh = nil
+            child.Raw = freeBoxData
          }
       }
    }
 }
 
 func removeEdts(moov *MoovBox) {
-   if moov == nil { return }
+   if moov == nil {
+      return
+   }
    for _, trak := range moov.GetAllTraks() {
       for i := range trak.Children {
          child := &trak.Children[i]
          if child.Edts != nil {
-            freeBoxData := make([]byte, len(child.Edts.RawData)); copy(freeBoxData, child.Edts.RawData)
-            copy(freeBoxData[4:8], "free"); child.Edts = nil; child.Raw = freeBoxData
+            freeBoxData := make([]byte, len(child.Edts.RawData))
+            copy(freeBoxData, child.Edts.RawData)
+            copy(freeBoxData[4:8], "free")
+            child.Edts = nil
+            child.Raw = freeBoxData
          }
       }
    }

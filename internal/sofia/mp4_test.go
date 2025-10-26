@@ -10,7 +10,6 @@ import (
    "testing"
 )
 
-// TestRoundTrip verifies that parsing and re-encoding a file results in a byte-perfect copy.
 func TestRoundTrip(t *testing.T) {
    testFiles := []string{
       "../../testdata/criterion-avc1/0-804.mp4",
@@ -41,19 +40,16 @@ func TestRoundTrip(t *testing.T) {
             return
          }
          if len(originalData) == 0 {
-            return // Skip empty files
+            return
          }
-
          parsedBoxes, err := ParseFile(originalData)
          if err != nil {
             t.Fatalf("ParseFile failed for %s: %v", filePath, err)
          }
-
          var encodedData []byte
          for _, box := range parsedBoxes {
             encodedData = append(encodedData, box.Encode()...)
          }
-
          if !bytes.Equal(originalData, encodedData) {
             t.Errorf("Round trip failed for %s. Original and encoded data do not match.", filePath)
          }
@@ -76,7 +72,6 @@ func removeEncryption(moov *MoovBox) error {
       if stsd == nil {
          continue
       }
-
       for i, child := range stsd.Children {
          var encBoxHeader []byte
          var encChildren []interface{}
@@ -94,7 +89,6 @@ func removeEncryption(moov *MoovBox) error {
          } else {
             continue
          }
-
          var sinf *SinfBox
          if isVideo {
             for _, c := range encChildren {
@@ -114,7 +108,6 @@ func removeEncryption(moov *MoovBox) error {
          if sinf == nil {
             return errors.New("could not find 'sinf' box")
          }
-
          var frma *FrmaBox
          for _, sinfChild := range sinf.Children {
             if f := sinfChild.Frma; f != nil {
@@ -125,7 +118,6 @@ func removeEncryption(moov *MoovBox) error {
          if frma == nil {
             return errors.New("could not find 'frma' box")
          }
-
          newFormatType := frma.DataFormat
          var newContent bytes.Buffer
          newContent.Write(encBoxHeader)
@@ -144,7 +136,6 @@ func removeEncryption(moov *MoovBox) error {
                }
             }
          }
-
          newBoxSize := uint32(8 + newContent.Len())
          newBoxData := make([]byte, newBoxSize)
          binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
@@ -177,6 +168,25 @@ func removeDRM(moov *MoovBox, moof *MoofBox) {
             copy(freeBoxData, child.Pssh.RawData)
             copy(freeBoxData[4:8], "free")
             child.Pssh = nil
+            child.Raw = freeBoxData
+         }
+      }
+   }
+}
+
+// removeEdts finds all edts boxes in a moov and renames them to 'free'.
+func removeEdts(moov *MoovBox) {
+   if moov == nil {
+      return
+   }
+   for _, trak := range moov.GetAllTraks() {
+      for i := range trak.Children {
+         child := &trak.Children[i]
+         if child.Edts != nil {
+            freeBoxData := make([]byte, len(child.Edts.RawData))
+            copy(freeBoxData, child.Edts.RawData)
+            copy(freeBoxData[4:8], "free")
+            child.Edts = nil
             child.Raw = freeBoxData
          }
       }
@@ -255,8 +265,14 @@ func TestDecryption(t *testing.T) {
    if err := removeEncryption(moov); err != nil {
       t.Fatalf("Failed to replace 'encv' with 'avc1': %v", err)
    }
+   t.Logf("Successfully updated moov box to signal unencrypted content ('avc1').")
 
    removeDRM(moov, moof)
+   t.Logf("Successfully neutralized 'pssh' boxes.")
+
+   // NEW: Call the function to remove 'edts' boxes.
+   removeEdts(moov)
+   t.Logf("Successfully neutralized 'edts' boxes.")
 
    var finalMP4Data bytes.Buffer
    for _, box := range parsedInit {
@@ -274,11 +290,17 @@ func TestDecryption(t *testing.T) {
    if err := os.WriteFile(outputFilePath, finalMP4Data.Bytes(), 0644); err != nil {
       t.Fatalf("Failed to write final MP4 file: %v", err)
    }
+   t.Logf("Successfully wrote playable MP4 file to: %s", outputFilePath)
 
+   // Verification
    if bytes.Contains(finalMP4Data.Bytes(), []byte("pssh")) {
       t.Error("Final MP4 contains 'pssh' box; removal failed.")
    }
    if bytes.Contains(finalMP4Data.Bytes(), []byte("sinf")) {
       t.Error("Final MP4 contains 'sinf' box; removal failed.")
+   }
+   // NEW: Verify that 'edts' has been removed.
+   if bytes.Contains(finalMP4Data.Bytes(), []byte("edts")) {
+      t.Error("Final MP4 contains 'edts' box; removal failed.")
    }
 }

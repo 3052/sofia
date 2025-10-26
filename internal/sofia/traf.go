@@ -1,33 +1,7 @@
 package mp4
 
-func (b *TrafBox) GetTfhd() *TfhdBox {
-   for _, child := range b.Children {
-      if child.Tfhd != nil {
-         return child.Tfhd
-      }
-   }
-   return nil
-}
+import "fmt"
 
-func (b *TrafBox) GetTrun() *TrunBox {
-   for _, child := range b.Children {
-      if child.Trun != nil {
-         return child.Trun
-      }
-   }
-   return nil
-}
-
-func (b *TrafBox) GetSenc() *SencBox {
-   for _, child := range b.Children {
-      if child.Senc != nil {
-         return child.Senc
-      }
-   }
-   return nil
-}
-
-// TrafChild holds either a parsed box or raw data for a child of a 'traf' box.
 type TrafChild struct {
    Tfhd *TfhdBox
    Trun *TrunBox
@@ -35,13 +9,12 @@ type TrafChild struct {
    Raw  []byte
 }
 
-// TrafBox represents the 'traf' box (Track Fragment Box).
 type TrafBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []TrafChild
 }
 
-// ParseTraf parses the 'traf' box from a byte slice.
 func ParseTraf(data []byte) (TrafBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -49,17 +22,23 @@ func ParseTraf(data []byte) (TrafBox, error) {
    }
    var traf TrafBox
    traf.Header = header
+   traf.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return TrafBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return TrafBox{}, fmt.Errorf("invalid child box size in traf")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child TrafChild
-
       switch string(h.Type[:]) {
       case "tfhd":
          tfhd, err := ParseTfhd(childData)
@@ -83,12 +62,14 @@ func ParseTraf(data []byte) (TrafBox, error) {
          child.Raw = childData
       }
       traf.Children = append(traf.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return traf, nil
 }
 
-// Encode encodes the 'traf' box to a byte slice.
 func (b *TrafBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -102,10 +83,34 @@ func (b *TrafBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)
    return encoded
+}
+
+func (b *TrafBox) GetTfhd() *TfhdBox {
+   for _, child := range b.Children {
+      if child.Tfhd != nil {
+         return child.Tfhd
+      }
+   }
+   return nil
+}
+func (b *TrafBox) GetTrun() *TrunBox {
+   for _, child := range b.Children {
+      if child.Trun != nil {
+         return child.Trun
+      }
+   }
+   return nil
+}
+func (b *TrafBox) GetSenc() *SencBox {
+   for _, child := range b.Children {
+      if child.Senc != nil {
+         return child.Senc
+      }
+   }
+   return nil
 }

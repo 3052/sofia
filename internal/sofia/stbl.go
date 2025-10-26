@@ -1,18 +1,18 @@
 package mp4
 
-// StblChild holds either a parsed box or raw data for a child of an 'stbl' box.
+import "fmt"
+
 type StblChild struct {
    Stsd *StsdBox
    Raw  []byte
 }
 
-// StblBox represents the 'stbl' box (Sample Table Box).
 type StblBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []StblChild
 }
 
-// ParseStbl parses the 'stbl' box from a byte slice.
 func ParseStbl(data []byte) (StblBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -20,17 +20,23 @@ func ParseStbl(data []byte) (StblBox, error) {
    }
    var stbl StblBox
    stbl.Header = header
+   stbl.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return StblBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return StblBox{}, fmt.Errorf("invalid child box size in stbl")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child StblChild
-
       switch string(h.Type[:]) {
       case "stsd":
          stsd, err := ParseStsd(childData)
@@ -42,12 +48,14 @@ func ParseStbl(data []byte) (StblBox, error) {
          child.Raw = childData
       }
       stbl.Children = append(stbl.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return stbl, nil
 }
 
-// Encode encodes the 'stbl' box to a byte slice.
 func (b *StblBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -57,7 +65,6 @@ func (b *StblBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)

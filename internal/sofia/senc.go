@@ -2,9 +2,7 @@ package mp4
 
 import (
    "encoding/binary"
-   "encoding/hex"
    "fmt"
-   "log"
 )
 
 // SubsampleInfo defines the size of clear and protected data blocks.
@@ -37,9 +35,7 @@ func ParseSenc(data []byte) (SencBox, error) {
    senc.Header = header
    senc.RawData = data[:header.Size]
 
-   log.Printf("[PARSE SENC] Box size: %d", len(data))
    senc.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-   log.Printf("[PARSE SENC] Flags: 0x%06x", senc.Flags)
 
    offset := 12
    if offset+4 > len(data) {
@@ -47,7 +43,6 @@ func ParseSenc(data []byte) (SencBox, error) {
    }
    sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
-   log.Printf("[PARSE SENC] Sample count: %d", sampleCount)
 
    senc.Samples = make([]SampleEncryptionInfo, sampleCount)
    const ivSize = 8
@@ -59,7 +54,6 @@ func ParseSenc(data []byte) (SencBox, error) {
       }
       senc.Samples[i].IV = data[offset : offset+ivSize]
       offset += ivSize
-      log.Printf("[PARSE SENC] Sample %d: IV=%s", i, hex.EncodeToString(senc.Samples[i].IV))
 
       if subsamplesPresent {
          if offset+2 > len(data) {
@@ -68,8 +62,6 @@ func ParseSenc(data []byte) (SencBox, error) {
          subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
          offset += 2
          senc.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
-         log.Printf("[PARSE SENC] Sample %d: Subsample count=%d", i, subsampleCount)
-
          for j := uint16(0); j < subsampleCount; j++ {
             if offset+6 > len(data) {
                return SencBox{}, fmt.Errorf("senc box truncated at subsample data for sample %d", i)
@@ -81,7 +73,6 @@ func ParseSenc(data []byte) (SencBox, error) {
                BytesOfProtectedData: protectedBytes,
             }
             offset += 6
-            log.Printf("[PARSE SENC] Sample %d, Subsample %d: Clear=%-5d Protected=%-5d", i, j, clearBytes, protectedBytes)
          }
       }
    }

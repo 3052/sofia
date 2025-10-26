@@ -1,18 +1,18 @@
 package mp4
 
-// MinfChild holds either a parsed box or raw data for a child of a 'minf' box.
+import "fmt"
+
 type MinfChild struct {
    Stbl *StblBox
    Raw  []byte
 }
 
-// MinfBox represents the 'minf' box (Media Information Box).
 type MinfBox struct {
    Header   BoxHeader
+   RawData  []byte
    Children []MinfChild
 }
 
-// ParseMinf parses the 'minf' box from a byte slice.
 func ParseMinf(data []byte) (MinfBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -20,17 +20,23 @@ func ParseMinf(data []byte) (MinfBox, error) {
    }
    var minf MinfBox
    minf.Header = header
+   minf.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return MinfBox{}, err
+         break
       }
-
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(boxData) {
+         return MinfBox{}, fmt.Errorf("invalid child box size in minf")
+      }
+      childData := boxData[offset : offset+boxSize]
       var child MinfChild
-
       switch string(h.Type[:]) {
       case "stbl":
          stbl, err := ParseStbl(childData)
@@ -42,12 +48,14 @@ func ParseMinf(data []byte) (MinfBox, error) {
          child.Raw = childData
       }
       minf.Children = append(minf.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+      if h.Size == 0 {
+         break
+      }
    }
    return minf, nil
 }
 
-// Encode encodes the 'minf' box to a byte slice.
 func (b *MinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -57,7 +65,6 @@ func (b *MinfBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)

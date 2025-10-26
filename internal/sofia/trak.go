@@ -1,9 +1,15 @@
 package mp4
 
-// TrakBox represents the 'trak' box.
+// TrakChild holds either a parsed box or raw data for a child of a 'trak' box.
+type TrakChild struct {
+   Mdia *MdiaBox
+   Raw  []byte
+}
+
+// TrakBox represents the 'trak' box (Track Box).
 type TrakBox struct {
-   Header BoxHeader
-   Mdia   MdiaBox
+   Header   BoxHeader
+   Children []TrakChild
 }
 
 // ParseTrak parses the 'trak' box from a byte slice.
@@ -21,24 +27,38 @@ func ParseTrak(data []byte) (TrakBox, error) {
       if err != nil {
          return TrakBox{}, err
       }
-      if string(h.Type[:]) == "mdia" {
-         mdia, err := ParseMdia(boxData[offset:])
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child TrakChild
+
+      switch string(h.Type[:]) {
+      case "mdia":
+         mdia, err := ParseMdia(childData)
          if err != nil {
             return TrakBox{}, err
          }
-         trak.Mdia = mdia
-         offset += int(mdia.Header.Size)
-      } else {
-         offset += int(h.Size)
+         child.Mdia = &mdia
+      default:
+         child.Raw = childData
       }
+      trak.Children = append(trak.Children, child)
+      offset += int(h.Size)
    }
    return trak, nil
 }
 
 // Encode encodes the 'trak' box to a byte slice.
 func (b *TrakBox) Encode() []byte {
-   content := b.Mdia.Encode()
-   b.Header.Size = uint32(len(content) + 8)
+   var content []byte
+   for _, child := range b.Children {
+      if child.Mdia != nil {
+         content = append(content, child.Mdia.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
+   }
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

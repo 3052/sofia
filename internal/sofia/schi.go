@@ -1,9 +1,15 @@
 package mp4
 
-// SchiBox represents the 'schi' box.
+// SchiChild holds either a parsed box or raw data for a child of a 'schi' box.
+type SchiChild struct {
+   Tenc *TencBox
+   Raw  []byte
+}
+
+// SchiBox represents the 'schi' box (Scheme Information Box).
 type SchiBox struct {
-   Header BoxHeader
-   Tenc   TencBox
+   Header   BoxHeader
+   Children []SchiChild
 }
 
 // ParseSchi parses the 'schi' box from a byte slice.
@@ -21,24 +27,38 @@ func ParseSchi(data []byte) (SchiBox, error) {
       if err != nil {
          return SchiBox{}, err
       }
-      if string(h.Type[:]) == "tenc" {
-         tenc, err := ParseTenc(boxData[offset:])
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child SchiChild
+
+      switch string(h.Type[:]) {
+      case "tenc":
+         tenc, err := ParseTenc(childData)
          if err != nil {
             return SchiBox{}, err
          }
-         schi.Tenc = tenc
-         offset += int(tenc.Header.Size)
-      } else {
-         offset += int(h.Size)
+         child.Tenc = &tenc
+      default:
+         child.Raw = childData
       }
+      schi.Children = append(schi.Children, child)
+      offset += int(h.Size)
    }
    return schi, nil
 }
 
 // Encode encodes the 'schi' box to a byte slice.
 func (b *SchiBox) Encode() []byte {
-   content := b.Tenc.Encode()
-   b.Header.Size = uint32(len(content) + 8)
+   var content []byte
+   for _, child := range b.Children {
+      if child.Tenc != nil {
+         content = append(content, child.Tenc.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
+   }
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

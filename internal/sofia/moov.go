@@ -1,10 +1,16 @@
 package mp4
 
-// MoovBox represents the 'moov' box.
+// MoovChild holds either a parsed box or raw data for a child of a 'moov' box.
+type MoovChild struct {
+   Trak *TrakBox
+   Pssh *PsshBox
+   Raw  []byte
+}
+
+// MoovBox represents the 'moov' box (Movie Box).
 type MoovBox struct {
-   Header BoxHeader
-   Traks  []TrakBox
-   Pssh   []PsshBox
+   Header   BoxHeader
+   Children []MoovChild
 }
 
 // ParseMoov parses the 'moov' box from a byte slice.
@@ -22,24 +28,28 @@ func ParseMoov(data []byte) (MoovBox, error) {
       if err != nil {
          return MoovBox{}, err
       }
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child MoovChild
+
       switch string(h.Type[:]) {
       case "trak":
-         trak, err := ParseTrak(boxData[offset:])
+         trak, err := ParseTrak(childData)
          if err != nil {
             return MoovBox{}, err
          }
-         moov.Traks = append(moov.Traks, trak)
-         offset += int(trak.Header.Size)
+         child.Trak = &trak
       case "pssh":
-         pssh, err := ParsePssh(boxData[offset:])
+         pssh, err := ParsePssh(childData)
          if err != nil {
             return MoovBox{}, err
          }
-         moov.Pssh = append(moov.Pssh, pssh)
-         offset += int(pssh.Header.Size)
+         child.Pssh = &pssh
       default:
-         offset += int(h.Size)
+         child.Raw = childData
       }
+      moov.Children = append(moov.Children, child)
+      offset += int(h.Size)
    }
    return moov, nil
 }
@@ -47,13 +57,17 @@ func ParseMoov(data []byte) (MoovBox, error) {
 // Encode encodes the 'moov' box to a byte slice.
 func (b *MoovBox) Encode() []byte {
    var content []byte
-   for _, trak := range b.Traks {
-      content = append(content, trak.Encode()...)
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         content = append(content, child.Trak.Encode()...)
+      } else if child.Pssh != nil {
+         content = append(content, child.Pssh.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
    }
-   for _, pssh := range b.Pssh {
-      content = append(content, pssh.Encode()...)
-   }
-   b.Header.Size = uint32(len(content) + 8)
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

@@ -24,7 +24,6 @@ func NewDecrypter() *Decrypter {
 }
 
 // AddKey adds a decryption key to the decrypter's key map.
-// Both kid and key must be 32-character hex strings (representing 16 bytes).
 func (d *Decrypter) AddKey(kidHex string, keyHex string) error {
    kid, err := hex.DecodeString(kidHex)
    if err != nil || len(kid) != 16 {
@@ -57,10 +56,9 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
    for _, moofChild := range moof.Children {
       traf := moofChild.Traf
       if traf == nil {
-         continue // Skip non-traf boxes
+         continue
       }
 
-      // Find the necessary sub-boxes within the Track Fragment (traf)
       tfhd := traf.GetTfhd()
       trun := traf.GetTrun()
       senc := traf.GetSenc()
@@ -68,14 +66,12 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          return nil, errors.New("traf is missing one or more required boxes: tfhd, trun, senc")
       }
 
-      // Use the Track ID from tfhd to find the corresponding track's encryption info in the moov
       trak := moov.GetTrakByTrackID(tfhd.TrackID)
       if trak == nil {
          return nil, fmt.Errorf("could not find trak with ID %d in moov", tfhd.TrackID)
       }
       tenc := trak.GetTenc()
       if tenc == nil {
-         // This track is not encrypted, append its data as-is
          for _, sample := range trun.Samples {
             end := mdatOffset + int(sample.Size)
             if end > len(mdatData) {
@@ -87,7 +83,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          continue
       }
 
-      // Get the decryption key for this track
       key, ok := d.keys[tenc.DefaultKID]
       if !ok {
          return nil, fmt.Errorf("no key found for KID %s", hex.EncodeToString(tenc.DefaultKID[:]))
@@ -102,7 +97,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          return nil, errors.New("sample count mismatch between trun and senc boxes")
       }
 
-      // Decrypt each sample in the run
       for i, sampleInfo := range trun.Samples {
          sampleSize := int(sampleInfo.Size)
          if mdatOffset+sampleSize > len(mdatData) {
@@ -111,25 +105,30 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          encryptedSample := mdatData[mdatOffset : mdatOffset+sampleSize]
          mdatOffset += sampleSize
 
+         // *** FIX: Handle 8-byte IVs by padding them to 16 bytes ***
          iv := senc.Samples[i].IV
-         stream := cipher.NewCTR(block, iv)
+         if len(iv) == 8 {
+            // Pad 8-byte IV to 16 bytes by prepending zeroes
+            paddedIV := make([]byte, 16)
+            copy(paddedIV[8:], iv)
+            iv = paddedIV
+         } else if len(iv) != 16 {
+            return nil, fmt.Errorf("invalid IV length: got %d, want 16", len(iv))
+         }
 
+         stream := cipher.NewCTR(block, iv)
          decryptedSample := make([]byte, 0, sampleSize)
          sampleOffset := 0
 
          if len(senc.Samples[i].Subsamples) == 0 {
-            // No subsample info, the whole sample is encrypted
             decryptedPortion := make([]byte, len(encryptedSample))
             stream.XORKeyStream(decryptedPortion, encryptedSample)
             decryptedSample = append(decryptedSample, decryptedPortion...)
          } else {
-            // Decrypt using subsample information
             for _, sub := range senc.Samples[i].Subsamples {
-               // Append clear part
                decryptedSample = append(decryptedSample, encryptedSample[sampleOffset:sampleOffset+sub.BytesOfClearData]...)
                sampleOffset += sub.BytesOfClearData
 
-               // Decrypt protected part
                protectedData := encryptedSample[sampleOffset : sampleOffset+sub.BytesOfProtectedData]
                decryptedPortion := make([]byte, len(protectedData))
                stream.XORKeyStream(decryptedPortion, protectedData)

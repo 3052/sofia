@@ -52,15 +52,11 @@ func ParseTrun(data []byte) (TrunBox, error) {
          offset += 4
       }
       if sampleSizePresent {
-         // Ensure we don't read past the end of the box data
          if offset+4 > len(data) {
             return TrunBox{}, errors.New("trun box is truncated while parsing sample sizes")
          }
          trun.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
-      } else {
-         // Fallback or error needed if default sample size isn't in tfhd
-         // For these samples, sample size is always present in trun
       }
       if sampleFlagsPresent {
          offset += 4

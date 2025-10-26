@@ -7,30 +7,34 @@ import (
    "testing"
 )
 
-// TestRoundTrip loops through specified files and ensures that parsing and
-// then encoding the data results in the exact same byte sequence.
-// This is the clean, final version that uses the module's public API correctly.
-func TestRoundTrip(t *testing.T) {
-   // The user must place the test files in a 'testdata' subdirectory
-   // relative to the module root.
-   testFiles := []string{
-      "testdata/criterion-avc1/0-804.mp4",
-      "testdata/criterion-avc1/13845-168166.mp4",
-      "testdata/hboMax-dvh1/0-862.mp4",
-      "testdata/hboMax-dvh1/19579-78380.mp4",
-      "testdata/hulu-avc1/map.mp4",
-      "testdata/hulu-avc1/pts_0.mp4",
-      "testdata/paramount-mp4a/init.m4v",
-      "testdata/paramount-mp4a/seg_1.m4s",
-      "testdata/roku-avc1/index_video_8_0_1.mp4",
-      "testdata/tubi-avc1/0-1683.mp4",
-      "testdata/tubi-avc1/16524-27006.mp4",
-   }
+var testFiles = []string{
+   `criterion-avc1\0-804.mp4`,
+   `criterion-avc1\13845-168166.mp4`,
+   `hboMax-dvh1\0-862.mp4`,
+   `hboMax-dvh1\19579-78380.mp4`,
+   `hboMax-ec-3\0-657.mp4`,
+   `hboMax-ec-3\28710-157870.mp4`,
+   `hboMax-hvc1\0-834.mp4`,
+   `hboMax-hvc1\19551-35438.mp4`,
+   `hulu-avc1\map.mp4`,
+   `hulu-avc1\pts_0.mp4`,
+   `paramount-mp4a\init.m4v`,
+   `paramount-mp4a\seg_1.m4s`,
+   `roku-avc1\index_video_8_0_1.mp4`,
+   `roku-avc1\index_video_8_0_init.mp4`,
+   `rtbf-avc1\vod-idx-3-video=300000-0.dash`,
+   `rtbf-avc1\vod-idx-3-video=300000.dash`,
+   `tubi-avc1\0-1683.mp4`,
+   `tubi-avc1\16524-27006.mp4`,
+}
 
+const folder = "../../testdata/"
+
+func TestRoundTrip(t *testing.T) {
    for _, filePath := range testFiles {
       // Use a subtest for each file for clearer test output.
       t.Run(filepath.Base(filePath), func(t *testing.T) {
-         originalData, err := os.ReadFile(filePath)
+         originalData, err := os.ReadFile(folder + filePath)
          if err != nil {
             t.Skipf("test file not found, skipping: %s", filePath)
             return

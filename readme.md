@@ -8,7 +8,7 @@
 
 ISOBMFF
 
-library for reading and writing MP4
+module for reading and writing MP4
 
 - <https://wikipedia.org/wiki/MP4_file_format>
 - <https://wikipedia.org/wiki/MPEG_Common_Encryption>

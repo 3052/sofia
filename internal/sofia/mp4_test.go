@@ -5,6 +5,7 @@ import (
    "encoding/binary"
    "encoding/hex"
    "errors"
+   "log"
    "os"
    "path/filepath"
    "testing"
@@ -171,6 +172,7 @@ func removeEncryption(moov *MoovBox) error {
 
 // TestDecryption now assembles and writes a complete, playable MP4 file.
 func TestDecryption(t *testing.T) {
+   log.SetFlags(log.Ltime)
    const placeholderKey = "1ba08384626f9523e37b9db17f44da2b"
    // --- Test Setup ---
    initFilePath := "../../testdata/roku-avc1/index_video_8_0_init.mp4"

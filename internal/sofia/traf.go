@@ -1,11 +1,17 @@
 package mp4
 
-// TrafBox represents the 'traf' box.
+// TrafChild holds either a parsed box or raw data for a child of a 'traf' box.
+type TrafChild struct {
+   Tfhd *TfhdBox
+   Trun *TrunBox
+   Senc *SencBox
+   Raw  []byte
+}
+
+// TrafBox represents the 'traf' box (Track Fragment Box).
 type TrafBox struct {
-   Header BoxHeader
-   Tfhd   TfhdBox
-   Trun   *TrunBox
-   Senc   *SencBox
+   Header   BoxHeader
+   Children []TrafChild
 }
 
 // ParseTraf parses the 'traf' box from a byte slice.
@@ -23,45 +29,54 @@ func ParseTraf(data []byte) (TrafBox, error) {
       if err != nil {
          return TrafBox{}, err
       }
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child TrafChild
+
       switch string(h.Type[:]) {
       case "tfhd":
-         tfhd, err := ParseTfhd(boxData[offset:])
+         tfhd, err := ParseTfhd(childData)
          if err != nil {
             return TrafBox{}, err
          }
-         traf.Tfhd = tfhd
-         offset += int(tfhd.Header.Size)
+         child.Tfhd = &tfhd
       case "trun":
-         trun, err := ParseTrun(boxData[offset:])
+         trun, err := ParseTrun(childData)
          if err != nil {
             return TrafBox{}, err
          }
-         traf.Trun = &trun
-         offset += int(trun.Header.Size)
+         child.Trun = &trun
       case "senc":
-         senc, err := ParseSenc(boxData[offset:])
+         senc, err := ParseSenc(childData)
          if err != nil {
             return TrafBox{}, err
          }
-         traf.Senc = &senc
-         offset += int(senc.Header.Size)
+         child.Senc = &senc
       default:
-         offset += int(h.Size)
+         child.Raw = childData
       }
+      traf.Children = append(traf.Children, child)
+      offset += int(h.Size)
    }
    return traf, nil
 }
 
 // Encode encodes the 'traf' box to a byte slice.
 func (b *TrafBox) Encode() []byte {
-   content := b.Tfhd.Encode()
-   if b.Trun != nil {
-      content = append(content, b.Trun.Encode()...)
+   var content []byte
+   for _, child := range b.Children {
+      if child.Tfhd != nil {
+         content = append(content, child.Tfhd.Encode()...)
+      } else if child.Trun != nil {
+         content = append(content, child.Trun.Encode()...)
+      } else if child.Senc != nil {
+         content = append(content, child.Senc.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
    }
-   if b.Senc != nil {
-      content = append(content, b.Senc.Encode()...)
-   }
-   b.Header.Size = uint32(len(content) + 8)
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

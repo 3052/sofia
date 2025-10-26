@@ -1,9 +1,15 @@
 package mp4
 
-// MinfBox represents the 'minf' box.
+// MinfChild holds either a parsed box or raw data for a child of a 'minf' box.
+type MinfChild struct {
+   Stbl *StblBox
+   Raw  []byte
+}
+
+// MinfBox represents the 'minf' box (Media Information Box).
 type MinfBox struct {
-   Header BoxHeader
-   Stbl   StblBox
+   Header   BoxHeader
+   Children []MinfChild
 }
 
 // ParseMinf parses the 'minf' box from a byte slice.
@@ -21,24 +27,38 @@ func ParseMinf(data []byte) (MinfBox, error) {
       if err != nil {
          return MinfBox{}, err
       }
-      if string(h.Type[:]) == "stbl" {
-         stbl, err := ParseStbl(boxData[offset:])
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child MinfChild
+
+      switch string(h.Type[:]) {
+      case "stbl":
+         stbl, err := ParseStbl(childData)
          if err != nil {
             return MinfBox{}, err
          }
-         minf.Stbl = stbl
-         offset += int(stbl.Header.Size)
-      } else {
-         offset += int(h.Size)
+         child.Stbl = &stbl
+      default:
+         child.Raw = childData
       }
+      minf.Children = append(minf.Children, child)
+      offset += int(h.Size)
    }
    return minf, nil
 }
 
 // Encode encodes the 'minf' box to a byte slice.
 func (b *MinfBox) Encode() []byte {
-   content := b.Stbl.Encode()
-   b.Header.Size = uint32(len(content) + 8)
+   var content []byte
+   for _, child := range b.Children {
+      if child.Stbl != nil {
+         content = append(content, child.Stbl.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
+   }
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

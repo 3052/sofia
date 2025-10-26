@@ -1,10 +1,16 @@
 package mp4
 
-// SinfBox represents the 'sinf' box.
+// SinfChild holds either a parsed box or raw data for a child of a 'sinf' box.
+type SinfChild struct {
+   Frma *FrmaBox
+   Schi *SchiBox
+   Raw  []byte
+}
+
+// SinfBox represents the 'sinf' box (Protection Scheme Information Box).
 type SinfBox struct {
-   Header BoxHeader
-   Frma   FrmaBox
-   Schi   SchiBox
+   Header   BoxHeader
+   Children []SinfChild
 }
 
 // ParseSinf parses the 'sinf' box from a byte slice.
@@ -22,33 +28,46 @@ func ParseSinf(data []byte) (SinfBox, error) {
       if err != nil {
          return SinfBox{}, err
       }
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child SinfChild
+
       switch string(h.Type[:]) {
       case "frma":
-         frma, err := ParseFrma(boxData[offset:])
+         frma, err := ParseFrma(childData)
          if err != nil {
             return SinfBox{}, err
          }
-         sinf.Frma = frma
-         offset += int(frma.Header.Size)
+         child.Frma = &frma
       case "schi":
-         schi, err := ParseSchi(boxData[offset:])
+         schi, err := ParseSchi(childData)
          if err != nil {
             return SinfBox{}, err
          }
-         sinf.Schi = schi
-         offset += int(schi.Header.Size)
+         child.Schi = &schi
       default:
-         offset += int(h.Size)
+         child.Raw = childData
       }
+      sinf.Children = append(sinf.Children, child)
+      offset += int(h.Size)
    }
    return sinf, nil
 }
 
 // Encode encodes the 'sinf' box to a byte slice.
 func (b *SinfBox) Encode() []byte {
-   content := b.Frma.Encode()
-   content = append(content, b.Schi.Encode()...)
-   b.Header.Size = uint32(len(content) + 8)
+   var content []byte
+   for _, child := range b.Children {
+      if child.Frma != nil {
+         content = append(content, child.Frma.Encode()...)
+      } else if child.Schi != nil {
+         content = append(content, child.Schi.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
+   }
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

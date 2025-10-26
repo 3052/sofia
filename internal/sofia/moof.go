@@ -1,9 +1,15 @@
 package mp4
 
-// MoofBox represents the 'moof' box.
+// MoofChild holds either a parsed box or raw data for a child of a 'moof' box.
+type MoofChild struct {
+   Traf *TrafBox
+   Raw  []byte
+}
+
+// MoofBox represents the 'moof' box (Movie Fragment Box).
 type MoofBox struct {
-   Header BoxHeader
-   Trafs  []TrafBox
+   Header   BoxHeader
+   Children []MoofChild
 }
 
 // ParseMoof parses the 'moof' box from a byte slice.
@@ -21,16 +27,22 @@ func ParseMoof(data []byte) (MoofBox, error) {
       if err != nil {
          return MoofBox{}, err
       }
-      if string(h.Type[:]) == "traf" {
-         traf, err := ParseTraf(boxData[offset:])
+
+      childData := boxData[offset : offset+int(h.Size)]
+      var child MoofChild
+
+      switch string(h.Type[:]) {
+      case "traf":
+         traf, err := ParseTraf(childData)
          if err != nil {
             return MoofBox{}, err
          }
-         moof.Trafs = append(moof.Trafs, traf)
-         offset += int(traf.Header.Size)
-      } else {
-         offset += int(h.Size)
+         child.Traf = &traf
+      default:
+         child.Raw = childData
       }
+      moof.Children = append(moof.Children, child)
+      offset += int(h.Size)
    }
    return moof, nil
 }
@@ -38,10 +50,15 @@ func ParseMoof(data []byte) (MoofBox, error) {
 // Encode encodes the 'moof' box to a byte slice.
 func (b *MoofBox) Encode() []byte {
    var content []byte
-   for _, traf := range b.Trafs {
-      content = append(content, traf.Encode()...)
+   for _, child := range b.Children {
+      if child.Traf != nil {
+         content = append(content, child.Traf.Encode()...)
+      } else if child.Raw != nil {
+         content = append(content, child.Raw...)
+      }
    }
-   b.Header.Size = uint32(len(content) + 8)
+
+   b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)
    b.Header.Write(encoded)
    copy(encoded[8:], content)

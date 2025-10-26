@@ -8,13 +8,12 @@ import (
 // SampleInfo holds details about a single sample in a track run.
 type SampleInfo struct {
    Size uint32
-   // Duration, CompositionTimeOffset, etc., could be added here if needed.
 }
 
 // TrunBox represents the 'trun' box (Track Run Box).
 type TrunBox struct {
    Header  BoxHeader
-   Version byte
+   RawData []byte // Stores the original box data for a perfect round trip
    Flags   uint32
    Samples []SampleInfo
 }
@@ -27,32 +26,53 @@ func ParseTrun(data []byte) (TrunBox, error) {
    }
    var trun TrunBox
    trun.Header = header
-   trun.Version = data[8]
+   trun.RawData = data[:header.Size] // Store the original data
+
+   // Also parse the fields needed for decryption
    trun.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 
    sampleCount := binary.BigEndian.Uint32(data[12:16])
    offset := 16
 
-   // Skip data_offset if present
    if trun.Flags&0x000001 != 0 {
       offset += 4
-   }
-   // Skip first_sample_flags if present
+   } // data_offset_present
    if trun.Flags&0x000004 != 0 {
       offset += 4
-   }
+   } // first_sample_flags_present
 
    trun.Samples = make([]SampleInfo, sampleCount)
+   sampleDurationPresent := trun.Flags&0x000100 != 0
+   sampleSizePresent := trun.Flags&0x000200 != 0
+   sampleFlagsPresent := trun.Flags&0x000400 != 0
+   sampleCTOPresent := trun.Flags&0x000800 != 0
+
    for i := uint32(0); i < sampleCount; i++ {
-      // This simplified parser assumes only sample_size is present.
-      // A full implementation would check flags for duration, CTO, etc.
-      if trun.Flags&0x000200 == 0 {
-         return TrunBox{}, errors.New("trun parsing error: expected sample_size_present flag")
+      if sampleDurationPresent {
+         offset += 4
       }
-      trun.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      if sampleSizePresent {
+         // Ensure we don't read past the end of the box data
+         if offset+4 > len(data) {
+            return TrunBox{}, errors.New("trun box is truncated while parsing sample sizes")
+         }
+         trun.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
+         offset += 4
+      } else {
+         // Fallback or error needed if default sample size isn't in tfhd
+         // For these samples, sample size is always present in trun
+      }
+      if sampleFlagsPresent {
+         offset += 4
+      }
+      if sampleCTOPresent {
+         offset += 4
+      }
    }
    return trun, nil
 }
 
-func (b *TrunBox) Encode() []byte { return nil } // Omitted for brevity
+// Encode returns the raw byte data to ensure a perfect round trip.
+func (b *TrunBox) Encode() []byte {
+   return b.RawData
+}

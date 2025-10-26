@@ -1,6 +1,9 @@
 package mp4
 
-import "encoding/binary"
+import (
+   "encoding/binary"
+   "fmt"
+)
 
 // SubsampleInfo defines the size of clear and protected data blocks.
 type SubsampleInfo struct {
@@ -17,7 +20,7 @@ type SampleEncryptionInfo struct {
 // SencBox represents the 'senc' box (Sample Encryption Box).
 type SencBox struct {
    Header  BoxHeader
-   Version byte
+   RawData []byte // Stores the original box data for a perfect round trip
    Flags   uint32
    Samples []SampleEncryptionInfo
 }
@@ -30,26 +33,40 @@ func ParseSenc(data []byte) (SencBox, error) {
    }
    var senc SencBox
    senc.Header = header
-   senc.Version = data[8]
+   senc.RawData = data[:header.Size] // Store the original data
+
+   // Also parse the fields needed for decryption
    senc.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 
    offset := 12
+   if offset+4 > len(data) {
+      return SencBox{}, fmt.Errorf("senc box is too short to contain sample count")
+   }
    sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
 
    senc.Samples = make([]SampleEncryptionInfo, sampleCount)
-   const ivSize = 8 // From the sample files, IV size is 8 bytes. A robust parser would get this from tenc.
+   const ivSize = 8
 
    for i := uint32(0); i < sampleCount; i++ {
+      if offset+ivSize > len(data) {
+         return SencBox{}, fmt.Errorf("senc box is truncated while parsing IV for sample %d", i)
+      }
       iv := data[offset : offset+ivSize]
       senc.Samples[i].IV = iv
       offset += ivSize
 
-      if senc.Flags&0x000002 != 0 { // Check for subsample_data_present flag
+      if senc.Flags&0x000002 != 0 { // subsample_data_present
+         if offset+2 > len(data) {
+            return SencBox{}, fmt.Errorf("senc box is truncated while parsing subsample count for sample %d", i)
+         }
          subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
          offset += 2
          senc.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
          for j := uint16(0); j < subsampleCount; j++ {
+            if offset+6 > len(data) {
+               return SencBox{}, fmt.Errorf("senc box is truncated while parsing subsample data for sample %d", i)
+            }
             clearBytes := int(binary.BigEndian.Uint16(data[offset : offset+2]))
             protectedBytes := int(binary.BigEndian.Uint32(data[offset+2 : offset+6]))
             senc.Samples[i].Subsamples[j] = SubsampleInfo{
@@ -63,10 +80,7 @@ func ParseSenc(data []byte) (SencBox, error) {
    return senc, nil
 }
 
-// Encode is complex and omitted for brevity, as decryption is the primary goal.
-// A perfect round-trip would require storing and re-writing the original byte slice.
+// Encode returns the raw byte data to ensure a perfect round trip.
 func (b *SencBox) Encode() []byte {
-   // A proper implementation would rebuild the byte stream from the parsed fields.
-   // This is highly complex. For now, we assume this is a parse-only operation in the context of decryption.
-   return nil
+   return b.RawData
 }

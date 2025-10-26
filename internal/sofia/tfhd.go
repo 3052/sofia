@@ -5,7 +5,7 @@ import "encoding/binary"
 // TfhdBox represents the 'tfhd' box (Track Fragment Header Box).
 type TfhdBox struct {
    Header  BoxHeader
-   Version byte
+   RawData []byte // Stores the original box data for a perfect round trip
    Flags   uint32
    TrackID uint32
 }
@@ -18,10 +18,15 @@ func ParseTfhd(data []byte) (TfhdBox, error) {
    }
    var tfhd TfhdBox
    tfhd.Header = header
-   tfhd.Version = data[8]
+   tfhd.RawData = data[:header.Size] // Store the original data
+
+   // Also parse the fields needed for decryption
    tfhd.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
    tfhd.TrackID = binary.BigEndian.Uint32(data[12:16])
    return tfhd, nil
 }
 
-func (b *TfhdBox) Encode() []byte { return nil } // Omitted for brevity
+// Encode returns the raw byte data to ensure a perfect round trip.
+func (b *TfhdBox) Encode() []byte {
+   return b.RawData
+}

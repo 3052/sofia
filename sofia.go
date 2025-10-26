@@ -6,6 +6,20 @@ import (
    "strconv"
 )
 
+// ISO/IEC 14496-12
+//
+//   aligned(8) class Box(
+//      unsigned int(32) boxtype,
+//      optional unsigned int(8)[16] extended_type
+//   ) {
+//      BoxHeader(boxtype, extended_type);
+//      // the remaining bytes are the BoxPayload
+//   }
+type Box struct {
+   BoxHeader BoxHeader
+   Payload   []byte
+}
+
 func (b *BoxHeader) Append(data []byte) ([]byte, error) {
    data = binary.BigEndian.AppendUint32(data, b.Size)
    data = append(data, b.Type[:]...)
@@ -99,20 +113,6 @@ func (b *BoxError) Error() string {
    data = append(data, " box type:"...)
    data = strconv.AppendQuote(data, b.Box.Type.String())
    return string(data)
-}
-
-// ISO/IEC 14496-12
-//
-//   aligned(8) class Box(
-//      unsigned int(32) boxtype,
-//      optional unsigned int(8)[16] extended_type
-//   ) {
-//      BoxHeader(boxtype, extended_type);
-//      // the remaining bytes are the BoxPayload
-//   }
-type Box struct {
-   BoxHeader BoxHeader
-   Payload   []byte
 }
 
 const PiffExtendedType = "a2394f525a9b4f14a2446c427c648df4"

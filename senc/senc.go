@@ -5,6 +5,7 @@ import (
    "crypto/aes"
    "crypto/cipher"
    "encoding/binary"
+   "log"
 )
 
 // github.com/Eyevinn/mp4ff/blob/v0.40.2/mp4/crypto.go#L101
@@ -15,6 +16,9 @@ func (s *Sample) Decrypt(data, key []byte) error {
    }
    var iv [16]byte
    copy(iv[:], s.InitializationVector[:])
+   
+   log.Printf("key:%x iv:%x", key, iv)
+   
    stream := cipher.NewCTR(block, iv[:])
    if len(s.Subsample) >= 1 {
       var i uint32

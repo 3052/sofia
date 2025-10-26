@@ -1,5 +1,7 @@
 package mp4
 
+import "fmt"
+
 // EncvChild holds either a parsed box or raw data for a child of an 'encv' box.
 type EncvChild struct {
    Sinf *SinfBox
@@ -7,10 +9,14 @@ type EncvChild struct {
 }
 
 // EncvBox represents the 'encv' box (Encrypted Video).
+// It has a fixed-size header area before its children.
 type EncvBox struct {
-   Header   BoxHeader
-   Children []EncvChild
+   Header      BoxHeader
+   EntryHeader []byte // Stores the fixed-size part of the VisualSampleEntry
+   Children    []EncvChild
 }
+
+const visualSampleEntrySize = 78 // 8 for SampleEntry, 70 for VisualSampleEntry
 
 // ParseEncv parses the 'encv' box from a byte slice.
 func ParseEncv(data []byte) (EncvBox, error) {
@@ -20,16 +26,41 @@ func ParseEncv(data []byte) (EncvBox, error) {
    }
    var encv EncvBox
    encv.Header = header
-   boxData := data[8:header.Size]
 
+   // The 'encv' box is a VisualSampleEntry, which has a 78-byte header area
+   // before any child boxes start.
+   payloadOffset := 8 // Start after the main box header
+   if len(data) < payloadOffset+visualSampleEntrySize {
+      // This box is too small to have children, so its entire payload is the header.
+      encv.EntryHeader = data[payloadOffset:header.Size]
+      return encv, nil
+   }
+
+   // Capture the fixed-size header part
+   encv.EntryHeader = data[payloadOffset : payloadOffset+visualSampleEntrySize]
+
+   // The rest of the data contains the child boxes.
+   boxData := data[payloadOffset+visualSampleEntrySize : header.Size]
    offset := 0
    for offset < len(boxData) {
       h, _, err := ReadBoxHeader(boxData[offset:])
       if err != nil {
-         return EncvBox{}, err
+         // Not enough data for a full header, stop parsing children.
+         break
       }
 
-      childData := boxData[offset : offset+int(h.Size)]
+      boxSize := int(h.Size)
+      if boxSize == 0 {
+         boxSize = len(boxData) - offset
+      }
+      if boxSize < 8 {
+         return EncvBox{}, fmt.Errorf("invalid box size %d in encv child", boxSize)
+      }
+      if offset+boxSize > len(boxData) {
+         return EncvBox{}, fmt.Errorf("box size %d exceeds parent encv bounds", boxSize)
+      }
+
+      childData := boxData[offset : offset+boxSize]
       var child EncvChild
 
       switch string(h.Type[:]) {
@@ -43,21 +74,29 @@ func ParseEncv(data []byte) (EncvBox, error) {
          child.Raw = childData
       }
       encv.Children = append(encv.Children, child)
-      offset += int(h.Size)
+      offset += boxSize
+
+      if h.Size == 0 {
+         break
+      }
    }
    return encv, nil
 }
 
 // Encode encodes the 'encv' box to a byte slice.
 func (b *EncvBox) Encode() []byte {
-   var content []byte
+   // First, encode all children boxes into a single byte slice.
+   var childrenContent []byte
    for _, child := range b.Children {
       if child.Sinf != nil {
-         content = append(content, child.Sinf.Encode()...)
+         childrenContent = append(childrenContent, child.Sinf.Encode()...)
       } else if child.Raw != nil {
-         content = append(content, child.Raw...)
+         childrenContent = append(childrenContent, child.Raw...)
       }
    }
+
+   // The full content is the fixed entry header followed by the children.
+   content := append(b.EntryHeader, childrenContent...)
 
    b.Header.Size = uint32(8 + len(content))
    encoded := make([]byte, b.Header.Size)

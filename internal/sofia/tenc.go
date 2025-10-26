@@ -19,11 +19,16 @@ func ParseTenc(data []byte) (TencBox, error) {
    tenc.Header = header
    tenc.RawData = data[:header.Size] // Store the original data
 
-   // Also parse the fields needed for decryption
-   if len(data) < 31 {
+   // Also parse the fields needed for decryption.
+   // A tenc box is a "full box" (version+flags), taking 12 bytes total for the header part.
+   // The KID starts after 1 byte (isProtected) and 1 byte (IV size).
+   // So, the KID offset is 8 (box header) + 4 (full box header) + 1 + 1 = 14.
+   kidStart := 14
+   if len(data) < kidStart+16 {
       return TencBox{}, fmt.Errorf("tenc box is too small to contain KID: %d bytes", len(data))
    }
-   copy(tenc.DefaultKID[:], data[15:31])
+   // Correctly copy from offset 14 to 30.
+   copy(tenc.DefaultKID[:], data[kidStart:kidStart+16])
 
    return tenc, nil
 }

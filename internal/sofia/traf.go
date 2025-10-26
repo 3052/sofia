@@ -1,5 +1,32 @@
 package mp4
 
+func (b *TrafBox) GetTfhd() *TfhdBox {
+   for _, child := range b.Children {
+      if child.Tfhd != nil {
+         return child.Tfhd
+      }
+   }
+   return nil
+}
+
+func (b *TrafBox) GetTrun() *TrunBox {
+   for _, child := range b.Children {
+      if child.Trun != nil {
+         return child.Trun
+      }
+   }
+   return nil
+}
+
+func (b *TrafBox) GetSenc() *SencBox {
+   for _, child := range b.Children {
+      if child.Senc != nil {
+         return child.Senc
+      }
+   }
+   return nil
+}
+
 // TrafChild holds either a parsed box or raw data for a child of a 'traf' box.
 type TrafChild struct {
    Tfhd *TfhdBox

@@ -41,7 +41,7 @@ type SampleEntry struct {
       Depth           uint16
       _               int16
    }
-   Box  []*sofia.Box
+   Box  []sofia.Box
    Sinf sinf.Box
 }
 
@@ -116,7 +116,7 @@ func (s *SampleEntry) Read(data []byte) error {
          // nbc-avc1
          // roku-avc1
          "pasp":
-         s.Box = append(s.Box, &box)
+         s.Box = append(s.Box, box)
       case "sinf":
          s.Sinf.BoxHeader = box.BoxHeader
          err := s.Sinf.Read(box.Payload)

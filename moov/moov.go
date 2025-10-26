@@ -66,7 +66,7 @@ func (b *Box) Read(data []byte) error {
          "mvhd",
          // criterion-mp4a
          "udta":
-         b.Box = append(b.Box, &boxVar)
+         b.Box = append(b.Box, boxVar)
       case "trak":
          b.Trak.BoxHeader = boxVar.BoxHeader
          err := b.Trak.Read(boxVar.Payload)
@@ -74,12 +74,12 @@ func (b *Box) Read(data []byte) error {
             return err
          }
       case "pssh":
-         pssh1 := pssh.Box{BoxHeader: boxVar.BoxHeader}
-         err := pssh1.Read(boxVar.Payload)
+         psshVar := pssh.Box{BoxHeader: boxVar.BoxHeader}
+         err := psshVar.Read(boxVar.Payload)
          if err != nil {
             return err
          }
-         b.Pssh = append(b.Pssh, pssh1)
+         b.Pssh = append(b.Pssh, &psshVar)
       default:
          return &sofia.BoxError{b.BoxHeader, boxVar.BoxHeader}
       }
@@ -92,8 +92,8 @@ func (b *Box) Read(data []byte) error {
 //   }
 type Box struct {
    BoxHeader sofia.BoxHeader
-   Box       []*sofia.Box
-   Pssh      []pssh.Box
+   Box       []sofia.Box
+   Pssh      []*pssh.Box
    Trak      trak.Box
 }
 

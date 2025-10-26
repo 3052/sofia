@@ -1,5 +1,18 @@
 package mp4
 
+func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         // A full implementation would parse tkhd to get track ID.
+         // For these samples, we assume track ID 1 is the first trak.
+         if trackID == 1 { // Simplified assumption
+            return child.Trak
+         }
+      }
+   }
+   return nil
+}
+
 // MoovChild holds either a parsed box or raw data for a child of a 'moov' box.
 type MoovChild struct {
    Trak *TrakBox

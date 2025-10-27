@@ -1,9 +1,6 @@
 package mp4
 
-import (
-   "errors"
-   "fmt"
-)
+import "errors"
 
 type TrafChild struct {
    Tfhd *TfhdBox
@@ -18,8 +15,6 @@ type TrafBox struct {
    Children []TrafChild
 }
 
-// GetBandwidth calculates the bandwidth of the track fragment in bits per second.
-// It requires the track's timescale from the 'mdhd' box.
 func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
    trun := b.GetTrun()
    tfhd := b.GetTfhd()
@@ -36,14 +31,12 @@ func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
 
    for _, sample := range trun.Samples {
       size := sample.Size
-      // If per-sample size is not present, use the default from tfhd
       if size == 0 && tfhd != nil {
          size = tfhd.DefaultSampleSize
       }
       totalBytes += uint64(size)
 
       duration := sample.Duration
-      // If per-sample duration is not present, use the default from tfhd
       if duration == 0 && tfhd != nil {
          duration = tfhd.DefaultSampleDuration
       }
@@ -51,17 +44,12 @@ func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
    }
 
    if totalDuration == 0 {
-      return 0, nil // Avoid division by zero if fragment has no duration
+      return 0, nil
    }
-
-   // Bandwidth in bits per second:
-   // (totalBytes * 8 bits/byte) / (totalDuration / timescale seconds)
-   // which simplifies to: (totalBytes * 8 * timescale) / totalDuration
    bandwidth := (totalBytes * 8 * uint64(timescale)) / totalDuration
    return bandwidth, nil
 }
 
-// ParseTraf and other helpers remain the same...
 func ParseTraf(data []byte) (TrafBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -82,7 +70,7 @@ func ParseTraf(data []byte) (TrafBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return TrafBox{}, fmt.Errorf("invalid child box size in traf")
+         return TrafBox{}, errors.New("invalid child box size in traf")
       }
       childData := boxData[offset : offset+boxSize]
       var child TrafChild
@@ -116,6 +104,7 @@ func ParseTraf(data []byte) (TrafBox, error) {
    }
    return traf, nil
 }
+
 func (b *TrafBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -135,6 +124,7 @@ func (b *TrafBox) Encode() []byte {
    copy(encoded[8:], content)
    return encoded
 }
+
 func (b *TrafBox) GetTfhd() *TfhdBox {
    for _, child := range b.Children {
       if child.Tfhd != nil {

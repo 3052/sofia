@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type StblChild struct {
    Stsd *StsdBox
@@ -33,7 +33,7 @@ func ParseStbl(data []byte) (StblBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return StblBox{}, fmt.Errorf("invalid child box size in stbl")
+         return StblBox{}, errors.New("invalid child box size in stbl")
       }
       childData := boxData[offset : offset+boxSize]
       var child StblChild

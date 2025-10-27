@@ -2,7 +2,7 @@ package mp4
 
 import (
    "encoding/binary"
-   "fmt"
+   "errors"
 )
 
 type StsdChild struct {
@@ -38,7 +38,7 @@ func ParseStsd(data []byte) (StsdBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return StsdBox{}, fmt.Errorf("invalid child box size in stsd")
+         return StsdBox{}, errors.New("invalid child box size in stsd")
       }
       childData := boxData[offset : offset+boxSize]
       var child StsdChild

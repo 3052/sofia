@@ -8,27 +8,39 @@ import (
    "fmt"
 )
 
+// KeyMap maps a 16-byte Key ID (KID) to its 16-byte decryption key.
 type KeyMap map[[16]byte][16]byte
-type Decrypter struct{ keys KeyMap }
 
+// Decrypter handles the decryption of CENC-encrypted media segments.
+type Decrypter struct {
+   keys KeyMap
+}
+
+// NewDecrypter creates a new decrypter instance.
 func NewDecrypter() *Decrypter {
    return &Decrypter{keys: make(KeyMap)}
 }
-func (d *Decrypter) AddKey(kidHex string, keyHex string) error {
-   kid, err := hex.DecodeString(kidHex)
-   if err != nil || len(kid) != 16 {
-      return fmt.Errorf("invalid KID: %w", err)
+
+// AddKey now correctly accepts byte slices for both KID and key.
+func (d *Decrypter) AddKey(kid []byte, key []byte) error {
+   if len(kid) != 16 {
+      return fmt.Errorf("invalid KID length: expected 16, got %d", len(kid))
    }
-   key, err := hex.DecodeString(keyHex)
-   if err != nil || len(key) != 16 {
-      return fmt.Errorf("invalid key: %w", err)
+   if len(key) != 16 {
+      return fmt.Errorf("invalid key length: expected 16, got %d", len(key))
    }
-   var kidArray, keyArray [16]byte
+
+   var kidArray [16]byte
+   var keyArray [16]byte
    copy(kidArray[:], kid)
    copy(keyArray[:], key)
+
    d.keys[kidArray] = keyArray
    return nil
 }
+
+// Decrypt takes a parsed movie fragment (moof) and its corresponding media data (mdat),
+// along with the movie's initialization data (moov), and returns the decrypted media data.
 func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte, error) {
    if moof == nil || mdatData == nil || moov == nil {
       return nil, errors.New("moof, mdat, and moov boxes must not be nil")
@@ -57,7 +69,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
 
       if tenc == nil || senc == nil {
          for i, sample := range trun.Samples {
-            // *** NEW: Fallback logic for sample size ***
             sampleSize := sample.Size
             if sampleSize == 0 {
                sampleSize = tfhd.DefaultSampleSize
@@ -65,7 +76,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
             if sampleSize == 0 {
                return nil, fmt.Errorf("sample %d has zero size and no default is available", i)
             }
-
             end := mdatOffset + int(sampleSize)
             if end > len(mdatData) {
                return nil, fmt.Errorf("sample %d size exceeds mdat bounds", i)
@@ -91,7 +101,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
       }
 
       for i, sampleInfo := range trun.Samples {
-         // *** NEW: Fallback logic for sample size ***
          sampleSize := sampleInfo.Size
          if sampleSize == 0 {
             sampleSize = tfhd.DefaultSampleSize
@@ -99,7 +108,6 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          if sampleSize == 0 {
             return nil, fmt.Errorf("encrypted sample %d has zero size and no default is available", i)
          }
-
          if mdatOffset+int(sampleSize) > len(mdatData) {
             return nil, fmt.Errorf("mdat buffer exhausted at sample %d", i)
          }

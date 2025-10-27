@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type MoofChild struct {
    Traf *TrafBox
@@ -34,7 +34,7 @@ func ParseMoof(data []byte) (MoofBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MoofBox{}, fmt.Errorf("invalid child box size in moof")
+         return MoofBox{}, errors.New("invalid child box size in moof")
       }
       childData := boxData[offset : offset+boxSize]
       var child MoofChild

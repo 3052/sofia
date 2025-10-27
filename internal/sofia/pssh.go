@@ -3,8 +3,7 @@ package mp4
 // PsshBox represents the 'pssh' box (Protection System Specific Header).
 type PsshBox struct {
    Header  BoxHeader
-   RawData []byte // Stores the original box data for a perfect round trip
-   // We can add parsed fields here later if needed, e.g., SystemID, Data
+   RawData []byte
 }
 
 // ParsePssh parses the 'pssh' box from a byte slice.
@@ -15,14 +14,17 @@ func ParsePssh(data []byte) (PsshBox, error) {
    }
    var pssh PsshBox
    pssh.Header = header
-   pssh.RawData = data[:header.Size] // Store the original data
-
-   // Parsing of internal fields could be added here if necessary for other features.
-
+   pssh.RawData = data[:header.Size]
    return pssh, nil
 }
 
-// Encode returns the raw byte data to ensure a perfect round trip.
+// Encode now correctly serializes the box from its fields.
 func (b *PsshBox) Encode() []byte {
-   return b.RawData
+   // Reconstruct the box to honor any header modifications (like renaming to 'free').
+   // The original payload (RawData[8:]) is preserved.
+   b.Header.Size = uint32(len(b.RawData))
+   encoded := make([]byte, b.Header.Size)
+   b.Header.Write(encoded)
+   copy(encoded[8:], b.RawData[8:])
+   return encoded
 }

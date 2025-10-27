@@ -80,3 +80,13 @@ func (b *MoofBox) Encode() []byte {
    copy(encoded[8:], content)
    return encoded
 }
+
+// RemoveDRM finds and renames all pssh boxes within this moof box to 'free'.
+func (b *MoofBox) RemoveDRM() {
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Pssh != nil {
+         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
+      }
+   }
+}

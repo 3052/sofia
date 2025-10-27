@@ -2,13 +2,13 @@ package mp4
 
 import (
    "bytes"
-   "encoding/binary"
    "encoding/hex"
    "os"
    "path/filepath"
    "testing"
 )
 
+// senc_test defines the structure for our data-driven tests.
 type senc_test struct {
    initial string
    key     string
@@ -16,6 +16,7 @@ type senc_test struct {
    segment string
 }
 
+// senc_tests is the table of all files and keys to be used in testing.
 var senc_tests = []senc_test{
    {
       initial: "criterion-avc1/0-804.mp4",
@@ -73,6 +74,7 @@ var senc_tests = []senc_test{
    },
 }
 
+// TestRoundTrip is a table-driven test covering all files.
 func TestRoundTrip(t *testing.T) {
    const testDataPrefix = "../../testdata/"
 
@@ -107,6 +109,7 @@ func TestRoundTrip(t *testing.T) {
    }
 }
 
+// TestDecryption is a table-driven test that decrypts all provided samples.
 func TestDecryption(t *testing.T) {
    const testDataPrefix = "../../testdata/"
    const outputDir = "test_output"
@@ -204,11 +207,9 @@ func TestDecryption(t *testing.T) {
          if err := moov.RemoveEncryption(); err != nil {
             t.Logf("Note: removeEncryption returned an error (likely expected for clear content): %v", err)
          }
-
-         // Call the new, separate methods
          moov.RemoveDRM()
          moof.RemoveDRM()
-         removeEdts(moov)
+         trak.RemoveEdts()
 
          var finalMP4Data bytes.Buffer
          for _, box := range parsedInit {
@@ -219,7 +220,12 @@ func TestDecryption(t *testing.T) {
             }
          }
          finalMP4Data.Write(moof.Encode())
-         finalMP4Data.Write(createMdatBox(decryptedPayload))
+
+         newMdat := MdatBox{
+            Header:  BoxHeader{Type: [4]byte{'m', 'd', 'a', 't'}},
+            Payload: decryptedPayload,
+         }
+         finalMP4Data.Write(newMdat.Encode())
 
          outputFilePath := filepath.Join(outputDir, test.out)
          if err := os.WriteFile(outputFilePath, finalMP4Data.Bytes(), 0644); err != nil {
@@ -236,28 +242,5 @@ func TestDecryption(t *testing.T) {
             t.Error("'edts' box found; removal failed.")
          }
       })
-   }
-}
-
-func createMdatBox(payload []byte) []byte {
-   size := uint32(len(payload) + 8)
-   mdatBox := make([]byte, size)
-   binary.BigEndian.PutUint32(mdatBox[0:4], size)
-   copy(mdatBox[4:8], "mdat")
-   copy(mdatBox[8:], payload)
-   return mdatBox
-}
-
-func removeEdts(moov *MoovBox) {
-   if moov == nil {
-      return
-   }
-   for _, trak := range moov.GetAllTraks() {
-      for i := range trak.Children {
-         child := &trak.Children[i]
-         if child.Edts != nil {
-            child.Edts.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-         }
-      }
    }
 }

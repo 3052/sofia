@@ -5,28 +5,13 @@ import (
    "encoding/binary"
 )
 
-func (r *Reference) SetSize(size uint32) {
-   r[0] &= ^r.mask()
-   r[0] |= size
-}
-
-type Reference [3]uint32
-
-func (r *Reference) Append(data []byte) ([]byte, error) {
-   return binary.Append(data, binary.BigEndian, r)
-}
-
-func (r *Reference) Decode(data []byte) (int, error) {
-   return binary.Decode(data, binary.BigEndian, r)
+// this is the size of the fragment, typically `moof` + `mdat`
+func (r *Reference) Size() uint32 {
+   return r[0] & r.mask()
 }
 
 func (*Reference) mask() uint32 {
    return 0xFFFFFFFF >> 1
-}
-
-// this is the size of the fragment, typically `moof` + `mdat`
-func (r *Reference) Size() uint32 {
-   return r[0] & r.mask()
 }
 
 // ISO/IEC 14496-12
@@ -62,18 +47,6 @@ type Box struct {
    _                        uint16
    ReferenceCount           uint16
    Reference                []Reference
-}
-
-func (b *Box) GetSize() int {
-   size := b.BoxHeader.GetSize()
-   size += binary.Size(b.FullBoxHeader)
-   size += binary.Size(b.ReferenceId)
-   size += binary.Size(b.Timescale)
-   size += binary.Size(b.EarliestPresentationTime)
-   size += binary.Size(b.FirstOffset)
-   size += 2 // reserved
-   size += binary.Size(b.ReferenceCount)
-   return size + binary.Size(b.Reference)
 }
 
 func (b *Box) Append(data []byte) ([]byte, error) {
@@ -141,4 +114,14 @@ func (b *Box) Read(data []byte) error {
       b.Reference[i] = refer
    }
    return nil
+}
+
+type Reference [3]uint32
+
+func (r *Reference) Append(data []byte) ([]byte, error) {
+   return binary.Append(data, binary.BigEndian, r)
+}
+
+func (r *Reference) Decode(data []byte) (int, error) {
+   return binary.Decode(data, binary.BigEndian, r)
 }

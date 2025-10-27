@@ -1,6 +1,6 @@
 package mp4
 
-import "errors"
+import "fmt"
 
 type TrakChild struct {
    Edts *EdtsBox
@@ -34,7 +34,7 @@ func ParseTrak(data []byte) (TrakBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return TrakBox{}, errors.New("invalid child box size in trak")
+         return TrakBox{}, fmt.Errorf("invalid child box size in trak")
       }
       childData := boxData[offset : offset+boxSize]
       var child TrakChild
@@ -79,6 +79,16 @@ func (b *TrakBox) Encode() []byte {
    b.Header.Write(encoded)
    copy(encoded[8:], content)
    return encoded
+}
+
+// RemoveEdts finds and renames any 'edts' boxes within this track to 'free'.
+func (b *TrakBox) RemoveEdts() {
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Edts != nil {
+         child.Edts.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
+      }
+   }
 }
 
 func (b *TrakBox) GetMdhd() *MdhdBox {

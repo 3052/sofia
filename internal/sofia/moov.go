@@ -85,7 +85,6 @@ func (b *MoovBox) Encode() []byte {
    return encoded
 }
 
-// RemoveEncryption traverses the moov box and replaces encrypted sample entries.
 func (b *MoovBox) RemoveEncryption() error {
    for _, trak := range b.GetAllTraks() {
       stsd := trak.GetStsd()
@@ -114,7 +113,6 @@ func (b *MoovBox) RemoveEncryption() error {
    return nil
 }
 
-// RemoveDRM finds and renames all pssh boxes within this moov box to 'free'.
 func (b *MoovBox) RemoveDRM() {
    for i := range b.Children {
       child := &b.Children[i]

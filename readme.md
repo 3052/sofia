@@ -16,7 +16,6 @@
 6. remove `sinf`
 7. rename `enca`
 8. rename `encv`
-9. PIFF?
 10. get bandwidth using `trun` (and `mdhd`, `tfhd`)
 
 ## prior art

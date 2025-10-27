@@ -2,6 +2,7 @@ package mp4
 
 import (
    "encoding/binary"
+   "errors"
    "fmt"
 )
 
@@ -39,7 +40,7 @@ func ParseSenc(data []byte) (SencBox, error) {
 
    offset := 12
    if offset+4 > len(data) {
-      return SencBox{}, fmt.Errorf("senc box too short for sample count")
+      return SencBox{}, errors.New("senc box too short for sample count")
    }
    sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4

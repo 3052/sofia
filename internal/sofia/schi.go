@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type SchiChild struct {
    Tenc *TencBox
@@ -32,7 +32,7 @@ func ParseSchi(data []byte) (SchiBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return SchiBox{}, fmt.Errorf("invalid child box size in schi")
+         return SchiBox{}, errors.New("invalid child box size in schi")
       }
       childData := boxData[offset : offset+boxSize]
       var child SchiChild

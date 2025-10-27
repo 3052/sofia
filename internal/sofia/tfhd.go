@@ -2,7 +2,7 @@ package mp4
 
 import (
    "encoding/binary"
-   "fmt"
+   "errors"
 )
 
 // TfhdBox now includes all possible fields from the header.
@@ -33,35 +33,35 @@ func ParseTfhd(data []byte) (TfhdBox, error) {
 
    if tfhd.Flags&0x000001 != 0 { // base_data_offset_present
       if offset+8 > len(data) {
-         return TfhdBox{}, fmt.Errorf("tfhd box too short for base_data_offset")
+         return TfhdBox{}, errors.New("tfhd box too short for base_data_offset")
       }
       tfhd.BaseDataOffset = binary.BigEndian.Uint64(data[offset : offset+8])
       offset += 8
    }
    if tfhd.Flags&0x000002 != 0 { // sample_description_index_present
       if offset+4 > len(data) {
-         return TfhdBox{}, fmt.Errorf("tfhd box too short for sample_description_index")
+         return TfhdBox{}, errors.New("tfhd box too short for sample_description_index")
       }
       tfhd.SampleDescriptionIndex = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
    }
    if tfhd.Flags&0x000008 != 0 { // default_sample_duration_present
       if offset+4 > len(data) {
-         return TfhdBox{}, fmt.Errorf("tfhd box too short for default_sample_duration")
+         return TfhdBox{}, errors.New("tfhd box too short for default_sample_duration")
       }
       tfhd.DefaultSampleDuration = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
    }
    if tfhd.Flags&0x000010 != 0 { // default_sample_size_present
       if offset+4 > len(data) {
-         return TfhdBox{}, fmt.Errorf("tfhd box too short for default_sample_size")
+         return TfhdBox{}, errors.New("tfhd box too short for default_sample_size")
       }
       tfhd.DefaultSampleSize = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
    }
    if tfhd.Flags&0x000020 != 0 { // default_sample_flags_present
       if offset+4 > len(data) {
-         return TfhdBox{}, fmt.Errorf("tfhd box too short for default_sample_flags")
+         return TfhdBox{}, errors.New("tfhd box too short for default_sample_flags")
       }
       tfhd.DefaultSampleFlags = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4

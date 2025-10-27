@@ -6,6 +6,7 @@ import (
 )
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MediaDataBox extends Box('mdat') {
 //      bit(8) data[];
 //   }

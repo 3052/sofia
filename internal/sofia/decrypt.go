@@ -8,20 +8,12 @@ import (
    "fmt"
 )
 
-// KeyMap maps a 16-byte Key ID (KID) to its 16-byte decryption key.
 type KeyMap map[[16]byte][16]byte
+type Decrypter struct{ keys KeyMap }
 
-// Decrypter handles the decryption of CENC-encrypted media segments.
-type Decrypter struct {
-   keys KeyMap
-}
-
-// NewDecrypter creates a new decrypter instance.
 func NewDecrypter() *Decrypter {
    return &Decrypter{keys: make(KeyMap)}
 }
-
-// AddKey adds a decryption key to the decrypter's key map.
 func (d *Decrypter) AddKey(kidHex string, keyHex string) error {
    kid, err := hex.DecodeString(kidHex)
    if err != nil || len(kid) != 16 {
@@ -37,8 +29,6 @@ func (d *Decrypter) AddKey(kidHex string, keyHex string) error {
    d.keys[kidArray] = keyArray
    return nil
 }
-
-// Decrypt now correctly checks for the presence of a 'senc' box before attempting decryption.
 func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte, error) {
    if moof == nil || mdatData == nil || moov == nil {
       return nil, errors.New("moof, mdat, and moov boxes must not be nil")
@@ -53,10 +43,7 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          continue
       }
 
-      tfhd := traf.GetTfhd()
-      trun := traf.GetTrun()
-      senc := traf.GetSenc() // This can be nil for unencrypted segments
-
+      tfhd, trun, senc := traf.GetTfhd(), traf.GetTrun(), traf.GetSenc()
       if tfhd == nil || trun == nil {
          return nil, errors.New("traf is missing required boxes: tfhd, trun")
       }
@@ -68,23 +55,27 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
 
       tenc := trak.GetTenc()
 
-      // *** CORRECTED LOGIC ***
-      // Only decrypt if both the moov signals encryption (tenc) AND
-      // the segment signals encryption (senc).
       if tenc == nil || senc == nil {
-         // This segment is in the clear. Copy the data as-is.
          for i, sample := range trun.Samples {
-            end := mdatOffset + int(sample.Size)
+            // *** NEW: Fallback logic for sample size ***
+            sampleSize := sample.Size
+            if sampleSize == 0 {
+               sampleSize = tfhd.DefaultSampleSize
+            }
+            if sampleSize == 0 {
+               return nil, fmt.Errorf("sample %d has zero size and no default is available", i)
+            }
+
+            end := mdatOffset + int(sampleSize)
             if end > len(mdatData) {
                return nil, fmt.Errorf("sample %d size exceeds mdat bounds", i)
             }
             decryptedMdat = append(decryptedMdat, mdatData[mdatOffset:end]...)
             mdatOffset = end
          }
-         continue // Move to the next track fragment
+         continue
       }
 
-      // If we reach here, the segment is definitely encrypted.
       key, ok := d.keys[tenc.DefaultKID]
       if !ok {
          return nil, fmt.Errorf("no key for KID %s", hex.EncodeToString(tenc.DefaultKID[:]))
@@ -100,12 +91,20 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
       }
 
       for i, sampleInfo := range trun.Samples {
-         sampleSize := int(sampleInfo.Size)
-         if mdatOffset+sampleSize > len(mdatData) {
+         // *** NEW: Fallback logic for sample size ***
+         sampleSize := sampleInfo.Size
+         if sampleSize == 0 {
+            sampleSize = tfhd.DefaultSampleSize
+         }
+         if sampleSize == 0 {
+            return nil, fmt.Errorf("encrypted sample %d has zero size and no default is available", i)
+         }
+
+         if mdatOffset+int(sampleSize) > len(mdatData) {
             return nil, fmt.Errorf("mdat buffer exhausted at sample %d", i)
          }
-         encryptedSample := mdatData[mdatOffset : mdatOffset+sampleSize]
-         mdatOffset += sampleSize
+         encryptedSample := mdatData[mdatOffset : mdatOffset+int(sampleSize)]
+         mdatOffset += int(sampleSize)
 
          iv := senc.Samples[i].IV
          if len(iv) == 8 {

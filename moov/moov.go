@@ -88,6 +88,7 @@ func (b *Box) Read(data []byte) error {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MovieBox extends Box('moov') {
 //   }
 type Box struct {

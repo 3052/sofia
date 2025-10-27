@@ -27,7 +27,7 @@ func (b *Box) Read(data []byte) error {
             return err
          }
          b.Schi.BoxHeader = boxVar.BoxHeader
-      case 
+      case
          // amc-avc1
          // amc-mp4a
          // cineMember-avc1
@@ -56,6 +56,7 @@ func (b *Box) Read(data []byte) error {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class ProtectionSchemeInfoBox(fmt) extends Box('sinf') {
 //      OriginalFormatBox(fmt) original_format;
 //      SchemeTypeBox scheme_type_box; // optional

@@ -118,6 +118,7 @@ func (b *Box) Read(data []byte) error {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class TrackFragmentBox extends Box('traf') {
 //   }
 type Box struct {

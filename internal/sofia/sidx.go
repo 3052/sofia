@@ -30,12 +30,10 @@ type SidxBox struct {
 
 // Parse parses the 'sidx' box from a byte slice.
 func (b *SidxBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
 
    b.Version = data[8]
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF

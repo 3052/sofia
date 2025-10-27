@@ -23,12 +23,10 @@ type TrunBox struct {
 
 // Parse parses the 'trun' box from a byte slice.
 func (b *TrunBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
 
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 

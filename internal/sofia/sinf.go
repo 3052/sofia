@@ -18,17 +18,15 @@ type SinfBox struct {
 
 // Parse parses the 'sinf' box from a byte slice.
 func (b *SinfBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
-   boxData := data[8:header.Size]
+   b.RawData = data[:b.Header.Size]
+   boxData := data[8:b.Header.Size]
    offset := 0
    for offset < len(boxData) {
-      h, _, err := ReadBoxHeader(boxData[offset:])
-      if err != nil {
+      var h BoxHeader
+      if _, err := h.Read(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)

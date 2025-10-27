@@ -18,11 +18,9 @@ type PsshBox struct {
 
 // Parse now fully parses the pssh box structure.
 func (b *PsshBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
 
    // A pssh is a Full Box
    if len(data) < 12 {

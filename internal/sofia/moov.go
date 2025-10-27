@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type MoovChild struct {
    Trak *TrakBox
@@ -34,7 +34,7 @@ func ParseMoov(data []byte) (MoovBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MoovBox{}, fmt.Errorf("invalid child box size in moov")
+         return MoovBox{}, errors.New("invalid child box size in moov")
       }
       childData := boxData[offset : offset+boxSize]
       var child MoovChild

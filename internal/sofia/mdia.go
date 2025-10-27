@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type MdiaChild struct {
    Mdhd *MdhdBox
@@ -34,7 +34,7 @@ func ParseMdia(data []byte) (MdiaBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MdiaBox{}, fmt.Errorf("invalid child box size in mdia")
+         return MdiaBox{}, errors.New("invalid child box size in mdia")
       }
       childData := boxData[offset : offset+boxSize]
       var child MdiaChild

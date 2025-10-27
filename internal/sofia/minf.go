@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type MinfChild struct {
    Stbl *StblBox
@@ -33,7 +33,7 @@ func ParseMinf(data []byte) (MinfBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MinfBox{}, fmt.Errorf("invalid child box size in minf")
+         return MinfBox{}, errors.New("invalid child box size in minf")
       }
       childData := boxData[offset : offset+boxSize]
       var child MinfChild

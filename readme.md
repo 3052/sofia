@@ -16,7 +16,7 @@
 6. remove `sinf`
 7. rename `enca`
 8. rename `encv`
-10. get bandwidth using `trun` (and `mdhd`, `tfhd`)
+9. get bandwidth from `traf`
 
 ## prior art
 

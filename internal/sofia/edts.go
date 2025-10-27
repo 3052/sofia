@@ -1,7 +1,6 @@
 package mp4
 
 // EdtsBox represents the 'edts' box (Edit Box).
-// We treat it as a leaf box since we only need to identify and rename it.
 type EdtsBox struct {
    Header  BoxHeader
    RawData []byte
@@ -19,7 +18,11 @@ func ParseEdts(data []byte) (EdtsBox, error) {
    return edts, nil
 }
 
-// Encode returns the raw byte data to ensure a perfect round trip.
+// Encode now correctly serializes the box from its fields.
 func (b *EdtsBox) Encode() []byte {
-   return b.RawData
+   b.Header.Size = uint32(len(b.RawData))
+   encoded := make([]byte, b.Header.Size)
+   b.Header.Write(encoded)
+   copy(encoded[8:], b.RawData[8:])
+   return encoded
 }

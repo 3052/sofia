@@ -1,11 +1,12 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type EncaChild struct {
    Sinf *SinfBox
    Raw  []byte
 }
+
 type EncaBox struct {
    Header      BoxHeader
    RawData     []byte
@@ -40,7 +41,7 @@ func ParseEnca(data []byte) (EncaBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return EncaBox{}, fmt.Errorf("invalid child box size in enca")
+         return EncaBox{}, errors.New("invalid child box size in enca")
       }
       childData := boxData[offset : offset+boxSize]
       var child EncaChild
@@ -62,6 +63,7 @@ func ParseEnca(data []byte) (EncaBox, error) {
    }
    return enca, nil
 }
+
 func (b *EncaBox) Encode() []byte {
    var childrenContent []byte
    for _, child := range b.Children {

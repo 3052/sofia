@@ -188,12 +188,10 @@ func TestDecryption(t *testing.T) {
             if err != nil {
                t.Fatalf("Failed to decode test key from hex: %v", err)
             }
-
             keys := make(KeyMap)
             if err := keys.AddKey(kidBytes, keyBytes); err != nil {
                t.Fatalf("Failed to add key to KeyMap: %v", err)
             }
-
             payload, err := keys.Decrypt(moof, mdat.Payload, moov)
             if err != nil {
                t.Fatalf("Decryption failed: %v", err)
@@ -203,11 +201,13 @@ func TestDecryption(t *testing.T) {
             decryptedPayload = mdat.Payload
          }
 
-         // Call the new method on the moov box instance.
          if err := moov.RemoveEncryption(); err != nil {
             t.Logf("Note: removeEncryption returned an error (likely expected for clear content): %v", err)
          }
-         removeDRM(moov, moof)
+
+         // Call the new, separate methods
+         moov.RemoveDRM()
+         moof.RemoveDRM()
          removeEdts(moov)
 
          var finalMP4Data bytes.Buffer
@@ -248,33 +248,6 @@ func createMdatBox(payload []byte) []byte {
    return mdatBox
 }
 
-func removeDRM(moov *MoovBox, moof *MoofBox) {
-   if moov != nil {
-      for i := range moov.Children {
-         child := &moov.Children[i]
-         if child.Pssh != nil {
-            freeBoxData := make([]byte, len(child.Pssh.RawData))
-            copy(freeBoxData, child.Pssh.RawData)
-            copy(freeBoxData[4:8], "free")
-            child.Pssh = nil
-            child.Raw = freeBoxData
-         }
-      }
-   }
-   if moof != nil {
-      for i := range moof.Children {
-         child := &moof.Children[i]
-         if child.Pssh != nil {
-            freeBoxData := make([]byte, len(child.Pssh.RawData))
-            copy(freeBoxData, child.Pssh.RawData)
-            copy(freeBoxData[4:8], "free")
-            child.Pssh = nil
-            child.Raw = freeBoxData
-         }
-      }
-   }
-}
-
 func removeEdts(moov *MoovBox) {
    if moov == nil {
       return
@@ -283,11 +256,7 @@ func removeEdts(moov *MoovBox) {
       for i := range trak.Children {
          child := &trak.Children[i]
          if child.Edts != nil {
-            freeBoxData := make([]byte, len(child.Edts.RawData))
-            copy(freeBoxData, child.Edts.RawData)
-            copy(freeBoxData[4:8], "free")
-            child.Edts = nil
-            child.Raw = freeBoxData
+            child.Edts.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
          }
       }
    }

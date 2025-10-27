@@ -1,11 +1,12 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type EncvChild struct {
    Sinf *SinfBox
    Raw  []byte
 }
+
 type EncvBox struct {
    Header      BoxHeader
    RawData     []byte
@@ -40,7 +41,7 @@ func ParseEncv(data []byte) (EncvBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return EncvBox{}, fmt.Errorf("invalid child box size in encv")
+         return EncvBox{}, errors.New("invalid child box size in encv")
       }
       childData := boxData[offset : offset+boxSize]
       var child EncvChild
@@ -62,6 +63,7 @@ func ParseEncv(data []byte) (EncvBox, error) {
    }
    return encv, nil
 }
+
 func (b *EncvBox) Encode() []byte {
    var childrenContent []byte
    for _, child := range b.Children {

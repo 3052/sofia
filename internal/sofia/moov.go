@@ -85,93 +85,117 @@ func (b *MoovBox) Encode() []byte {
    return encoded
 }
 
-// RemoveEncryption traverses the moov box and replaces encrypted sample entries
-// (encv, enca) with their unencrypted counterparts (e.g., avc1, mp4a).
+// RemoveEncryption traverses the moov box and replaces encrypted sample entries.
 func (b *MoovBox) RemoveEncryption() error {
    for _, trak := range b.GetAllTraks() {
       stsd := trak.GetStsd()
       if stsd == nil {
          continue
       }
-      for i, child := range stsd.Children {
-         var encBoxHeader []byte
-         var encChildren []interface{}
-         var isVideo bool
-
-         if child.Encv != nil {
-            encBoxHeader = child.Encv.EntryHeader
-            isVideo = true
-            for _, c := range child.Encv.Children {
-               encChildren = append(encChildren, c)
+      for i := range stsd.Children {
+         stsdChild := &stsd.Children[i]
+         if stsdChild.Encv != nil {
+            newBoxData, err := b.rebuildVideoSampleEntry(stsdChild.Encv)
+            if err != nil {
+               return err
             }
-         } else if child.Enca != nil {
-            encBoxHeader = child.Enca.EntryHeader
-            for _, c := range child.Enca.Children {
-               encChildren = append(encChildren, c)
+            stsdChild.Encv = nil
+            stsdChild.Raw = newBoxData
+         } else if stsdChild.Enca != nil {
+            newBoxData, err := b.rebuildAudioSampleEntry(stsdChild.Enca)
+            if err != nil {
+               return err
             }
-         } else {
-            continue
+            stsdChild.Enca = nil
+            stsdChild.Raw = newBoxData
          }
-
-         var sinf *SinfBox
-         if isVideo {
-            for _, c := range encChildren {
-               if s := c.(EncvChild).Sinf; s != nil {
-                  sinf = s
-                  break
-               }
-            }
-         } else {
-            for _, c := range encChildren {
-               if s := c.(EncaChild).Sinf; s != nil {
-                  sinf = s
-                  break
-               }
-            }
-         }
-         if sinf == nil {
-            return errors.New("could not find 'sinf' box")
-         }
-
-         var frma *FrmaBox
-         for _, sinfChild := range sinf.Children {
-            if f := sinfChild.Frma; f != nil {
-               frma = f
-               break
-            }
-         }
-         if frma == nil {
-            return errors.New("could not find 'frma' box")
-         }
-
-         newFormatType := frma.DataFormat
-         var newContent bytes.Buffer
-         newContent.Write(encBoxHeader)
-         for _, c := range encChildren {
-            var childSinf *SinfBox
-            if isVideo {
-               childSinf = c.(EncvChild).Sinf
-            } else {
-               childSinf = c.(EncaChild).Sinf
-            }
-            if childSinf == nil {
-               if isVideo {
-                  newContent.Write(c.(EncvChild).Raw)
-               } else {
-                  newContent.Write(c.(EncaChild).Raw)
-               }
-            }
-         }
-
-         newBoxSize := uint32(8 + newContent.Len())
-         newBoxData := make([]byte, newBoxSize)
-         binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
-         copy(newBoxData[4:8], newFormatType[:])
-         copy(newBoxData[8:], newContent.Bytes())
-         stsd.Children[i] = StsdChild{Raw: newBoxData}
       }
    }
    return nil
+}
+
+// RemoveDRM finds and renames all pssh boxes within this moov box to 'free'.
+func (b *MoovBox) RemoveDRM() {
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Pssh != nil {
+         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
+      }
+   }
+}
+
+func (b *MoovBox) rebuildVideoSampleEntry(encv *EncvBox) ([]byte, error) {
+   var sinf *SinfBox
+   for _, child := range encv.Children {
+      if child.Sinf != nil {
+         sinf = child.Sinf
+         break
+      }
+   }
+   if sinf == nil {
+      return nil, errors.New("could not find 'sinf' box in encv")
+   }
+   var frma *FrmaBox
+   for _, sinfChild := range sinf.Children {
+      if f := sinfChild.Frma; f != nil {
+         frma = f
+         break
+      }
+   }
+   if frma == nil {
+      return nil, errors.New("could not find 'frma' box in sinf")
+   }
+   newFormatType := frma.DataFormat
+   var newContent bytes.Buffer
+   newContent.Write(encv.EntryHeader)
+   for _, child := range encv.Children {
+      if child.Sinf == nil {
+         newContent.Write(child.Raw)
+      }
+   }
+   newBoxSize := uint32(8 + newContent.Len())
+   newBoxData := make([]byte, newBoxSize)
+   binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
+   copy(newBoxData[4:8], newFormatType[:])
+   copy(newBoxData[8:], newContent.Bytes())
+   return newBoxData, nil
+}
+
+func (b *MoovBox) rebuildAudioSampleEntry(enca *EncaBox) ([]byte, error) {
+   var sinf *SinfBox
+   for _, child := range enca.Children {
+      if child.Sinf != nil {
+         sinf = child.Sinf
+         break
+      }
+   }
+   if sinf == nil {
+      return nil, errors.New("could not find 'sinf' box in enca")
+   }
+   var frma *FrmaBox
+   for _, sinfChild := range sinf.Children {
+      if f := sinfChild.Frma; f != nil {
+         frma = f
+         break
+      }
+   }
+   if frma == nil {
+      return nil, errors.New("could not find 'frma' box in sinf")
+   }
+   newFormatType := frma.DataFormat
+   var newContent bytes.Buffer
+   newContent.Write(enca.EntryHeader)
+   for _, child := range enca.Children {
+      if child.Sinf == nil {
+         newContent.Write(child.Raw)
+      }
+   }
+   newBoxSize := uint32(8 + newContent.Len())
+   newBoxData := make([]byte, newBoxSize)
+   binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
+   copy(newBoxData[4:8], newFormatType[:])
+   copy(newBoxData[8:], newContent.Bytes())
+   return newBoxData, nil
 }
 
 func (b *MoovBox) GetTrakByTrackID(trackID uint32) *TrakBox {

@@ -1,18 +1,22 @@
 package mp4
 
-import "fmt"
+import "errors"
 
+// SinfChild holds either a parsed box or raw data for a child of a 'sinf' box.
 type SinfChild struct {
    Frma *FrmaBox
    Schi *SchiBox
    Raw  []byte
 }
+
+// SinfBox represents the 'sinf' box (Protection Scheme Information Box).
 type SinfBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []SinfChild
 }
 
+// ParseSinf parses the 'sinf' box from a byte slice.
 func ParseSinf(data []byte) (SinfBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
@@ -33,7 +37,7 @@ func ParseSinf(data []byte) (SinfBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return SinfBox{}, fmt.Errorf("invalid child box size in sinf")
+         return SinfBox{}, errors.New("invalid child box size in sinf")
       }
       childData := boxData[offset : offset+boxSize]
       var child SinfChild
@@ -61,6 +65,8 @@ func ParseSinf(data []byte) (SinfBox, error) {
    }
    return sinf, nil
 }
+
+// Encode re-serializes the box from its children.
 func (b *SinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

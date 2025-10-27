@@ -91,14 +91,17 @@ func TestRoundTrip(t *testing.T) {
                if len(originalData) == 0 {
                   return
                }
+
                parsedBoxes, err := ParseFile(originalData)
                if err != nil {
                   t.Fatalf("ParseFile failed: %v", err)
                }
+
                var encodedData []byte
                for _, box := range parsedBoxes {
                   encodedData = append(encodedData, box.Encode()...)
                }
+
                if !bytes.Equal(originalData, encodedData) {
                   t.Errorf("Round trip failed. Original and encoded data do not match.")
                }

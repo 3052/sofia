@@ -1,6 +1,8 @@
 package mp4
 
-import "errors"
+import (
+   "errors"
+)
 
 type MoofChild struct {
    Traf *TrafBox
@@ -81,8 +83,8 @@ func (b *MoofBox) Encode() []byte {
    return encoded
 }
 
-// RemoveDRM finds and renames all pssh boxes within this moof box to 'free'.
-func (b *MoofBox) RemoveDRM() {
+// Sanitize finds and renames all pssh boxes within this moof box to 'free'.
+func (b *MoofBox) Sanitize() {
    for i := range b.Children {
       child := &b.Children[i]
       if child.Pssh != nil {

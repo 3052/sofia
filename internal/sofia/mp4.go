@@ -84,32 +84,32 @@ func ParseFile(data []byte) ([]Box, error) {
 
       switch string(h.Type[:]) {
       case "moov":
-         b, err := ParseMoov(boxData)
-         if err != nil {
+         var b MoovBox
+         if err := b.Parse(boxData); err != nil {
             return nil, err
          }
          currentBox.Moov = &b
       case "moof":
-         b, err := ParseMoof(boxData)
-         if err != nil {
+         var b MoofBox
+         if err := b.Parse(boxData); err != nil {
             return nil, err
          }
          currentBox.Moof = &b
       case "mdat":
-         b, err := ParseMdat(boxData)
-         if err != nil {
+         var b MdatBox
+         if err := b.Parse(boxData); err != nil {
             return nil, err
          }
          currentBox.Mdat = &b
       case "sidx":
-         b, err := ParseSidx(boxData)
-         if err != nil {
+         var b SidxBox
+         if err := b.Parse(boxData); err != nil {
             return nil, err
          }
          currentBox.Sidx = &b
       case "pssh":
-         b, err := ParsePssh(boxData)
-         if err != nil {
+         var b PsshBox
+         if err := b.Parse(boxData); err != nil {
             return nil, err
          }
          currentBox.Pssh = &b

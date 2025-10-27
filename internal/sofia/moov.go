@@ -14,14 +14,14 @@ type MoovBox struct {
    Children []MoovChild
 }
 
-func ParseMoov(data []byte) (MoovBox, error) {
+// Parse parses the 'moov' box from a byte slice.
+func (b *MoovBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return MoovBox{}, err
+      return err
    }
-   var moov MoovBox
-   moov.Header = header
-   moov.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -34,33 +34,33 @@ func ParseMoov(data []byte) (MoovBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MoovBox{}, errors.New("invalid child box size in moov")
+         return errors.New("invalid child box size in moov")
       }
       childData := boxData[offset : offset+boxSize]
       var child MoovChild
       switch string(h.Type[:]) {
       case "trak":
-         trak, err := ParseTrak(childData)
-         if err != nil {
-            return MoovBox{}, err
+         var trak TrakBox
+         if err := trak.Parse(childData); err != nil {
+            return err
          }
          child.Trak = &trak
       case "pssh":
-         pssh, err := ParsePssh(childData)
-         if err != nil {
-            return MoovBox{}, err
+         var pssh PsshBox
+         if err := pssh.Parse(childData); err != nil {
+            return err
          }
          child.Pssh = &pssh
       default:
          child.Raw = childData
       }
-      moov.Children = append(moov.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return moov, nil
+   return nil
 }
 
 func (b *MoovBox) Encode() []byte {

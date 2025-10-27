@@ -7,21 +7,20 @@ type TrakChild struct {
    Mdia *MdiaBox
    Raw  []byte
 }
-
 type TrakBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []TrakChild
 }
 
-func ParseTrak(data []byte) (TrakBox, error) {
+// Parse parses the 'trak' box from a byte slice.
+func (b *TrakBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return TrakBox{}, err
+      return err
    }
-   var trak TrakBox
-   trak.Header = header
-   trak.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -34,35 +33,34 @@ func ParseTrak(data []byte) (TrakBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return TrakBox{}, errors.New("invalid child box size in trak")
+         return errors.New("invalid child box size in trak")
       }
       childData := boxData[offset : offset+boxSize]
       var child TrakChild
       switch string(h.Type[:]) {
       case "edts":
-         edts, err := ParseEdts(childData)
-         if err != nil {
-            return TrakBox{}, err
+         var edts EdtsBox
+         if err := edts.Parse(childData); err != nil {
+            return err
          }
          child.Edts = &edts
       case "mdia":
-         mdia, err := ParseMdia(childData)
-         if err != nil {
-            return TrakBox{}, err
+         var mdia MdiaBox
+         if err := mdia.Parse(childData); err != nil {
+            return err
          }
          child.Mdia = &mdia
       default:
          child.Raw = childData
       }
-      trak.Children = append(trak.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return trak, nil
+   return nil
 }
-
 func (b *TrakBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -90,7 +88,6 @@ func (b *TrakBox) RemoveEdts() {
       }
    }
 }
-
 func (b *TrakBox) GetMdhd() *MdhdBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -103,7 +100,6 @@ func (b *TrakBox) GetMdhd() *MdhdBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetStbl() *StblBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -120,7 +116,6 @@ func (b *TrakBox) GetStbl() *StblBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetStsd() *StsdBox {
    stbl := b.GetStbl()
    if stbl == nil {
@@ -133,7 +128,6 @@ func (b *TrakBox) GetStsd() *StsdBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetTenc() *TencBox {
    stsd := b.GetStsd()
    if stsd == nil {

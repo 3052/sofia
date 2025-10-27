@@ -6,21 +6,20 @@ type StblChild struct {
    Stsd *StsdBox
    Raw  []byte
 }
-
 type StblBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []StblChild
 }
 
-func ParseStbl(data []byte) (StblBox, error) {
+// Parse parses the 'stbl' box from a byte slice.
+func (b *StblBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return StblBox{}, err
+      return err
    }
-   var stbl StblBox
-   stbl.Header = header
-   stbl.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -33,29 +32,28 @@ func ParseStbl(data []byte) (StblBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return StblBox{}, errors.New("invalid child box size in stbl")
+         return errors.New("invalid child box size in stbl")
       }
       childData := boxData[offset : offset+boxSize]
       var child StblChild
       switch string(h.Type[:]) {
       case "stsd":
-         stsd, err := ParseStsd(childData)
-         if err != nil {
-            return StblBox{}, err
+         var stsd StsdBox
+         if err := stsd.Parse(childData); err != nil {
+            return err
          }
          child.Stsd = &stsd
       default:
          child.Raw = childData
       }
-      stbl.Children = append(stbl.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return stbl, nil
+   return nil
 }
-
 func (b *StblBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

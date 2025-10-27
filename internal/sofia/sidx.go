@@ -28,75 +28,74 @@ type SidxBox struct {
    References               []SidxReference
 }
 
-// ParseSidx parses the 'sidx' box from a byte slice.
-func ParseSidx(data []byte) (SidxBox, error) {
+// Parse parses the 'sidx' box from a byte slice.
+func (b *SidxBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return SidxBox{}, err
+      return err
    }
-   var sidx SidxBox
-   sidx.Header = header
-   sidx.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
 
-   sidx.Version = data[8]
-   sidx.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
+   b.Version = data[8]
+   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
    offset := 12
 
    if len(data) < offset+8 {
-      return SidxBox{}, errors.New("sidx box is too short for referenceID and timescale")
+      return errors.New("sidx box is too short for referenceID and timescale")
    }
-   sidx.ReferenceID = binary.BigEndian.Uint32(data[offset : offset+4])
+   b.ReferenceID = binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
-   sidx.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
+   b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
 
-   if sidx.Version == 0 {
+   if b.Version == 0 {
       if len(data) < offset+8 {
-         return SidxBox{}, errors.New("sidx v0 box is too short for EPT and first_offset")
+         return errors.New("sidx v0 box is too short for EPT and first_offset")
       }
-      sidx.EarliestPresentationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
+      b.EarliestPresentationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
       offset += 4
-      sidx.FirstOffset = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
+      b.FirstOffset = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
       offset += 4
    } else {
       if len(data) < offset+16 {
-         return SidxBox{}, errors.New("sidx v1 box is too short for EPT and first_offset")
+         return errors.New("sidx v1 box is too short for EPT and first_offset")
       }
-      sidx.EarliestPresentationTime = binary.BigEndian.Uint64(data[offset : offset+8])
+      b.EarliestPresentationTime = binary.BigEndian.Uint64(data[offset : offset+8])
       offset += 8
-      sidx.FirstOffset = binary.BigEndian.Uint64(data[offset : offset+8])
+      b.FirstOffset = binary.BigEndian.Uint64(data[offset : offset+8])
       offset += 8
    }
 
    if len(data) < offset+4 {
-      return SidxBox{}, errors.New("sidx box is too short for reference_count")
+      return errors.New("sidx box is too short for reference_count")
    }
    // Skip 2 reserved bytes
    offset += 2
    referenceCount := binary.BigEndian.Uint16(data[offset : offset+2])
    offset += 2
 
-   sidx.References = make([]SidxReference, referenceCount)
+   b.References = make([]SidxReference, referenceCount)
    for i := 0; i < int(referenceCount); i++ {
       if len(data) < offset+12 {
-         return SidxBox{}, errors.New("sidx box is truncated in reference loop")
+         return errors.New("sidx box is truncated in reference loop")
       }
       val1 := binary.BigEndian.Uint32(data[offset : offset+4])
-      sidx.References[i].ReferenceType = (val1 >> 31) == 1
-      sidx.References[i].ReferencedSize = val1 & 0x7FFFFFFF
+      b.References[i].ReferenceType = (val1 >> 31) == 1
+      b.References[i].ReferencedSize = val1 & 0x7FFFFFFF
       offset += 4
 
-      sidx.References[i].SubsegmentDuration = binary.BigEndian.Uint32(data[offset : offset+4])
+      b.References[i].SubsegmentDuration = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
 
       val2 := binary.BigEndian.Uint32(data[offset : offset+4])
-      sidx.References[i].StartsWithSAP = (val2 >> 31) == 1
-      sidx.References[i].SAPType = uint8((val2 >> 28) & 0x07)
-      sidx.References[i].SAPDeltaTime = val2 & 0x0FFFFFFF
+      b.References[i].StartsWithSAP = (val2 >> 31) == 1
+      b.References[i].SAPType = uint8((val2 >> 28) & 0x07)
+      b.References[i].SAPDeltaTime = val2 & 0x0FFFFFFF
       offset += 4
    }
 
-   return sidx, nil
+   return nil
 }
 
 // Encode returns the raw byte data to ensure a perfect round trip.

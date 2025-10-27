@@ -8,7 +8,6 @@ type TrafChild struct {
    Senc *SencBox
    Raw  []byte
 }
-
 type TrafBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -18,31 +17,26 @@ type TrafBox struct {
 func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
    trun := b.GetTrun()
    tfhd := b.GetTfhd()
-
    if trun == nil {
       return 0, errors.New("traf is missing trun box")
    }
    if timescale == 0 {
       return 0, errors.New("timescale cannot be zero")
    }
-
    var totalBytes uint64 = 0
    var totalDuration uint64 = 0
-
    for _, sample := range trun.Samples {
       size := sample.Size
       if size == 0 && tfhd != nil {
          size = tfhd.DefaultSampleSize
       }
       totalBytes += uint64(size)
-
       duration := sample.Duration
       if duration == 0 && tfhd != nil {
          duration = tfhd.DefaultSampleDuration
       }
       totalDuration += uint64(duration)
    }
-
    if totalDuration == 0 {
       return 0, nil
    }
@@ -50,14 +44,14 @@ func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
    return bandwidth, nil
 }
 
-func ParseTraf(data []byte) (TrafBox, error) {
+// Parse parses the 'traf' box from a byte slice.
+func (b *TrafBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return TrafBox{}, err
+      return err
    }
-   var traf TrafBox
-   traf.Header = header
-   traf.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -70,41 +64,40 @@ func ParseTraf(data []byte) (TrafBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return TrafBox{}, errors.New("invalid child box size in traf")
+         return errors.New("invalid child box size in traf")
       }
       childData := boxData[offset : offset+boxSize]
       var child TrafChild
       switch string(h.Type[:]) {
       case "tfhd":
-         tfhd, err := ParseTfhd(childData)
-         if err != nil {
-            return TrafBox{}, err
+         var tfhd TfhdBox
+         if err := tfhd.Parse(childData); err != nil {
+            return err
          }
          child.Tfhd = &tfhd
       case "trun":
-         trun, err := ParseTrun(childData)
-         if err != nil {
-            return TrafBox{}, err
+         var trun TrunBox
+         if err := trun.Parse(childData); err != nil {
+            return err
          }
          child.Trun = &trun
       case "senc":
-         senc, err := ParseSenc(childData)
-         if err != nil {
-            return TrafBox{}, err
+         var senc SencBox
+         if err := senc.Parse(childData); err != nil {
+            return err
          }
          child.Senc = &senc
       default:
          child.Raw = childData
       }
-      traf.Children = append(traf.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return traf, nil
+   return nil
 }
-
 func (b *TrafBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -124,7 +117,6 @@ func (b *TrafBox) Encode() []byte {
    copy(encoded[8:], content)
    return encoded
 }
-
 func (b *TrafBox) GetTfhd() *TfhdBox {
    for _, child := range b.Children {
       if child.Tfhd != nil {

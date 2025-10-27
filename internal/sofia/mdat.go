@@ -6,17 +6,16 @@ type MdatBox struct {
    Payload []byte
 }
 
-// ParseMdat now correctly separates the header from the media payload.
-func ParseMdat(data []byte) (MdatBox, error) {
+// Parse now correctly separates the header from the media payload.
+func (b *MdatBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return MdatBox{}, err
+      return err
    }
-   var mdat MdatBox
-   mdat.Header = header
+   b.Header = header
    // The payload is the content of the box *after* the 8-byte header.
-   mdat.Payload = data[8:header.Size]
-   return mdat, nil
+   b.Payload = data[8:header.Size]
+   return nil
 }
 
 // Encode now correctly reconstructs the full box from the header and payload.

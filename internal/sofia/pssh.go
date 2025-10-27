@@ -16,59 +16,58 @@ type PsshBox struct {
    Data     []byte
 }
 
-// ParsePssh now fully parses the pssh box structure.
-func ParsePssh(data []byte) (PsshBox, error) {
+// Parse now fully parses the pssh box structure.
+func (b *PsshBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return PsshBox{}, err
+      return err
    }
-   var pssh PsshBox
-   pssh.Header = header
+   b.Header = header
 
    // A pssh is a Full Box
    if len(data) < 12 {
-      return PsshBox{}, errors.New("pssh box is too short for version and flags")
+      return errors.New("pssh box is too short for version and flags")
    }
-   pssh.Version = data[8]
-   copy(pssh.Flags[:], data[9:12])
+   b.Version = data[8]
+   copy(b.Flags[:], data[9:12])
    offset := 12
 
    if len(data) < offset+16 {
-      return PsshBox{}, errors.New("pssh box is too short for SystemID")
+      return errors.New("pssh box is too short for SystemID")
    }
-   copy(pssh.SystemID[:], data[offset:offset+16])
+   copy(b.SystemID[:], data[offset:offset+16])
    offset += 16
 
-   if pssh.Version > 0 {
+   if b.Version > 0 {
       if len(data) < offset+4 {
-         return PsshBox{}, errors.New("pssh v1+ box is too short for KIDCount")
+         return errors.New("pssh v1+ box is too short for KIDCount")
       }
       kidCount := binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
-      pssh.KIDs = make([][16]byte, kidCount)
+      b.KIDs = make([][16]byte, kidCount)
       for i := 0; i < int(kidCount); i++ {
          if len(data) < offset+16 {
-            return PsshBox{}, errors.New("pssh box is truncated while parsing KIDs")
+            return errors.New("pssh box is truncated while parsing KIDs")
          }
          var kid [16]byte
          copy(kid[:], data[offset:offset+16])
-         pssh.KIDs[i] = kid
+         b.KIDs[i] = kid
          offset += 16
       }
    }
 
    if len(data) < offset+4 {
-      return PsshBox{}, errors.New("pssh box is too short for DataSize")
+      return errors.New("pssh box is too short for DataSize")
    }
    dataSize := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
 
    if len(data) < offset+int(dataSize) {
-      return PsshBox{}, errors.New("pssh data size exceeds box bounds")
+      return errors.New("pssh data size exceeds box bounds")
    }
-   pssh.Data = data[offset : offset+int(dataSize)]
+   b.Data = data[offset : offset+int(dataSize)]
 
-   return pssh, nil
+   return nil
 }
 
 // Encode now correctly serializes the box from its fields.

@@ -1,29 +1,26 @@
 package mp4
 
-import (
-   "errors"
-)
+import "errors"
 
 type MoofChild struct {
    Traf *TrafBox
    Pssh *PsshBox
    Raw  []byte
 }
-
 type MoofBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []MoofChild
 }
 
-func ParseMoof(data []byte) (MoofBox, error) {
+// Parse parses the 'moof' box from a byte slice.
+func (b *MoofBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return MoofBox{}, err
+      return err
    }
-   var moof MoofBox
-   moof.Header = header
-   moof.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -36,35 +33,34 @@ func ParseMoof(data []byte) (MoofBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MoofBox{}, errors.New("invalid child box size in moof")
+         return errors.New("invalid child box size in moof")
       }
       childData := boxData[offset : offset+boxSize]
       var child MoofChild
       switch string(h.Type[:]) {
       case "traf":
-         traf, err := ParseTraf(childData)
-         if err != nil {
-            return MoofBox{}, err
+         var traf TrafBox
+         if err := traf.Parse(childData); err != nil {
+            return err
          }
          child.Traf = &traf
       case "pssh":
-         pssh, err := ParsePssh(childData)
-         if err != nil {
-            return MoofBox{}, err
+         var pssh PsshBox
+         if err := pssh.Parse(childData); err != nil {
+            return err
          }
          child.Pssh = &pssh
       default:
          child.Raw = childData
       }
-      moof.Children = append(moof.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return moof, nil
+   return nil
 }
-
 func (b *MoofBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

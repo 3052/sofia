@@ -14,21 +14,21 @@ type EncvBox struct {
    Children    []EncvChild
 }
 
-func ParseEncv(data []byte) (EncvBox, error) {
+// Parse parses the 'encv' box from a byte slice.
+func (b *EncvBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return EncvBox{}, err
+      return err
    }
-   var encv EncvBox
-   encv.Header = header
-   encv.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    const visualSampleEntrySize = 78
    payloadOffset := 8
    if len(data) < payloadOffset+visualSampleEntrySize {
-      encv.EntryHeader = data[payloadOffset:header.Size]
-      return encv, nil
+      b.EntryHeader = data[payloadOffset:header.Size]
+      return nil
    }
-   encv.EntryHeader = data[payloadOffset : payloadOffset+visualSampleEntrySize]
+   b.EntryHeader = data[payloadOffset : payloadOffset+visualSampleEntrySize]
    boxData := data[payloadOffset+visualSampleEntrySize : header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -41,27 +41,27 @@ func ParseEncv(data []byte) (EncvBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return EncvBox{}, errors.New("invalid child box size in encv")
+         return errors.New("invalid child box size in encv")
       }
       childData := boxData[offset : offset+boxSize]
       var child EncvChild
       switch string(h.Type[:]) {
       case "sinf":
-         sinf, err := ParseSinf(childData)
-         if err != nil {
-            return EncvBox{}, err
+         var sinf SinfBox
+         if err := sinf.Parse(childData); err != nil {
+            return err
          }
          child.Sinf = &sinf
       default:
          child.Raw = childData
       }
-      encv.Children = append(encv.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return encv, nil
+   return nil
 }
 
 func (b *EncvBox) Encode() []byte {

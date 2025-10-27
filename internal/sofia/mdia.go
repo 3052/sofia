@@ -7,21 +7,20 @@ type MdiaChild struct {
    Minf *MinfBox
    Raw  []byte
 }
-
 type MdiaBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []MdiaChild
 }
 
-func ParseMdia(data []byte) (MdiaBox, error) {
+// Parse parses the 'mdia' box from a byte slice.
+func (b *MdiaBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return MdiaBox{}, err
+      return err
    }
-   var mdia MdiaBox
-   mdia.Header = header
-   mdia.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -34,35 +33,34 @@ func ParseMdia(data []byte) (MdiaBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return MdiaBox{}, errors.New("invalid child box size in mdia")
+         return errors.New("invalid child box size in mdia")
       }
       childData := boxData[offset : offset+boxSize]
       var child MdiaChild
       switch string(h.Type[:]) {
       case "mdhd":
-         mdhd, err := ParseMdhd(childData)
-         if err != nil {
-            return MdiaBox{}, err
+         var mdhd MdhdBox
+         if err := mdhd.Parse(childData); err != nil {
+            return err
          }
          child.Mdhd = &mdhd
       case "minf":
-         minf, err := ParseMinf(childData)
-         if err != nil {
-            return MdiaBox{}, err
+         var minf MinfBox
+         if err := minf.Parse(childData); err != nil {
+            return err
          }
          child.Minf = &minf
       default:
          child.Raw = childData
       }
-      mdia.Children = append(mdia.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return mdia, nil
+   return nil
 }
-
 func (b *MdiaBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

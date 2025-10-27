@@ -26,50 +26,49 @@ type SencBox struct {
    Samples []SampleEncryptionInfo
 }
 
-// ParseSenc parses the 'senc' box from a byte slice.
-func ParseSenc(data []byte) (SencBox, error) {
+// Parse parses the 'senc' box from a byte slice.
+func (b *SencBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return SencBox{}, err
+      return err
    }
-   var senc SencBox
-   senc.Header = header
-   senc.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
 
-   senc.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
+   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 
    offset := 12
    if offset+4 > len(data) {
-      return SencBox{}, errors.New("senc box too short for sample count")
+      return errors.New("senc box too short for sample count")
    }
    sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
 
-   senc.Samples = make([]SampleEncryptionInfo, sampleCount)
+   b.Samples = make([]SampleEncryptionInfo, sampleCount)
    const ivSize = 8
-   subsamplesPresent := senc.Flags&0x000002 != 0
+   subsamplesPresent := b.Flags&0x000002 != 0
 
    for i := uint32(0); i < sampleCount; i++ {
       if offset+ivSize > len(data) {
-         return SencBox{}, fmt.Errorf("senc box truncated at IV for sample %d", i)
+         return fmt.Errorf("senc box truncated at IV for sample %d", i)
       }
-      senc.Samples[i].IV = data[offset : offset+ivSize]
+      b.Samples[i].IV = data[offset : offset+ivSize]
       offset += ivSize
 
       if subsamplesPresent {
          if offset+2 > len(data) {
-            return SencBox{}, fmt.Errorf("senc box truncated at subsample count for sample %d", i)
+            return fmt.Errorf("senc box truncated at subsample count for sample %d", i)
          }
          subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
          offset += 2
-         senc.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
+         b.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
          for j := uint16(0); j < subsampleCount; j++ {
             if offset+6 > len(data) {
-               return SencBox{}, fmt.Errorf("senc box truncated at subsample data for sample %d", i)
+               return fmt.Errorf("senc box truncated at subsample data for sample %d", i)
             }
             clearBytes := binary.BigEndian.Uint16(data[offset : offset+2])
             protectedBytes := binary.BigEndian.Uint32(data[offset+2 : offset+6])
-            senc.Samples[i].Subsamples[j] = SubsampleInfo{
+            b.Samples[i].Subsamples[j] = SubsampleInfo{
                BytesOfClearData:     clearBytes,
                BytesOfProtectedData: protectedBytes,
             }
@@ -77,7 +76,7 @@ func ParseSenc(data []byte) (SencBox, error) {
          }
       }
    }
-   return senc, nil
+   return nil
 }
 
 // Encode returns the raw byte data to ensure a perfect round trip.

@@ -6,16 +6,15 @@ type EdtsBox struct {
    RawData []byte
 }
 
-// ParseEdts parses the 'edts' box from a byte slice.
-func ParseEdts(data []byte) (EdtsBox, error) {
+// Parse parses the 'edts' box from a byte slice.
+func (b *EdtsBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return EdtsBox{}, err
+      return err
    }
-   var edts EdtsBox
-   edts.Header = header
-   edts.RawData = data[:header.Size]
-   return edts, nil
+   b.Header = header
+   b.RawData = data[:header.Size]
+   return nil
 }
 
 // Encode now correctly serializes the box from its fields.

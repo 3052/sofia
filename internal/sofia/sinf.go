@@ -16,15 +16,14 @@ type SinfBox struct {
    Children []SinfChild
 }
 
-// ParseSinf parses the 'sinf' box from a byte slice.
-func ParseSinf(data []byte) (SinfBox, error) {
+// Parse parses the 'sinf' box from a byte slice.
+func (b *SinfBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return SinfBox{}, err
+      return err
    }
-   var sinf SinfBox
-   sinf.Header = header
-   sinf.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -37,33 +36,33 @@ func ParseSinf(data []byte) (SinfBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return SinfBox{}, errors.New("invalid child box size in sinf")
+         return errors.New("invalid child box size in sinf")
       }
       childData := boxData[offset : offset+boxSize]
       var child SinfChild
       switch string(h.Type[:]) {
       case "frma":
-         frma, err := ParseFrma(childData)
-         if err != nil {
-            return SinfBox{}, err
+         var frma FrmaBox
+         if err := frma.Parse(childData); err != nil {
+            return err
          }
          child.Frma = &frma
       case "schi":
-         schi, err := ParseSchi(childData)
-         if err != nil {
-            return SinfBox{}, err
+         var schi SchiBox
+         if err := schi.Parse(childData); err != nil {
+            return err
          }
          child.Schi = &schi
       default:
          child.Raw = childData
       }
-      sinf.Children = append(sinf.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return sinf, nil
+   return nil
 }
 
 // Encode re-serializes the box from its children.

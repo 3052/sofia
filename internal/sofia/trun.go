@@ -21,65 +21,64 @@ type TrunBox struct {
    Samples []SampleInfo
 }
 
-// ParseTrun parses the 'trun' box from a byte slice.
-func ParseTrun(data []byte) (TrunBox, error) {
+// Parse parses the 'trun' box from a byte slice.
+func (b *TrunBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return TrunBox{}, err
+      return err
    }
-   var trun TrunBox
-   trun.Header = header
-   trun.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
 
-   trun.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
+   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 
    sampleCount := binary.BigEndian.Uint32(data[12:16])
    offset := 16
 
-   if trun.Flags&0x000001 != 0 {
+   if b.Flags&0x000001 != 0 {
       offset += 4
    } // data_offset_present
-   if trun.Flags&0x000004 != 0 {
+   if b.Flags&0x000004 != 0 {
       offset += 4
    } // first_sample_flags_present
 
-   trun.Samples = make([]SampleInfo, sampleCount)
-   sampleDurationPresent := trun.Flags&0x000100 != 0
-   sampleSizePresent := trun.Flags&0x000200 != 0
-   sampleFlagsPresent := trun.Flags&0x000400 != 0
-   sampleCTOPresent := trun.Flags&0x000800 != 0
+   b.Samples = make([]SampleInfo, sampleCount)
+   sampleDurationPresent := b.Flags&0x000100 != 0
+   sampleSizePresent := b.Flags&0x000200 != 0
+   sampleFlagsPresent := b.Flags&0x000400 != 0
+   sampleCTOPresent := b.Flags&0x000800 != 0
 
    for i := uint32(0); i < sampleCount; i++ {
       if sampleDurationPresent {
          if offset+4 > len(data) {
-            return TrunBox{}, errors.New("trun box truncated at sample duration")
+            return errors.New("trun box truncated at sample duration")
          }
-         trun.Samples[i].Duration = binary.BigEndian.Uint32(data[offset : offset+4])
+         b.Samples[i].Duration = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
       if sampleSizePresent {
          if offset+4 > len(data) {
-            return TrunBox{}, errors.New("trun box truncated at sample size")
+            return errors.New("trun box truncated at sample size")
          }
-         trun.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
+         b.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
       if sampleFlagsPresent {
          if offset+4 > len(data) {
-            return TrunBox{}, errors.New("trun box truncated at sample flags")
+            return errors.New("trun box truncated at sample flags")
          }
-         trun.Samples[i].Flags = binary.BigEndian.Uint32(data[offset : offset+4])
+         b.Samples[i].Flags = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
       if sampleCTOPresent {
          if offset+4 > len(data) {
-            return TrunBox{}, errors.New("trun box truncated at sample CTO")
+            return errors.New("trun box truncated at sample CTO")
          }
-         trun.Samples[i].CompositionTimeOffset = int32(binary.BigEndian.Uint32(data[offset : offset+4]))
+         b.Samples[i].CompositionTimeOffset = int32(binary.BigEndian.Uint32(data[offset : offset+4]))
          offset += 4
       }
    }
-   return trun, nil
+   return nil
 }
 
 // Encode returns the raw byte data to ensure a perfect round trip.

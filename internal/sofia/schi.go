@@ -12,14 +12,14 @@ type SchiBox struct {
    Children []SchiChild
 }
 
-func ParseSchi(data []byte) (SchiBox, error) {
+// Parse parses the 'schi' box from a byte slice.
+func (b *SchiBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return SchiBox{}, err
+      return err
    }
-   var schi SchiBox
-   schi.Header = header
-   schi.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    boxData := data[8:header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -32,27 +32,27 @@ func ParseSchi(data []byte) (SchiBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return SchiBox{}, errors.New("invalid child box size in schi")
+         return errors.New("invalid child box size in schi")
       }
       childData := boxData[offset : offset+boxSize]
       var child SchiChild
       switch string(h.Type[:]) {
       case "tenc":
-         tenc, err := ParseTenc(childData)
-         if err != nil {
-            return SchiBox{}, err
+         var tenc TencBox
+         if err := tenc.Parse(childData); err != nil {
+            return err
          }
          child.Tenc = &tenc
       default:
          child.Raw = childData
       }
-      schi.Children = append(schi.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return schi, nil
+   return nil
 }
 func (b *SchiBox) Encode() []byte {
    var content []byte

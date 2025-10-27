@@ -14,21 +14,21 @@ type EncaBox struct {
    Children    []EncaChild
 }
 
-func ParseEnca(data []byte) (EncaBox, error) {
+// Parse parses the 'enca' box from a byte slice.
+func (b *EncaBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return EncaBox{}, err
+      return err
    }
-   var enca EncaBox
-   enca.Header = header
-   enca.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
    const audioSampleEntrySize = 28
    payloadOffset := 8
    if len(data) < payloadOffset+audioSampleEntrySize {
-      enca.EntryHeader = data[payloadOffset:header.Size]
-      return enca, nil
+      b.EntryHeader = data[payloadOffset:header.Size]
+      return nil
    }
-   enca.EntryHeader = data[payloadOffset : payloadOffset+audioSampleEntrySize]
+   b.EntryHeader = data[payloadOffset : payloadOffset+audioSampleEntrySize]
    boxData := data[payloadOffset+audioSampleEntrySize : header.Size]
    offset := 0
    for offset < len(boxData) {
@@ -41,27 +41,27 @@ func ParseEnca(data []byte) (EncaBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return EncaBox{}, errors.New("invalid child box size in enca")
+         return errors.New("invalid child box size in enca")
       }
       childData := boxData[offset : offset+boxSize]
       var child EncaChild
       switch string(h.Type[:]) {
       case "sinf":
-         sinf, err := ParseSinf(childData)
-         if err != nil {
-            return EncaBox{}, err
+         var sinf SinfBox
+         if err := sinf.Parse(childData); err != nil {
+            return err
          }
          child.Sinf = &sinf
       default:
          child.Raw = childData
       }
-      enca.Children = append(enca.Children, child)
+      b.Children = append(b.Children, child)
       offset += boxSize
       if h.Size == 0 {
          break
       }
    }
-   return enca, nil
+   return nil
 }
 
 func (b *EncaBox) Encode() []byte {

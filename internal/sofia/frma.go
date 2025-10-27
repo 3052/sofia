@@ -9,23 +9,22 @@ type FrmaBox struct {
    DataFormat [4]byte
 }
 
-// ParseFrma parses the 'frma' box from a byte slice.
-func ParseFrma(data []byte) (FrmaBox, error) {
+// Parse parses the 'frma' box from a byte slice.
+func (b *FrmaBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return FrmaBox{}, err
+      return err
    }
-   var frma FrmaBox
-   frma.Header = header
-   frma.RawData = data[:header.Size]
+   b.Header = header
+   b.RawData = data[:header.Size]
 
    // The dataFormat is the 4 bytes immediately following the box header.
    if len(data) < 12 {
-      return FrmaBox{}, fmt.Errorf("frma box is too small: %d bytes", len(data))
+      return fmt.Errorf("frma box is too small: %d bytes", len(data))
    }
-   copy(frma.DataFormat[:], data[8:12])
+   copy(b.DataFormat[:], data[8:12])
 
-   return frma, nil
+   return nil
 }
 
 // Encode returns the raw byte data to ensure a perfect round trip.

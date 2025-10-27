@@ -9,15 +9,14 @@ type TencBox struct {
    DefaultKID [16]byte
 }
 
-// ParseTenc parses the 'tenc' box from a byte slice.
-func ParseTenc(data []byte) (TencBox, error) {
+// Parse parses the 'tenc' box from a byte slice.
+func (b *TencBox) Parse(data []byte) error {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
-      return TencBox{}, err
+      return err
    }
-   var tenc TencBox
-   tenc.Header = header
-   tenc.RawData = data[:header.Size] // Store the original data
+   b.Header = header
+   b.RawData = data[:header.Size] // Store the original data
 
    // Also parse the fields needed for decryption.
    // A tenc box is a "full box" (version+flags), taking 12 bytes total for the header part.
@@ -25,12 +24,12 @@ func ParseTenc(data []byte) (TencBox, error) {
    // So, the KID offset is 8 (box header) + 4 (full box header) + 1 + 1 = 14.
    kidStart := 14
    if len(data) < kidStart+16 {
-      return TencBox{}, fmt.Errorf("tenc box is too small to contain KID: %d bytes", len(data))
+      return fmt.Errorf("tenc box is too small to contain KID: %d bytes", len(data))
    }
    // Correctly copy from offset 14 to 30.
-   copy(tenc.DefaultKID[:], data[kidStart:kidStart+16])
+   copy(b.DefaultKID[:], data[kidStart:kidStart+16])
 
-   return tenc, nil
+   return nil
 }
 
 // Encode returns the raw byte data to ensure a perfect round trip.

@@ -1,6 +1,6 @@
 package mp4
 
-import "fmt"
+import "errors"
 
 type TrakChild struct {
    Edts *EdtsBox
@@ -34,7 +34,7 @@ func ParseTrak(data []byte) (TrakBox, error) {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return TrakBox{}, fmt.Errorf("invalid child box size in trak")
+         return TrakBox{}, errors.New("invalid child box size in trak")
       }
       childData := boxData[offset : offset+boxSize]
       var child TrakChild

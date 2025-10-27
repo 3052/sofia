@@ -4,13 +4,11 @@ import (
    "bytes"
    "encoding/binary"
    "encoding/hex"
-   "errors"
    "os"
    "path/filepath"
    "testing"
 )
 
-// senc_test defines the structure for our data-driven tests.
 type senc_test struct {
    initial string
    key     string
@@ -18,7 +16,6 @@ type senc_test struct {
    segment string
 }
 
-// senc_tests is the table of all files and keys to be used in testing.
 var senc_tests = []senc_test{
    {
       initial: "criterion-avc1/0-804.mp4",
@@ -192,20 +189,22 @@ func TestDecryption(t *testing.T) {
                t.Fatalf("Failed to decode test key from hex: %v", err)
             }
 
-            decrypter := NewDecrypter()
-            if err := decrypter.AddKey(kidBytes, keyBytes); err != nil {
-               t.Fatalf("Failed to add key to decrypter: %v", err)
+            keys := make(KeyMap)
+            if err := keys.AddKey(kidBytes, keyBytes); err != nil {
+               t.Fatalf("Failed to add key to KeyMap: %v", err)
             }
-            payload, err := decrypter.Decrypt(moof, mdat.Data[8:], moov)
+
+            payload, err := keys.Decrypt(moof, mdat.Payload, moov)
             if err != nil {
                t.Fatalf("Decryption failed: %v", err)
             }
             decryptedPayload = payload
          } else {
-            decryptedPayload = mdat.Data[8:]
+            decryptedPayload = mdat.Payload
          }
 
-         if err := removeEncryption(moov); err != nil {
+         // Call the new method on the moov box instance.
+         if err := moov.RemoveEncryption(); err != nil {
             t.Logf("Note: removeEncryption returned an error (likely expected for clear content): %v", err)
          }
          removeDRM(moov, moof)
@@ -216,7 +215,6 @@ func TestDecryption(t *testing.T) {
             if box.Moov != nil {
                finalMP4Data.Write(moov.Encode())
             } else {
-               // This is the corrected line
                finalMP4Data.Write(box.Encode())
             }
          }
@@ -248,93 +246,6 @@ func createMdatBox(payload []byte) []byte {
    copy(mdatBox[4:8], "mdat")
    copy(mdatBox[8:], payload)
    return mdatBox
-}
-
-func removeEncryption(moov *MoovBox) error {
-   for _, trak := range moov.GetAllTraks() {
-      stsd := trak.GetStsd()
-      if stsd == nil {
-         continue
-      }
-      for i, child := range stsd.Children {
-         var encBoxHeader []byte
-         var encChildren []interface{}
-         var isVideo bool
-
-         if child.Encv != nil {
-            encBoxHeader = child.Encv.EntryHeader
-            isVideo = true
-            for _, c := range child.Encv.Children {
-               encChildren = append(encChildren, c)
-            }
-         } else if child.Enca != nil {
-            encBoxHeader = child.Enca.EntryHeader
-            for _, c := range child.Enca.Children {
-               encChildren = append(encChildren, c)
-            }
-         } else {
-            continue
-         }
-
-         var sinf *SinfBox
-         if isVideo {
-            for _, c := range encChildren {
-               if s := c.(EncvChild).Sinf; s != nil {
-                  sinf = s
-                  break
-               }
-            }
-         } else {
-            for _, c := range encChildren {
-               if s := c.(EncaChild).Sinf; s != nil {
-                  sinf = s
-                  break
-               }
-            }
-         }
-         if sinf == nil {
-            return errors.New("could not find 'sinf' box")
-         }
-
-         var frma *FrmaBox
-         for _, sinfChild := range sinf.Children {
-            if f := sinfChild.Frma; f != nil {
-               frma = f
-               break
-            }
-         }
-         if frma == nil {
-            return errors.New("could not find 'frma' box")
-         }
-
-         newFormatType := frma.DataFormat
-         var newContent bytes.Buffer
-         newContent.Write(encBoxHeader)
-         for _, c := range encChildren {
-            var childSinf *SinfBox
-            if isVideo {
-               childSinf = c.(EncvChild).Sinf
-            } else {
-               childSinf = c.(EncaChild).Sinf
-            }
-            if childSinf == nil {
-               if isVideo {
-                  newContent.Write(c.(EncvChild).Raw)
-               } else {
-                  newContent.Write(c.(EncaChild).Raw)
-               }
-            }
-         }
-
-         newBoxSize := uint32(8 + newContent.Len())
-         newBoxData := make([]byte, newBoxSize)
-         binary.BigEndian.PutUint32(newBoxData[0:4], newBoxSize)
-         copy(newBoxData[4:8], newFormatType[:])
-         copy(newBoxData[8:], newContent.Bytes())
-         stsd.Children[i] = StsdChild{Raw: newBoxData}
-      }
-   }
-   return nil
 }
 
 func removeDRM(moov *MoovBox, moof *MoofBox) {

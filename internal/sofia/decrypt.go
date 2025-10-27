@@ -8,21 +8,11 @@ import (
    "fmt"
 )
 
-// KeyMap maps a 16-byte Key ID (KID) to its 16-byte decryption key.
+// KeyMap now holds the keys and all associated methods.
 type KeyMap map[[16]byte][16]byte
 
-// Decrypter handles the decryption of CENC-encrypted media segments.
-type Decrypter struct {
-   keys KeyMap
-}
-
-// NewDecrypter creates a new decrypter instance.
-func NewDecrypter() *Decrypter {
-   return &Decrypter{keys: make(KeyMap)}
-}
-
-// AddKey now correctly accepts byte slices for both KID and key.
-func (d *Decrypter) AddKey(kid []byte, key []byte) error {
+// AddKey adds a decryption key to the key map.
+func (km KeyMap) AddKey(kid []byte, key []byte) error {
    if len(kid) != 16 {
       return fmt.Errorf("invalid KID length: expected 16, got %d", len(kid))
    }
@@ -35,15 +25,17 @@ func (d *Decrypter) AddKey(kid []byte, key []byte) error {
    copy(kidArray[:], kid)
    copy(keyArray[:], key)
 
-   d.keys[kidArray] = keyArray
+   km[kidArray] = keyArray
    return nil
 }
 
-// Decrypt takes a parsed movie fragment (moof) and its corresponding media data (mdat),
-// along with the movie's initialization data (moov), and returns the decrypted media data.
-func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte, error) {
+// Decrypt is now a method on KeyMap, using the keys it contains.
+func (km KeyMap) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte, error) {
    if moof == nil || mdatData == nil || moov == nil {
       return nil, errors.New("moof, mdat, and moov boxes must not be nil")
+   }
+   if km == nil {
+      return nil, errors.New("keyMap cannot be nil")
    }
 
    decryptedMdat := make([]byte, 0, len(mdatData))
@@ -86,7 +78,7 @@ func (d *Decrypter) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]by
          continue
       }
 
-      key, ok := d.keys[tenc.DefaultKID]
+      key, ok := km[tenc.DefaultKID]
       if !ok {
          return nil, fmt.Errorf("no key for KID %s", hex.EncodeToString(tenc.DefaultKID[:]))
       }

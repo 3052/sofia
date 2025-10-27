@@ -1,24 +1,31 @@
 package mp4
 
-// MdatBox represents the 'mdat' box.
+// MdatBox represents the 'mdat' box (Media Data Box).
 type MdatBox struct {
-   Header BoxHeader
-   Data   []byte
+   Header  BoxHeader
+   Payload []byte
 }
 
-// ParseMdat parses the 'mdat' box from a byte slice.
+// ParseMdat now correctly separates the header from the media payload.
 func ParseMdat(data []byte) (MdatBox, error) {
    header, _, err := ReadBoxHeader(data)
    if err != nil {
       return MdatBox{}, err
    }
-   return MdatBox{
-      Header: header,
-      Data:   data[:header.Size],
-   }, nil
+   var mdat MdatBox
+   mdat.Header = header
+   // The payload is the content of the box *after* the 8-byte header.
+   mdat.Payload = data[8:header.Size]
+   return mdat, nil
 }
 
-// Encode encodes the 'mdat' box to a byte slice.
+// Encode now correctly reconstructs the full box from the header and payload.
 func (b *MdatBox) Encode() []byte {
-   return b.Data
+   // The size in the header must be updated to reflect the current payload size.
+   size := uint32(len(b.Payload) + 8)
+   fullBox := make([]byte, size)
+   b.Header.Size = size
+   b.Header.Write(fullBox)
+   copy(fullBox[8:], b.Payload)
+   return fullBox
 }

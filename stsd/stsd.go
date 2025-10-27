@@ -85,6 +85,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
    }
    return data, nil
 }
+
 func (b *Box) Sinf() (*sinf.Box, bool) {
    if as := b.AudioSample; as != nil {
       return &as.Sinf, true

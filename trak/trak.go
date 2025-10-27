@@ -62,6 +62,7 @@ func (b *Box) Read(data []byte) error {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class TrackBox extends Box('trak') {
 //   }
 type Box struct {

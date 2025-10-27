@@ -78,6 +78,7 @@ func (b *Box) Append(data []byte) ([]byte, error) {
 }
 
 // ISO/IEC 14496-12
+//
 //   aligned(8) class MovieFragmentBox extends Box('moof') {
 //   }
 type Box struct {

@@ -6,6 +6,7 @@ import (
 )
 
 // ISO/IEC 23001-7
+//
 //   aligned(8) class ProtectionSystemSpecificHeaderBox extends FullBox(
 //      'pssh', version, flags=0,
 //   ) {

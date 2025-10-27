@@ -16,9 +16,6 @@ func (s *Sample) Decrypt(data, key []byte) error {
    }
    var iv [16]byte
    copy(iv[:], s.InitializationVector[:])
-   
-   log.Printf("key:%x iv:%x", key, iv)
-   
    stream := cipher.NewCTR(block, iv[:])
    if len(s.Subsample) >= 1 {
       var i uint32
@@ -38,7 +35,6 @@ func (s *Sample) Decrypt(data, key []byte) error {
    }
    return nil
 }
-
 
 func (s *Subsample) Decode(data []byte) (int, error) {
    return binary.Decode(data, binary.BigEndian, s)

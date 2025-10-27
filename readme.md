@@ -6,12 +6,18 @@
 >
 > [No Country for Old Men](//youtube.com/watch?v=GH4IhjtaAUQ) (2007)
 
-ISOBMFF
+## features
 
-module for reading and writing MP4
-
-- <https://wikipedia.org/wiki/MP4_file_format>
-- <https://wikipedia.org/wiki/MPEG_Common_Encryption>
+1. Firefox playback
+2. decrypt `mdat` using `senc`
+3. multiple `moof` boxes
+4. remove `edts`
+5. remove `pssh`
+6. remove `sinf`
+7. rename `enca`
+8. rename `encv`
+9. PIFF?
+10. get bandwidth using `trun` (and `mdhd`, `tfhd`)
 
 ## prior art
 
@@ -24,3 +30,17 @@ module for reading and writing MP4
 7. https://github.com/garden4hu/fmp4parser-go/issues/4
 8. https://github.com/eswarantg/mp4box/issues/3
 9. https://github.com/miquels/mp4/issues/2
+
+## standard
+
+ISO/IEC 14496-12:
+
+<https://wikipedia.org/wiki/ISO_base_media_file_format>
+
+ISO/IEC 14496-14:
+
+<https://wikipedia.org/wiki/MP4_file_format>
+
+ISO/IEC 23001-7:
+
+<https://wikipedia.org/wiki/MPEG_Common_Encryption>

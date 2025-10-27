@@ -8,6 +8,7 @@ import (
    "testing"
 )
 
+// TestDecryption is a table-driven test that decrypts all provided samples.
 func TestDecryption(t *testing.T) {
    const testDataPrefix = "../../testdata/"
    const outputDir = "test_output"
@@ -102,11 +103,10 @@ func TestDecryption(t *testing.T) {
             decryptedPayload = mdat.Payload
          }
 
-         if err := moov.RemoveEncryption(); err != nil {
-            t.Logf("Note: removeEncryption returned an error (likely expected for clear content): %v", err)
+         if err := moov.Sanitize(); err != nil {
+            t.Logf("Note: sanitization returned an error (likely expected for clear content): %v", err)
          }
-         moov.RemoveDRM()
-         moof.RemoveDRM()
+         moof.Sanitize()
          trak.RemoveEdts()
 
          var finalMP4Data bytes.Buffer
@@ -118,7 +118,6 @@ func TestDecryption(t *testing.T) {
             }
          }
          finalMP4Data.Write(moof.Encode())
-
          newMdat := MdatBox{
             Header:  BoxHeader{Type: [4]byte{'m', 'd', 'a', 't'}},
             Payload: decryptedPayload,

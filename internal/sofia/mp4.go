@@ -26,6 +26,7 @@ func (h BoxHeader) Write(data []byte) int {
    copy(data[4:8], h.Type[:])
    return 8
 }
+
 // Box is a generic wrapper for any top-level MP4 box.
 type Box struct {
    Moov *MoovBox

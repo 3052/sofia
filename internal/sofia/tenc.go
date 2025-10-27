@@ -11,12 +11,10 @@ type TencBox struct {
 
 // Parse parses the 'tenc' box from a byte slice.
 func (b *TencBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size] // Store the original data
+   b.RawData = data[:b.Header.Size] // Store the original data
 
    // Also parse the fields needed for decryption.
    // A tenc box is a "full box" (version+flags), taking 12 bytes total for the header part.

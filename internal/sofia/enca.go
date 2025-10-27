@@ -16,24 +16,22 @@ type EncaBox struct {
 
 // Parse parses the 'enca' box from a byte slice.
 func (b *EncaBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
    const audioSampleEntrySize = 28
    payloadOffset := 8
    if len(data) < payloadOffset+audioSampleEntrySize {
-      b.EntryHeader = data[payloadOffset:header.Size]
+      b.EntryHeader = data[payloadOffset:b.Header.Size]
       return nil
    }
    b.EntryHeader = data[payloadOffset : payloadOffset+audioSampleEntrySize]
-   boxData := data[payloadOffset+audioSampleEntrySize : header.Size]
+   boxData := data[payloadOffset+audioSampleEntrySize : b.Header.Size]
    offset := 0
    for offset < len(boxData) {
-      h, _, err := ReadBoxHeader(boxData[offset:])
-      if err != nil {
+      var h BoxHeader
+      if _, err := h.Read(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)

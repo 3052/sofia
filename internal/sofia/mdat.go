@@ -8,13 +8,11 @@ type MdatBox struct {
 
 // Parse now correctly separates the header from the media payload.
 func (b *MdatBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
    // The payload is the content of the box *after* the 8-byte header.
-   b.Payload = data[8:header.Size]
+   b.Payload = data[8:b.Header.Size]
    return nil
 }
 

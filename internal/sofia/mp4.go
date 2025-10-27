@@ -11,14 +11,15 @@ type BoxHeader struct {
    Type [4]byte
 }
 
-func ReadBoxHeader(data []byte) (BoxHeader, int, error) {
+// Read parses a box header from a byte slice into the BoxHeader struct.
+// It returns the number of bytes read (8) or an error.
+func (h *BoxHeader) Read(data []byte) (int, error) {
    if len(data) < 8 {
-      return BoxHeader{}, 0, errors.New("not enough data for box header")
+      return 0, errors.New("not enough data for box header")
    }
-   var h BoxHeader
    h.Size = binary.BigEndian.Uint32(data[0:4])
    copy(h.Type[:], data[4:8])
-   return h, 8, nil
+   return 8, nil
 }
 
 func (h BoxHeader) Write(data []byte) int {
@@ -63,12 +64,13 @@ func ParseFile(data []byte) ([]Box, error) {
       if len(data)-offset < 8 {
          break
       }
-      h, _, err := ReadBoxHeader(data[offset:])
+      var boxHeader BoxHeader
+      _, err := boxHeader.Read(data[offset:])
       if err != nil {
          return nil, fmt.Errorf("error reading header at offset %d: %w", offset, err)
       }
 
-      boxSize := int(h.Size)
+      boxSize := int(boxHeader.Size)
       if boxSize == 0 {
          boxSize = len(data) - offset
       }
@@ -76,43 +78,43 @@ func ParseFile(data []byte) ([]Box, error) {
          return nil, fmt.Errorf("invalid box size %d at offset %d", boxSize, offset)
       }
       if offset+boxSize > len(data) {
-         return nil, fmt.Errorf("box '%s' at offset %d with size %d exceeds file bounds", string(h.Type[:]), offset, boxSize)
+         return nil, fmt.Errorf("box '%s' at offset %d with size %d exceeds file bounds", string(boxHeader.Type[:]), offset, boxSize)
       }
 
       boxData := data[offset : offset+boxSize]
       var currentBox Box
 
-      switch string(h.Type[:]) {
+      switch string(boxHeader.Type[:]) {
       case "moov":
-         var b MoovBox
-         if err := b.Parse(boxData); err != nil {
+         var moovBox MoovBox
+         if err := moovBox.Parse(boxData); err != nil {
             return nil, err
          }
-         currentBox.Moov = &b
+         currentBox.Moov = &moovBox
       case "moof":
-         var b MoofBox
-         if err := b.Parse(boxData); err != nil {
+         var moofBox MoofBox
+         if err := moofBox.Parse(boxData); err != nil {
             return nil, err
          }
-         currentBox.Moof = &b
+         currentBox.Moof = &moofBox
       case "mdat":
-         var b MdatBox
-         if err := b.Parse(boxData); err != nil {
+         var mdatBox MdatBox
+         if err := mdatBox.Parse(boxData); err != nil {
             return nil, err
          }
-         currentBox.Mdat = &b
+         currentBox.Mdat = &mdatBox
       case "sidx":
-         var b SidxBox
-         if err := b.Parse(boxData); err != nil {
+         var sidxBox SidxBox
+         if err := sidxBox.Parse(boxData); err != nil {
             return nil, err
          }
-         currentBox.Sidx = &b
+         currentBox.Sidx = &sidxBox
       case "pssh":
-         var b PsshBox
-         if err := b.Parse(boxData); err != nil {
+         var psshBox PsshBox
+         if err := psshBox.Parse(boxData); err != nil {
             return nil, err
          }
-         currentBox.Pssh = &b
+         currentBox.Pssh = &psshBox
       default:
          currentBox.Raw = boxData
       }

@@ -8,12 +8,10 @@ type EdtsBox struct {
 
 // Parse parses the 'edts' box from a byte slice.
 func (b *EdtsBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
    return nil
 }
 

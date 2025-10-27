@@ -20,12 +20,10 @@ type TfhdBox struct {
 
 // Parse is now a full parser that respects all flags.
 func (b *TfhdBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
    b.TrackID = binary.BigEndian.Uint32(data[12:16])
    offset := 16

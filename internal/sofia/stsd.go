@@ -18,18 +18,16 @@ type StsdBox struct {
 
 // Parse parses the 'stsd' box from a byte slice.
 func (b *StsdBox) Parse(data []byte) error {
-   header, _, err := ReadBoxHeader(data)
-   if err != nil {
+   if _, err := b.Header.Read(data); err != nil {
       return err
    }
-   b.Header = header
-   b.RawData = data[:header.Size]
+   b.RawData = data[:b.Header.Size]
    entryCount := binary.BigEndian.Uint32(data[12:16])
-   boxData := data[16:header.Size]
+   boxData := data[16:b.Header.Size]
    offset := 0
    for i := uint32(0); i < entryCount && offset < len(boxData); i++ {
-      h, _, err := ReadBoxHeader(boxData[offset:])
-      if err != nil {
+      var h BoxHeader
+      if _, err := h.Read(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)

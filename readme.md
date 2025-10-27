@@ -11,13 +11,14 @@
 1. Firefox playback
 2. decrypt `mdat` using `senc`
 3. multiple `moof` boxes
-4. parse `sidx`
-5. remove `edts`
-6. remove `pssh`
-7. remove `sinf`
-8. rename `enca`
-9. rename `encv`
-10. get bandwidth from `traf`
+4. parse `pssh`
+5. parse `sidx`
+6. remove `edts`
+7. remove `pssh`
+8. remove `sinf`
+9. rename `enca`
+10. rename `encv`
+11. get bandwidth from `traf`
 
 ## prior art
 

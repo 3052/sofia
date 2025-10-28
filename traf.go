@@ -24,8 +24,10 @@ func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
    if timescale == 0 {
       return 0, errors.New("timescale cannot be zero")
    }
-   var totalBytes uint64 = 0
-   var totalDuration uint64 = 0
+   var (
+      totalBytes    uint64
+      totalDuration uint64
+   )
    for _, sample := range trun.Samples {
       size := sample.Size
       if size == 0 && tfhd != nil {

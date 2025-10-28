@@ -3,7 +3,6 @@ package sofia
 import (
    "crypto/aes"
    "crypto/cipher"
-   "encoding/hex"
    "errors"
    "fmt"
 )
@@ -29,17 +28,57 @@ func (km KeyMap) AddKey(kid []byte, key []byte) error {
    return nil
 }
 
-// Decrypt is now a method on KeyMap, using the keys it contains.
-func (km KeyMap) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte, error) {
-   if moof == nil || mdatData == nil || moov == nil {
-      return nil, errors.New("moof, mdat, and moov boxes must not be nil")
-   }
-   if km == nil {
-      return nil, errors.New("keyMap cannot be nil")
+// DecryptSegment processes a slice of parsed boxes, decrypting the mdat payloads in-place.
+// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
+func (km KeyMap) DecryptSegment(segmentBoxes []Box, moov *MoovBox) error {
+   if moov == nil {
+      return errors.New("moov box must not be nil")
    }
 
-   decryptedMdat := make([]byte, 0, len(mdatData))
-   mdatOffset := 0
+   trak := moov.GetTrak()
+   if trak == nil {
+      return errors.New("could not find trak in moov")
+   }
+
+   tenc := trak.GetTenc()
+   if tenc == nil {
+      // Content is not encrypted, nothing to do.
+      return nil
+   }
+
+   key, ok := km[tenc.DefaultKID]
+   if !ok {
+      return fmt.Errorf("no key for KID %x", tenc.DefaultKID)
+   }
+
+   block, err := aes.NewCipher(key[:])
+   if err != nil {
+      return fmt.Errorf("AES cipher error: %w", err)
+   }
+
+   // Iterate through the boxes, processing moof/mdat pairs as they are found.
+   for i := 0; i < len(segmentBoxes); i++ {
+      if segmentBoxes[i].Moof != nil {
+         moof := segmentBoxes[i].Moof
+         if i+1 >= len(segmentBoxes) || segmentBoxes[i+1].Mdat == nil {
+            return fmt.Errorf("malformed segment: moof at index %d is not followed by an mdat", i)
+         }
+         mdat := segmentBoxes[i+1].Mdat
+
+         // Perform the decryption directly on the MdatBox's payload.
+         err := km.decryptFragment(moof, mdat.Payload, block)
+         if err != nil {
+            return fmt.Errorf("failed to process fragment at index %d: %w", i, err)
+         }
+         i++ // Skip the mdat box in the next iteration.
+      }
+   }
+   return nil
+}
+
+// decryptFragment handles a single moof/mdat pair, decrypting the mdatData in-place.
+func (km KeyMap) decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
+   currentMdatOffset := 0
 
    for _, moofChild := range moof.Children {
       traf := moofChild.Traf
@@ -47,49 +86,18 @@ func (km KeyMap) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte,
          continue
       }
 
-      tfhd, trun, senc := traf.GetTfhd(), traf.GetTrun(), traf.GetSenc()
+      tfhd, trun := traf.GetTfhd(), traf.GetTrun()
       if tfhd == nil || trun == nil {
-         return nil, errors.New("traf is missing required boxes: tfhd, trun")
+         return errors.New("traf is missing required boxes: tfhd or trun")
       }
-
-      trak := moov.GetTrak()
-      if trak == nil {
-         return nil, fmt.Errorf("could not find trak")
-      }
-
-      tenc := trak.GetTenc()
-
-      if tenc == nil || senc == nil {
-         for i, sample := range trun.Samples {
-            sampleSize := sample.Size
-            if sampleSize == 0 {
-               sampleSize = tfhd.DefaultSampleSize
-            }
-            if sampleSize == 0 {
-               return nil, fmt.Errorf("sample %d has zero size and no default is available", i)
-            }
-            end := mdatOffset + int(sampleSize)
-            if end > len(mdatData) {
-               return nil, fmt.Errorf("sample %d size exceeds mdat bounds", i)
-            }
-            decryptedMdat = append(decryptedMdat, mdatData[mdatOffset:end]...)
-            mdatOffset = end
-         }
+      senc := traf.GetSenc()
+      if senc == nil {
+         // This fragment is not encrypted, so we do nothing.
          continue
       }
 
-      key, ok := km[tenc.DefaultKID]
-      if !ok {
-         return nil, fmt.Errorf("no key for KID %s", hex.EncodeToString(tenc.DefaultKID[:]))
-      }
-
-      block, err := aes.NewCipher(key[:])
-      if err != nil {
-         return nil, fmt.Errorf("AES cipher error: %w", err)
-      }
-
       if len(trun.Samples) != len(senc.Samples) {
-         return nil, errors.New("sample count mismatch between trun and senc")
+         return errors.New("sample count mismatch between trun and senc")
       }
 
       for i, sampleInfo := range trun.Samples {
@@ -98,13 +106,13 @@ func (km KeyMap) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte,
             sampleSize = tfhd.DefaultSampleSize
          }
          if sampleSize == 0 {
-            return nil, fmt.Errorf("encrypted sample %d has zero size and no default is available", i)
+            return fmt.Errorf("sample %d has zero size", i)
          }
-         if mdatOffset+int(sampleSize) > len(mdatData) {
-            return nil, fmt.Errorf("mdat buffer exhausted at sample %d", i)
+         if currentMdatOffset+int(sampleSize) > len(mdatData) {
+            return fmt.Errorf("mdat buffer exhausted at sample %d", i)
          }
-         encryptedSample := mdatData[mdatOffset : mdatOffset+int(sampleSize)]
-         mdatOffset += int(sampleSize)
+         sampleData := mdatData[currentMdatOffset : currentMdatOffset+int(sampleSize)]
+         currentMdatOffset += int(sampleSize)
 
          iv := senc.Samples[i].IV
          if len(iv) == 8 {
@@ -112,35 +120,29 @@ func (km KeyMap) Decrypt(moof *MoofBox, mdatData []byte, moov *MoovBox) ([]byte,
             copy(paddedIV, iv)
             iv = paddedIV
          } else if len(iv) != 16 {
-            return nil, fmt.Errorf("invalid IV length: got %d, want 16", len(iv))
+            return fmt.Errorf("invalid IV length for sample %d: got %d, want 16", i, len(iv))
          }
 
          stream := cipher.NewCTR(block, iv)
-         decryptedSample := make([]byte, 0, sampleSize)
-         sampleOffset := 0
 
          if len(senc.Samples[i].Subsamples) == 0 {
-            decryptedPortion := make([]byte, len(encryptedSample))
-            stream.XORKeyStream(decryptedPortion, encryptedSample)
-            decryptedSample = append(decryptedSample, decryptedPortion...)
+            // Full sample encryption, decrypt in-place.
+            stream.XORKeyStream(sampleData, sampleData)
          } else {
+            // Subsample encryption.
+            sampleOffset := 0
             for _, sub := range senc.Samples[i].Subsamples {
-               clearSize := int(sub.BytesOfClearData)
-               protectedSize := int(sub.BytesOfProtectedData)
-               endOfClear := sampleOffset + clearSize
-               decryptedSample = append(decryptedSample, encryptedSample[sampleOffset:endOfClear]...)
-               sampleOffset = endOfClear
-               if protectedSize > 0 {
-                  endOfProtected := sampleOffset + protectedSize
-                  protectedData := encryptedSample[sampleOffset:endOfProtected]
-                  stream.XORKeyStream(protectedData, protectedData)
-                  decryptedSample = append(decryptedSample, protectedData...)
+               sampleOffset += int(sub.BytesOfClearData)
+               if sub.BytesOfProtectedData > 0 {
+                  endOfProtected := sampleOffset + int(sub.BytesOfProtectedData)
+                  protectedPortion := sampleData[sampleOffset:endOfProtected]
+                  // Decrypt the protected portion in-place.
+                  stream.XORKeyStream(protectedPortion, protectedPortion)
                   sampleOffset = endOfProtected
                }
             }
          }
-         decryptedMdat = append(decryptedMdat, decryptedSample...)
       }
    }
-   return decryptedMdat, nil
+   return nil
 }

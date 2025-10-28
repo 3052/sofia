@@ -7,10 +7,10 @@ import (
 
 // TestSidxParsing verifies that the sidx box is parsed correctly.
 func TestSidxParsing(t *testing.T) {
-   sidxFilePath := "../../testdata/roku-avc1/index_video_8_0_1.mp4"
+   sidxFilePath := "testdata/roku-avc1/index_video_8_0_1.mp4"
    sidxData, err := os.ReadFile(sidxFilePath)
    if err != nil {
-      t.Skipf("Skipping sidx test: could not read file: %s", sidxFilePath)
+      t.Fatalf("Skipping sidx test: could not read file: %s", sidxFilePath)
    }
 
    parsed, err := ParseFile(sidxData)

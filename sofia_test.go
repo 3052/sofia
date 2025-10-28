@@ -75,7 +75,7 @@ var senc_tests = []senc_test{
 
 // TestRoundTrip is a table-driven test covering all files.
 func TestRoundTrip(t *testing.T) {
-   const testDataPrefix = "../../testdata/"
+   const testDataPrefix = "testdata/"
 
    for _, test := range senc_tests {
       t.Run(test.out, func(t *testing.T) {
@@ -85,7 +85,7 @@ func TestRoundTrip(t *testing.T) {
             t.Run(filepath.Base(filePath), func(t *testing.T) {
                originalData, err := os.ReadFile(filePath)
                if err != nil {
-                  t.Skipf("test file not found, skipping: %s", filePath)
+                  t.Fatalf("test file not found, skipping: %s", filePath)
                   return
                }
                if len(originalData) == 0 {

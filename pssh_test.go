@@ -8,10 +8,10 @@ import (
 )
 
 func TestPsshParsing(t *testing.T) {
-   psshFilePath := "../../testdata/roku-avc1/index_video_8_0_init.mp4"
+   psshFilePath := "testdata/roku-avc1/index_video_8_0_init.mp4"
    psshData, err := os.ReadFile(psshFilePath)
    if err != nil {
-      t.Skipf("Skipping pssh test: could not read file: %s", psshFilePath)
+      t.Fatalf("Skipping pssh test: could not read file: %s", psshFilePath)
    }
 
    parsed, err := ParseFile(psshData)

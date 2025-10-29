@@ -167,3 +167,14 @@ func (b *MoovBox) GetAllTraks() []*TrakBox {
    }
    return traks
 }
+
+// GetAllPssh returns a slice of all PsshBox children within this MoovBox.
+func (b *MoovBox) GetAllPssh() []*PsshBox {
+   var psshBoxes []*PsshBox
+   for _, child := range b.Children {
+      if child.Pssh != nil {
+         psshBoxes = append(psshBoxes, child.Pssh)
+      }
+   }
+   return psshBoxes
+}

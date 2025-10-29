@@ -1,12 +1,12 @@
 package sofia
 
 import (
+   "bytes"
    "encoding/binary"
    "errors"
 )
 
 // PsshBox represents the 'pssh' box (Protection System Specific Header).
-// It now contains fully parsed fields.
 type PsshBox struct {
    Header   BoxHeader
    Version  byte
@@ -22,7 +22,6 @@ func (b *PsshBox) Parse(data []byte) error {
       return err
    }
 
-   // A pssh is a Full Box
    if len(data) < 12 {
       return errors.New("pssh box is too short for version and flags")
    }
@@ -76,8 +75,7 @@ func (b *PsshBox) Encode() []byte {
    }
    dataSize := len(b.Data)
 
-   // Calculate total size of the box payload
-   payloadSize := 4 + 16 + kidSectionSize + 4 + dataSize // FullBoxHeader + SystemID + [KIDs] + DataSize + Data
+   payloadSize := 4 + 16 + kidSectionSize + 4 + dataSize
    b.Header.Size = uint32(8 + payloadSize)
 
    encoded := make([]byte, b.Header.Size)
@@ -105,4 +103,16 @@ func (b *PsshBox) Encode() []byte {
    copy(encoded[offset:], b.Data)
 
    return encoded
+}
+
+// FindPsshBySystemID finds the first PsshBox in a slice with a matching SystemID.
+// It returns the box if found, otherwise nil.
+func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
+   // THIS IS THE CORRECTED LINE
+   for _, pssh := range psshBoxes {
+      if bytes.Equal(pssh.SystemID[:], systemID) {
+         return pssh
+      }
+   }
+   return nil
 }

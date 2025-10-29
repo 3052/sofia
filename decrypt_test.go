@@ -22,7 +22,7 @@ func TestDecryption(t *testing.T) {
          initFilePath := filepath.Join(testDataPrefix, test.initial)
          segmentFilePath := filepath.Join(testDataPrefix, test.segment)
 
-         // 1. Parse Initialization Segment
+         // 1. Parse Initialization Segment (still needed for final assembly)
          initData, err := os.ReadFile(initFilePath)
          if err != nil {
             t.Fatalf("Could not read init file: %s, error: %v", initFilePath, err)
@@ -31,12 +31,7 @@ func TestDecryption(t *testing.T) {
          if err != nil {
             t.Fatalf("Failed to parse init file: %v", err)
          }
-         var moov *MoovBox
-         for i := range parsedInit {
-            if parsedInit[i].Moov != nil {
-               moov = parsedInit[i].Moov
-            }
-         }
+         moov := FindMoov(parsedInit)
          if moov == nil {
             t.Fatal("Could not find 'moov' box in init file.")
          }
@@ -51,36 +46,22 @@ func TestDecryption(t *testing.T) {
             t.Fatalf("Failed to parse segment file: %v", err)
          }
 
-         // 3. Prepare decryption keys
-         var keys KeyMap
-         trak := moov.GetTrak()
-         if trak == nil {
-            t.Fatal("Could not find track in moov box.")
+         // 3. Decrypt the segment's mdat boxes in-place.
+         keyBytes, err := hex.DecodeString(test.key)
+         if err != nil {
+            t.Fatalf("Failed to decode test key from hex: %v", err)
          }
-         tenc := trak.GetTenc()
-         isEncrypted := tenc != nil
-
-         if isEncrypted {
-            keyBytes, err := hex.DecodeString(test.key)
-            if err != nil {
-               t.Fatalf("Failed to decode test key from hex: %v", err)
-            }
-            keys = make(KeyMap)
-            if err := keys.AddKey(tenc.DefaultKID[:], keyBytes); err != nil {
-               t.Fatalf("Failed to add key to KeyMap: %v", err)
-            }
-         }
-
-         // 4. Decrypt the segment's mdat boxes in-place.
-         if err := keys.DecryptSegment(parsedSegment, moov); err != nil {
+         if err := DecryptSegment(parsedSegment, keyBytes); err != nil {
             t.Fatalf("Decryption failed: %v", err)
          }
 
-         // 5. Sanitize metadata and construct the final interleaved MP4
+         // 4. Sanitize metadata and construct the final interleaved MP4
          if err := moov.Sanitize(); err != nil {
             t.Logf("Note: sanitization returned an error (as expected for some clear content): %v", err)
          }
-         trak.RemoveEdts()
+         if trak := moov.GetTrak(); trak != nil {
+            trak.RemoveEdts()
+         }
 
          var finalMP4Data bytes.Buffer
          // Write the init segment first
@@ -93,11 +74,10 @@ func TestDecryption(t *testing.T) {
             if box.Moof != nil {
                box.Moof.Sanitize()
             }
-            // Encode writes the sanitized moof or the now-decrypted mdat.
             finalMP4Data.Write(box.Encode())
          }
 
-         // 6. Write to file and verify
+         // 5. Write to file and verify
          outputFilePath := filepath.Join(outputDir, test.out)
          if err := os.WriteFile(outputFilePath, finalMP4Data.Bytes(), 0644); err != nil {
             t.Fatalf("Failed to write final MP4 file: %v", err)

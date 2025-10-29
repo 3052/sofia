@@ -31,12 +31,7 @@ func TestDecryption(t *testing.T) {
          if err != nil {
             t.Fatalf("Failed to parse init file: %v", err)
          }
-         var moov *MoovBox
-         for i := range parsedInit {
-            if parsedInit[i].Moov != nil {
-               moov = parsedInit[i].Moov
-            }
-         }
+         moov := FindMoov(parsedInit)
          if moov == nil {
             t.Fatal("Could not find 'moov' box in init file.")
          }
@@ -93,7 +88,6 @@ func TestDecryption(t *testing.T) {
             if box.Moof != nil {
                box.Moof.Sanitize()
             }
-            // Encode writes the sanitized moof or the now-decrypted mdat.
             finalMP4Data.Write(box.Encode())
          }
 

@@ -6,8 +6,57 @@ import (
    "fmt"
 )
 
-// ParseFile reads a byte slice and parses it into a slice of generic Box
-// structs.
+type BoxHeader struct {
+   Size uint32
+   Type [4]byte
+}
+
+// Read parses a box header from a byte slice into the BoxHeader struct.
+// It returns the number of bytes read (8) or an error.
+func (h *BoxHeader) Read(data []byte) (int, error) {
+   if len(data) < 8 {
+      return 0, errors.New("not enough data for box header")
+   }
+   h.Size = binary.BigEndian.Uint32(data[0:4])
+   copy(h.Type[:], data[4:8])
+   return 8, nil
+}
+
+func (h BoxHeader) Write(data []byte) int {
+   binary.BigEndian.PutUint32(data[0:4], h.Size)
+   copy(data[4:8], h.Type[:])
+   return 8
+}
+
+// Box is a generic wrapper for any top-level MP4 box.
+type Box struct {
+   Moov *MoovBox
+   Moof *MoofBox
+   Mdat *MdatBox
+   Sidx *SidxBox
+   Pssh *PsshBox
+   Raw  []byte
+}
+
+// Encode selects the correct encoder based on the top-level box type.
+func (b *Box) Encode() []byte {
+   switch {
+   case b.Moov != nil:
+      return b.Moov.Encode()
+   case b.Moof != nil:
+      return b.Moof.Encode()
+   case b.Mdat != nil:
+      return b.Mdat.Encode()
+   case b.Sidx != nil:
+      return b.Sidx.Encode()
+   case b.Pssh != nil:
+      return b.Pssh.Encode()
+   default:
+      return b.Raw
+   }
+}
+
+// ParseFile reads a byte slice and parses it into a slice of generic Box structs.
 func ParseFile(data []byte) ([]Box, error) {
    var boxes []Box
    offset := 0
@@ -75,52 +124,39 @@ func ParseFile(data []byte) ([]Box, error) {
    return boxes, nil
 }
 
-type BoxHeader struct {
-   Size uint32
-   Type [4]byte
-}
-
-// Read parses a box header from a byte slice into the BoxHeader struct.
-// It returns the number of bytes read (8) or an error.
-func (h *BoxHeader) Read(data []byte) (int, error) {
-   if len(data) < 8 {
-      return 0, errors.New("not enough data for box header")
+// FindMoov finds the first MoovBox in a slice of generic boxes.
+// It returns the box if found, otherwise nil.
+func FindMoov(boxes []Box) *MoovBox {
+   for _, box := range boxes {
+      if box.Moov != nil {
+         return box.Moov
+      }
    }
-   h.Size = binary.BigEndian.Uint32(data[0:4])
-   copy(h.Type[:], data[4:8])
-   return 8, nil
+   return nil
 }
 
-func (h BoxHeader) Write(data []byte) int {
-   binary.BigEndian.PutUint32(data[0:4], h.Size)
-   copy(data[4:8], h.Type[:])
-   return 8
-}
-
-// Box is a generic wrapper for any top-level MP4 box.
-type Box struct {
-   Moov *MoovBox
-   Moof *MoofBox
-   Mdat *MdatBox
-   Sidx *SidxBox
-   Pssh *PsshBox
-   Raw  []byte
-}
-
-// Encode selects the correct encoder based on the top-level box type.
-func (b *Box) Encode() []byte {
-   switch {
-   case b.Moov != nil:
-      return b.Moov.Encode()
-   case b.Moof != nil:
-      return b.Moof.Encode()
-   case b.Mdat != nil:
-      return b.Mdat.Encode()
-   case b.Sidx != nil:
-      return b.Sidx.Encode()
-   case b.Pssh != nil:
-      return b.Pssh.Encode()
-   default:
-      return b.Raw
+// FindFirstTraf finds the first TrafBox located inside the first MoofBox in a slice of generic boxes.
+// It returns the box if found, otherwise nil.
+func FindFirstTraf(boxes []Box) *TrafBox {
+   for _, box := range boxes {
+      if box.Moof != nil {
+         for _, child := range box.Moof.Children {
+            if child.Traf != nil {
+               return child.Traf
+            }
+         }
+      }
    }
+   return nil
+}
+
+// FindSidx finds the first SidxBox in a slice of generic boxes.
+// It returns the box if found, otherwise nil.
+func FindSidx(boxes []Box) *SidxBox {
+   for _, box := range boxes {
+      if box.Sidx != nil {
+         return box.Sidx
+      }
+   }
+   return nil
 }

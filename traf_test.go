@@ -56,41 +56,34 @@ func setupTrafTest(t *testing.T) (*TrafBox, uint32) {
    return traf, mdhd.Timescale
 }
 
-// TestGetBandwidth demonstrates how to parse the necessary boxes to use the GetBandwidth method.
-func TestGetBandwidth(t *testing.T) {
+// TestBandwidthCalculation demonstrates the decoupled workflow for calculating bandwidth.
+func TestBandwidthCalculation(t *testing.T) {
    traf, timescale := setupTrafTest(t)
+   t.Logf("Found timescale: %d", timescale)
 
-   // Call GetBandwidth with the timescale.
-   bandwidth, err := traf.GetBandwidth(timescale)
+   // 1. Get the raw totals from the TrafBox.
+   totalBytes, totalDuration, err := traf.GetTotals()
    if err != nil {
-      t.Fatalf("GetBandwidth failed: %v", err)
+      t.Fatalf("GetTotals failed: %v", err)
+   }
+   if totalBytes == 0 {
+      t.Fatal("Expected non-zero total bytes from GetTotals.")
+   }
+   if totalDuration == 0 {
+      t.Fatal("Expected non-zero total duration from GetTotals.")
+   }
+   t.Logf("Got totals: %d bytes, %d duration units", totalBytes, totalDuration)
+
+   // 2. Call the public helper function with the extracted values.
+   bandwidth, err := CalculateBandwidth(totalBytes, totalDuration, timescale)
+   if err != nil {
+      t.Fatalf("CalculateBandwidth failed: %v", err)
    }
 
-   // Verify the result is plausible.
+   // 3. Verify the result is plausible.
    if bandwidth == 0 {
       t.Error("Expected a non-zero bandwidth, but got 0.")
    }
 
    t.Logf("Successfully calculated bandwidth: %d bps (%.2f kbps)", bandwidth, float64(bandwidth)/1000.0)
-}
-
-// TestGetTotalDuration verifies the calculation of a traf's total duration.
-func TestGetTotalDuration(t *testing.T) {
-   traf, timescale := setupTrafTest(t)
-
-   duration, err := traf.GetTotalDuration()
-   if err != nil {
-      t.Fatalf("GetTotalDuration failed: %v", err)
-   }
-
-   // Verify the result is plausible.
-   if duration == 0 {
-      t.Error("Expected a non-zero duration, but got 0.")
-   }
-
-   // Optional: Calculate and log the duration in seconds for readability.
-   durationInSeconds := float64(duration) / float64(timescale)
-   t.Logf("Successfully calculated total duration: %d (in timescale units)", duration)
-   t.Logf("Timescale: %d units per second", timescale)
-   t.Logf("Calculated duration: %.2f seconds", durationInSeconds)
 }

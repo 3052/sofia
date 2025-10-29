@@ -7,56 +7,42 @@ import (
    "fmt"
 )
 
-// KeyMap now holds the keys and all associated methods.
-type KeyMap map[[16]byte][16]byte
-
-// AddKey adds a decryption key to the key map.
-func (km KeyMap) AddKey(kid []byte, key []byte) error {
-   if len(kid) != 16 {
-      return fmt.Errorf("invalid KID length: expected 16, got %d", len(kid))
+// DecryptSegment decrypts a segment's mdat boxes in-place using the provided key.
+// It self-determines if decryption is needed by checking for 'senc' boxes within the segment.
+// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
+func DecryptSegment(segmentBoxes []Box, key []byte) error {
+   // First, check if any part of this segment is actually encrypted.
+   var isEncrypted bool
+   for _, box := range segmentBoxes {
+      if box.Moof != nil {
+         for _, child := range box.Moof.Children {
+            if child.Traf != nil && child.Traf.GetSenc() != nil {
+               isEncrypted = true
+               break
+            }
+         }
+      }
+      if isEncrypted {
+         break
+      }
    }
+
+   // If no 'senc' boxes were found in any fragment, there is nothing to decrypt.
+   if !isEncrypted {
+      return nil
+   }
+
+   // If the segment is encrypted, we must have a valid key.
    if len(key) != 16 {
       return fmt.Errorf("invalid key length: expected 16, got %d", len(key))
    }
 
-   var kidArray [16]byte
-   var keyArray [16]byte
-   copy(kidArray[:], kid)
-   copy(keyArray[:], key)
-
-   km[kidArray] = keyArray
-   return nil
-}
-
-// DecryptSegment processes a slice of parsed boxes, decrypting the mdat payloads in-place.
-// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
-func (km KeyMap) DecryptSegment(segmentBoxes []Box, moov *MoovBox) error {
-   if moov == nil {
-      return errors.New("moov box must not be nil")
-   }
-
-   trak := moov.GetTrak()
-   if trak == nil {
-      return errors.New("could not find trak in moov")
-   }
-
-   tenc := trak.GetTenc()
-   if tenc == nil {
-      // Content is not encrypted, nothing to do.
-      return nil
-   }
-
-   key, ok := km[tenc.DefaultKID]
-   if !ok {
-      return fmt.Errorf("no key for KID %x", tenc.DefaultKID)
-   }
-
-   block, err := aes.NewCipher(key[:])
+   block, err := aes.NewCipher(key)
    if err != nil {
       return fmt.Errorf("AES cipher error: %w", err)
    }
 
-   // Iterate through the boxes, processing moof/mdat pairs as they are found.
+   // Iterate through the boxes, processing moof/mdat pairs.
    for i := 0; i < len(segmentBoxes); i++ {
       if segmentBoxes[i].Moof != nil {
          moof := segmentBoxes[i].Moof
@@ -65,8 +51,8 @@ func (km KeyMap) DecryptSegment(segmentBoxes []Box, moov *MoovBox) error {
          }
          mdat := segmentBoxes[i+1].Mdat
 
-         // Perform the decryption directly on the MdatBox's payload.
-         err := km.decryptFragment(moof, mdat.Payload, block)
+         // Perform decryption directly on the MdatBox's payload.
+         err := decryptFragment(moof, mdat.Payload, block)
          if err != nil {
             return fmt.Errorf("failed to process fragment at index %d: %w", i, err)
          }
@@ -76,8 +62,8 @@ func (km KeyMap) DecryptSegment(segmentBoxes []Box, moov *MoovBox) error {
    return nil
 }
 
-// decryptFragment handles a single moof/mdat pair, decrypting the mdatData in-place.
-func (km KeyMap) decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
+// decryptFragment is an unexported helper that handles a single moof/mdat pair, decrypting the mdatData in-place.
+func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
    currentMdatOffset := 0
 
    for _, moofChild := range moof.Children {
@@ -90,9 +76,9 @@ func (km KeyMap) decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Bl
       if tfhd == nil || trun == nil {
          return errors.New("traf is missing required boxes: tfhd or trun")
       }
+      // The 'senc' box is the per-fragment signal. If it's not here, we skip this traf.
       senc := traf.GetSenc()
       if senc == nil {
-         // This fragment is not encrypted, so we do nothing.
          continue
       }
 

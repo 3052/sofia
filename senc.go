@@ -28,7 +28,7 @@ type SencBox struct {
 
 // Parse parses the 'senc' box from a byte slice.
 func (b *SencBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]

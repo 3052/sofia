@@ -6,19 +6,6 @@ import (
    "errors"
 )
 
-// FindPsshBySystemID finds the first PsshBox in a slice with a matching
-// SystemID. It returns the box if found, otherwise nil.
-func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
-   // THIS IS THE CORRECTED LINE
-   for _, pssh := range psshBoxes {
-      if bytes.Equal(pssh.SystemID[:], systemID) {
-         return pssh
-      }
-   }
-   return nil
-}
-
-// PsshBox represents the 'pssh' box (Protection System Specific Header).
 type PsshBox struct {
    Header   BoxHeader
    Version  byte
@@ -28,9 +15,8 @@ type PsshBox struct {
    Data     []byte
 }
 
-// Parse now fully parses the pssh box structure.
 func (b *PsshBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
 
@@ -79,40 +65,36 @@ func (b *PsshBox) Parse(data []byte) error {
    return nil
 }
 
-// Encode now correctly serializes the box from its fields.
 func (b *PsshBox) Encode() []byte {
-   kidSectionSize := 0
-   if b.Version > 0 {
-      kidSectionSize = 4 + (len(b.KIDs) * 16)
-   }
-   dataSize := len(b.Data)
-
-   payloadSize := 4 + 16 + kidSectionSize + 4 + dataSize
-   b.Header.Size = uint32(8 + payloadSize)
-
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-
-   offset := 8
-   encoded[offset] = b.Version
-   copy(encoded[offset+1:offset+4], b.Flags[:])
-   offset += 4
-
-   copy(encoded[offset:offset+16], b.SystemID[:])
-   offset += 16
+   var payload []byte
+   payload = append(payload, b.Version)
+   payload = append(payload, b.Flags[:]...)
+   payload = append(payload, b.SystemID[:]...)
 
    if b.Version > 0 {
-      binary.BigEndian.PutUint32(encoded[offset:offset+4], uint32(len(b.KIDs)))
-      offset += 4
+      kidCountBytes := make([]byte, 4)
+      binary.BigEndian.PutUint32(kidCountBytes, uint32(len(b.KIDs)))
+      payload = append(payload, kidCountBytes...)
       for _, kid := range b.KIDs {
-         copy(encoded[offset:offset+16], kid[:])
-         offset += 16
+         payload = append(payload, kid[:]...)
       }
    }
 
-   binary.BigEndian.PutUint32(encoded[offset:offset+4], uint32(dataSize))
-   offset += 4
-   copy(encoded[offset:], b.Data)
+   dataSizeBytes := make([]byte, 4)
+   binary.BigEndian.PutUint32(dataSizeBytes, uint32(len(b.Data)))
+   payload = append(payload, dataSizeBytes...)
+   payload = append(payload, b.Data...)
 
-   return encoded
+   b.Header.Size = uint32(8 + len(payload))
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, payload...)
+}
+
+func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
+   for _, pssh := range psshBoxes {
+      if bytes.Equal(pssh.SystemID[:], systemID) {
+         return pssh
+      }
+   }
+   return nil
 }

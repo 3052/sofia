@@ -40,7 +40,7 @@ func (b *TrafBox) GetTotals() (totalBytes uint64, totalDuration uint64, err erro
 
 // Parse parses the 'traf' box from a byte slice.
 func (b *TrafBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -48,7 +48,7 @@ func (b *TrafBox) Parse(data []byte) error {
    offset := 0
    for offset < len(boxData) {
       var h BoxHeader
-      if _, err := h.Read(boxData[offset:]); err != nil {
+      if err := h.Parse(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)
@@ -105,10 +105,8 @@ func (b *TrafBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(8 + len(content))
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-   copy(encoded[8:], content)
-   return encoded
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, content...)
 }
 
 func (b *TrafBox) GetTfhd() *TfhdBox {

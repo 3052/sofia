@@ -16,7 +16,7 @@ type MdhdBox struct {
 
 // Parse parses the 'mdhd' box from a byte slice.
 func (b *MdhdBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]

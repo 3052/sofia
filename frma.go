@@ -11,7 +11,7 @@ type FrmaBox struct {
 
 // Parse parses the 'frma' box from a byte slice.
 func (b *FrmaBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]

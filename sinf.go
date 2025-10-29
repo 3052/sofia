@@ -2,23 +2,20 @@ package sofia
 
 import "errors"
 
-// SinfChild holds either a parsed box or raw data for a child of a 'sinf' box.
 type SinfChild struct {
    Frma *FrmaBox
    Schi *SchiBox
    Raw  []byte
 }
 
-// SinfBox represents the 'sinf' box (Protection Scheme Information Box).
 type SinfBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []SinfChild
 }
 
-// Parse parses the 'sinf' box from a byte slice.
 func (b *SinfBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -26,7 +23,7 @@ func (b *SinfBox) Parse(data []byte) error {
    offset := 0
    for offset < len(boxData) {
       var h BoxHeader
-      if _, err := h.Read(boxData[offset:]); err != nil {
+      if err := h.Parse(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)
@@ -62,8 +59,6 @@ func (b *SinfBox) Parse(data []byte) error {
    }
    return nil
 }
-
-// Encode re-serializes the box from its children.
 func (b *SinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -76,8 +71,6 @@ func (b *SinfBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(8 + len(content))
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-   copy(encoded[8:], content)
-   return encoded
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, content...)
 }

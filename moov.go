@@ -2,6 +2,106 @@ package sofia
 
 import "errors"
 
+// Sanitize removes all DRM and encryption signaling from the moov box.
+// It renames pssh boxes to 'free' and updates encrypted sample entries.
+func (b *MoovBox) Sanitize() error {
+   // Rename top-level pssh boxes within this moov box to 'free'.
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Pssh != nil {
+         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'} // Firefox
+      }
+   }
+
+   // Traverse into each track to remove encryption signaling.
+   for _, trak := range b.GetAllTraks() {
+      stsd := trak.GetStsd()
+      if stsd == nil {
+         continue
+      }
+      for i := range stsd.Children {
+         stsdChild := &stsd.Children[i]
+
+         var sampleEntryHeader *BoxHeader
+         var sinf *SinfBox
+         var isEncrypted bool
+
+         if stsdChild.Encv != nil {
+            isEncrypted = true
+            sampleEntryHeader = &stsdChild.Encv.Header
+            for j := range stsdChild.Encv.Children {
+               if stsdChild.Encv.Children[j].Sinf != nil {
+                  sinf = stsdChild.Encv.Children[j].Sinf
+                  break
+               }
+            }
+         } else if stsdChild.Enca != nil {
+            isEncrypted = true
+            sampleEntryHeader = &stsdChild.Enca.Header
+            for j := range stsdChild.Enca.Children {
+               if stsdChild.Enca.Children[j].Sinf != nil {
+                  sinf = stsdChild.Enca.Children[j].Sinf
+                  break
+               }
+            }
+         }
+
+         if !isEncrypted {
+            continue
+         }
+
+         if sinf == nil {
+            return errors.New("could not find 'sinf' box to remove")
+         }
+         var frma *FrmaBox
+         for _, sinfChild := range sinf.Children {
+            if f := sinfChild.Frma; f != nil {
+               frma = f
+               break
+            }
+         }
+         if frma == nil {
+            return errors.New("could not find 'frma' box for original format")
+         }
+
+         sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'} // Firefox
+         sampleEntryHeader.Type = frma.DataFormat       // Firefox
+      }
+   }
+   return nil
+}
+
+// GetTrak returns the first trak box found, assuming there is only one.
+func (b *MoovBox) GetTrak() *TrakBox {
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         return child.Trak
+      }
+   }
+   return nil
+}
+
+func (b *MoovBox) GetAllTraks() []*TrakBox {
+   var traks []*TrakBox
+   for _, child := range b.Children {
+      if child.Trak != nil {
+         traks = append(traks, child.Trak)
+      }
+   }
+   return traks
+}
+
+// GetAllPssh returns a slice of all PsshBox children within this MoovBox.
+func (b *MoovBox) GetAllPssh() []*PsshBox {
+   var psshBoxes []*PsshBox
+   for _, child := range b.Children {
+      if child.Pssh != nil {
+         psshBoxes = append(psshBoxes, child.Pssh)
+      }
+   }
+   return psshBoxes
+}
+
 type MoovChild struct {
    Trak *TrakBox
    Pssh *PsshBox
@@ -77,104 +177,4 @@ func (b *MoovBox) Encode() []byte {
    b.Header.Write(encoded)
    copy(encoded[8:], content)
    return encoded
-}
-
-// Sanitize removes all DRM and encryption signaling from the moov box.
-// It renames pssh boxes to 'free' and updates encrypted sample entries.
-func (b *MoovBox) Sanitize() error {
-   // Rename top-level pssh boxes within this moov box to 'free'.
-   for i := range b.Children {
-      child := &b.Children[i]
-      if child.Pssh != nil {
-         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
-
-   // Traverse into each track to remove encryption signaling.
-   for _, trak := range b.GetAllTraks() {
-      stsd := trak.GetStsd()
-      if stsd == nil {
-         continue
-      }
-      for i := range stsd.Children {
-         stsdChild := &stsd.Children[i]
-
-         var sampleEntryHeader *BoxHeader
-         var sinf *SinfBox
-         var isEncrypted bool
-
-         if stsdChild.Encv != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Encv.Header
-            for j := range stsdChild.Encv.Children {
-               if stsdChild.Encv.Children[j].Sinf != nil {
-                  sinf = stsdChild.Encv.Children[j].Sinf
-                  break
-               }
-            }
-         } else if stsdChild.Enca != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Enca.Header
-            for j := range stsdChild.Enca.Children {
-               if stsdChild.Enca.Children[j].Sinf != nil {
-                  sinf = stsdChild.Enca.Children[j].Sinf
-                  break
-               }
-            }
-         }
-
-         if !isEncrypted {
-            continue
-         }
-
-         if sinf == nil {
-            return errors.New("could not find 'sinf' box to remove")
-         }
-         var frma *FrmaBox
-         for _, sinfChild := range sinf.Children {
-            if f := sinfChild.Frma; f != nil {
-               frma = f
-               break
-            }
-         }
-         if frma == nil {
-            return errors.New("could not find 'frma' box for original format")
-         }
-
-         sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-         sampleEntryHeader.Type = frma.DataFormat
-      }
-   }
-   return nil
-}
-
-// GetTrak returns the first trak box found, assuming there is only one.
-func (b *MoovBox) GetTrak() *TrakBox {
-   for _, child := range b.Children {
-      if child.Trak != nil {
-         return child.Trak
-      }
-   }
-   return nil
-}
-
-func (b *MoovBox) GetAllTraks() []*TrakBox {
-   var traks []*TrakBox
-   for _, child := range b.Children {
-      if child.Trak != nil {
-         traks = append(traks, child.Trak)
-      }
-   }
-   return traks
-}
-
-// GetAllPssh returns a slice of all PsshBox children within this MoovBox.
-func (b *MoovBox) GetAllPssh() []*PsshBox {
-   var psshBoxes []*PsshBox
-   for _, child := range b.Children {
-      if child.Pssh != nil {
-         psshBoxes = append(psshBoxes, child.Pssh)
-      }
-   }
-   return psshBoxes
 }

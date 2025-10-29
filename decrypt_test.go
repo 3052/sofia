@@ -35,7 +35,6 @@ func TestDecryption(t *testing.T) {
          if moov == nil {
             t.Fatal("Could not find 'moov' box in init file.")
          }
-
          // 2. Parse Media Segment
          segmentData, err := os.ReadFile(segmentFilePath)
          if err != nil {
@@ -45,7 +44,6 @@ func TestDecryption(t *testing.T) {
          if err != nil {
             t.Fatalf("Failed to parse segment file: %v", err)
          }
-
          // 3. Decrypt the segment's mdat boxes in-place.
          keyBytes, err := hex.DecodeString(test.key)
          if err != nil {
@@ -54,7 +52,6 @@ func TestDecryption(t *testing.T) {
          if err := DecryptSegment(parsedSegment, keyBytes); err != nil {
             t.Fatalf("Decryption failed: %v", err)
          }
-
          // 4. Sanitize metadata and construct the final interleaved MP4
          if err := moov.Sanitize(); err != nil {
             t.Logf("Note: sanitization returned an error (as expected for some clear content): %v", err)
@@ -62,13 +59,11 @@ func TestDecryption(t *testing.T) {
          if trak := moov.GetTrak(); trak != nil {
             trak.RemoveEdts()
          }
-
          var finalMP4Data bytes.Buffer
          // Write the init segment first
          for _, box := range parsedInit {
             finalMP4Data.Write(box.Encode())
          }
-
          // Assemble the final file by iterating through the modified segment boxes.
          for _, box := range parsedSegment {
             if box.Moof != nil {
@@ -76,13 +71,11 @@ func TestDecryption(t *testing.T) {
             }
             finalMP4Data.Write(box.Encode())
          }
-
          // 5. Write to file and verify
          outputFilePath := filepath.Join(outputDir, test.out)
          if err := os.WriteFile(outputFilePath, finalMP4Data.Bytes(), 0644); err != nil {
             t.Fatalf("Failed to write final MP4 file: %v", err)
          }
-
          if bytes.Contains(finalMP4Data.Bytes(), []byte("pssh")) {
             t.Error("'pssh' box found; removal failed.")
          }

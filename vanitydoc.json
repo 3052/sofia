@@ -5,7 +5,7 @@
    "modules": {
       "sofia": {
          "archive_ref_prefix": "tags/",
-         "ref": "v1.8.7",
+         "ref": "v1.8.8",
          "type": "github",
          "url": "https://github.com/3052/sofia"
       }

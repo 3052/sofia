@@ -8,41 +8,64 @@ type TrafChild struct {
    Senc *SencBox
    Raw  []byte
 }
-
 type TrafBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []TrafChild
 }
 
-func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
+// getTotals is an unexported helper to calculate the total byte size and
+// duration of all samples in a traf. It avoids looping through the samples
+// multiple times.
+func (b *TrafBox) getTotals() (totalBytes uint64, totalDuration uint64, err error) {
    trun := b.GetTrun()
    tfhd := b.GetTfhd()
    if trun == nil {
-      return 0, errors.New("traf is missing trun box")
+      return 0, 0, errors.New("traf is missing trun box to calculate totals")
    }
-   if timescale == 0 {
-      return 0, errors.New("timescale cannot be zero")
-   }
-   var (
-      totalBytes    uint64
-      totalDuration uint64
-   )
+
    for _, sample := range trun.Samples {
+      // Calculate size for bandwidth
       size := sample.Size
       if size == 0 && tfhd != nil {
          size = tfhd.DefaultSampleSize
       }
       totalBytes += uint64(size)
+
+      // Calculate duration
       duration := sample.Duration
       if duration == 0 && tfhd != nil {
          duration = tfhd.DefaultSampleDuration
       }
       totalDuration += uint64(duration)
    }
+   return totalBytes, totalDuration, nil
+}
+
+// GetTotalDuration calculates the total duration of all samples in the traf.
+func (b *TrafBox) GetTotalDuration() (uint64, error) {
+   _, totalDuration, err := b.getTotals()
+   return totalDuration, err
+}
+
+// GetBandwidth calculates the average bandwidth of the traf in bits per second.
+func (b *TrafBox) GetBandwidth(timescale uint32) (uint64, error) {
+   if timescale == 0 {
+      return 0, errors.New("timescale cannot be zero")
+   }
+
+   totalBytes, totalDuration, err := b.getTotals()
+   if err != nil {
+      return 0, err
+   }
+
    if totalDuration == 0 {
+      // Avoid division by zero if the duration is unknown.
       return 0, nil
    }
+
+   // Bandwidth in bps = (TotalBytes * 8 bits/byte) / (TotalDuration / Timescale in seconds)
+   // Simplified: (TotalBytes * 8 * Timescale) / TotalDuration
    bandwidth := (totalBytes * 8 * uint64(timescale)) / totalDuration
    return bandwidth, nil
 }
@@ -99,7 +122,6 @@ func (b *TrafBox) Parse(data []byte) error {
    }
    return nil
 }
-
 func (b *TrafBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -119,7 +141,6 @@ func (b *TrafBox) Encode() []byte {
    copy(encoded[8:], content)
    return encoded
 }
-
 func (b *TrafBox) GetTfhd() *TfhdBox {
    for _, child := range b.Children {
       if child.Tfhd != nil {
@@ -136,7 +157,6 @@ func (b *TrafBox) GetTrun() *TrunBox {
    }
    return nil
 }
-
 func (b *TrafBox) GetSenc() *SencBox {
    for _, child := range b.Children {
       if child.Senc != nil {

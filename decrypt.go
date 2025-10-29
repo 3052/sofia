@@ -7,9 +7,10 @@ import (
    "fmt"
 )
 
-// DecryptSegment decrypts a segment's mdat boxes in-place using the provided key.
-// It self-determines if decryption is needed by checking for 'senc' boxes within the segment.
-// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
+// DecryptSegment decrypts a segment's mdat boxes in-place using the provided
+// key. It self-determines if decryption is needed by checking for 'senc' boxes
+// within the segment. This function has a side effect: it modifies the Payload
+// of the MdatBox structs within the segmentBoxes slice.
 func DecryptSegment(segmentBoxes []Box, key []byte) error {
    // First, check if any part of this segment is actually encrypted.
    var isEncrypted bool

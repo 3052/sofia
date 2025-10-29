@@ -2,6 +2,16 @@ package sofia
 
 import "errors"
 
+// Sanitize finds and renames all pssh boxes within this moof box to 'free'.
+func (b *MoofBox) Sanitize() {
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Pssh != nil {
+         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
+      }
+   }
+}
+
 type MoofChild struct {
    Traf *TrafBox
    Pssh *PsshBox
@@ -77,14 +87,4 @@ func (b *MoofBox) Encode() []byte {
    b.Header.Write(encoded)
    copy(encoded[8:], content)
    return encoded
-}
-
-// Sanitize finds and renames all pssh boxes within this moof box to 'free'.
-func (b *MoofBox) Sanitize() {
-   for i := range b.Children {
-      child := &b.Children[i]
-      if child.Pssh != nil {
-         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
 }

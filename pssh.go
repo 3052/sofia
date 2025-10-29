@@ -6,6 +6,18 @@ import (
    "errors"
 )
 
+// FindPsshBySystemID finds the first PsshBox in a slice with a matching
+// SystemID. It returns the box if found, otherwise nil.
+func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
+   // THIS IS THE CORRECTED LINE
+   for _, pssh := range psshBoxes {
+      if bytes.Equal(pssh.SystemID[:], systemID) {
+         return pssh
+      }
+   }
+   return nil
+}
+
 // PsshBox represents the 'pssh' box (Protection System Specific Header).
 type PsshBox struct {
    Header   BoxHeader
@@ -103,16 +115,4 @@ func (b *PsshBox) Encode() []byte {
    copy(encoded[offset:], b.Data)
 
    return encoded
-}
-
-// FindPsshBySystemID finds the first PsshBox in a slice with a matching SystemID.
-// It returns the box if found, otherwise nil.
-func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
-   // THIS IS THE CORRECTED LINE
-   for _, pssh := range psshBoxes {
-      if bytes.Equal(pssh.SystemID[:], systemID) {
-         return pssh
-      }
-   }
-   return nil
 }

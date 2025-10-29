@@ -10,16 +10,14 @@ type StsdChild struct {
    Enca *EncaBox
    Raw  []byte
 }
-
 type StsdBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []StsdChild
 }
 
-// Parse parses the 'stsd' box from a byte slice.
 func (b *StsdBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -28,7 +26,7 @@ func (b *StsdBox) Parse(data []byte) error {
    offset := 0
    for i := uint32(0); i < entryCount && offset < len(boxData); i++ {
       var h BoxHeader
-      if _, err := h.Read(boxData[offset:]); err != nil {
+      if err := h.Parse(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)
@@ -76,11 +74,9 @@ func (b *StsdBox) Encode() []byte {
          content = append(content, child.Raw...)
       }
    }
-   headerData := b.RawData[8:16] // Get original version, flags, and entry count
+   headerData := b.RawData[8:16]
    fullContent := append(headerData, content...)
    b.Header.Size = uint32(8 + len(fullContent))
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-   copy(encoded[8:], fullContent)
-   return encoded
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, fullContent...)
 }

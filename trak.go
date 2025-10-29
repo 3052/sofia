@@ -7,16 +7,14 @@ type TrakChild struct {
    Mdia *MdiaBox
    Raw  []byte
 }
-
 type TrakBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []TrakChild
 }
 
-// Parse parses the 'trak' box from a byte slice.
 func (b *TrakBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -24,7 +22,7 @@ func (b *TrakBox) Parse(data []byte) error {
    offset := 0
    for offset < len(boxData) {
       var h BoxHeader
-      if _, err := h.Read(boxData[offset:]); err != nil {
+      if err := h.Parse(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)
@@ -60,7 +58,6 @@ func (b *TrakBox) Parse(data []byte) error {
    }
    return nil
 }
-
 func (b *TrakBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -73,13 +70,10 @@ func (b *TrakBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(8 + len(content))
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-   copy(encoded[8:], content)
-   return encoded
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, content...)
 }
 
-// RemoveEdts finds and renames any 'edts' boxes within this track to 'free'.
 func (b *TrakBox) RemoveEdts() {
    for i := range b.Children {
       child := &b.Children[i]
@@ -88,7 +82,6 @@ func (b *TrakBox) RemoveEdts() {
       }
    }
 }
-
 func (b *TrakBox) GetMdhd() *MdhdBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -101,7 +94,6 @@ func (b *TrakBox) GetMdhd() *MdhdBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetStbl() *StblBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -118,7 +110,6 @@ func (b *TrakBox) GetStbl() *StblBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetStsd() *StsdBox {
    stbl := b.GetStbl()
    if stbl == nil {
@@ -131,7 +122,6 @@ func (b *TrakBox) GetStsd() *StsdBox {
    }
    return nil
 }
-
 func (b *TrakBox) GetTenc() *TencBox {
    stsd := b.GetStsd()
    if stsd == nil {

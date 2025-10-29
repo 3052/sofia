@@ -30,7 +30,7 @@ type SidxBox struct {
 
 // Parse parses the 'sidx' box from a byte slice.
 func (b *SidxBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -68,7 +68,6 @@ func (b *SidxBox) Parse(data []byte) error {
    if len(data) < offset+4 {
       return errors.New("sidx box is too short for reference_count")
    }
-   // Skip 2 reserved bytes
    offset += 2
    referenceCount := binary.BigEndian.Uint16(data[offset : offset+2])
    offset += 2

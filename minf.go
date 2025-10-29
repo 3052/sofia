@@ -6,16 +6,14 @@ type MinfChild struct {
    Stbl *StblBox
    Raw  []byte
 }
-
 type MinfBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []MinfChild
 }
 
-// Parse parses the 'minf' box from a byte slice.
 func (b *MinfBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
@@ -23,7 +21,7 @@ func (b *MinfBox) Parse(data []byte) error {
    offset := 0
    for offset < len(boxData) {
       var h BoxHeader
-      if _, err := h.Read(boxData[offset:]); err != nil {
+      if err := h.Parse(boxData[offset:]); err != nil {
          break
       }
       boxSize := int(h.Size)
@@ -53,7 +51,6 @@ func (b *MinfBox) Parse(data []byte) error {
    }
    return nil
 }
-
 func (b *MinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -64,8 +61,6 @@ func (b *MinfBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(8 + len(content))
-   encoded := make([]byte, b.Header.Size)
-   b.Header.Write(encoded)
-   copy(encoded[8:], content)
-   return encoded
+   headerBytes := b.Header.Encode()
+   return append(headerBytes, content...)
 }

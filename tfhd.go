@@ -20,7 +20,7 @@ type TfhdBox struct {
 
 // Parse is now a full parser that respects all flags.
 func (b *TfhdBox) Parse(data []byte) error {
-   if _, err := b.Header.Read(data); err != nil {
+   if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]

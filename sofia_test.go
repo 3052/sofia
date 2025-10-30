@@ -85,16 +85,16 @@ func TestRoundTrip(t *testing.T) {
             t.Run(filepath.Base(filePath), func(t *testing.T) {
                originalData, err := os.ReadFile(filePath)
                if err != nil {
-                  t.Fatalf("test file not found, skipping: %s", filePath)
+                  t.Fatalf("test file not found: %s, error: %v", filePath, err)
                   return
                }
                if len(originalData) == 0 {
                   return
                }
 
-               parsedBoxes, err := ParseFile(originalData)
+               parsedBoxes, err := Parse(originalData)
                if err != nil {
-                  t.Fatalf("ParseFile failed: %v", err)
+                  t.Fatalf("Parse failed: %v", err)
                }
 
                var encodedData []byte

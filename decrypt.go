@@ -7,19 +7,20 @@ import (
    "fmt"
 )
 
-// DecryptSegment decrypts a segment's mdat boxes in-place using the provided
-// key. It self-determines if decryption is needed by checking for 'senc' boxes
-// within the segment. This function has a side effect: it modifies the Payload
-// of the MdatBox structs within the segmentBoxes slice.
+// DecryptSegment decrypts a segment's mdat boxes in-place using the provided key.
+// It self-determines if decryption is needed by checking for 'senc' boxes within the segment.
+// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
 func DecryptSegment(segmentBoxes []Box, key []byte) error {
    // First, check if any part of this segment is actually encrypted.
    var isEncrypted bool
    for _, box := range segmentBoxes {
       if box.Moof != nil {
          for _, child := range box.Moof.Children {
-            if child.Traf != nil && child.Traf.GetSenc() != nil {
-               isEncrypted = true
-               break
+            if child.Traf != nil {
+               if _, ok := child.Traf.GetSenc(); ok {
+                  isEncrypted = true
+                  break
+               }
             }
          }
       }
@@ -78,8 +79,8 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
          return errors.New("traf is missing required boxes: tfhd or trun")
       }
       // The 'senc' box is the per-fragment signal. If it's not here, we skip this traf.
-      senc := traf.GetSenc()
-      if senc == nil {
+      senc, ok := traf.GetSenc()
+      if !ok {
          continue
       }
 

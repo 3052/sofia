@@ -82,17 +82,19 @@ func (b *TrakBox) RemoveEdts() {
       }
    }
 }
-func (b *TrakBox) GetMdhd() *MdhdBox {
+
+// GetMdhd finds the MdhdBox and returns it, along with a boolean indicating if it was found.
+func (b *TrakBox) GetMdhd() (*MdhdBox, bool) {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
          for _, mdiaChild := range mdia.Children {
             if mdhd := mdiaChild.Mdhd; mdhd != nil {
-               return mdhd
+               return mdhd, true
             }
          }
       }
    }
-   return nil
+   return nil, false
 }
 func (b *TrakBox) GetStbl() *StblBox {
    for _, child := range b.Children {
@@ -128,23 +130,7 @@ func (b *TrakBox) GetTenc() *TencBox {
       return nil
    }
    for _, stsdChild := range stsd.Children {
-      var sinf *SinfBox
-      if stsdChild.Encv != nil {
-         for _, encvChild := range stsdChild.Encv.Children {
-            if encvChild.Sinf != nil {
-               sinf = encvChild.Sinf
-               break
-            }
-         }
-      }
-      if sinf == nil && stsdChild.Enca != nil {
-         for _, encaChild := range stsdChild.Enca.Children {
-            if encaChild.Sinf != nil {
-               sinf = encaChild.Sinf
-               break
-            }
-         }
-      }
+      sinf := stsdChild.GetSinf()
       if sinf != nil {
          for _, sinfChild := range sinf.Children {
             if schi := sinfChild.Schi; schi != nil {

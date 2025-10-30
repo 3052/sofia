@@ -90,11 +90,11 @@ func (b *PsshBox) Encode() []byte {
    return append(headerBytes, payload...)
 }
 
-func FindPsshBySystemID(psshBoxes []*PsshBox, systemID []byte) *PsshBox {
+func FindPssh(psshBoxes []*PsshBox, systemID []byte) (*PsshBox, bool) {
    for _, pssh := range psshBoxes {
       if bytes.Equal(pssh.SystemID[:], systemID) {
-         return pssh
+         return pssh, true
       }
    }
-   return nil
+   return nil, false
 }

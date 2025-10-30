@@ -76,7 +76,10 @@ func (b *MoovBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
+// Sanitize removes all DRM and encryption signaling from the moov box.
+// It renames pssh boxes to 'free' and updates encrypted sample entries.
 func (b *MoovBox) Sanitize() error {
+   // Rename top-level pssh boxes within this moov box to 'free'.
    for i := range b.Children {
       child := &b.Children[i]
       if child.Pssh != nil {
@@ -84,38 +87,16 @@ func (b *MoovBox) Sanitize() error {
       }
    }
 
-   for _, trak := range b.GetAllTraks() {
+   // Get the single track and sanitize it.
+   if trak, ok := b.GetTrak(); ok {
       stsd := trak.GetStsd()
       if stsd == nil {
-         continue
+         return nil // No sample descriptions to sanitize.
       }
       for i := range stsd.Children {
          stsdChild := &stsd.Children[i]
 
-         var sampleEntryHeader *BoxHeader
-         var sinf *SinfBox
-         var isEncrypted bool
-
-         if stsdChild.Encv != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Encv.Header
-            for j := range stsdChild.Encv.Children {
-               if stsdChild.Encv.Children[j].Sinf != nil {
-                  sinf = stsdChild.Encv.Children[j].Sinf
-                  break
-               }
-            }
-         } else if stsdChild.Enca != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Enca.Header
-            for j := range stsdChild.Enca.Children {
-               if stsdChild.Enca.Children[j].Sinf != nil {
-                  sinf = stsdChild.Enca.Children[j].Sinf
-                  break
-               }
-            }
-         }
-
+         sampleEntryHeader, sinf, isEncrypted := stsdChild.GetEncryptionInfo()
          if !isEncrypted {
             continue
          }
@@ -123,17 +104,13 @@ func (b *MoovBox) Sanitize() error {
          if sinf == nil {
             return errors.New("could not find 'sinf' box to remove")
          }
-         var frma *FrmaBox
-         for _, sinfChild := range sinf.Children {
-            if f := sinfChild.Frma; f != nil {
-               frma = f
-               break
-            }
-         }
+
+         frma := sinf.GetFrma()
          if frma == nil {
             return errors.New("could not find 'frma' box for original format")
          }
 
+         // Perform the sanitization.
          sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
          sampleEntryHeader.Type = frma.DataFormat
       }
@@ -141,26 +118,17 @@ func (b *MoovBox) Sanitize() error {
    return nil
 }
 
-func (b *MoovBox) GetTrak() *TrakBox {
+// GetTrak returns the first trak box found and a boolean indicating if it was found.
+func (b *MoovBox) GetTrak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {
-         return child.Trak
+         return child.Trak, true
       }
    }
-   return nil
+   return nil, false
 }
 
-func (b *MoovBox) GetAllTraks() []*TrakBox {
-   var traks []*TrakBox
-   for _, child := range b.Children {
-      if child.Trak != nil {
-         traks = append(traks, child.Trak)
-      }
-   }
-   return traks
-}
-
-func (b *MoovBox) GetAllPssh() []*PsshBox {
+func (b *MoovBox) AllPssh() []*PsshBox {
    var psshBoxes []*PsshBox
    for _, child := range b.Children {
       if child.Pssh != nil {

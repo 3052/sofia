@@ -11,7 +11,6 @@ type BoxHeader struct {
    Type [4]byte
 }
 
-// Parse populates the BoxHeader from the start of a byte slice.
 func (h *BoxHeader) Parse(data []byte) error {
    if len(data) < 8 {
       return errors.New("not enough data for box header")
@@ -21,7 +20,6 @@ func (h *BoxHeader) Parse(data []byte) error {
    return nil
 }
 
-// Encode allocates a new 8-byte slice and writes the header's data into it.
 func (h *BoxHeader) Encode() []byte {
    buf := make([]byte, 8)
    binary.BigEndian.PutUint32(buf[0:4], h.Size)
@@ -29,7 +27,6 @@ func (h *BoxHeader) Encode() []byte {
    return buf
 }
 
-// Box is a generic wrapper for any top-level MP4 box.
 type Box struct {
    Moov *MoovBox
    Moof *MoofBox
@@ -39,7 +36,6 @@ type Box struct {
    Raw  []byte
 }
 
-// Encode selects the correct encoder based on the top-level box type.
 func (b *Box) Encode() []byte {
    switch {
    case b.Moov != nil:
@@ -57,7 +53,6 @@ func (b *Box) Encode() []byte {
    }
 }
 
-// ParseFile reads a byte slice and parses it into a slice of generic Box structs.
 func ParseFile(data []byte) ([]Box, error) {
    var boxes []Box
    offset := 0
@@ -125,35 +120,35 @@ func ParseFile(data []byte) ([]Box, error) {
 }
 
 // FindMoov finds the first MoovBox in a slice of generic boxes.
-func FindMoov(boxes []Box) *MoovBox {
+func FindMoov(boxes []Box) (*MoovBox, bool) {
    for _, box := range boxes {
       if box.Moov != nil {
-         return box.Moov
+         return box.Moov, true
       }
    }
-   return nil
+   return nil, false
 }
 
-// FindFirstTraf finds the first TrafBox located inside the first MoofBox in a slice of generic boxes.
-func FindFirstTraf(boxes []Box) *TrafBox {
+func AllTrafs(boxes []Box) []*TrafBox {
+   var trafs []*TrafBox
    for _, box := range boxes {
       if box.Moof != nil {
          for _, child := range box.Moof.Children {
             if child.Traf != nil {
-               return child.Traf
+               trafs = append(trafs, child.Traf)
             }
          }
       }
    }
-   return nil
+   return trafs
 }
 
 // FindSidx finds the first SidxBox in a slice of generic boxes.
-func FindSidx(boxes []Box) *SidxBox {
+func FindSidx(boxes []Box) (*SidxBox, bool) {
    for _, box := range boxes {
       if box.Sidx != nil {
-         return box.Sidx
+         return box.Sidx, true
       }
    }
-   return nil
+   return nil, false
 }

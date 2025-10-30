@@ -74,7 +74,8 @@ func (b *TrakBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-func (b *TrakBox) RemoveEdts() {
+// ReplaceEdts finds any 'edts' boxes within this track and replaces their type with 'free'.
+func (b *TrakBox) ReplaceEdts() {
    for i := range b.Children {
       child := &b.Children[i]
       if child.Edts != nil {
@@ -82,9 +83,7 @@ func (b *TrakBox) RemoveEdts() {
       }
    }
 }
-
-// GetMdhd finds the MdhdBox and returns it, along with a boolean indicating if it was found.
-func (b *TrakBox) GetMdhd() (*MdhdBox, bool) {
+func (b *TrakBox) Mdhd() (*MdhdBox, bool) {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
          for _, mdiaChild := range mdia.Children {
@@ -96,7 +95,7 @@ func (b *TrakBox) GetMdhd() (*MdhdBox, bool) {
    }
    return nil, false
 }
-func (b *TrakBox) GetStbl() *StblBox {
+func (b *TrakBox) Stbl() *StblBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
          for _, mdiaChild := range mdia.Children {
@@ -112,8 +111,8 @@ func (b *TrakBox) GetStbl() *StblBox {
    }
    return nil
 }
-func (b *TrakBox) GetStsd() *StsdBox {
-   stbl := b.GetStbl()
+func (b *TrakBox) Stsd() *StsdBox {
+   stbl := b.Stbl()
    if stbl == nil {
       return nil
    }
@@ -124,13 +123,13 @@ func (b *TrakBox) GetStsd() *StsdBox {
    }
    return nil
 }
-func (b *TrakBox) GetTenc() *TencBox {
-   stsd := b.GetStsd()
+func (b *TrakBox) Tenc() *TencBox {
+   stsd := b.Stsd()
    if stsd == nil {
       return nil
    }
    for _, stsdChild := range stsd.Children {
-      sinf := stsdChild.GetSinf()
+      sinf := stsdChild.Sinf()
       if sinf != nil {
          for _, sinfChild := range sinf.Children {
             if schi := sinfChild.Schi; schi != nil {

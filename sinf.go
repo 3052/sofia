@@ -2,21 +2,18 @@ package sofia
 
 import "errors"
 
-// SinfChild holds either a parsed box or raw data for a child of a 'sinf' box.
 type SinfChild struct {
    Frma *FrmaBox
    Schi *SchiBox
    Raw  []byte
 }
 
-// SinfBox represents the 'sinf' box (Protection Scheme Information Box).
 type SinfBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []SinfChild
 }
 
-// Parse parses the 'sinf' box from a byte slice.
 func (b *SinfBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
@@ -63,7 +60,6 @@ func (b *SinfBox) Parse(data []byte) error {
    return nil
 }
 
-// Encode re-serializes the box from its children.
 func (b *SinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -80,8 +76,8 @@ func (b *SinfBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// GetFrma finds and returns the first FrmaBox child.
-func (b *SinfBox) GetFrma() *FrmaBox {
+// Frma finds and returns the first FrmaBox child.
+func (b *SinfBox) Frma() *FrmaBox {
    for _, child := range b.Children {
       if child.Frma != nil {
          return child.Frma

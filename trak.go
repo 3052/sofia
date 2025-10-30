@@ -128,23 +128,8 @@ func (b *TrakBox) GetTenc() *TencBox {
       return nil
    }
    for _, stsdChild := range stsd.Children {
-      var sinf *SinfBox
-      if stsdChild.Encv != nil {
-         for _, encvChild := range stsdChild.Encv.Children {
-            if encvChild.Sinf != nil {
-               sinf = encvChild.Sinf
-               break
-            }
-         }
-      }
-      if sinf == nil && stsdChild.Enca != nil {
-         for _, encaChild := range stsdChild.Enca.Children {
-            if encaChild.Sinf != nil {
-               sinf = encaChild.Sinf
-               break
-            }
-         }
-      }
+      // Use the new helper method to find the sinf box.
+      sinf := stsdChild.GetSinf()
       if sinf != nil {
          for _, sinfChild := range sinf.Children {
             if schi := sinfChild.Schi; schi != nil {

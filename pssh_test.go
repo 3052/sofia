@@ -17,24 +17,22 @@ func TestPsshParsing(t *testing.T) {
       t.Fatalf("Failed to parse file: %v", err)
    }
 
-   moov := FindMoov(parsed)
-   if moov == nil {
+   moov, ok := FindMoov(parsed)
+   if !ok {
       t.Fatal("Could not find 'moov' box in parsed file.")
    }
 
-   // Use the new method to get all pssh boxes.
-   psshBoxes := moov.GetAllPssh()
+   psshBoxes := moov.AllPssh()
    if len(psshBoxes) < 2 {
       t.Fatalf("Expected to find at least 2 pssh boxes, but found %d", len(psshBoxes))
    }
 
-   // Define the SystemIDs we are looking for.
    widevineID, _ := hex.DecodeString("edef8ba979d64acea3c827dcd51d21ed")
    playreadyID, _ := hex.DecodeString("9a04f07998404286ab92e65be0885f95")
 
    // Test for Widevine pssh box.
-   widevineBox := FindPsshBySystemID(psshBoxes, widevineID)
-   if widevineBox == nil {
+   widevineBox, ok := FindPssh(psshBoxes, widevineID)
+   if !ok {
       t.Error("Did not find Widevine pssh box")
    } else {
       if len(widevineBox.Data) == 0 {
@@ -44,8 +42,8 @@ func TestPsshParsing(t *testing.T) {
    }
 
    // Test for PlayReady pssh box.
-   playreadyBox := FindPsshBySystemID(psshBoxes, playreadyID)
-   if playreadyBox == nil {
+   playreadyBox, ok := FindPssh(psshBoxes, playreadyID)
+   if !ok {
       t.Error("Did not find PlayReady pssh box")
    } else {
       if len(playreadyBox.Data) == 0 {

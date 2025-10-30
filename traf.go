@@ -127,11 +127,12 @@ func (b *TrafBox) GetTrun() *TrunBox {
    return nil
 }
 
-func (b *TrafBox) GetSenc() *SencBox {
+// GetSenc finds the SencBox child and returns it, along with a boolean indicating if it was found.
+func (b *TrafBox) GetSenc() (*SencBox, bool) {
    for _, child := range b.Children {
       if child.Senc != nil {
-         return child.Senc
+         return child.Senc, true
       }
    }
-   return nil
+   return nil, false
 }

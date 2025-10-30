@@ -1,6 +1,9 @@
 package sofia
 
-import "errors"
+import (
+   "bytes"
+   "errors"
+)
 
 type MoovChild struct {
    Trak *TrakBox
@@ -76,10 +79,7 @@ func (b *MoovBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// Sanitize removes all DRM and encryption signaling from the moov box.
-// It renames pssh boxes to 'free' and updates encrypted sample entries.
 func (b *MoovBox) Sanitize() error {
-   // Rename top-level pssh boxes within this moov box to 'free'.
    for i := range b.Children {
       child := &b.Children[i]
       if child.Pssh != nil {
@@ -87,17 +87,16 @@ func (b *MoovBox) Sanitize() error {
       }
    }
 
-   // Get the single track and sanitize it.
-   if trak, ok := b.GetTrak(); ok {
-      stsd := trak.GetStsd()
+   if trak, ok := b.Trak(); ok {
+      stsd := trak.Stsd()
       if stsd == nil {
-         return nil // No sample descriptions to sanitize.
+         return nil
       }
       for i := range stsd.Children {
          stsdChild := &stsd.Children[i]
 
-         sampleEntryHeader, sinf, isEncrypted := stsdChild.GetEncryptionInfo()
-         if !isEncrypted {
+         sampleEntryHeader, sinf, isProtected := stsdChild.Protection()
+         if !isProtected {
             continue
          }
 
@@ -105,12 +104,11 @@ func (b *MoovBox) Sanitize() error {
             return errors.New("could not find 'sinf' box to remove")
          }
 
-         frma := sinf.GetFrma()
+         frma := sinf.Frma()
          if frma == nil {
             return errors.New("could not find 'frma' box for original format")
          }
 
-         // Perform the sanitization.
          sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
          sampleEntryHeader.Type = frma.DataFormat
       }
@@ -118,8 +116,7 @@ func (b *MoovBox) Sanitize() error {
    return nil
 }
 
-// GetTrak returns the first trak box found and a boolean indicating if it was found.
-func (b *MoovBox) GetTrak() (*TrakBox, bool) {
+func (b *MoovBox) Trak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {
          return child.Trak, true
@@ -128,12 +125,14 @@ func (b *MoovBox) GetTrak() (*TrakBox, bool) {
    return nil, false
 }
 
-func (b *MoovBox) AllPssh() []*PsshBox {
-   var psshBoxes []*PsshBox
+// FindPssh finds the first PsshBox child with a matching SystemID.
+func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
    for _, child := range b.Children {
       if child.Pssh != nil {
-         psshBoxes = append(psshBoxes, child.Pssh)
+         if bytes.Equal(child.Pssh.SystemID[:], systemID) {
+            return child.Pssh, true
+         }
       }
    }
-   return psshBoxes
+   return nil, false
 }

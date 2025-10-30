@@ -12,7 +12,7 @@ func TestPsshParsing(t *testing.T) {
    if err != nil {
       t.Fatalf("Could not read file: %s, error: %v", psshFilePath, err)
    }
-   parsed, err := ParseFile(psshData)
+   parsed, err := Parse(psshData)
    if err != nil {
       t.Fatalf("Failed to parse file: %v", err)
    }

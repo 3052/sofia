@@ -12,7 +12,7 @@ func TestSidxParsing(t *testing.T) {
    if err != nil {
       t.Fatalf("Could not read file: %s, error: %v", sidxFilePath, err)
    }
-   parsed, err := ParseFile(sidxData)
+   parsed, err := Parse(sidxData)
    if err != nil {
       t.Fatalf("Failed to parse file: %v", err)
    }

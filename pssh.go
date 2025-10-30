@@ -90,6 +90,7 @@ func (b *PsshBox) Encode() []byte {
    return append(headerBytes, payload...)
 }
 
+// FindPssh finds the first PsshBox in a slice with a matching SystemID.
 func FindPssh(psshBoxes []*PsshBox, systemID []byte) (*PsshBox, bool) {
    for _, pssh := range psshBoxes {
       if bytes.Equal(pssh.SystemID[:], systemID) {

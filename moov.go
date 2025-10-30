@@ -88,16 +88,16 @@ func (b *MoovBox) Sanitize() error {
    }
 
    // Get the single track and sanitize it.
-   if trak, ok := b.GetTrak(); ok {
-      stsd := trak.GetStsd()
+   if trak, ok := b.Trak(); ok {
+      stsd := trak.Stsd()
       if stsd == nil {
          return nil // No sample descriptions to sanitize.
       }
       for i := range stsd.Children {
          stsdChild := &stsd.Children[i]
 
-         sampleEntryHeader, sinf, isEncrypted := stsdChild.GetEncryptionInfo()
-         if !isEncrypted {
+         sampleEntryHeader, sinf, isProtected := stsdChild.Protection()
+         if !isProtected {
             continue
          }
 
@@ -105,7 +105,7 @@ func (b *MoovBox) Sanitize() error {
             return errors.New("could not find 'sinf' box to remove")
          }
 
-         frma := sinf.GetFrma()
+         frma := sinf.Frma()
          if frma == nil {
             return errors.New("could not find 'frma' box for original format")
          }
@@ -118,8 +118,8 @@ func (b *MoovBox) Sanitize() error {
    return nil
 }
 
-// GetTrak returns the first trak box found and a boolean indicating if it was found.
-func (b *MoovBox) GetTrak() (*TrakBox, bool) {
+// Trak returns the first trak box found and a boolean indicating if it was found.
+func (b *MoovBox) Trak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {
          return child.Trak, true
@@ -128,6 +128,7 @@ func (b *MoovBox) GetTrak() (*TrakBox, bool) {
    return nil, false
 }
 
+// AllPssh returns a slice of all PsshBox children within this MoovBox.
 func (b *MoovBox) AllPssh() []*PsshBox {
    var psshBoxes []*PsshBox
    for _, child := range b.Children {

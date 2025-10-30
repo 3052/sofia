@@ -53,7 +53,7 @@ func (b *Box) Encode() []byte {
    }
 }
 
-func ParseFile(data []byte) ([]Box, error) {
+func Parse(data []byte) ([]Box, error) {
    var boxes []Box
    offset := 0
    for offset < len(data) {
@@ -129,7 +129,8 @@ func FindMoov(boxes []Box) (*MoovBox, bool) {
    return nil, false
 }
 
-func AllTrafs(boxes []Box) []*TrafBox {
+// AllTraf finds all TrafBoxes located within all MoofBoxes in a slice of generic boxes.
+func AllTraf(boxes []Box) []*TrafBox {
    var trafs []*TrafBox
    for _, box := range boxes {
       if box.Moof != nil {

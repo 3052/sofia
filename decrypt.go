@@ -7,24 +7,18 @@ import (
    "fmt"
 )
 
-// DecryptSegment decrypts a segment's mdat boxes in-place using the provided key.
+// Decrypt decrypts a segment's mdat boxes in-place using the provided key.
 // It self-determines if decryption is needed by checking for 'senc' boxes within the segment.
 // This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
-func DecryptSegment(segmentBoxes []Box, key []byte) error {
-   // First, check if any part of this segment is actually encrypted.
+func Decrypt(segmentBoxes []Box, key []byte) error {
+   // Use the AllTraf helper to efficiently find all track fragments.
+   allTrafs := AllTraf(segmentBoxes)
+
+   // Check if any track fragment contains encryption info.
    var isEncrypted bool
-   for _, box := range segmentBoxes {
-      if box.Moof != nil {
-         for _, child := range box.Moof.Children {
-            if child.Traf != nil {
-               if _, ok := child.Traf.GetSenc(); ok {
-                  isEncrypted = true
-                  break
-               }
-            }
-         }
-      }
-      if isEncrypted {
+   for _, traf := range allTrafs {
+      if _, ok := traf.Senc(); ok {
+         isEncrypted = true
          break
       }
    }
@@ -74,12 +68,12 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
          continue
       }
 
-      tfhd, trun := traf.GetTfhd(), traf.GetTrun()
+      tfhd, trun := traf.Tfhd(), traf.Trun()
       if tfhd == nil || trun == nil {
          return errors.New("traf is missing required boxes: tfhd or trun")
       }
       // The 'senc' box is the per-fragment signal. If it's not here, we skip this traf.
-      senc, ok := traf.GetSenc()
+      senc, ok := traf.Senc()
       if !ok {
          continue
       }

@@ -14,10 +14,10 @@ type TrafBox struct {
    Children []TrafChild
 }
 
-// GetTotals calculates the total byte size and duration of all samples in a traf.
-func (b *TrafBox) GetTotals() (totalBytes uint64, totalDuration uint64, err error) {
-   trun := b.GetTrun()
-   tfhd := b.GetTfhd()
+// Totals calculates the total byte size and duration of all samples in a traf.
+func (b *TrafBox) Totals() (totalBytes uint64, totalDuration uint64, err error) {
+   trun := b.Trun()
+   tfhd := b.Tfhd()
    if trun == nil {
       return 0, 0, errors.New("traf is missing trun box to calculate totals")
    }
@@ -38,7 +38,6 @@ func (b *TrafBox) GetTotals() (totalBytes uint64, totalDuration uint64, err erro
    return totalBytes, totalDuration, nil
 }
 
-// Parse parses the 'traf' box from a byte slice.
 func (b *TrafBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
@@ -109,7 +108,7 @@ func (b *TrafBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-func (b *TrafBox) GetTfhd() *TfhdBox {
+func (b *TrafBox) Tfhd() *TfhdBox {
    for _, child := range b.Children {
       if child.Tfhd != nil {
          return child.Tfhd
@@ -118,7 +117,7 @@ func (b *TrafBox) GetTfhd() *TfhdBox {
    return nil
 }
 
-func (b *TrafBox) GetTrun() *TrunBox {
+func (b *TrafBox) Trun() *TrunBox {
    for _, child := range b.Children {
       if child.Trun != nil {
          return child.Trun
@@ -127,8 +126,7 @@ func (b *TrafBox) GetTrun() *TrunBox {
    return nil
 }
 
-// GetSenc finds the SencBox child and returns it, along with a boolean indicating if it was found.
-func (b *TrafBox) GetSenc() (*SencBox, bool) {
+func (b *TrafBox) Senc() (*SencBox, bool) {
    for _, child := range b.Children {
       if child.Senc != nil {
          return child.Senc, true

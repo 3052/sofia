@@ -80,8 +80,8 @@ func (b *StsdBox) Encode() []byte {
    return append(headerBytes, fullContent...)
 }
 
-// GetSinf finds the SinfBox within a sample description, whether it's in an 'encv' or 'enca' box.
-func (sc *StsdChild) GetSinf() *SinfBox {
+// Sinf finds the SinfBox within a sample description, whether it's in an 'encv' or 'enca' box.
+func (sc *StsdChild) Sinf() *SinfBox {
    if sc.Encv != nil {
       for _, encvChild := range sc.Encv.Children {
          if encvChild.Sinf != nil {
@@ -99,8 +99,8 @@ func (sc *StsdChild) GetSinf() *SinfBox {
    return nil
 }
 
-// GetEncryptionInfo returns the sample entry header, the sinf box, and a boolean indicating if the entry is encrypted.
-func (sc *StsdChild) GetEncryptionInfo() (header *BoxHeader, sinf *SinfBox, isEncrypted bool) {
+// Protection returns the sample entry header, the sinf box, and a boolean indicating if the entry is protected.
+func (sc *StsdChild) Protection() (header *BoxHeader, sinf *SinfBox, isProtected bool) {
    if sc.Encv != nil {
       for _, child := range sc.Encv.Children {
          if child.Sinf != nil {

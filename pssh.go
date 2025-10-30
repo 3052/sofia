@@ -1,7 +1,6 @@
 package sofia
 
 import (
-   "bytes"
    "encoding/binary"
    "errors"
 )
@@ -88,13 +87,4 @@ func (b *PsshBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(payload))
    headerBytes := b.Header.Encode()
    return append(headerBytes, payload...)
-}
-
-func FindPssh(psshBoxes []*PsshBox, systemID []byte) (*PsshBox, bool) {
-   for _, pssh := range psshBoxes {
-      if bytes.Equal(pssh.SystemID[:], systemID) {
-         return pssh, true
-      }
-   }
-   return nil, false
 }

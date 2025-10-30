@@ -27,7 +27,7 @@ func TestDecryption(t *testing.T) {
          if err != nil {
             t.Fatalf("Could not read init file: %s, error: %v", initFilePath, err)
          }
-         parsedInit, err := ParseFile(initData)
+         parsedInit, err := Parse(initData)
          if err != nil {
             t.Fatalf("Failed to parse init file: %v", err)
          }
@@ -41,18 +41,18 @@ func TestDecryption(t *testing.T) {
          if err != nil {
             t.Fatalf("Could not read segment file: %s, error: %v", segmentFilePath, err)
          }
-         parsedSegment, err := ParseFile(segmentData)
+         parsedSegment, err := Parse(segmentData)
          if err != nil {
             t.Fatalf("Failed to parse segment file: %v", err)
          }
 
          // 3. Decrypt the segment's mdat boxes in-place.
-         if trak, ok := moov.GetTrak(); ok && trak.GetTenc() != nil {
+         if trak, ok := moov.Trak(); ok && trak.Tenc() != nil {
             keyBytes, err := hex.DecodeString(test.key)
             if err != nil {
                t.Fatalf("Failed to decode test key from hex: %v", err)
             }
-            if err := DecryptSegment(parsedSegment, keyBytes); err != nil {
+            if err := Decrypt(parsedSegment, keyBytes); err != nil {
                t.Fatalf("Decryption failed: %v", err)
             }
          }
@@ -61,8 +61,8 @@ func TestDecryption(t *testing.T) {
          if err := moov.Sanitize(); err != nil {
             t.Logf("Note: sanitization returned an error (as expected for some clear content): %v", err)
          }
-         if trak, ok := moov.GetTrak(); ok {
-            trak.RemoveEdts()
+         if trak, ok := moov.Trak(); ok {
+            trak.ReplaceEdts()
          }
 
          var finalMP4Data bytes.Buffer

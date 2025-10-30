@@ -12,7 +12,7 @@ func TestPsshParsing(t *testing.T) {
    if err != nil {
       t.Fatalf("Could not read file: %s, error: %v", psshFilePath, err)
    }
-   parsed, err := ParseFile(psshData)
+   parsed, err := Parse(psshData)
    if err != nil {
       t.Fatalf("Failed to parse file: %v", err)
    }
@@ -22,16 +22,11 @@ func TestPsshParsing(t *testing.T) {
       t.Fatal("Could not find 'moov' box in parsed file.")
    }
 
-   psshBoxes := moov.AllPssh()
-   if len(psshBoxes) < 2 {
-      t.Fatalf("Expected to find at least 2 pssh boxes, but found %d", len(psshBoxes))
-   }
-
    widevineID, _ := hex.DecodeString("edef8ba979d64acea3c827dcd51d21ed")
    playreadyID, _ := hex.DecodeString("9a04f07998404286ab92e65be0885f95")
 
    // Test for Widevine pssh box.
-   widevineBox, ok := FindPssh(psshBoxes, widevineID)
+   widevineBox, ok := moov.FindPssh(widevineID)
    if !ok {
       t.Error("Did not find Widevine pssh box")
    } else {
@@ -42,7 +37,7 @@ func TestPsshParsing(t *testing.T) {
    }
 
    // Test for PlayReady pssh box.
-   playreadyBox, ok := FindPssh(psshBoxes, playreadyID)
+   playreadyBox, ok := moov.FindPssh(playreadyID)
    if !ok {
       t.Error("Did not find PlayReady pssh box")
    } else {

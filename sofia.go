@@ -53,7 +53,7 @@ func (b *Box) Encode() []byte {
    }
 }
 
-func ParseFile(data []byte) ([]Box, error) {
+func Parse(data []byte) ([]Box, error) {
    var boxes []Box
    offset := 0
    for offset < len(data) {
@@ -129,18 +129,15 @@ func FindMoov(boxes []Box) (*MoovBox, bool) {
    return nil, false
 }
 
-func AllTrafs(boxes []Box) []*TrafBox {
-   var trafs []*TrafBox
+// AllMoof finds all MoofBoxes in a slice of generic boxes.
+func AllMoof(boxes []Box) []*MoofBox {
+   var moofs []*MoofBox
    for _, box := range boxes {
       if box.Moof != nil {
-         for _, child := range box.Moof.Children {
-            if child.Traf != nil {
-               trafs = append(trafs, child.Traf)
-            }
-         }
+         moofs = append(moofs, box.Moof)
       }
    }
-   return trafs
+   return moofs
 }
 
 // FindSidx finds the first SidxBox in a slice of generic boxes.

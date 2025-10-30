@@ -82,3 +82,13 @@ func (b *MoofBox) Sanitize() {
       }
    }
 }
+
+// Traf returns the first traf box found and a boolean indicating if it was found.
+func (b *MoofBox) Traf() (*TrafBox, bool) {
+   for _, child := range b.Children {
+      if child.Traf != nil {
+         return child.Traf, true
+      }
+   }
+   return nil, false
+}

@@ -16,7 +16,11 @@ func (b *TencBox) Parse(data []byte) error {
    }
    b.RawData = data[:b.Header.Size] // Store the original data
 
-   kidStart := 14
+   // A 'tenc' box is a "Full Box".
+   // The KID starts after the main header (8 bytes), the full box header (4 bytes),
+   // a 24-bit reserved field (3 bytes), and an 8-bit IV size field (1 byte).
+   // So, the KID offset is 8 + 4 + 3 + 1 = 16.
+   const kidStart = 16
    if len(data) < kidStart+16 {
       return fmt.Errorf("tenc box is too small to contain KID: %d bytes", len(data))
    }

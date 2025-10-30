@@ -76,7 +76,10 @@ func (b *MoovBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
+// Sanitize removes all DRM and encryption signaling from the moov box.
+// It renames pssh boxes to 'free' and updates encrypted sample entries.
 func (b *MoovBox) Sanitize() error {
+   // Rename top-level pssh boxes within this moov box to 'free'.
    for i := range b.Children {
       child := &b.Children[i]
       if child.Pssh != nil {
@@ -84,6 +87,7 @@ func (b *MoovBox) Sanitize() error {
       }
    }
 
+   // Traverse into each track to remove encryption signaling.
    for _, trak := range b.GetAllTraks() {
       stsd := trak.GetStsd()
       if stsd == nil {
@@ -92,30 +96,7 @@ func (b *MoovBox) Sanitize() error {
       for i := range stsd.Children {
          stsdChild := &stsd.Children[i]
 
-         var sampleEntryHeader *BoxHeader
-         var sinf *SinfBox
-         var isEncrypted bool
-
-         if stsdChild.Encv != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Encv.Header
-            for j := range stsdChild.Encv.Children {
-               if stsdChild.Encv.Children[j].Sinf != nil {
-                  sinf = stsdChild.Encv.Children[j].Sinf
-                  break
-               }
-            }
-         } else if stsdChild.Enca != nil {
-            isEncrypted = true
-            sampleEntryHeader = &stsdChild.Enca.Header
-            for j := range stsdChild.Enca.Children {
-               if stsdChild.Enca.Children[j].Sinf != nil {
-                  sinf = stsdChild.Enca.Children[j].Sinf
-                  break
-               }
-            }
-         }
-
+         sampleEntryHeader, sinf, isEncrypted := stsdChild.GetEncryptionInfo()
          if !isEncrypted {
             continue
          }
@@ -123,17 +104,14 @@ func (b *MoovBox) Sanitize() error {
          if sinf == nil {
             return errors.New("could not find 'sinf' box to remove")
          }
-         var frma *FrmaBox
-         for _, sinfChild := range sinf.Children {
-            if f := sinfChild.Frma; f != nil {
-               frma = f
-               break
-            }
-         }
+
+         // Use the new helper method to find the frma box.
+         frma := sinf.GetFrma()
          if frma == nil {
             return errors.New("could not find 'frma' box for original format")
          }
 
+         // Perform the sanitization.
          sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
          sampleEntryHeader.Type = frma.DataFormat
       }

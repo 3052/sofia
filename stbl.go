@@ -65,3 +65,13 @@ func (b *StblBox) Encode() []byte {
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
 }
+
+// Stsd finds the StsdBox child and returns it, along with a boolean indicating if it was found.
+func (b *StblBox) Stsd() (*StsdBox, bool) {
+   for _, child := range b.Children {
+      if child.Stsd != nil {
+         return child.Stsd, true
+      }
+   }
+   return nil, false
+}

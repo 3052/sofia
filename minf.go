@@ -64,3 +64,13 @@ func (b *MinfBox) Encode() []byte {
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
 }
+
+// Stbl finds the StblBox child and returns it, along with a boolean indicating if it was found.
+func (b *MinfBox) Stbl() (*StblBox, bool) {
+   for _, child := range b.Children {
+      if child.Stbl != nil {
+         return child.Stbl, true
+      }
+   }
+   return nil, false
+}

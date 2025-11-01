@@ -13,14 +13,12 @@ import (
 func TestTencKIDParsing(t *testing.T) {
    // The file identified in the bug report.
    testFilePath := filepath.Join("testdata", "hulu-avc1/map.mp4")
-
    // The known correct KID for this file.
    expectedKidHex := "077ad79156b4442a9b44e17692764a4a"
    expectedKid, err := hex.DecodeString(expectedKidHex)
    if err != nil {
       t.Fatalf("Internal test error: failed to decode expected KID hex: %v", err)
    }
-
    // 1. Read and parse the initialization file.
    initData, err := os.ReadFile(testFilePath)
    if err != nil {
@@ -30,8 +28,7 @@ func TestTencKIDParsing(t *testing.T) {
    if err != nil {
       t.Fatalf("Failed to parse file: %v", err)
    }
-
-   // 2. Navigate to the 'tenc' box.
+   // 2. Navigate to the 'tenc' box using single-level accessors.
    moov, ok := FindMoov(parsedInit)
    if !ok {
       t.Fatal("Test setup failed: could not find 'moov' box.")
@@ -40,15 +37,34 @@ func TestTencKIDParsing(t *testing.T) {
    if !ok {
       t.Fatal("Test setup failed: could not find 'trak' box.")
    }
-   stsd := trak.Stsd()
-   if stsd == nil {
+   mdia, ok := trak.Mdia()
+   if !ok {
+      t.Fatal("Test setup failed: could not find 'mdia' box.")
+   }
+   minf, ok := mdia.Minf()
+   if !ok {
+      t.Fatal("Test setup failed: could not find 'minf' box.")
+   }
+   stbl, ok := minf.Stbl()
+   if !ok {
+      t.Fatal("Test setup failed: could not find 'stbl' box.")
+   }
+   stsd, ok := stbl.Stsd()
+   if !ok {
       t.Fatal("Test setup failed: could not find 'stsd' box.")
    }
-   tenc, ok := stsd.Tenc()
+   sinf, _, ok := stsd.Sinf()
+   if !ok {
+      t.Fatal("Test setup failed: could not find 'sinf' box.")
+   }
+   schi, ok := sinf.Schi()
+   if !ok {
+      t.Fatal("Test setup failed: could not find 'schi' box.")
+   }
+   tenc, ok := schi.Tenc()
    if !ok {
       t.Fatal("Test setup failed: could not find 'tenc' box.")
    }
-
    // 3. The actual test: Compare the parsed KID with the expected KID.
    parsedKid := tenc.DefaultKID[:] // Convert array to slice for comparison.
    if !bytes.Equal(parsedKid, expectedKid) {

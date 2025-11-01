@@ -1,0 +1,70 @@
+[ftyp] size=40
+ - majorBrand: mp41
+ - minorVersion: 0
+ - compatibleBrand: iso8
+ - compatibleBrand: isom
+ - compatibleBrand: mp41
+ - compatibleBrand: dash
+ - compatibleBrand: avc1
+ - compatibleBrand: cmfc
+[moov] size=825
+  [mvhd] size=108 version=0 flags=000000
+   - timeScale: 48000
+   - duration: 0
+   - creation time: 2024-10-04T03:42:59Z
+   - modification time: 2024-10-04T03:42:59Z
+  [meta] size=141 version=0 flags=000000
+    [hdlr] size=32 version=0 flags=000000
+     - handlerType: ID32
+     - handlerName: ""
+    [ID32] size=97
+     - not implemented or unknown box
+  [trak] size=512
+    [tkhd] size=92 version=0 flags=000007
+     - trackID: 1
+     - duration: 0
+     - creation time: 2024-10-04T03:42:59Z
+     - modification time: 2024-10-04T03:42:59Z
+     - Width: 426.0, Height: 230.0
+    [mdia] size=376
+      [mdhd] size=32 version=0 flags=000000
+       - timeScale: 48000
+       - creation time: 2024-10-04T03:42:59Z
+       - modification time: 2024-10-04T03:42:59Z
+       - language: und
+      [hdlr] size=45 version=0 flags=000000
+       - handlerType: vide
+       - handlerName: "VideoHandler"
+      [minf] size=291
+        [dinf] size=36
+          [dref] size=28 version=0 flags=000000
+            [url ] size=12 version=0 flags=000001
+        [stbl] size=227
+          [stsd] size=151 version=0 flags=000000
+            [avc1] size=135
+             - width: 426
+             - height: 230
+             - compressorName: "AVC Coding"
+              [avcC] size=49
+               - AVCProfileIndication: 77
+               - profileCompatibility: 40
+               - AVCLevelIndication: 30
+               - SPS: 674d401ee428363fc93602200000030020002ee001e2c5b2c0
+               - PPS: 68e938b3c8
+          [stts] size=16 version=0 flags=000000
+          [stsc] size=16 version=0 flags=000000
+          [stsz] size=20 version=0 flags=000000
+          [stco] size=16 version=0 flags=000000
+        [vmhd] size=20 version=0 flags=000001
+    [edts] size=36
+      [elst] size=28 version=0 flags=000000
+      - entry[1]: segmentDuration=0 mediaTime=4004, mediaRateInteger=1 mediaRateFraction=0
+  [mvex] size=56
+    [mehd] size=16 version=0 flags=000000
+     - fragmentDuration: 289403114
+    [trex] size=32 version=0 flags=000000
+     - trackID: 1
+     - defaultSampleDescriptionIndex: 1
+     - defaultSampleDuration: 2002
+     - defaultSampleSize: 0
+     - defaultSampleFlags: 00000000 (isLeading=0 dependsOn=0 isDependedOn=0 hasRedundancy=0 padding=0 isNonSync=false degradationPriority=0)

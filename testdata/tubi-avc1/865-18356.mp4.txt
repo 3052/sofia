@@ -1,0 +1,5 @@
+[sidx] size=17492 version=0 flags=000000
+ - referenceID: 1
+ - timeScale: 48000
+ - earliestPresentationTime: 0
+ - firstOffset: 0

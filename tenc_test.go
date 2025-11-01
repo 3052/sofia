@@ -40,8 +40,12 @@ func TestTencKIDParsing(t *testing.T) {
    if !ok {
       t.Fatal("Test setup failed: could not find 'trak' box.")
    }
-   tenc := trak.Tenc()
-   if tenc == nil {
+   stsd := trak.Stsd()
+   if stsd == nil {
+      t.Fatal("Test setup failed: could not find 'stsd' box.")
+   }
+   tenc, ok := stsd.Tenc()
+   if !ok {
       t.Fatal("Test setup failed: could not find 'tenc' box.")
    }
 

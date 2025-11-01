@@ -7,7 +7,6 @@ type TrakChild struct {
    Mdia *MdiaBox
    Raw  []byte
 }
-
 type TrakBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -59,7 +58,6 @@ func (b *TrakBox) Parse(data []byte) error {
    }
    return nil
 }
-
 func (b *TrakBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -76,7 +74,6 @@ func (b *TrakBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// ReplaceEdts finds any 'edts' boxes within this track and replaces their type with 'free'.
 func (b *TrakBox) ReplaceEdts() {
    for i := range b.Children {
       child := &b.Children[i]
@@ -85,7 +82,6 @@ func (b *TrakBox) ReplaceEdts() {
       }
    }
 }
-
 func (b *TrakBox) Mdhd() (*MdhdBox, bool) {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
@@ -99,49 +95,18 @@ func (b *TrakBox) Mdhd() (*MdhdBox, bool) {
    return nil, false
 }
 
-func (b *TrakBox) Stbl() *StblBox {
+func (b *TrakBox) Stsd() *StsdBox {
    for _, child := range b.Children {
       if mdia := child.Mdia; mdia != nil {
          for _, mdiaChild := range mdia.Children {
             if minf := mdiaChild.Minf; minf != nil {
                for _, minfChild := range minf.Children {
                   if stbl := minfChild.Stbl; stbl != nil {
-                     return stbl
-                  }
-               }
-            }
-         }
-      }
-   }
-   return nil
-}
-
-func (b *TrakBox) Stsd() *StsdBox {
-   stbl := b.Stbl()
-   if stbl == nil {
-      return nil
-   }
-   for _, stblChild := range stbl.Children {
-      if stsd := stblChild.Stsd; stsd != nil {
-         return stsd
-      }
-   }
-   return nil
-}
-
-func (b *TrakBox) Tenc() *TencBox {
-   stsd := b.Stsd()
-   if stsd == nil {
-      return nil
-   }
-   for _, stsdChild := range stsd.Children {
-      sinf := stsdChild.Sinf()
-      if sinf != nil {
-         for _, sinfChild := range sinf.Children {
-            if schi := sinfChild.Schi; schi != nil {
-               for _, schiChild := range schi.Children {
-                  if schiChild.Tenc != nil {
-                     return schiChild.Tenc
+                     for _, stblChild := range stbl.Children {
+                        if stsd := stblChild.Stsd; stsd != nil {
+                           return stsd
+                        }
+                     }
                   }
                }
             }

@@ -80,24 +80,7 @@ func (b *StsdBox) Encode() []byte {
    return append(headerBytes, fullContent...)
 }
 
-func (sc *StsdChild) Sinf() *SinfBox {
-   if sc.Encv != nil {
-      for _, encvChild := range sc.Encv.Children {
-         if encvChild.Sinf != nil {
-            return encvChild.Sinf
-         }
-      }
-   }
-   if sc.Enca != nil {
-      for _, encaChild := range sc.Enca.Children {
-         if encaChild.Sinf != nil {
-            return encaChild.Sinf
-         }
-      }
-   }
-   return nil
-}
-
+// Protection returns the sample entry header, the sinf box, and a boolean indicating if the entry is protected.
 func (sc *StsdChild) Protection() (header *BoxHeader, sinf *SinfBox, isProtected bool) {
    if sc.Encv != nil {
       for _, child := range sc.Encv.Children {
@@ -119,7 +102,8 @@ func (sc *StsdChild) Protection() (header *BoxHeader, sinf *SinfBox, isProtected
 // Tenc traverses the children of the StsdBox to find and return the TencBox.
 func (b *StsdBox) Tenc() (*TencBox, bool) {
    for _, stsdChild := range b.Children {
-      if sinf := stsdChild.Sinf(); sinf != nil {
+      _, sinf, isProtected := stsdChild.Protection()
+      if isProtected {
          for _, sinfChild := range sinf.Children {
             if schi := sinfChild.Schi; schi != nil {
                for _, schiChild := range schi.Children {

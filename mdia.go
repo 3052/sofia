@@ -7,6 +7,7 @@ type MdiaChild struct {
    Minf *MinfBox
    Raw  []byte
 }
+
 type MdiaBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -58,6 +59,7 @@ func (b *MdiaBox) Parse(data []byte) error {
    }
    return nil
 }
+
 func (b *MdiaBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -72,4 +74,24 @@ func (b *MdiaBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
+}
+
+// Mdhd finds the MdhdBox child and returns it, along with a boolean indicating if it was found.
+func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
+   for _, child := range b.Children {
+      if child.Mdhd != nil {
+         return child.Mdhd, true
+      }
+   }
+   return nil, false
+}
+
+// Minf finds the MinfBox child and returns it, along with a boolean indicating if it was found.
+func (b *MdiaBox) Minf() (*MinfBox, bool) {
+   for _, child := range b.Children {
+      if child.Minf != nil {
+         return child.Minf, true
+      }
+   }
+   return nil, false
 }

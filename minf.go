@@ -6,6 +6,7 @@ type MinfChild struct {
    Stbl *StblBox
    Raw  []byte
 }
+
 type MinfBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -51,6 +52,7 @@ func (b *MinfBox) Parse(data []byte) error {
    }
    return nil
 }
+
 func (b *MinfBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -63,4 +65,14 @@ func (b *MinfBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
+}
+
+// Stbl finds the StblBox child and returns it, along with a boolean indicating if it was found.
+func (b *MinfBox) Stbl() (*StblBox, bool) {
+   for _, child := range b.Children {
+      if child.Stbl != nil {
+         return child.Stbl, true
+      }
+   }
+   return nil, false
 }

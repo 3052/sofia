@@ -10,10 +10,33 @@ type StsdChild struct {
    Enca *EncaBox
    Raw  []byte
 }
+
 type StsdBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []StsdChild
+}
+
+// Sinf finds the first protected sample entry and returns its SinfBox, its header, and a boolean indicating if it was found.
+func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
+   for i := range b.Children {
+      child := &b.Children[i]
+      if child.Encv != nil {
+         for _, c := range child.Encv.Children {
+            if c.Sinf != nil {
+               return c.Sinf, &child.Encv.Header, true
+            }
+         }
+      }
+      if child.Enca != nil {
+         for _, c := range child.Enca.Children {
+            if c.Sinf != nil {
+               return c.Sinf, &child.Enca.Header, true
+            }
+         }
+      }
+   }
+   return nil, nil, false
 }
 
 func (b *StsdBox) Parse(data []byte) error {
@@ -62,6 +85,7 @@ func (b *StsdBox) Parse(data []byte) error {
    }
    return nil
 }
+
 func (b *StsdBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
@@ -78,42 +102,4 @@ func (b *StsdBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(fullContent))
    headerBytes := b.Header.Encode()
    return append(headerBytes, fullContent...)
-}
-
-// Protection returns the sample entry header, the sinf box, and a boolean indicating if the entry is protected.
-func (sc *StsdChild) Protection() (header *BoxHeader, sinf *SinfBox, isProtected bool) {
-   if sc.Encv != nil {
-      for _, child := range sc.Encv.Children {
-         if child.Sinf != nil {
-            return &sc.Encv.Header, child.Sinf, true
-         }
-      }
-   }
-   if sc.Enca != nil {
-      for _, child := range sc.Enca.Children {
-         if child.Sinf != nil {
-            return &sc.Enca.Header, child.Sinf, true
-         }
-      }
-   }
-   return nil, nil, false
-}
-
-// Tenc traverses the children of the StsdBox to find and return the TencBox.
-func (b *StsdBox) Tenc() (*TencBox, bool) {
-   for _, stsdChild := range b.Children {
-      _, sinf, isProtected := stsdChild.Protection()
-      if isProtected {
-         for _, sinfChild := range sinf.Children {
-            if schi := sinfChild.Schi; schi != nil {
-               for _, schiChild := range schi.Children {
-                  if schiChild.Tenc != nil {
-                     return schiChild.Tenc, true
-                  }
-               }
-            }
-         }
-      }
-   }
-   return nil, false
 }

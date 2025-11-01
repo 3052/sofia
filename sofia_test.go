@@ -66,10 +66,9 @@ var senc_tests = []senc_test{
       segment: "rtbf-avc1/vod-idx-3-video=300000-0.dash",
    },
    {
-      initial: "tubi-avc1/0-1683.mp4",
-      key:     "8109222ffe94120d61f887d40d0257ed",
+      initial: "tubi-avc1/0-864.mp4",
       out:     "tubi-avc1.mp4",
-      segment: "tubi-avc1/16524-27006.mp4",
+      segment: "tubi-avc1/18357-74393.mp4",
    },
 }
 

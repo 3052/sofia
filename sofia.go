@@ -6,6 +6,15 @@ import (
    "fmt"
 )
 
+// Missing is an error type used when a required child box is not found.
+type Missing struct {
+   Child string
+}
+
+func (e *Missing) Error() string {
+   return fmt.Sprintf("box '%s' not found", e.Child)
+}
+
 type BoxHeader struct {
    Size uint32
    Type [4]byte
@@ -64,7 +73,6 @@ func Parse(data []byte) ([]Box, error) {
       if err := header.Parse(data[offset:]); err != nil {
          return nil, fmt.Errorf("error reading header at offset %d: %w", offset, err)
       }
-
       boxSize := int(header.Size)
       if boxSize == 0 {
          boxSize = len(data) - offset
@@ -75,10 +83,8 @@ func Parse(data []byte) ([]Box, error) {
       if offset+boxSize > len(data) {
          return nil, fmt.Errorf("box '%s' at offset %d with size %d exceeds file bounds", string(header.Type[:]), offset, boxSize)
       }
-
       boxData := data[offset : offset+boxSize]
       var currentBox Box
-
       switch string(header.Type[:]) {
       case "moov":
          var moov MoovBox

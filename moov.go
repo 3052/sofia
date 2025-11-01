@@ -86,31 +86,25 @@ func (b *MoovBox) Sanitize() error {
          child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
       }
    }
-
    if trak, ok := b.Trak(); ok {
-      stsd := trak.Stsd()
-      if stsd == nil {
-         return nil
-      }
-      for i := range stsd.Children {
-         stsdChild := &stsd.Children[i]
-
-         sampleEntryHeader, sinf, isProtected := stsdChild.Protection()
-         if !isProtected {
-            continue
+      if mdia, ok := trak.Mdia(); ok {
+         if minf, ok := mdia.Minf(); ok {
+            if stbl, ok := minf.Stbl(); ok {
+               if stsd, ok := stbl.Stsd(); ok {
+                  if sinf, sampleEntryHeader, isProtected := stsd.Sinf(); isProtected {
+                     if sinf == nil {
+                        return errors.New("inconsistent state: protection found but sinf is nil")
+                     }
+                     frma := sinf.Frma()
+                     if frma == nil {
+                        return errors.New("could not find 'frma' box for original format")
+                     }
+                     sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
+                     sampleEntryHeader.Type = frma.DataFormat
+                  }
+               }
+            }
          }
-
-         if sinf == nil {
-            return errors.New("could not find 'sinf' box to remove")
-         }
-
-         frma := sinf.Frma()
-         if frma == nil {
-            return errors.New("could not find 'frma' box for original format")
-         }
-
-         sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-         sampleEntryHeader.Type = frma.DataFormat
       }
    }
    return nil

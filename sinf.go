@@ -85,3 +85,13 @@ func (b *SinfBox) Frma() *FrmaBox {
    }
    return nil
 }
+
+// Schi finds the SchiBox child and returns it, along with a boolean indicating if it was found.
+func (b *SinfBox) Schi() (*SchiBox, bool) {
+   for _, child := range b.Children {
+      if child.Schi != nil {
+         return child.Schi, true
+      }
+   }
+   return nil, false
+}

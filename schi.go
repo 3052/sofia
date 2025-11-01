@@ -6,6 +6,7 @@ type SchiChild struct {
    Tenc *TencBox
    Raw  []byte
 }
+
 type SchiBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -64,4 +65,14 @@ func (b *SchiBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
+}
+
+// Tenc finds the TencBox child and returns it, along with a boolean indicating if it was found.
+func (b *SchiBox) Tenc() (*TencBox, bool) {
+   for _, child := range b.Children {
+      if child.Tenc != nil {
+         return child.Tenc, true
+      }
+   }
+   return nil, false
 }

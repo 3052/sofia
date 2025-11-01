@@ -47,7 +47,16 @@ func TestDecryption(t *testing.T) {
          }
 
          // 3. Decrypt the segment's mdat boxes in-place.
-         if trak, ok := moov.Trak(); ok && trak.Tenc() != nil {
+         var isEncrypted bool
+         if trak, ok := moov.Trak(); ok {
+            if stsd := trak.Stsd(); stsd != nil {
+               if _, ok := stsd.Tenc(); ok {
+                  isEncrypted = true
+               }
+            }
+         }
+
+         if isEncrypted {
             keyBytes, err := hex.DecodeString(test.key)
             if err != nil {
                t.Fatalf("Failed to decode test key from hex: %v", err)

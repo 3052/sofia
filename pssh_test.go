@@ -25,7 +25,7 @@ func TestPsshParsing(t *testing.T) {
    widevineID, _ := hex.DecodeString("edef8ba979d64acea3c827dcd51d21ed")
    playreadyID, _ := hex.DecodeString("9a04f07998404286ab92e65be0885f95")
 
-   // Test for Widevine pssh box.
+   // Test for Widevine pssh box using the correct method on moov.
    widevineBox, ok := moov.FindPssh(widevineID)
    if !ok {
       t.Error("Did not find Widevine pssh box")
@@ -36,7 +36,7 @@ func TestPsshParsing(t *testing.T) {
       t.Logf("Found Widevine pssh box with Data length: %d", len(widevineBox.Data))
    }
 
-   // Test for PlayReady pssh box.
+   // Test for PlayReady pssh box using the correct method on moov.
    playreadyBox, ok := moov.FindPssh(playreadyID)
    if !ok {
       t.Error("Did not find PlayReady pssh box")

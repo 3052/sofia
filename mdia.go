@@ -73,3 +73,23 @@ func (b *MdiaBox) Encode() []byte {
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
 }
+
+// Mdhd finds the MdhdBox child and returns it, along with a boolean indicating if it was found.
+func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
+   for _, child := range b.Children {
+      if child.Mdhd != nil {
+         return child.Mdhd, true
+      }
+   }
+   return nil, false
+}
+
+// Minf finds the MinfBox child and returns it, along with a boolean indicating if it was found.
+func (b *MdiaBox) Minf() (*MinfBox, bool) {
+   for _, child := range b.Children {
+      if child.Minf != nil {
+         return child.Minf, true
+      }
+   }
+   return nil, false
+}

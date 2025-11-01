@@ -82,36 +82,13 @@ func (b *TrakBox) ReplaceEdts() {
       }
    }
 }
-func (b *TrakBox) Mdhd() (*MdhdBox, bool) {
+
+// Mdia finds the MdiaBox child and returns it, along with a boolean indicating if it was found.
+func (b *TrakBox) Mdia() (*MdiaBox, bool) {
    for _, child := range b.Children {
-      if mdia := child.Mdia; mdia != nil {
-         for _, mdiaChild := range mdia.Children {
-            if mdhd := mdiaChild.Mdhd; mdhd != nil {
-               return mdhd, true
-            }
-         }
+      if child.Mdia != nil {
+         return child.Mdia, true
       }
    }
    return nil, false
-}
-
-func (b *TrakBox) Stsd() *StsdBox {
-   for _, child := range b.Children {
-      if mdia := child.Mdia; mdia != nil {
-         for _, mdiaChild := range mdia.Children {
-            if minf := mdiaChild.Minf; minf != nil {
-               for _, minfChild := range minf.Children {
-                  if stbl := minfChild.Stbl; stbl != nil {
-                     for _, stblChild := range stbl.Children {
-                        if stsd := stblChild.Stsd; stsd != nil {
-                           return stsd
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-   return nil
 }

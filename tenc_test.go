@@ -30,39 +30,39 @@ func TestTencKIDParsing(t *testing.T) {
    // Navigate to the 'tenc' box, checking for existence at each step.
    moov, ok := FindMoov(parsedInit)
    if !ok {
-      t.Fatal(&Missing{Child: "moov"})
+      t.Fatal(Missing("moov"))
    }
    trak, ok := moov.Trak()
    if !ok {
-      t.Fatal(&Missing{Child: "trak"})
+      t.Fatal(Missing("trak"))
    }
    mdia, ok := trak.Mdia()
    if !ok {
-      t.Fatal(&Missing{Child: "mdia"})
+      t.Fatal(Missing("mdia"))
    }
    minf, ok := mdia.Minf()
    if !ok {
-      t.Fatal(&Missing{Child: "minf"})
+      t.Fatal(Missing("minf"))
    }
    stbl, ok := minf.Stbl()
    if !ok {
-      t.Fatal(&Missing{Child: "stbl"})
+      t.Fatal(Missing("stbl"))
    }
    stsd, ok := stbl.Stsd()
    if !ok {
-      t.Fatal(&Missing{Child: "stsd"})
+      t.Fatal(Missing("stsd"))
    }
    sinf, _, ok := stsd.Sinf()
    if !ok {
-      t.Fatal(&Missing{Child: "sinf"})
+      t.Fatal(Missing("sinf"))
    }
    schi, ok := sinf.Schi()
    if !ok {
-      t.Fatal(&Missing{Child: "schi"})
+      t.Fatal(Missing("schi"))
    }
    tenc, ok := schi.Tenc()
    if !ok {
-      t.Fatal(&Missing{Child: "tenc"})
+      t.Fatal(Missing("tenc"))
    }
 
    // The actual test: Compare the parsed KID with the expected KID.

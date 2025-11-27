@@ -29,24 +29,21 @@ type SidxBox struct {
 }
 
 // AddReference appends a new reference entry to the SidxBox.
-func (b *SidxBox) AddReference(referencedSize uint32, duration uint32, startsWithSAP bool, sapType uint8, sapDeltaTime uint32) error {
+func (b *SidxBox) AddReference(referencedSize, duration uint32) error {
    if referencedSize > 0x7FFFFFFF {
       return errors.New("referencedSize exceeds maximum 31-bit value")
    }
-   if sapType > 7 {
-      return errors.New("sapType exceeds maximum 3-bit value (0-7)")
+   // The reference_count field in the box is uint16 (max 65535).
+   if len(b.References) >= 65535 {
+      return errors.New("maximum number of sidx references (65535) exceeded")
    }
-   if sapDeltaTime > 0x0FFFFFFF {
-      return errors.New("sapDeltaTime exceeds maximum 28-bit value")
-   }
-
    ref := SidxReference{
-      ReferenceType:      false, // Defaults to media reference (0). Set to true manually if needed.
       ReferencedSize:     referencedSize,
       SubsegmentDuration: duration,
-      StartsWithSAP:      startsWithSAP,
-      SAPType:            sapType,
-      SAPDeltaTime:       sapDeltaTime,
+      // Defaulting StartsWithSAP to true and SAPType to 1 is crucial.
+      // Otherwise, players may treat the segment as non-seekable.
+      StartsWithSAP: true,
+      SAPType:       1,
    }
    b.References = append(b.References, ref)
    return nil
@@ -58,7 +55,6 @@ func (b *SidxBox) Parse(data []byte) error {
       return err
    }
 
-   // Basic bounds check for FullBox header (Version + Flags)
    if len(data) < 12 {
       return errors.New("sidx box too short for version and flags")
    }
@@ -94,7 +90,6 @@ func (b *SidxBox) Parse(data []byte) error {
       offset += 8
    }
 
-   // Check for reserved (2 bytes) + reference_count (2 bytes)
    if len(data) < offset+4 {
       return errors.New("sidx box is too short for reference_count")
    }
@@ -135,11 +130,10 @@ func (b *SidxBox) Parse(data []byte) error {
 
 // Encode serializes the SidxBox to a byte slice.
 func (b *SidxBox) Encode() []byte {
-   // 1. Calculate size
-   // Header (8) + Version/Flags (4) + RefID (4) + Timescale (4) + Reserved (2) + RefCount (2) = 24 bytes fixed overhead
-   // Plus EPT and FirstOffset: (8 bytes for v0, 16 bytes for v1)
-   // Plus References: 12 bytes each
-
+   // Size calculation:
+   // Header(8) + Ver/Flags(4) + ID(4) + Time(4) + Res(2) + Count(2) = 24 fixed
+   // + EPT/Offset (8 for v0, 16 for v1)
+   // + References (12 each)
    size := 24 + (len(b.References) * 12)
    if b.Version == 0 {
       size += 8
@@ -150,25 +144,18 @@ func (b *SidxBox) Encode() []byte {
    b.Header.Size = uint32(size)
    buf := make([]byte, size)
 
-   // Write Header
    headerBytes := b.Header.Encode()
    copy(buf[0:8], headerBytes)
 
-   // Write Version and Flags
    buf[8] = b.Version
    binary.BigEndian.PutUint32(buf[8:12], b.Flags&0x00FFFFFF|uint32(b.Version)<<24)
 
    offset := 12
-
-   // Write ReferenceID
    binary.BigEndian.PutUint32(buf[offset:offset+4], b.ReferenceID)
    offset += 4
-
-   // Write Timescale
    binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
    offset += 4
 
-   // Write EPT and FirstOffset
    if b.Version == 0 {
       binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.EarliestPresentationTime))
       offset += 4
@@ -181,16 +168,14 @@ func (b *SidxBox) Encode() []byte {
       offset += 8
    }
 
-   // Write Reserved (2 bytes) - zeroed by make()
+   // Reserved (2 bytes) zeroed by alloc
    offset += 2
 
-   // Write Reference Count
    binary.BigEndian.PutUint16(buf[offset:offset+2], uint16(len(b.References)))
    offset += 2
 
-   // Write References
    for _, ref := range b.References {
-      // Word 1: ReferenceType (1 bit) | ReferencedSize (31 bits)
+      // Word 1: [RefType 1bit][ReferencedSize 31bit]
       val1 := ref.ReferencedSize & 0x7FFFFFFF
       if ref.ReferenceType {
          val1 |= 1 << 31
@@ -198,11 +183,11 @@ func (b *SidxBox) Encode() []byte {
       binary.BigEndian.PutUint32(buf[offset:offset+4], val1)
       offset += 4
 
-      // Word 2: SubsegmentDuration
+      // Word 2: Duration
       binary.BigEndian.PutUint32(buf[offset:offset+4], ref.SubsegmentDuration)
       offset += 4
 
-      // Word 3: StartsWithSAP (1 bit) | SAPType (3 bits) | SAPDeltaTime (28 bits)
+      // Word 3: [StartsWithSAP 1bit][SAPType 3bit][SAPDeltaTime 28bit]
       val2 := ref.SAPDeltaTime & 0x0FFFFFFF
       val2 |= uint32(ref.SAPType&0x07) << 28
       if ref.StartsWithSAP {

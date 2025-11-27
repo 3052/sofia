@@ -58,6 +58,7 @@ func (b *MoofBox) Parse(data []byte) error {
    }
    return nil
 }
+
 func (b *MoofBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {

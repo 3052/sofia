@@ -1,60 +1,62 @@
 package sofia
 
 import (
+   "encoding/binary"
+   "io"
    "os"
    "path/filepath"
    "sort"
    "testing"
 )
 
-// TestBuildSidxAndConcat reads all mp4s in testdata, constructs a sidx box
-// based on segments (files starting from index 1), and writes a concatenated
-// stream [InitSegment][Sidx][Segment1][Segment2]... to disk.
-func TestBuildSidxAndConcat(t *testing.T) {
-   // 1. Read all ".mp4" files in "testdata"
-   matches, err := filepath.Glob(filepath.Join("testdata", "*.mp4"))
+// TestSinglePassConcat performs a one-pass read/write concatenation.
+// 1. Writes Init segment.
+// 2. Writes a placeholder Sidx (allocated for max size).
+// 3. Streams Media segments to output while extracting duration (no double read).
+// 4. Seeks back and updates Sidx.
+func TestSinglePassConcat(t *testing.T) {
+   // 1. Setup Input Files
+   files, err := filepath.Glob(filepath.Join("testdata", "*.mp4"))
    if err != nil {
       t.Fatalf("Failed to glob mp4 files: %v", err)
    }
-
-   // Filter out the output file if it already exists from a previous run
-   // to prevent it from being treated as an input segment.
-   outputFilename := "output_concatenated.mp4"
-   var inputFiles []string
-   for _, m := range matches {
-      if filepath.Base(m) != outputFilename {
-         inputFiles = append(inputFiles, m)
+   outputName := "output_concatenated.mp4"
+   var inputs []string
+   for _, f := range files {
+      if filepath.Base(f) != outputName {
+         inputs = append(inputs, f)
       }
    }
+   sort.Strings(inputs)
 
-   if len(inputFiles) == 0 {
-      t.Skip("No mp4 files found in testdata to process.")
+   if len(inputs) < 2 {
+      t.Skip("Need at least 2 segments (init + media) to run test")
    }
 
-   // Ensure deterministic order: Init segment first, then segments in order
-   sort.Strings(inputFiles)
+   initSeg := inputs[0]
+   mediaSegs := inputs[1:]
 
-   // Identify Init segment and Media segments
-   initPath := inputFiles[0]
-   segPaths := inputFiles[1:]
-
-   t.Logf("Init Segment: %s", initPath)
-   t.Logf("Media Segments: %d files", len(segPaths))
-
-   // Read Init Segment
-   initData, err := os.ReadFile(initPath)
+   // 2. Open Output File
+   outPath := filepath.Join("testdata", outputName)
+   outFile, err := os.Create(outPath)
    if err != nil {
-      t.Fatalf("Failed to read init file: %v", err)
+      t.Fatalf("Failed to create output file: %v", err)
    }
+   defer outFile.Close()
 
-   // Parse Init Segment to extract Timescale from 'mdhd'
-   initBoxes, err := Parse(initData)
+   // 3. Write Init Segment
+   initData, err := os.ReadFile(initSeg)
    if err != nil {
-      t.Fatalf("Failed to parse init segment: %v", err)
+      t.Fatalf("Failed to read init segment: %v", err)
+   }
+   if _, err := outFile.Write(initData); err != nil {
+      t.Fatalf("Failed to write init segment: %v", err)
    }
 
-   var timescale uint32
-   if moov, ok := FindMoov(initBoxes); ok {
+   // Extract timescale from Init segment for the Sidx
+   parsedInit, _ := Parse(initData)
+   var timescale uint32 = 90000
+   if moov, ok := FindMoov(parsedInit); ok {
       if trak, ok := moov.Trak(); ok {
          if mdia, ok := trak.Mdia(); ok {
             if mdhd, ok := mdia.Mdhd(); ok {
@@ -63,108 +65,192 @@ func TestBuildSidxAndConcat(t *testing.T) {
          }
       }
    }
-   // Fallback if timescale not found
-   if timescale == 0 {
-      t.Log("Warning: Could not find timescale in init segment, defaulting to 90000")
-      timescale = 90000
+
+   // 4. Write Placeholder Sidx
+   // We construct a Sidx with dummy references to calculate the size.
+   dummySidx := &SidxBox{
+      Header:      BoxHeader{Type: [4]byte{'s', 'i', 'd', 'x'}},
+      Version:     0,
+      ReferenceID: 1,
+      Timescale:   timescale,
+   }
+   // Add dummy references equal to the number of segments
+   for range mediaSegs {
+      // Use max values to ensure size reservation is sufficient (though MP4 integers are fixed width)
+      dummySidx.AddReference(0xFFFFFFFF, 0xFFFFFFFF, true, 0, 0)
    }
 
-   // 2. Build "sidx" from segments
-   // Note: FirstOffset is the distance from the anchor point (start of sidx)
-   // to the first byte of the referenced data. Since we write [Sidx][Seg1]...,
-   // FirstOffset will equal the size of the Sidx box itself.
-   sidx := &SidxBox{
-      Header:                   BoxHeader{Type: [4]byte{'s', 'i', 'd', 'x'}},
-      Version:                  0,
-      ReferenceID:              1,
-      Timescale:                timescale,
-      EarliestPresentationTime: 0, // Assuming stream starts at 0
-      FirstOffset:              0, // Will be calculated after references are added
+   placeholderBytes := dummySidx.Encode()
+   placeholderSize := len(placeholderBytes)
+   sidxStartOffset, _ := outFile.Seek(0, io.SeekCurrent)
+
+   // Write the placeholder to disk
+   if _, err := outFile.Write(placeholderBytes); err != nil {
+      t.Fatalf("Failed to write sidx placeholder: %v", err)
    }
 
-   for _, segPath := range segPaths {
-      segData, err := os.ReadFile(segPath)
-      if err != nil {
-         t.Fatalf("Failed to read segment %s: %v", segPath, err)
-      }
+   // 5. Process Segments (Stream & Parse)
+   // We will populate the real Sidx struct as we go.
+   realSidx := &SidxBox{
+      Header:      BoxHeader{Type: [4]byte{'s', 'i', 'd', 'x'}},
+      Version:     0,
+      ReferenceID: 1,
+      Timescale:   timescale,
+      // FirstOffset must be the size of the Sidx box itself, as it points to the byte
+      // immediately following the Sidx box.
+      FirstOffset: uint64(placeholderSize),
+   }
 
-      // Parse segment to calculate duration
-      segBoxes, err := Parse(segData)
+   for _, segPath := range mediaSegs {
+      size, duration, err := copySegmentAndExtractDuration(segPath, outFile)
       if err != nil {
-         t.Fatalf("Failed to parse segment %s: %v", segPath, err)
+         t.Fatalf("Failed to process segment %s: %v", segPath, err)
       }
+      // Add real reference
+      realSidx.AddReference(size, duration, true, 1, 0)
+   }
 
-      var segDuration uint64
-      // Aggregate duration from all 'traf' boxes in the segment
-      for _, moof := range AllMoof(segBoxes) {
-         if traf, ok := moof.Traf(); ok {
-            _, d, err := traf.Totals()
-            if err != nil {
-               t.Fatalf("Failed to get totals for traf in %s: %v", segPath, err)
-            }
-            segDuration += d
+   // 6. Overwrite Sidx
+   realBytes := realSidx.Encode()
+
+   // Safety check: Calculate padding if the real sidx is smaller than the placeholder
+   // (This shouldn't happen with fixed-width fields, but good for robustness)
+   if len(realBytes) > placeholderSize {
+      t.Fatalf("Real Sidx size (%d) exceeds placeholder size (%d)", len(realBytes), placeholderSize)
+   }
+   padding := placeholderSize - len(realBytes)
+
+   // Seek back to Sidx start
+   if _, err := outFile.Seek(sidxStartOffset, io.SeekStart); err != nil {
+      t.Fatalf("Failed to seek to sidx offset: %v", err)
+   }
+
+   // Write real Sidx
+   if _, err := outFile.Write(realBytes); err != nil {
+      t.Fatalf("Failed to overwrite sidx: %v", err)
+   }
+
+   // Fill gap with 'free' box if needed
+   if padding > 0 {
+      if padding < 8 {
+         // MP4 boxes need at least 8 bytes header.
+         // In practice, sidx size is deterministic so this branch is unlikely.
+         // If it happens, we'd need to pad inside the Sidx reserved fields if possible,
+         // or just accept a small garbage gap (which is technically invalid ISO BMFF but often ignored).
+         // For this test, we assume standard behavior.
+         t.Logf("Warning: Padding %d is less than 8 bytes, cannot write standard free box.", padding)
+         // Fill with zeros (skip)
+         zeros := make([]byte, padding)
+         outFile.Write(zeros)
+      } else {
+         freeHeader := make([]byte, 8)
+         binary.BigEndian.PutUint32(freeHeader[0:4], uint32(padding))
+         copy(freeHeader[4:8], []byte("free"))
+
+         // Write header
+         outFile.Write(freeHeader)
+
+         // Write payload (padding - 8)
+         if padding > 8 {
+            filler := make([]byte, padding-8)
+            outFile.Write(filler)
          }
       }
-
-      // Add reference to Sidx
-      // ReferencedSize = File/Segment size in bytes
-      // StartsWithSAP = true (common for DASH segments)
-      // SAPType = 1, SAPDeltaTime = 0
-      err = sidx.AddReference(uint32(len(segData)), uint32(segDuration), true, 1, 0)
-      if err != nil {
-         t.Fatalf("Failed to add reference for %s: %v", segPath, err)
-      }
    }
 
-   // Calculate and set FirstOffset.
-   // 1. Encode to get the size of the sidx box.
-   encodedSidx := sidx.Encode()
-   sidxSize := uint64(len(encodedSidx))
+   t.Logf("Single-pass concatenation complete: %s", outPath)
+}
 
-   // 2. Set FirstOffset to the size of the box (pointing to byte immediately after sidx)
-   sidx.FirstOffset = sidxSize
-
-   // 3. Re-encode to bake in the correct FirstOffset
-   encodedSidx = sidx.Encode()
-
-   // Verify size consistency (size shouldn't change unless version changed, which we control)
-   if uint64(len(encodedSidx)) != sidxSize {
-      // In the rare case encoding changed size (e.g. variable int encoding, though MP4 uses fixed), update again.
-      sidx.FirstOffset = uint64(len(encodedSidx))
-      encodedSidx = sidx.Encode()
-   }
-
-   // Prepare Output File
-   outPath := filepath.Join("testdata", outputFilename)
-   f, err := os.Create(outPath)
+// copySegmentAndExtractDuration copies data from the input file to the writer
+// while parsing 'moof' atoms to calculate the segment duration.
+// It returns total bytes copied and the duration.
+func copySegmentAndExtractDuration(path string, w io.Writer) (uint32, uint32, error) {
+   f, err := os.Open(path)
    if err != nil {
-      t.Fatalf("Failed to create output file: %v", err)
+      return 0, 0, err
    }
    defer f.Close()
 
-   // 3. Write first file (Init Segment) to disk
-   _, err = f.Write(initData)
-   if err != nil {
-      t.Fatalf("Failed to write init data: %v", err)
-   }
+   var totalDuration uint64
+   var totalBytes int64
+   header := make([]byte, 8)
 
-   // 4. Write "sidx" to disk
-   _, err = f.Write(encodedSidx)
-   if err != nil {
-      t.Fatalf("Failed to write sidx data: %v", err)
-   }
-
-   // 5. Write remaining files (Segments) to disk
-   for _, segPath := range segPaths {
-      segData, err := os.ReadFile(segPath)
-      if err != nil {
-         t.Fatalf("Failed to read segment for writing: %v", err)
+   for {
+      // Read Atom Header
+      n, err := io.ReadFull(f, header)
+      if err == io.EOF {
+         break
       }
-      _, err = f.Write(segData)
       if err != nil {
-         t.Fatalf("Failed to write segment data: %v", err)
+         return 0, 0, err
+      }
+
+      // Write Header to Output
+      if _, err := w.Write(header); err != nil {
+         return 0, 0, err
+      }
+      totalBytes += int64(n)
+
+      size := binary.BigEndian.Uint32(header[0:4])
+      typ := string(header[4:8])
+
+      // Basic handling for box size
+      if size < 8 {
+         // size 0 means "rest of file"
+         if size == 0 {
+            copied, err := io.Copy(w, f)
+            if err != nil {
+               return 0, 0, err
+            }
+            totalBytes += copied
+            break
+         }
+         // size 1 (Extended) not implemented for this snippet
+         return 0, 0, io.ErrUnexpectedEOF
+      }
+
+      payloadSize := int64(size) - 8
+
+      if typ == "moof" {
+         // We need to parse 'moof' to get duration.
+         // Read the payload into memory.
+         payload := make([]byte, payloadSize)
+         if _, err := io.ReadFull(f, payload); err != nil {
+            return 0, 0, err
+         }
+
+         // Write payload to Output
+         if _, err := w.Write(payload); err != nil {
+            return 0, 0, err
+         }
+         totalBytes += payloadSize
+
+         // Reconstruct full box data for the sofia parser
+         fullBox := make([]byte, size)
+         copy(fullBox[:8], header)
+         copy(fullBox[8:], payload)
+
+         var moof MoofBox
+         if err := moof.Parse(fullBox); err != nil {
+            return 0, 0, err
+         }
+
+         if traf, ok := moof.Traf(); ok {
+            _, d, err := traf.Totals()
+            if err != nil {
+               return 0, 0, err
+            }
+            totalDuration += d
+         }
+      } else {
+         // For 'mdat' and others, stream directly without buffering everything
+         copied, err := io.CopyN(w, f, payloadSize)
+         if err != nil {
+            return 0, 0, err
+         }
+         totalBytes += copied
       }
    }
 
-   t.Logf("Created concatenated file with SIDX at: %s", outPath)
+   return uint32(totalBytes), uint32(totalDuration), nil
 }

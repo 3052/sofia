@@ -23,26 +23,32 @@ SegmentBase:
 
 https://play.google.com/store/apps/details?id=com.cbs.app
 
-SegmentTemplate:
+SegmentTemplate, but each segment has its own `sidx` so might be bad test:
 
 https://play.google.com/store/apps/details?id=com.roku.remote
 
+SegmentTemplate, but each segment has its own `sidx` so might be bad test:
+
+https://play.google.com/store/apps/details?id=tv.pluto.android
+
+https://play.google.com/store/apps/details?id=com.plexapp.android
+
+---------------------------------------------------------------------------------
+
 example:
 
-https://therokuchannel.roku.com/watch/597a64a4a25c5bf6af4a8c7053049a6f
+https://pluto.tv/on-demand/movies/6495eff09263a40013cf63a5
 
 ~~~
 N_m3u8DL-RE --skip-merge `
-'https://vod-playlist.sr.roku.com/1.mpd?origin=https%3A%2F%2Fvod.delivery.roku.com%2F4eb6f71c-0374-4403-8e73-83334c1ca62b%2Findex-1749161125402.mpd%3Faws.manifestfilter%3Daudio_language%3Aen%2Ceng'
+http://silo-hybrik.pluto.tv.s3.amazonaws.com/735_Paramount_Pictures_LF/clip/6495efee9263a40013cf638d_Jack_Reacher/1080pDRM/20241115_113001/dash/0-end/main.mpd
 
-Vid *CENC 1920x1080 | 3759 Kbps | 7 | 23.976 | avc1.640028 | 994 Segments | ~01h39m24s
+Vid *CENC 4586 Kbps | 8 | 30 | avc1.640028 | 1565 Segments | Main | ~02h10m24s
 ~~~
 
 ## decrypt
 
 ~~~
-18:03:28 key ID 28339ad78f734520da24e6e0573d392e
-18:03:28 DASH content ID 2a
-18:03:28 MP4 content ID 2a
-18:03:28 key 13d7c7cf295444944b627ef0ad2c1b3c
+19:42:36 key ID 000000006737a1396ec1349107feb9f4
+19:42:36 key d55db54e95d0e3df95981b37d2742cb7
 ~~~

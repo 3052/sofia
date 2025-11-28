@@ -2,6 +2,7 @@ package sofia
 
 import (
    "encoding/binary"
+   "errors"
 )
 
 // --- Box Builders ---
@@ -211,7 +212,6 @@ func filterMvex(moov *MoovBox) {
    for _, child := range moov.Children {
       // In sofia, unknown boxes are often stored in 'Raw'.
       // mvex is usually Type "mvex" (0x6d766578).
-      // Fix: Removed 'child.Raw != nil' check (S1009)
       if len(child.Raw) >= 8 {
          if string(child.Raw[4:8]) == "mvex" {
             continue
@@ -220,4 +220,60 @@ func filterMvex(moov *MoovBox) {
       cleanChildren = append(cleanChildren, child)
    }
    moov.Children = cleanChildren
+}
+
+// patchDuration updates the duration field in a raw mvhd or mdhd box.
+// It detects the version (0 or 1) and writes the duration to the correct offset.
+func patchDuration(boxData []byte, newDuration uint64) error {
+   if len(boxData) < 32 {
+      return errors.New("box too short to patch duration")
+   }
+
+   version := boxData[8] // Offset 8 is Version
+
+   if version == 1 {
+      // Version 1 (64-bit fields)
+      // Layout: [Size 4] [Type 4] [Ver 1] [Flags 3] [Creation 8] [Mod 8] [Timescale 4] [Duration 8]
+      // Offsets: 0+8=8, 8+4=12, 12+8=20, 20+8=28 (Timescale), 28+4=32 (Duration)
+      const durationOffset = 32
+      if len(boxData) < durationOffset+8 {
+         return errors.New("box too short for v1 duration")
+      }
+      binary.BigEndian.PutUint64(boxData[durationOffset:], newDuration)
+   } else {
+      // Version 0 (32-bit fields)
+      // Layout: [Size 4] [Type 4] [Ver 1] [Flags 3] [Creation 4] [Mod 4] [Timescale 4] [Duration 4]
+      // Offsets: 0+8=8, 8+4=12, 12+4=16, 16+4=20 (Timescale), 20+4=24 (Duration)
+      const durationOffset = 24
+      if len(boxData) < durationOffset+4 {
+         return errors.New("box too short for v0 duration")
+      }
+      if newDuration > 0xFFFFFFFF {
+         return errors.New("duration overflows 32-bit field (update init segment to use version 1 boxes)")
+      }
+      binary.BigEndian.PutUint32(boxData[durationOffset:], uint32(newDuration))
+   }
+   return nil
+}
+
+// getTimescale extracts the timescale from a raw mvhd or mdhd box.
+func getTimescale(boxData []byte) (uint32, error) {
+   if len(boxData) < 24 {
+      return 0, errors.New("box too short for timescale")
+   }
+   version := boxData[8]
+
+   var timescaleOffset int
+   if version == 1 {
+      // See offsets in patchDuration
+      timescaleOffset = 28
+   } else {
+      timescaleOffset = 20
+   }
+
+   if len(boxData) < timescaleOffset+4 {
+      return 0, errors.New("box truncated before timescale")
+   }
+
+   return binary.BigEndian.Uint32(boxData[timescaleOffset:]), nil
 }

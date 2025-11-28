@@ -40,9 +40,9 @@ type Box struct {
    Moov *MoovBox
    Moof *MoofBox
    Mdat *MdatBox
-   Sidx *SidxBox
    Pssh *PsshBox
-   Raw  []byte
+   // Sidx removed; will be stored in Raw
+   Raw []byte
 }
 
 func (b *Box) Encode() []byte {
@@ -53,8 +53,6 @@ func (b *Box) Encode() []byte {
       return b.Moof.Encode()
    case b.Mdat != nil:
       return b.Mdat.Encode()
-   case b.Sidx != nil:
-      return b.Sidx.Encode()
    case b.Pssh != nil:
       return b.Pssh.Encode()
    default:
@@ -104,12 +102,6 @@ func Parse(data []byte) ([]Box, error) {
             return nil, err
          }
          currentBox.Mdat = &mdat
-      case "sidx":
-         var sidx SidxBox
-         if err := sidx.Parse(boxData); err != nil {
-            return nil, err
-         }
-         currentBox.Sidx = &sidx
       case "pssh":
          var pssh PsshBox
          if err := pssh.Parse(boxData); err != nil {
@@ -117,6 +109,7 @@ func Parse(data []byte) ([]Box, error) {
          }
          currentBox.Pssh = &pssh
       default:
+         // sidx and others fall here
          currentBox.Raw = boxData
       }
       boxes = append(boxes, currentBox)
@@ -144,16 +137,6 @@ func AllMoof(boxes []Box) []*MoofBox {
       }
    }
    return moofs
-}
-
-// FindSidx finds the first SidxBox in a slice of generic boxes.
-func FindSidx(boxes []Box) (*SidxBox, bool) {
-   for _, box := range boxes {
-      if box.Sidx != nil {
-         return box.Sidx, true
-      }
-   }
-   return nil, false
 }
 
 // Decrypt decrypts a segment's mdat boxes in-place using the provided key.

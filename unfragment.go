@@ -179,6 +179,7 @@ func (u *Unfragmenter) Finish() error {
    stbl, _ := minf.Stbl()
 
    // A. Patch 'mdhd' (Media Header) with new duration
+   // We still patch mdhd so the track has a valid length
    mdhd, ok := mdia.Mdhd()
    if !ok {
       return errors.New("corrupt init segment: missing mdhd")
@@ -187,40 +188,9 @@ func (u *Unfragmenter) Finish() error {
       return fmt.Errorf("patching mdhd: %w", err)
    }
 
-   // Get track timescale to convert duration for mvhd
-   trackTimescale, err := getTimescale(mdhd.RawData)
-   if err != nil {
-      return fmt.Errorf("reading mdhd timescale: %w", err)
-   }
-   if trackTimescale == 0 {
-      trackTimescale = 1
-   }
-
-   // B. Patch 'mvhd' (Movie Header) with converted duration
-   foundMvhd := false
-   for i, child := range u.moov.Children {
-      // mvhd is usually parsed as a Raw child
-      if len(child.Raw) >= 8 && string(child.Raw[4:8]) == "mvhd" {
-         mvTimescale, err := getTimescale(child.Raw)
-         if err != nil {
-            return fmt.Errorf("reading mvhd timescale: %w", err)
-         }
-
-         // MovieDur = (TrackDur * MovieScale) / TrackScale
-         movieDuration := (totalDuration * uint64(mvTimescale)) / uint64(trackTimescale)
-
-         if err := patchDuration(child.Raw, movieDuration); err != nil {
-            return fmt.Errorf("patching mvhd: %w", err)
-         }
-
-         u.moov.Children[i].Raw = child.Raw
-         foundMvhd = true
-         break
-      }
-   }
-   if !foundMvhd {
-      return errors.New("corrupt init segment: missing mvhd")
-   }
+   // B. mvhd patching removed as requested.
+   // The file global duration will remain 0 (or whatever was in init.mp4),
+   // but individual track duration is updated above.
 
    // C. Update Children (remove mvex)
    filterMvex(u.moov)

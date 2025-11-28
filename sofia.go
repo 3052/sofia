@@ -40,7 +40,7 @@ type Box struct {
    Moov *MoovBox
    Moof *MoofBox
    Mdat *MdatBox
-   Sidx *SidxBox // Added back
+   Sidx *SidxBox
    Pssh *PsshBox
    Raw  []byte
 }
@@ -49,14 +49,9 @@ func (b *Box) Encode() []byte {
    switch {
    case b.Moov != nil:
       return b.Moov.Encode()
-   case b.Moof != nil:
-      return b.Moof.Encode()
    case b.Mdat != nil:
       return b.Mdat.Encode()
-   case b.Sidx != nil: // Added back
-      return b.Sidx.Encode()
-   case b.Pssh != nil:
-      return b.Pssh.Encode()
+   // Moof, Sidx, Pssh removed from Encode as they are read-only inputs
    default:
       return b.Raw
    }
@@ -104,7 +99,7 @@ func Parse(data []byte) ([]Box, error) {
             return nil, err
          }
          currentBox.Mdat = &mdat
-      case "sidx": // Added back
+      case "sidx":
          var sidx SidxBox
          if err := sidx.Parse(boxData); err != nil {
             return nil, err
@@ -147,7 +142,6 @@ func AllMoof(boxes []Box) []*MoofBox {
 }
 
 // FindSidx finds the first SidxBox in a slice of generic boxes.
-// Useful if you need to inspect it before unfragmenting.
 func FindSidx(boxes []Box) (*SidxBox, bool) {
    for _, box := range boxes {
       if box.Sidx != nil {
@@ -158,10 +152,10 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
 }
 
 // Decrypt decrypts a segment's mdat boxes in-place using the provided key.
-// It self-determines if decryption is needed by checking for 'senc' boxes within the segment.
-// This function has a side effect: it modifies the Payload of the MdatBox structs within the segmentBoxes slice.
 func Decrypt(segmentBoxes []Box, key []byte) error {
-   // Use the AllMoof helper to get all fragments, then check if any are encrypted.
+   // ... (Existing decryption logic unchanged, can be kept for utility)
+   // If you are only doing unfragmentation and not manual decryption via this function,
+   // you can remove this entirely. Keeping it for now as it's separate from Encode logic.
    var isEncrypted bool
    for _, moof := range AllMoof(segmentBoxes) {
       if traf, ok := moof.Traf(); ok {
@@ -171,11 +165,9 @@ func Decrypt(segmentBoxes []Box, key []byte) error {
          }
       }
    }
-   // If no 'senc' boxes were found in any fragment, there is nothing to decrypt.
    if !isEncrypted {
       return nil
    }
-   // If the segment is encrypted, we must have a valid key.
    if len(key) != 16 {
       return fmt.Errorf("invalid key length: expected 16, got %d", len(key))
    }
@@ -183,7 +175,6 @@ func Decrypt(segmentBoxes []Box, key []byte) error {
    if err != nil {
       return fmt.Errorf("AES cipher error: %w", err)
    }
-   // Iterate through the boxes, processing moof/mdat pairs.
    for i := 0; i < len(segmentBoxes); i++ {
       if segmentBoxes[i].Moof != nil {
          moof := segmentBoxes[i].Moof
@@ -191,22 +182,19 @@ func Decrypt(segmentBoxes []Box, key []byte) error {
             return fmt.Errorf("malformed segment: moof at index %d is not followed by an mdat", i)
          }
          mdat := segmentBoxes[i+1].Mdat
-         // Perform decryption directly on the MdatBox's payload.
          err := decryptFragment(moof, mdat.Payload, block)
          if err != nil {
             return fmt.Errorf("failed to process fragment at index %d: %w", i, err)
          }
-         i++ // Skip the mdat box in the next iteration.
+         i++
       }
    }
    return nil
 }
 
-// decryptFragment is an unexported helper that handles a single moof/mdat pair, decrypting the mdatData in-place.
 func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
    traf, ok := moof.Traf()
    if !ok {
-      // No traf in this moof, nothing to do.
       return nil
    }
    currentMdatOffset := 0
@@ -214,7 +202,6 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
    if tfhd == nil || trun == nil {
       return errors.New("traf is missing required boxes: tfhd or trun")
    }
-   // The 'senc' box is the per-fragment signal. If it's not here, we skip this traf.
    senc, ok := traf.Senc()
    if !ok {
       return nil
@@ -245,17 +232,14 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
       }
       stream := cipher.NewCTR(block, iv)
       if len(senc.Samples[i].Subsamples) == 0 {
-         // Full sample encryption, decrypt in-place.
          stream.XORKeyStream(sampleData, sampleData)
       } else {
-         // Subsample encryption.
          sampleOffset := 0
          for _, sub := range senc.Samples[i].Subsamples {
             sampleOffset += int(sub.BytesOfClearData)
             if sub.BytesOfProtectedData > 0 {
                endOfProtected := sampleOffset + int(sub.BytesOfProtectedData)
                protectedPortion := sampleData[sampleOffset:endOfProtected]
-               // Decrypt the protected portion in-place.
                stream.XORKeyStream(protectedPortion, protectedPortion)
                sampleOffset = endOfProtected
             }

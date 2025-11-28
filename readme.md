@@ -8,17 +8,28 @@
 
 ## features
 
-1. Firefox playback
-2. decrypt `mdat` using `senc`
-3. multiple `moof` boxes
-4. parse `pssh`
-5. parse `sidx`
-6. remove `edts`
-7. remove `pssh`
-8. remove `sinf`
-9. rename `enca`
-10. rename `encv`
-11. get bandwidth from `traf`
+- delete `edts` box
+- delete `pssh` box
+- delete `sinf` box
+- read `enca` box
+- read `encv` box
+- read `frma` box
+- read `mdat` box
+- read `mdhd` box
+- read `mdia` box
+- read `moof` box
+- read `moov` box
+- read `pssh` box
+- read `senc` box
+- read `sidx` box
+- read `tfhd` box
+- read `traf` box
+- read `trak` box
+- read `trun` box
+- update `enca` box
+- update `encv` box
+- write `mdat` box
+- write `moov` box
 
 ## prior art
 

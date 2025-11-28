@@ -7,6 +7,7 @@ type MoofChild struct {
    Pssh *PsshBox
    Raw  []byte
 }
+
 type MoofBox struct {
    Header   BoxHeader
    RawData  []byte
@@ -57,31 +58,6 @@ func (b *MoofBox) Parse(data []byte) error {
       }
    }
    return nil
-}
-
-func (b *MoofBox) Encode() []byte {
-   var content []byte
-   for _, child := range b.Children {
-      if child.Traf != nil {
-         content = append(content, child.Traf.Encode()...)
-      } else if child.Pssh != nil {
-         content = append(content, child.Pssh.Encode()...)
-      } else if child.Raw != nil {
-         content = append(content, child.Raw...)
-      }
-   }
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
-}
-
-func (b *MoofBox) Sanitize() {
-   for i := range b.Children {
-      child := &b.Children[i]
-      if child.Pssh != nil {
-         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
 }
 
 // Traf returns the first traf box found and a boolean indicating if it was found.

@@ -63,9 +63,8 @@ func (b *TrakBox) Parse(data []byte) error {
 func (b *TrakBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
-      if child.Edts != nil {
-         content = append(content, child.Edts.Encode()...)
-      } else if child.Mdia != nil {
+      // Logic update: Skip 'edts' entirely to delete it.
+      if child.Mdia != nil {
          content = append(content, child.Mdia.Encode()...)
       } else if child.Raw != nil {
          content = append(content, child.Raw...)
@@ -74,15 +73,6 @@ func (b *TrakBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
-}
-
-func (b *TrakBox) ReplaceEdts() {
-   for i := range b.Children {
-      child := &b.Children[i]
-      if child.Edts != nil {
-         child.Edts.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
 }
 
 // Mdia finds the MdiaBox child and returns it, along with a boolean indicating if it was found.

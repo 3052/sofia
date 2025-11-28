@@ -5,47 +5,39 @@ import (
    "errors"
 )
 
-// SampleInfo holds details about a single sample in a track run.
 type SampleInfo struct {
    Size                  uint32
    Duration              uint32
    Flags                 uint32
-   CompositionTimeOffset int32 // Can be signed
+   CompositionTimeOffset int32
 }
 
-// TrunBox represents the 'trun' box (Track Run Box).
 type TrunBox struct {
    Header  BoxHeader
-   RawData []byte // Stores the original box data for a perfect round trip
+   RawData []byte
    Flags   uint32
    Samples []SampleInfo
 }
 
-// Parse parses the 'trun' box from a byte slice.
 func (b *TrunBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
-
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-
    sampleCount := binary.BigEndian.Uint32(data[12:16])
    offset := 16
-
    if b.Flags&0x000001 != 0 {
       offset += 4
-   } // data_offset_present
+   }
    if b.Flags&0x000004 != 0 {
       offset += 4
-   } // first_sample_flags_present
-
+   }
    b.Samples = make([]SampleInfo, sampleCount)
    sampleDurationPresent := b.Flags&0x000100 != 0
    sampleSizePresent := b.Flags&0x000200 != 0
    sampleFlagsPresent := b.Flags&0x000400 != 0
    sampleCTOPresent := b.Flags&0x000800 != 0
-
    for i := uint32(0); i < sampleCount; i++ {
       if sampleDurationPresent {
          if offset+4 > len(data) {
@@ -77,9 +69,4 @@ func (b *TrunBox) Parse(data []byte) error {
       }
    }
    return nil
-}
-
-// Encode returns the raw byte data to ensure a perfect round trip.
-func (b *TrunBox) Encode() []byte {
-   return b.RawData
 }

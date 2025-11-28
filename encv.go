@@ -64,9 +64,8 @@ func (b *EncvBox) Parse(data []byte) error {
 func (b *EncvBox) Encode() []byte {
    var childrenContent []byte
    for _, child := range b.Children {
-      if child.Sinf != nil {
-         childrenContent = append(childrenContent, child.Sinf.Encode()...)
-      } else if child.Raw != nil {
+      // Logic update: Skip 'sinf' entirely to delete it.
+      if child.Raw != nil {
          childrenContent = append(childrenContent, child.Raw...)
       }
    }

@@ -32,27 +32,22 @@ func (b *SencBox) Parse(data []byte) error {
       return err
    }
    b.RawData = data[:b.Header.Size]
-
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-
    offset := 12
    if offset+4 > len(data) {
       return errors.New("senc box too short for sample count")
    }
    sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
-
    b.Samples = make([]SampleEncryptionInfo, sampleCount)
    const ivSize = 8
    subsamplesPresent := b.Flags&0x000002 != 0
-
    for i := uint32(0); i < sampleCount; i++ {
       if offset+ivSize > len(data) {
          return fmt.Errorf("senc box truncated at IV for sample %d", i)
       }
       b.Samples[i].IV = data[offset : offset+ivSize]
       offset += ivSize
-
       if subsamplesPresent {
          if offset+2 > len(data) {
             return fmt.Errorf("senc box truncated at subsample count for sample %d", i)
@@ -75,9 +70,4 @@ func (b *SencBox) Parse(data []byte) error {
       }
    }
    return nil
-}
-
-// Encode returns the raw byte data to ensure a perfect round trip.
-func (b *SencBox) Encode() []byte {
-   return b.RawData
 }

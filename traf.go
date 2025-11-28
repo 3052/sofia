@@ -8,34 +8,11 @@ type TrafChild struct {
    Senc *SencBox
    Raw  []byte
 }
+
 type TrafBox struct {
    Header   BoxHeader
    RawData  []byte
    Children []TrafChild
-}
-
-// Totals calculates the total byte size and duration of all samples in a traf.
-func (b *TrafBox) Totals() (totalBytes uint64, totalDuration uint64, err error) {
-   trun := b.Trun()
-   tfhd := b.Tfhd()
-   if trun == nil {
-      return 0, 0, errors.New("traf is missing trun box to calculate totals")
-   }
-
-   for _, sample := range trun.Samples {
-      size := sample.Size
-      if size == 0 && tfhd != nil {
-         size = tfhd.DefaultSampleSize
-      }
-      totalBytes += uint64(size)
-
-      duration := sample.Duration
-      if duration == 0 && tfhd != nil {
-         duration = tfhd.DefaultSampleDuration
-      }
-      totalDuration += uint64(duration)
-   }
-   return totalBytes, totalDuration, nil
 }
 
 func (b *TrafBox) Parse(data []byte) error {
@@ -88,24 +65,6 @@ func (b *TrafBox) Parse(data []byte) error {
       }
    }
    return nil
-}
-
-func (b *TrafBox) Encode() []byte {
-   var content []byte
-   for _, child := range b.Children {
-      if child.Tfhd != nil {
-         content = append(content, child.Tfhd.Encode()...)
-      } else if child.Trun != nil {
-         content = append(content, child.Trun.Encode()...)
-      } else if child.Senc != nil {
-         content = append(content, child.Senc.Encode()...)
-      } else if child.Raw != nil {
-         content = append(content, child.Raw...)
-      }
-   }
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
 }
 
 func (b *TrafBox) Tfhd() *TfhdBox {

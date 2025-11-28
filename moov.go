@@ -66,10 +66,9 @@ func (b *MoovBox) Parse(data []byte) error {
 func (b *MoovBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
+      // Logic update: Skip 'pssh' entirely to delete it.
       if child.Trak != nil {
          content = append(content, child.Trak.Encode()...)
-      } else if child.Pssh != nil {
-         content = append(content, child.Pssh.Encode()...)
       } else if child.Raw != nil {
          content = append(content, child.Raw...)
       }
@@ -77,37 +76,6 @@ func (b *MoovBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
-}
-
-func (b *MoovBox) Sanitize() error {
-   for i := range b.Children {
-      child := &b.Children[i]
-      if child.Pssh != nil {
-         child.Pssh.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-      }
-   }
-   if trak, ok := b.Trak(); ok {
-      if mdia, ok := trak.Mdia(); ok {
-         if minf, ok := mdia.Minf(); ok {
-            if stbl, ok := minf.Stbl(); ok {
-               if stsd, ok := stbl.Stsd(); ok {
-                  if sinf, sampleEntryHeader, isProtected := stsd.Sinf(); isProtected {
-                     if sinf == nil {
-                        return errors.New("inconsistent state: protection found but sinf is nil")
-                     }
-                     frma := sinf.Frma()
-                     if frma == nil {
-                        return errors.New("could not find 'frma' box for original format")
-                     }
-                     sinf.Header.Type = [4]byte{'f', 'r', 'e', 'e'}
-                     sampleEntryHeader.Type = frma.DataFormat
-                  }
-               }
-            }
-         }
-      }
-   }
-   return nil
 }
 
 func (b *MoovBox) Trak() (*TrakBox, bool) {

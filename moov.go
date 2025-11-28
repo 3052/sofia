@@ -66,9 +66,10 @@ func (b *MoovBox) Parse(data []byte) error {
 func (b *MoovBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
-      // Logic update: Skip 'pssh' entirely to delete it.
       if child.Trak != nil {
          content = append(content, child.Trak.Encode()...)
+      } else if child.Pssh != nil {
+         // pssh is read-only in this simplified version; skipped
       } else if child.Raw != nil {
          content = append(content, child.Raw...)
       }
@@ -76,6 +77,29 @@ func (b *MoovBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(content))
    headerBytes := b.Header.Encode()
    return append(headerBytes, content...)
+}
+
+// Remove deletes all child boxes matching the given type (e.g., "pssh", "mvex").
+func (b *MoovBox) Remove(boxType string) {
+   var kept []MoovChild
+   for _, child := range b.Children {
+      // Check typed fields
+      if boxType == "trak" && child.Trak != nil {
+         continue
+      }
+      if boxType == "pssh" && child.Pssh != nil {
+         continue
+      }
+      // Check raw fields
+      // Fix: Removed 'child.Raw != nil' check (S1009)
+      if len(child.Raw) >= 8 {
+         if string(child.Raw[4:8]) == boxType {
+            continue
+         }
+      }
+      kept = append(kept, child)
+   }
+   b.Children = kept
 }
 
 func (b *MoovBox) Trak() (*TrakBox, bool) {

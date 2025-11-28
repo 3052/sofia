@@ -5,6 +5,7 @@ import (
    "errors"
    "fmt"
    "io"
+   "log"
 )
 
 // Unfragmenter handles the conversion of fragmented segments into a single file
@@ -22,7 +23,8 @@ type Unfragmenter struct {
    mdatStartOffset int64  // Where the mdat box starts in the file
    payloadWritten  uint64 // Total bytes of media data written so far
 
-   initialized bool
+   initialized  bool
+   segmentCount int // Debugging counter
 }
 
 type sampleInfo struct {
@@ -42,6 +44,7 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
       return errors.New("already initialized")
    }
 
+   log.Println("[Unfrag] Initializing...")
    boxes, err := Parse(initSegment)
    if err != nil {
       return fmt.Errorf("parsing init: %w", err)
@@ -60,8 +63,6 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
    }
 
    // 2. Write mdat Header Placeholder
-   // We assume 64-bit size (16 bytes) to be safe for multi-GB files.
-   // [size: 1 (4b)] [type: mdat (4b)] [largeSize: 0 (8b placeholder)]
    u.mdatStartOffset, _ = u.dst.Seek(0, io.SeekCurrent)
 
    mdatHeader := make([]byte, 16)
@@ -73,89 +74,107 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
    }
 
    u.initialized = true
+   log.Println("[Unfrag] Initialization complete. Ready for segments.")
    return nil
 }
 
 // AddSegment processes a single media segment (e.g., segment-1.m4s).
-// It parses metadata into memory and appends the payload immediately to disk.
 func (u *Unfragmenter) AddSegment(segmentData []byte) error {
    if !u.initialized {
       return errors.New("must call Initialize before AddSegment")
    }
 
+   u.segmentCount++
    boxes, err := Parse(segmentData)
    if err != nil {
-      return fmt.Errorf("parsing segment: %w", err)
+      return fmt.Errorf("parsing segment %d: %w", u.segmentCount, err)
    }
 
    moof := FindMoofPtr(boxes)
    mdat := FindMdatPtr(boxes)
 
    if moof == nil || mdat == nil {
-      // Possibly a silent audio segment or metadata only?
-      // We skip it to maintain stream integrity.
+      log.Printf("[Unfrag] Segment %d skipped: missing moof or mdat", u.segmentCount)
       return nil
    }
 
-   // 1. Calculate absolute offset for this chunk
-   // Current File Position is end of previous write.
-   // The STCO offset is absolute from start of file.
+   // --- Step 1: Extract Metadata (in memory) ---
+   traf, ok := moof.Traf()
+   if !ok {
+      log.Printf("[Unfrag] Segment %d skipped: valid moof but no traf", u.segmentCount)
+      return nil
+   }
+
+   tfhd := traf.Tfhd()
+   if tfhd == nil {
+      log.Printf("[Unfrag] Segment %d skipped: missing tfhd", u.segmentCount)
+      return nil
+   }
+
+   // Collect samples from ALL trun boxes in this fragment
+   var newSamples []sampleInfo
+
+   // Default values from tfhd
+   defDur := tfhd.DefaultSampleDuration
+   defSize := tfhd.DefaultSampleSize
+
+   // Iterate over traf children to find all 'trun' boxes
+   trunCount := 0
+   for _, child := range traf.Children {
+      if child.Trun != nil {
+         trunCount++
+         trun := child.Trun
+         for _, s := range trun.Samples {
+            si := sampleInfo{
+               Duration: defDur,
+               Size:     defSize,
+            }
+            if (trun.Flags & 0x000100) != 0 {
+               si.Duration = s.Duration
+            }
+            if (trun.Flags & 0x000200) != 0 {
+               si.Size = s.Size
+            }
+            newSamples = append(newSamples, si)
+         }
+      }
+   }
+
+   sampleCount := len(newSamples)
+   if sampleCount == 0 {
+      log.Printf("[Unfrag] Segment %d skipped: 0 samples found (truns found: %d)", u.segmentCount, trunCount)
+      return nil
+   }
+
+   // --- Step 2: Commit to Disk/State ---
+
    currentPos, _ := u.dst.Seek(0, io.SeekCurrent)
    u.chunkOffsets = append(u.chunkOffsets, uint64(currentPos))
 
-   // 2. Write Payload immediately
    n, err := u.dst.Write(mdat.Payload)
    if err != nil {
       return fmt.Errorf("writing payload: %w", err)
    }
    u.payloadWritten += uint64(n)
 
-   // 3. Extract Metadata
-   traf, ok := moof.Traf()
-   if !ok {
-      return nil
-   }
-   tfhd := traf.Tfhd()
-   trun := traf.Trun()
+   u.samples = append(u.samples, newSamples...)
+   u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(sampleCount))
 
-   if tfhd != nil && trun != nil {
-      // Defaults
-      defDur, defSize := tfhd.DefaultSampleDuration, tfhd.DefaultSampleSize
-
-      // Record sample count for this chunk (for stsc)
-      u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(len(trun.Samples)))
-
-      for _, s := range trun.Samples {
-         si := sampleInfo{
-            Duration: defDur,
-            Size:     defSize,
-         }
-
-         // Overrides
-         if (trun.Flags & 0x000100) != 0 {
-            si.Duration = s.Duration
-         }
-         if (trun.Flags & 0x000200) != 0 {
-            si.Size = s.Size
-         }
-         // IsSync check removed
-         // ctts check removed
-
-         u.samples = append(u.samples, si)
-      }
-   }
+   log.Printf("[Unfrag] Segment %d processed: Offset=%d, Samples=%d, Bytes=%d",
+      u.segmentCount, currentPos, sampleCount, n)
 
    return nil
 }
 
-// Finish constructs the final atoms, patches the duration, writes the moov box,
-// and updates the mdat header size.
+// Finish constructs the final atoms and writes the file footer.
 func (u *Unfragmenter) Finish() error {
    if !u.initialized {
       return errors.New("not initialized")
    }
 
-   // 1. Calculate Total Duration (in Track Timescale)
+   log.Println("[Unfrag] Finishing...")
+
+   // 1. Calculate Total Duration
    var totalDuration uint64
    for _, s := range u.samples {
       totalDuration += uint64(s.Duration)
@@ -165,21 +184,35 @@ func (u *Unfragmenter) Finish() error {
    stts := buildStts(u.samples)
    stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
-   // stss build removed
-   // ctts build removed
-
-   // 3. Build Offsets (stco)
-   // We assume offsets fit in 32-bit integers (< 4GB file).
    offsetBox := buildStco(u.chunkOffsets)
 
-   // 4. Update Moov Structure
+   // --- DEBUG LOGGING ---
+   log.Printf("[Unfrag] Summary:")
+   log.Printf("  Total Chunks (offsets): %d", len(u.chunkOffsets))
+   log.Printf("  Total Segments Tracked: %d", len(u.segmentSampleCounts))
+
+   // Validate STSC sum
+   var stscSum uint32
+   for _, c := range u.segmentSampleCounts {
+      stscSum += c
+   }
+   log.Printf("  Total Samples (stsc sum): %d", stscSum)
+   log.Printf("  Total Samples (stsz len): %d", len(u.samples))
+   log.Printf("  Total Duration: %d", totalDuration)
+
+   if stscSum != uint32(len(u.samples)) {
+      log.Printf("[Unfrag] ERROR: Sample count mismatch! stsc says %d, stsz says %d", stscSum, len(u.samples))
+   } else {
+      log.Println("[Unfrag] Sample counts match.")
+   }
+   // ---------------------
+
+   // 3. Update Moov
    trak, _ := u.moov.Trak()
    mdia, _ := trak.Mdia()
    minf, _ := mdia.Minf()
    stbl, _ := minf.Stbl()
 
-   // A. Patch 'mdhd' (Media Header) with new duration
-   // We still patch mdhd so the track has a valid length
    mdhd, ok := mdia.Mdhd()
    if !ok {
       return errors.New("corrupt init segment: missing mdhd")
@@ -188,15 +221,12 @@ func (u *Unfragmenter) Finish() error {
       return fmt.Errorf("patching mdhd: %w", err)
    }
 
-   // B. mvhd patching removed as requested.
-   // The file global duration will remain 0 (or whatever was in init.mp4),
-   // but individual track duration is updated above.
-
-   // C. Update Children (remove mvex)
    filterMvex(u.moov)
 
    var newChildren []StblChild
    if stsd, ok := stbl.Stsd(); ok {
+      // Attempt to unprotect encryption here if needed
+      stsd.UnprotectAll()
       newChildren = append(newChildren, StblChild{Stsd: stsd})
    } else {
       return errors.New("corrupt init segment: missing stsd")
@@ -206,35 +236,28 @@ func (u *Unfragmenter) Finish() error {
    newChildren = append(newChildren, StblChild{Raw: stsz})
    newChildren = append(newChildren, StblChild{Raw: stsc})
    newChildren = append(newChildren, StblChild{Raw: offsetBox})
-   // stss append removed
-   // ctts append removed
 
    stbl.Children = newChildren
 
-   // 5. Write Moov to end of file
+   // 4. Write Moov
    moovBytes := u.moov.Encode()
    if _, err := u.dst.Write(moovBytes); err != nil {
       return fmt.Errorf("writing moov: %w", err)
    }
 
-   // 6. Update mdat Size
-   // Go back to the start of mdat header
+   // 5. Update mdat Size
    if _, err := u.dst.Seek(u.mdatStartOffset+8, io.SeekStart); err != nil {
       return fmt.Errorf("seeking to mdat size: %w", err)
    }
 
-   // We used 16-byte header (Large Size). The size field is at offset 8.
-   // Value = Header(16) + Payload
    finalMdatSize := uint64(16) + u.payloadWritten
-
    var sizeBuf [8]byte
    binary.BigEndian.PutUint64(sizeBuf[:], finalMdatSize)
    if _, err := u.dst.Write(sizeBuf[:]); err != nil {
       return fmt.Errorf("updating mdat size: %w", err)
    }
 
-   // Seek back to end
    u.dst.Seek(0, io.SeekEnd)
-
+   log.Println("[Unfrag] Done.")
    return nil
 }

@@ -26,10 +26,8 @@ type Unfragmenter struct {
 }
 
 type sampleInfo struct {
-   Size              uint32
-   Duration          uint32
-   IsSync            bool
-   CompositionOffset int32
+   Size     uint32
+   Duration uint32
 }
 
 // NewUnfragmenter creates a new converter writing to the provided file.
@@ -64,7 +62,6 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
    // 2. Write mdat Header Placeholder
    // We assume 64-bit size (16 bytes) to be safe for multi-GB files.
    // [size: 1 (4b)] [type: mdat (4b)] [largeSize: 0 (8b placeholder)]
-   // Since we removed ftyp, this is likely written at offset 0.
    u.mdatStartOffset, _ = u.dst.Seek(0, io.SeekCurrent)
 
    mdatHeader := make([]byte, 16)
@@ -102,7 +99,7 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
 
    // 1. Calculate absolute offset for this chunk
    // Current File Position is end of previous write.
-   // The STCO/CO64 offset is absolute from start of file.
+   // The STCO offset is absolute from start of file.
    currentPos, _ := u.dst.Seek(0, io.SeekCurrent)
    u.chunkOffsets = append(u.chunkOffsets, uint64(currentPos))
 
@@ -123,7 +120,7 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
 
    if tfhd != nil && trun != nil {
       // Defaults
-      defDur, defSize, defFlags := tfhd.DefaultSampleDuration, tfhd.DefaultSampleSize, tfhd.DefaultSampleFlags
+      defDur, defSize := tfhd.DefaultSampleDuration, tfhd.DefaultSampleSize
 
       // Record sample count for this chunk (for stsc)
       u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(len(trun.Samples)))
@@ -132,7 +129,6 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
          si := sampleInfo{
             Duration: defDur,
             Size:     defSize,
-            IsSync:   (defFlags & 0x00010000) == 0,
          }
 
          // Overrides
@@ -142,12 +138,8 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
          if (trun.Flags & 0x000200) != 0 {
             si.Size = s.Size
          }
-         if (trun.Flags & 0x000400) != 0 {
-            si.IsSync = (s.Flags & 0x00010000) == 0
-         }
-         if (trun.Flags & 0x000800) != 0 {
-            si.CompositionOffset = s.CompositionTimeOffset
-         }
+         // IsSync check removed
+         // ctts check removed
 
          u.samples = append(u.samples, si)
       }
@@ -173,22 +165,12 @@ func (u *Unfragmenter) Finish() error {
    stts := buildStts(u.samples)
    stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
-   stss := buildStss(u.samples)
-   ctts := buildCtts(u.samples)
+   // stss build removed
+   // ctts build removed
 
-   // 3. Build Offsets (co64 or stco)
-   var offsetBox []byte
-   is64Bit := false
-   if len(u.chunkOffsets) > 0 {
-      if u.chunkOffsets[len(u.chunkOffsets)-1] > 0xFFFFFFFF {
-         is64Bit = true
-      }
-   }
-   if is64Bit {
-      offsetBox = buildCo64(u.chunkOffsets)
-   } else {
-      offsetBox = buildStco(u.chunkOffsets)
-   }
+   // 3. Build Offsets (stco)
+   // We assume offsets fit in 32-bit integers (< 4GB file).
+   offsetBox := buildStco(u.chunkOffsets)
 
    // 4. Update Moov Structure
    trak, _ := u.moov.Trak()
@@ -254,12 +236,8 @@ func (u *Unfragmenter) Finish() error {
    newChildren = append(newChildren, StblChild{Raw: stsz})
    newChildren = append(newChildren, StblChild{Raw: stsc})
    newChildren = append(newChildren, StblChild{Raw: offsetBox})
-   if stss != nil {
-      newChildren = append(newChildren, StblChild{Raw: stss})
-   }
-   if ctts != nil {
-      newChildren = append(newChildren, StblChild{Raw: ctts})
-   }
+   // stss append removed
+   // ctts append removed
 
    stbl.Children = newChildren
 

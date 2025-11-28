@@ -85,88 +85,15 @@ func buildStsc(counts []uint32) []byte {
    return makeBox("stsc", append(data, entries...))
 }
 
-func buildStss(samples []sampleInfo) []byte {
-   var indices []uint32
-   allSync := true
-   for i, s := range samples {
-      if s.IsSync {
-         indices = append(indices, uint32(i+1)) // 1-based index
-      } else {
-         allSync = false
-      }
-   }
-   // If every single sample is a sync sample, stss is not required.
-   if allSync {
-      return nil
-   }
-
-   data := make([]byte, 8)
-   binary.BigEndian.PutUint32(data[4:8], uint32(len(indices)))
-   entries := make([]byte, len(indices)*4)
-   for i, idx := range indices {
-      binary.BigEndian.PutUint32(entries[i*4:], idx)
-   }
-   return makeBox("stss", append(data, entries...))
-}
-
-func buildCtts(samples []sampleInfo) []byte {
-   hasCtts := false
-   for _, s := range samples {
-      if s.CompositionOffset != 0 {
-         hasCtts = true
-         break
-      }
-   }
-   if !hasCtts {
-      return nil
-   }
-
-   // RLE compression for offsets
-   var entries []byte
-   count := uint32(0)
-   currOff := samples[0].CompositionOffset
-   currCnt := uint32(0)
-
-   for _, s := range samples {
-      if s.CompositionOffset == currOff {
-         currCnt++
-      } else {
-         entries = append(entries, uint32ToBytes(currCnt)...)
-         // Cast int32 to uint32 for binary writing
-         entries = append(entries, uint32ToBytes(uint32(currOff))...)
-         count++
-         currOff = s.CompositionOffset
-         currCnt = 1
-      }
-   }
-   // Flush last
-   entries = append(entries, uint32ToBytes(currCnt)...)
-   entries = append(entries, uint32ToBytes(uint32(currOff))...)
-   count++
-
-   data := make([]byte, 8)
-   binary.BigEndian.PutUint32(data[4:8], count)
-   return makeBox("ctts", append(data, entries...))
-}
-
 func buildStco(offsets []uint64) []byte {
    data := make([]byte, 8)
    binary.BigEndian.PutUint32(data[4:8], uint32(len(offsets)))
    entries := make([]byte, len(offsets)*4)
    for i, o := range offsets {
+      // Truncate to 32-bit (unsafe if > 4GB)
       binary.BigEndian.PutUint32(entries[i*4:], uint32(o))
    }
    return makeBox("stco", append(data, entries...))
-}
-
-func buildCo64(offsets []uint64) []byte {
-   data := make([]byte, 8)
-   binary.BigEndian.PutUint32(data[4:8], uint32(len(offsets)))
-   entries := make([]byte, len(offsets)*8)
-   for i, o := range offsets {
-      binary.BigEndian.PutUint64(entries[i*8:], o)
-   }
-   return makeBox("co64", append(data, entries...))
 }
 
 // --- Utility Helpers ---

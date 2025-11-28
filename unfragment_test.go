@@ -14,7 +14,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
 
    // 1. Check if "ignore" folder exists
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
-      t.Skipf("Skipping test: directory '%s' not found", workDir)
+      t.Fatalf("Skipping test: directory '%s' not found", workDir)
    }
 
    // 2. Open Output File

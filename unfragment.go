@@ -52,7 +52,6 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
 
    // 1. Capture ftyp
    for _, b := range boxes {
-      // Fix: Removed 'b.Raw != nil' check (S1009)
       if len(b.Raw) >= 8 && string(b.Raw[4:8]) == "ftyp" {
          u.ftyp = b.Raw
          break
@@ -171,50 +170,96 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
    return nil
 }
 
-// Finish constructs the final atoms, writes the moov box at the end of the file,
+// Finish constructs the final atoms, patches the duration, writes the moov box,
 // and updates the mdat header size.
 func (u *Unfragmenter) Finish() error {
    if !u.initialized {
       return errors.New("not initialized")
    }
 
-   // 1. Build Tables
+   // 1. Calculate Total Duration (in Track Timescale)
+   var totalDuration uint64
+   for _, s := range u.samples {
+      totalDuration += uint64(s.Duration)
+   }
+
+   // 2. Build Sample Tables
    stts := buildStts(u.samples)
    stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
    stss := buildStss(u.samples)
    ctts := buildCtts(u.samples)
 
-   // 2. Build Offsets (co64 or stco)
-   // Since we are writing moov at the end, the offsets we calculated in AddSegment
-   // are already correct absolute offsets.
+   // 3. Build Offsets (co64 or stco)
    var offsetBox []byte
    is64Bit := false
-
-   // Check if any offset exceeds 4GB
    if len(u.chunkOffsets) > 0 {
-      lastOffset := u.chunkOffsets[len(u.chunkOffsets)-1]
-      if lastOffset > 0xFFFFFFFF {
+      if u.chunkOffsets[len(u.chunkOffsets)-1] > 0xFFFFFFFF {
          is64Bit = true
       }
    }
-
    if is64Bit {
       offsetBox = buildCo64(u.chunkOffsets)
    } else {
       offsetBox = buildStco(u.chunkOffsets)
    }
 
-   // 3. Inject into Moov
+   // 4. Update Moov Structure
    trak, _ := u.moov.Trak()
    mdia, _ := trak.Mdia()
    minf, _ := mdia.Minf()
    stbl, _ := minf.Stbl()
 
-   // Filter mvex (removes fragmentation flag)
+   // A. Patch 'mdhd' (Media Header) with new duration
+   mdhd, ok := mdia.Mdhd()
+   if !ok {
+      return errors.New("corrupt init segment: missing mdhd")
+   }
+   // mdhd.RawData holds the bytes that will be written. We must patch them.
+   if err := patchDuration(mdhd.RawData, totalDuration); err != nil {
+      return fmt.Errorf("patching mdhd: %w", err)
+   }
+
+   // Get track timescale to convert duration for mvhd
+   trackTimescale, err := getTimescale(mdhd.RawData)
+   if err != nil {
+      return fmt.Errorf("reading mdhd timescale: %w", err)
+   }
+   if trackTimescale == 0 {
+      trackTimescale = 1
+   }
+
+   // B. Patch 'mvhd' (Movie Header) with converted duration
+   foundMvhd := false
+   for i, child := range u.moov.Children {
+      // mvhd is usually parsed as a Raw child in this library
+      if len(child.Raw) >= 8 && string(child.Raw[4:8]) == "mvhd" {
+         mvTimescale, err := getTimescale(child.Raw)
+         if err != nil {
+            return fmt.Errorf("reading mvhd timescale: %w", err)
+         }
+
+         // Convert duration: MovieDur = (TrackDur * MovieScale) / TrackScale
+         // Use float logic or careful multiplication to avoid overflow/underflow
+         movieDuration := (totalDuration * uint64(mvTimescale)) / uint64(trackTimescale)
+
+         if err := patchDuration(child.Raw, movieDuration); err != nil {
+            return fmt.Errorf("patching mvhd: %w", err)
+         }
+
+         // Re-assign the patched slice back to children
+         u.moov.Children[i].Raw = child.Raw
+         foundMvhd = true
+         break
+      }
+   }
+   if !foundMvhd {
+      return errors.New("corrupt init segment: missing mvhd")
+   }
+
+   // C. Update Children
    filterMvex(u.moov)
 
-   // Rebuild stbl children
    var newChildren []StblChild
    if stsd, ok := stbl.Stsd(); ok {
       newChildren = append(newChildren, StblChild{Stsd: stsd})
@@ -225,7 +270,7 @@ func (u *Unfragmenter) Finish() error {
    newChildren = append(newChildren, StblChild{Raw: stts})
    newChildren = append(newChildren, StblChild{Raw: stsz})
    newChildren = append(newChildren, StblChild{Raw: stsc})
-   newChildren = append(newChildren, StblChild{Raw: offsetBox}) // The calculated offsets
+   newChildren = append(newChildren, StblChild{Raw: offsetBox})
    if stss != nil {
       newChildren = append(newChildren, StblChild{Raw: stss})
    }
@@ -235,13 +280,13 @@ func (u *Unfragmenter) Finish() error {
 
    stbl.Children = newChildren
 
-   // 4. Write Moov to end of file
+   // 5. Write Moov to end of file
    moovBytes := u.moov.Encode()
    if _, err := u.dst.Write(moovBytes); err != nil {
       return fmt.Errorf("writing moov: %w", err)
    }
 
-   // 5. Update mdat Size
+   // 6. Update mdat Size
    // Go back to the start of mdat header
    if _, err := u.dst.Seek(u.mdatStartOffset+8, io.SeekStart); err != nil {
       return fmt.Errorf("seeking to mdat size: %w", err)
@@ -257,7 +302,7 @@ func (u *Unfragmenter) Finish() error {
       return fmt.Errorf("updating mdat size: %w", err)
    }
 
-   // Seek back to end just in case user does more writes (optional)
+   // Seek back to end
    u.dst.Seek(0, io.SeekEnd)
 
    return nil

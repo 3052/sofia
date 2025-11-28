@@ -12,7 +12,6 @@ import (
 type Unfragmenter struct {
    dst  io.WriteSeeker
    moov *MoovBox // The template moov from init segment
-   ftyp []byte
 
    // Track state
    samples             []sampleInfo
@@ -39,7 +38,7 @@ func NewUnfragmenter(dst io.WriteSeeker) *Unfragmenter {
 }
 
 // Initialize processes the initialization segment (init.mp4).
-// It writes the ftyp box and a placeholder mdat header to the output.
+// It captures the moov template and writes the placeholder mdat header to output.
 func (u *Unfragmenter) Initialize(initSegment []byte) error {
    if u.initialized {
       return errors.New("already initialized")
@@ -50,15 +49,7 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
       return fmt.Errorf("parsing init: %w", err)
    }
 
-   // 1. Capture ftyp
-   for _, b := range boxes {
-      if len(b.Raw) >= 8 && string(b.Raw[4:8]) == "ftyp" {
-         u.ftyp = b.Raw
-         break
-      }
-   }
-
-   // 2. Capture and validate Moov
+   // 1. Capture and validate Moov
    moovPtr, ok := FindMoov(boxes)
    if !ok {
       return errors.New("no moov found in init segment")
@@ -70,20 +61,16 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
       return errors.New("no trak in moov")
    }
 
-   // 3. Write ftyp to output
-   if u.ftyp != nil {
-      if _, err := u.dst.Write(u.ftyp); err != nil {
-         return fmt.Errorf("writing ftyp: %w", err)
-      }
-   }
-
-   // 4. Write mdat Header Placeholder
+   // 2. Write mdat Header Placeholder
    // We assume 64-bit size (16 bytes) to be safe for multi-GB files.
    // [size: 1 (4b)] [type: mdat (4b)] [largeSize: 0 (8b placeholder)]
+   // Since we removed ftyp, this is likely written at offset 0.
    u.mdatStartOffset, _ = u.dst.Seek(0, io.SeekCurrent)
+
    mdatHeader := make([]byte, 16)
    binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
    copy(mdatHeader[4:8], []byte("mdat"))
+
    if _, err := u.dst.Write(mdatHeader); err != nil {
       return fmt.Errorf("writing mdat header: %w", err)
    }
@@ -115,7 +102,6 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
 
    // 1. Calculate absolute offset for this chunk
    // Current File Position is end of previous write.
-   // But we need to account for the fact that we are inside an 'mdat' box logically.
    // The STCO/CO64 offset is absolute from start of file.
    currentPos, _ := u.dst.Seek(0, io.SeekCurrent)
    u.chunkOffsets = append(u.chunkOffsets, uint64(currentPos))
@@ -215,7 +201,6 @@ func (u *Unfragmenter) Finish() error {
    if !ok {
       return errors.New("corrupt init segment: missing mdhd")
    }
-   // mdhd.RawData holds the bytes that will be written. We must patch them.
    if err := patchDuration(mdhd.RawData, totalDuration); err != nil {
       return fmt.Errorf("patching mdhd: %w", err)
    }
@@ -232,22 +217,20 @@ func (u *Unfragmenter) Finish() error {
    // B. Patch 'mvhd' (Movie Header) with converted duration
    foundMvhd := false
    for i, child := range u.moov.Children {
-      // mvhd is usually parsed as a Raw child in this library
+      // mvhd is usually parsed as a Raw child
       if len(child.Raw) >= 8 && string(child.Raw[4:8]) == "mvhd" {
          mvTimescale, err := getTimescale(child.Raw)
          if err != nil {
             return fmt.Errorf("reading mvhd timescale: %w", err)
          }
 
-         // Convert duration: MovieDur = (TrackDur * MovieScale) / TrackScale
-         // Use float logic or careful multiplication to avoid overflow/underflow
+         // MovieDur = (TrackDur * MovieScale) / TrackScale
          movieDuration := (totalDuration * uint64(mvTimescale)) / uint64(trackTimescale)
 
          if err := patchDuration(child.Raw, movieDuration); err != nil {
             return fmt.Errorf("patching mvhd: %w", err)
          }
 
-         // Re-assign the patched slice back to children
          u.moov.Children[i].Raw = child.Raw
          foundMvhd = true
          break
@@ -257,7 +240,7 @@ func (u *Unfragmenter) Finish() error {
       return errors.New("corrupt init segment: missing mvhd")
    }
 
-   // C. Update Children
+   // C. Update Children (remove mvex)
    filterMvex(u.moov)
 
    var newChildren []StblChild

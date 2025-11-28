@@ -1,6 +1,9 @@
 package sofia
 
 import (
+   "bytes"
+   "encoding/binary"
+   "io"
    "os"
    "path/filepath"
    "sort"
@@ -8,16 +11,13 @@ import (
 )
 
 // TestUnfragmenter_RealFiles looks for real files in the "ignore" directory.
-// It skips if the directory does not exist.
 func TestUnfragmenter_RealFiles(t *testing.T) {
    workDir := "ignore"
 
-   // 1. Check if "ignore" folder exists
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
-      t.Fatalf("Skipping test: directory '%s' not found", workDir)
+      t.Skipf("Skipping test: directory '%s' not found", workDir)
    }
 
-   // 2. Open Output File
    outPath := filepath.Join(workDir, "joined_output.mp4")
    outFile, err := os.Create(outPath)
    if err != nil {
@@ -25,10 +25,8 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    }
    defer outFile.Close()
 
-   // 3. Initialize Unfragmenter
    unfrag := NewUnfragmenter(outFile)
 
-   // Read init.mp4
    initPath := filepath.Join(workDir, "init.mp4")
    initData, err := os.ReadFile(initPath)
    if err != nil {
@@ -39,8 +37,6 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       t.Fatalf("Unfragmenter.Initialize failed: %v", err)
    }
 
-   // 4. Find and Sort Segments
-   // Matches files like segment-1.0001.m4s, segment-1.0002.m4s
    globPattern := filepath.Join(workDir, "segment-*.m4s")
    segmentFiles, err := filepath.Glob(globPattern)
    if err != nil {
@@ -51,31 +47,128 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       t.Fatalf("No segment files found matching pattern: %s", globPattern)
    }
 
-   // Sort ensures 1.0001 comes before 1.0002
    sort.Strings(segmentFiles)
 
    t.Logf("Found %d segments. Processing...", len(segmentFiles))
 
-   // 5. Process Segments
    for _, segmentPath := range segmentFiles {
-      // Read segment into memory
       segData, err := os.ReadFile(segmentPath)
       if err != nil {
          t.Fatalf("Failed to read segment %s: %v", segmentPath, err)
       }
-
-      // Add to unfragmenter
       if err := unfrag.AddSegment(segData); err != nil {
          t.Fatalf("Failed to add segment %s: %v", segmentPath, err)
       }
    }
 
-   // 6. Finish
    if err := unfrag.Finish(); err != nil {
       t.Fatalf("Unfragmenter.Finish failed: %v", err)
    }
 
-   // 7. Report
    stat, _ := outFile.Stat()
    t.Logf("Success! Created %s (%d bytes)", outPath, stat.Size())
+}
+
+// TestUnfragmenter_Integration simulates a full cycle with synthetic data.
+func TestUnfragmenter_Integration(t *testing.T) {
+   outFile, err := os.CreateTemp("", "output_*.mp4")
+   if err != nil {
+      t.Fatal(err)
+   }
+   defer os.Remove(outFile.Name())
+   defer outFile.Close()
+
+   // Create Synthetic Data
+   initSeg := createSyntheticInit()
+   seg1 := createSyntheticSegment(1, []byte{0xAA, 0xAA, 0xAA, 0xAA})
+   seg2 := createSyntheticSegment(2, []byte{0xBB, 0xBB, 0xBB, 0xBB})
+
+   unfrag := NewUnfragmenter(outFile)
+
+   if err := unfrag.Initialize(initSeg); err != nil {
+      t.Fatalf("Initialize failed: %v", err)
+   }
+   if err := unfrag.AddSegment(seg1); err != nil {
+      t.Fatalf("AddSegment 1 failed: %v", err)
+   }
+   if err := unfrag.AddSegment(seg2); err != nil {
+      t.Fatalf("AddSegment 2 failed: %v", err)
+   }
+   if err := unfrag.Finish(); err != nil {
+      t.Fatalf("Finish failed: %v", err)
+   }
+
+   // Verify Output
+   if _, err := outFile.Seek(0, io.SeekStart); err != nil {
+      t.Fatal(err)
+   }
+   content, err := io.ReadAll(outFile)
+   if err != nil {
+      t.Fatal(err)
+   }
+
+   // Check mdat payload
+   expectedPayload := []byte{0xAA, 0xAA, 0xAA, 0xAA, 0xBB, 0xBB, 0xBB, 0xBB}
+   if !bytes.Contains(content, expectedPayload) {
+      t.Error("Output missing concatenated mdat payloads")
+   }
+
+   // Check moov presence
+   if !bytes.Contains(content, []byte("moov")) {
+      t.Error("Output missing 'moov' box")
+   }
+
+   t.Logf("Successfully created MP4 of size %d bytes", len(content))
+}
+
+func createSyntheticInit() []byte {
+   // ftyp (will be ignored by Unfragmenter now, but present in input)
+   ftyp := makeBox("ftyp", []byte("iso50000"))
+
+   // minimal moov...stsd structure
+   // We need 'mvhd' and 'mdhd' for the duration patching logic to work
+
+   // mvhd (Version 0, 108 bytes usually, minimal 24 needed for timescale)
+   // We make it big enough for patching (size > 32)
+   mvhdData := make([]byte, 108)
+   // Set timescale at offset 20 (version 0)
+   binary.BigEndian.PutUint32(mvhdData[20:24], 1000)
+   mvhd := makeBox("mvhd", mvhdData)
+
+   // mdhd (Version 0)
+   mdhdData := make([]byte, 32)
+   // Set timescale at offset 20
+   binary.BigEndian.PutUint32(mdhdData[20:24], 1000)
+   mdhd := makeBox("mdhd", mdhdData)
+
+   stsd := makeBox("stsd", make([]byte, 8))
+   stbl := makeBox("stbl", stsd)
+   minf := makeBox("minf", stbl)
+   mdia := makeBox("mdia", append(mdhd, minf...))
+   trak := makeBox("trak", mdia)
+   moov := makeBox("moov", append(mvhd, trak...))
+
+   return append(ftyp, moov...)
+}
+
+func createSyntheticSegment(seq int, payload []byte) []byte {
+   tfhdData := make([]byte, 8)
+   binary.BigEndian.PutUint32(tfhdData[4:8], 1)
+   tfhd := makeBox("tfhd", tfhdData)
+
+   trunFlags := uint32(0x000301)
+   sampleCount := uint32(1)
+   trunData := make([]byte, 8)
+   binary.BigEndian.PutUint32(trunData[0:4], trunFlags)
+   binary.BigEndian.PutUint32(trunData[4:8], sampleCount)
+   trunData = append(trunData, 0, 0, 0, 0)
+   trunData = append(trunData, uint32ToBytes(100)...)
+   trunData = append(trunData, uint32ToBytes(uint32(len(payload)))...)
+
+   trun := makeBox("trun", trunData)
+   traf := makeBox("traf", append(tfhd, trun...))
+   moof := makeBox("moof", traf)
+   mdat := makeBox("mdat", payload)
+
+   return append(moof, mdat...)
 }

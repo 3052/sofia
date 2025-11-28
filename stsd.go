@@ -17,7 +17,7 @@ type StsdBox struct {
    Children []StsdChild
 }
 
-// Sinf finds the first protected sample entry and returns its SinfBox, its header, and a boolean indicating if it was found.
+// Sinf finds the first protected sample entry and returns its SinfBox.
 func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
    for i := range b.Children {
       child := &b.Children[i]
@@ -102,4 +102,22 @@ func (b *StsdBox) Encode() []byte {
    b.Header.Size = uint32(8 + len(fullContent))
    headerBytes := b.Header.Encode()
    return append(headerBytes, fullContent...)
+}
+
+// UnprotectAll iterates over all sample entries and unprotects them
+// if they are encrypted (enca/encv).
+func (b *StsdBox) UnprotectAll() error {
+   for _, child := range b.Children {
+      if child.Encv != nil {
+         if err := child.Encv.Unprotect(); err != nil {
+            return err
+         }
+      }
+      if child.Enca != nil {
+         if err := child.Enca.Unprotect(); err != nil {
+            return err
+         }
+      }
+   }
+   return nil
 }

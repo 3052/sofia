@@ -31,7 +31,7 @@ func (b *StcoBox) Encode() []byte {
 func buildStco(offsets []uint64) []byte {
    entries := make([]uint32, len(offsets))
    for i, o := range offsets {
-      // Truncate to 32-bit (unsafe if > 4GB, but stco is inherently 32-bit)
+      // Truncate to 32-bit (unsafe if > 4GB)
       entries[i] = uint32(o)
    }
    box := StcoBox{Offsets: entries}

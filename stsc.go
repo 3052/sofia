@@ -44,7 +44,8 @@ func buildStsc(counts []uint32) []byte {
       if len(entries) > 0 {
          last := &entries[len(entries)-1]
          if last.SamplesPerChunk == cnt {
-            // Continuation of previous run
+            // Continuation of previous run.
+            // We MUST still increment the chunk index counter!
             chunkIdx++
             continue
          }

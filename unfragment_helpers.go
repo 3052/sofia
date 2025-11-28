@@ -5,98 +5,7 @@ import (
    "errors"
 )
 
-// --- Box Builders ---
-
-func buildStts(samples []sampleInfo) []byte {
-   if len(samples) == 0 {
-      return nil
-   }
-   var entries []byte
-   count := uint32(0)
-   currDur := samples[0].Duration
-   currCnt := uint32(0)
-
-   for _, s := range samples {
-      if s.Duration == currDur {
-         currCnt++
-      } else {
-         entries = append(entries, uint32ToBytes(currCnt)...)
-         entries = append(entries, uint32ToBytes(currDur)...)
-         count++
-         currDur = s.Duration
-         currCnt = 1
-      }
-   }
-   // Flush last entry
-   entries = append(entries, uint32ToBytes(currCnt)...)
-   entries = append(entries, uint32ToBytes(currDur)...)
-   count++
-
-   data := make([]byte, 8) // Version(0) + Flags(0) + EntryCount
-   binary.BigEndian.PutUint32(data[4:8], count)
-   return makeBox("stts", append(data, entries...))
-}
-
-func buildStsz(samples []sampleInfo) []byte {
-   // Version(0) + Flags(0) + SampleSize(0=var) + SampleCount
-   data := make([]byte, 12)
-   binary.BigEndian.PutUint32(data[8:12], uint32(len(samples)))
-
-   entries := make([]byte, len(samples)*4)
-   for i, s := range samples {
-      binary.BigEndian.PutUint32(entries[i*4:], s.Size)
-   }
-   return makeBox("stsz", append(data, entries...))
-}
-
-func buildStsc(counts []uint32) []byte {
-   // Maps: 1 Chunk = 1 Segment.
-   // We group consecutive chunks that have the same number of samples.
-   type stscEntry struct {
-      firstChunk      uint32
-      samplesPerChunk uint32
-      sdi             uint32
-   }
-   var list []stscEntry
-
-   chunkIdx := uint32(1) // 1-based index
-   for _, cnt := range counts {
-      if len(list) > 0 {
-         last := &list[len(list)-1]
-         if last.samplesPerChunk == cnt {
-            // This chunk looks just like the previous run
-            chunkIdx++
-            continue
-         }
-      }
-      list = append(list, stscEntry{firstChunk: chunkIdx, samplesPerChunk: cnt, sdi: 1})
-      chunkIdx++
-   }
-
-   data := make([]byte, 8)
-   binary.BigEndian.PutUint32(data[4:8], uint32(len(list)))
-   entries := make([]byte, len(list)*12)
-   for i, e := range list {
-      off := i * 12
-      binary.BigEndian.PutUint32(entries[off:], e.firstChunk)
-      binary.BigEndian.PutUint32(entries[off+4:], e.samplesPerChunk)
-      binary.BigEndian.PutUint32(entries[off+8:], e.sdi)
-   }
-   return makeBox("stsc", append(data, entries...))
-}
-
-func buildStco(offsets []uint64) []byte {
-   data := make([]byte, 8)
-   binary.BigEndian.PutUint32(data[4:8], uint32(len(offsets)))
-   entries := make([]byte, len(offsets)*4)
-   for i, o := range offsets {
-      // Truncate to 32-bit (unsafe if > 4GB)
-      binary.BigEndian.PutUint32(entries[i*4:], uint32(o))
-   }
-   return makeBox("stco", append(data, entries...))
-}
-
-// --- Utility Helpers ---
+// --- Shared Utility Helpers ---
 
 func makeBox(typeStr string, payload []byte) []byte {
    size := 8 + len(payload)
@@ -133,12 +42,9 @@ func FindMdatPtr(boxes []Box) *MdatBox {
 }
 
 // filterMvex removes the 'mvex' atom from the MoovBox children.
-// The mvex atom signals fragmentation; removing it signals a regular MP4.
 func filterMvex(moov *MoovBox) {
    var cleanChildren []MoovChild
    for _, child := range moov.Children {
-      // In sofia, unknown boxes are often stored in 'Raw'.
-      // mvex is usually Type "mvex" (0x6d766578).
       if len(child.Raw) >= 8 {
          if string(child.Raw[4:8]) == "mvex" {
             continue
@@ -150,7 +56,6 @@ func filterMvex(moov *MoovBox) {
 }
 
 // patchDuration updates the duration field in a raw mvhd or mdhd box.
-// It detects the version (0 or 1) and writes the duration to the correct offset.
 func patchDuration(boxData []byte, newDuration uint64) error {
    if len(boxData) < 32 {
       return errors.New("box too short to patch duration")
@@ -159,18 +64,12 @@ func patchDuration(boxData []byte, newDuration uint64) error {
    version := boxData[8] // Offset 8 is Version
 
    if version == 1 {
-      // Version 1 (64-bit fields)
-      // Layout: [Size 4] [Type 4] [Ver 1] [Flags 3] [Creation 8] [Mod 8] [Timescale 4] [Duration 8]
-      // Offsets: 0+8=8, 8+4=12, 12+8=20, 20+8=28 (Timescale), 28+4=32 (Duration)
       const durationOffset = 32
       if len(boxData) < durationOffset+8 {
          return errors.New("box too short for v1 duration")
       }
       binary.BigEndian.PutUint64(boxData[durationOffset:], newDuration)
    } else {
-      // Version 0 (32-bit fields)
-      // Layout: [Size 4] [Type 4] [Ver 1] [Flags 3] [Creation 4] [Mod 4] [Timescale 4] [Duration 4]
-      // Offsets: 0+8=8, 8+4=12, 12+4=16, 16+4=20 (Timescale), 20+4=24 (Duration)
       const durationOffset = 24
       if len(boxData) < durationOffset+4 {
          return errors.New("box too short for v0 duration")
@@ -181,26 +80,4 @@ func patchDuration(boxData []byte, newDuration uint64) error {
       binary.BigEndian.PutUint32(boxData[durationOffset:], uint32(newDuration))
    }
    return nil
-}
-
-// getTimescale extracts the timescale from a raw mvhd or mdhd box.
-func getTimescale(boxData []byte) (uint32, error) {
-   if len(boxData) < 24 {
-      return 0, errors.New("box too short for timescale")
-   }
-   version := boxData[8]
-
-   var timescaleOffset int
-   if version == 1 {
-      // See offsets in patchDuration
-      timescaleOffset = 28
-   } else {
-      timescaleOffset = 20
-   }
-
-   if len(boxData) < timescaleOffset+4 {
-      return 0, errors.New("box truncated before timescale")
-   }
-
-   return binary.BigEndian.Uint32(boxData[timescaleOffset:]), nil
 }

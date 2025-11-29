@@ -2,6 +2,7 @@ package sofia
 
 import (
    "encoding/binary"
+   "errors"
    "fmt"
 )
 
@@ -38,5 +39,27 @@ func (b *MdhdBox) Parse(data []byte) error {
       b.Duration = uint64(binary.BigEndian.Uint32(data[24:28]))
    }
 
+   return nil
+}
+
+// SetDuration updates the duration field directly in the RawData.
+func (b *MdhdBox) SetDuration(duration uint64) error {
+   if b.Version == 1 {
+      // Version 1: Duration is at offset 32 (8 bytes)
+      if len(b.RawData) < 40 {
+         return errors.New("mdhd raw data too short for v1 duration")
+      }
+      binary.BigEndian.PutUint64(b.RawData[32:], duration)
+   } else {
+      // Version 0: Duration is at offset 24 (4 bytes)
+      if len(b.RawData) < 28 {
+         return errors.New("mdhd raw data too short for v0 duration")
+      }
+      if duration > 0xFFFFFFFF {
+         return errors.New("duration overflows 32-bit mdhd field")
+      }
+      binary.BigEndian.PutUint32(b.RawData[24:], uint32(duration))
+   }
+   b.Duration = duration // Update struct field for consistency
    return nil
 }

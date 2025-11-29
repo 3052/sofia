@@ -27,7 +27,7 @@ func (b *SttsBox) Encode() []byte {
    return buf
 }
 
-func buildStts(samples []sampleInfo) []byte {
+func buildStts(samples []UnfragSample) []byte {
    if len(samples) == 0 {
       return nil
    }
@@ -70,7 +70,7 @@ func (b *StszBox) Encode() []byte {
    return buf
 }
 
-func buildStsz(samples []sampleInfo) []byte {
+func buildStsz(samples []UnfragSample) []byte {
    entries := make([]uint32, len(samples))
    for i, s := range samples {
       entries[i] = s.Size

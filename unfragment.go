@@ -13,7 +13,7 @@ type Unfragmenter struct {
    moov                *MoovBox
    Samples             []UnfragSample
    chunkOffsets        []uint64
-   segmentSampleCounts []uint32
+   SegmentSampleCounts []uint32
    mdatStartOffset     int64
    payloadWritten      uint64
    initialized         bool
@@ -124,7 +124,7 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
    u.payloadWritten += uint64(n)
 
    u.Samples = append(u.Samples, newSamples...)
-   u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(len(newSamples)))
+   u.SegmentSampleCounts = append(u.SegmentSampleCounts, uint32(len(newSamples)))
 
    return nil
 }
@@ -143,7 +143,7 @@ func (u *Unfragmenter) Finish() error {
 
    stts := buildStts(u.Samples)
    stsz := buildStsz(u.Samples)
-   stsc := buildStsc(u.segmentSampleCounts)
+   stsc := buildStsc(u.SegmentSampleCounts)
    offsetBox := buildStco(u.chunkOffsets)
 
    trak, _ := u.moov.Trak()

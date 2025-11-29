@@ -5,7 +5,6 @@ import (
    "fmt"
 )
 
-// MdhdBox represents the 'mdhd' box (Media Header Box).
 type MdhdBox struct {
    Header    BoxHeader
    RawData   []byte
@@ -14,7 +13,6 @@ type MdhdBox struct {
    Duration  uint64
 }
 
-// Parse parses the 'mdhd' box from a byte slice.
 func (b *MdhdBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
@@ -27,14 +25,12 @@ func (b *MdhdBox) Parse(data []byte) error {
 
    b.Version = data[8]
    if b.Version == 1 {
-      // 64-bit duration version
       if len(data) < 36 {
          return fmt.Errorf("mdhd version 1 box is too small: %d bytes", len(data))
       }
       b.Timescale = binary.BigEndian.Uint32(data[28:32])
       b.Duration = binary.BigEndian.Uint64(data[32:40])
    } else {
-      // 32-bit duration version
       if len(data) < 24 {
          return fmt.Errorf("mdhd version 0 box is too small: %d bytes", len(data))
       }
@@ -43,9 +39,4 @@ func (b *MdhdBox) Parse(data []byte) error {
    }
 
    return nil
-}
-
-// Encode returns the raw byte data to ensure a perfect round trip.
-func (b *MdhdBox) Encode() []byte {
-   return b.RawData
 }

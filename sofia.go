@@ -49,9 +49,7 @@ func (b *Box) Encode() []byte {
    switch {
    case b.Moov != nil:
       return b.Moov.Encode()
-   case b.Mdat != nil:
-      return b.Mdat.Encode()
-   // Moof, Sidx, Pssh removed from Encode as they are read-only inputs
+   // Moof, Sidx, Pssh, Mdat removed from Encode (Read-only or Streamed)
    default:
       return b.Raw
    }
@@ -120,7 +118,8 @@ func Parse(data []byte) ([]Box, error) {
    return boxes, nil
 }
 
-// FindMoov finds the first MoovBox in a slice of generic boxes.
+// --- Finders ---
+
 func FindMoov(boxes []Box) (*MoovBox, bool) {
    for _, box := range boxes {
       if box.Moov != nil {
@@ -130,7 +129,6 @@ func FindMoov(boxes []Box) (*MoovBox, bool) {
    return nil, false
 }
 
-// AllMoof finds all MoofBoxes in a slice of generic boxes.
 func AllMoof(boxes []Box) []*MoofBox {
    var moofs []*MoofBox
    for _, box := range boxes {
@@ -141,7 +139,6 @@ func AllMoof(boxes []Box) []*MoofBox {
    return moofs
 }
 
-// FindSidx finds the first SidxBox in a slice of generic boxes.
 func FindSidx(boxes []Box) (*SidxBox, bool) {
    for _, box := range boxes {
       if box.Sidx != nil {
@@ -151,11 +148,57 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
    return nil, false
 }
 
+func FindMoofPtr(boxes []Box) *MoofBox {
+   for _, box := range boxes {
+      if box.Moof != nil {
+         return box.Moof
+      }
+   }
+   return nil
+}
+
+func FindMdatPtr(boxes []Box) *MdatBox {
+   for _, box := range boxes {
+      if box.Mdat != nil {
+         return box.Mdat
+      }
+   }
+   return nil
+}
+
+// --- Manipulation Helpers ---
+
+// patchDuration updates the duration field in a raw mvhd or mdhd box.
+func patchDuration(boxData []byte, newDuration uint64) error {
+   if len(boxData) < 32 {
+      return errors.New("box too short to patch duration")
+   }
+
+   version := boxData[8]
+
+   if version == 1 {
+      const durationOffset = 32
+      if len(boxData) < durationOffset+8 {
+         return errors.New("box too short for v1 duration")
+      }
+      binary.BigEndian.PutUint64(boxData[durationOffset:], newDuration)
+   } else {
+      const durationOffset = 24
+      if len(boxData) < durationOffset+4 {
+         return errors.New("box too short for v0 duration")
+      }
+      if newDuration > 0xFFFFFFFF {
+         return errors.New("duration overflows 32-bit field")
+      }
+      binary.BigEndian.PutUint32(boxData[durationOffset:], uint32(newDuration))
+   }
+   return nil
+}
+
+// --- Decryption (Legacy/Utility) ---
+
 // Decrypt decrypts a segment's mdat boxes in-place using the provided key.
 func Decrypt(segmentBoxes []Box, key []byte) error {
-   // ... (Existing decryption logic unchanged, can be kept for utility)
-   // If you are only doing unfragmentation and not manual decryption via this function,
-   // you can remove this entirely. Keeping it for now as it's separate from Encode logic.
    var isEncrypted bool
    for _, moof := range AllMoof(segmentBoxes) {
       if traf, ok := moof.Traf(); ok {

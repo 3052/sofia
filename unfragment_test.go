@@ -121,23 +121,16 @@ func TestUnfragmenter_Integration(t *testing.T) {
    t.Logf("Successfully created MP4 of size %d bytes", len(content))
 }
 
+// --- Test Helpers ---
+
 func createSyntheticInit() []byte {
-   // ftyp (will be ignored by Unfragmenter now, but present in input)
    ftyp := makeBox("ftyp", []byte("iso50000"))
 
-   // minimal moov...stsd structure
-   // We need 'mvhd' and 'mdhd' for the duration patching logic to work
-
-   // mvhd (Version 0, 108 bytes usually, minimal 24 needed for timescale)
-   // We make it big enough for patching (size > 32)
    mvhdData := make([]byte, 108)
-   // Set timescale at offset 20 (version 0)
    binary.BigEndian.PutUint32(mvhdData[20:24], 1000)
    mvhd := makeBox("mvhd", mvhdData)
 
-   // mdhd (Version 0)
    mdhdData := make([]byte, 32)
-   // Set timescale at offset 20
    binary.BigEndian.PutUint32(mdhdData[20:24], 1000)
    mdhd := makeBox("mdhd", mdhdData)
 
@@ -171,4 +164,18 @@ func createSyntheticSegment(seq int, payload []byte) []byte {
    mdat := makeBox("mdat", payload)
 
    return append(moof, mdat...)
+}
+
+func makeBox(typeStr string, payload []byte) []byte {
+   size := 8 + len(payload)
+   buf := make([]byte, 8)
+   binary.BigEndian.PutUint32(buf[0:4], uint32(size))
+   copy(buf[4:8], []byte(typeStr))
+   return append(buf, payload...)
+}
+
+func uint32ToBytes(v uint32) []byte {
+   b := make([]byte, 4)
+   binary.BigEndian.PutUint32(b, v)
+   return b
 }

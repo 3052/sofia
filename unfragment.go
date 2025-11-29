@@ -191,7 +191,6 @@ func (u *Unfragmenter) Finish() error {
    log.Printf("  Total Chunks (offsets): %d", len(u.chunkOffsets))
    log.Printf("  Total Segments Tracked: %d", len(u.segmentSampleCounts))
 
-   // Validate STSC sum
    var stscSum uint32
    for _, c := range u.segmentSampleCounts {
       stscSum += c
@@ -221,11 +220,10 @@ func (u *Unfragmenter) Finish() error {
       return fmt.Errorf("patching mdhd: %w", err)
    }
 
-   filterMvex(u.moov)
+   u.moov.RemoveMvex()
 
    var newChildren []StblChild
    if stsd, ok := stbl.Stsd(); ok {
-      // Attempt to unprotect encryption here if needed
       stsd.UnprotectAll()
       newChildren = append(newChildren, StblChild{Stsd: stsd})
    } else {

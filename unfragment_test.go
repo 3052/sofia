@@ -10,6 +10,58 @@ import (
    "testing"
 )
 
+// TestUnfragmenter_Integration simulates a full cycle with synthetic data.
+func TestUnfragmenter_Integration(t *testing.T) {
+   outFile, err := os.CreateTemp("", "output_*.mp4")
+   if err != nil {
+      t.Fatal(err)
+   }
+   defer os.Remove(outFile.Name())
+   defer outFile.Close()
+
+   // Create Synthetic Data
+   initSeg := createSyntheticInit()
+   seg1 := createSyntheticSegment(1, []byte{0xAA, 0xAA, 0xAA, 0xAA})
+   seg2 := createSyntheticSegment(2, []byte{0xBB, 0xBB, 0xBB, 0xBB})
+
+   unfrag := &Unfragmenter{Writer: outFile}
+
+   if err := unfrag.Initialize(initSeg); err != nil {
+      t.Fatalf("Initialize failed: %v", err)
+   }
+   if err := unfrag.AddSegment(seg1); err != nil {
+      t.Fatalf("AddSegment 1 failed: %v", err)
+   }
+   if err := unfrag.AddSegment(seg2); err != nil {
+      t.Fatalf("AddSegment 2 failed: %v", err)
+   }
+   if err := unfrag.Finish(); err != nil {
+      t.Fatalf("Finish failed: %v", err)
+   }
+
+   // Verify Output
+   if _, err := outFile.Seek(0, io.SeekStart); err != nil {
+      t.Fatal(err)
+   }
+   content, err := io.ReadAll(outFile)
+   if err != nil {
+      t.Fatal(err)
+   }
+
+   // Check mdat payload
+   expectedPayload := []byte{0xAA, 0xAA, 0xAA, 0xAA, 0xBB, 0xBB, 0xBB, 0xBB}
+   if !bytes.Contains(content, expectedPayload) {
+      t.Error("Output missing concatenated mdat payloads")
+   }
+
+   // Check moov presence
+   if !bytes.Contains(content, []byte("moov")) {
+      t.Error("Output missing 'moov' box")
+   }
+
+   t.Logf("Successfully created MP4 of size %d bytes", len(content))
+}
+
 // TestUnfragmenter_RealFiles looks for real files in the "ignore" directory.
 func TestUnfragmenter_RealFiles(t *testing.T) {
    workDir := "ignore"
@@ -65,58 +117,6 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    t.Logf("Success! Created %s (%d bytes)", outPath, stat.Size())
 }
 
-// TestUnfragmenter_Integration simulates a full cycle with synthetic data.
-func TestUnfragmenter_Integration(t *testing.T) {
-   outFile, err := os.CreateTemp("", "output_*.mp4")
-   if err != nil {
-      t.Fatal(err)
-   }
-   defer os.Remove(outFile.Name())
-   defer outFile.Close()
-
-   // Create Synthetic Data
-   initSeg := createSyntheticInit()
-   seg1 := createSyntheticSegment(1, []byte{0xAA, 0xAA, 0xAA, 0xAA})
-   seg2 := createSyntheticSegment(2, []byte{0xBB, 0xBB, 0xBB, 0xBB})
-
-   unfrag := &Unfragmenter{Writer: outFile}
-
-   if err := unfrag.Initialize(initSeg); err != nil {
-      t.Fatalf("Initialize failed: %v", err)
-   }
-   if err := unfrag.AddSegment(seg1); err != nil {
-      t.Fatalf("AddSegment 1 failed: %v", err)
-   }
-   if err := unfrag.AddSegment(seg2); err != nil {
-      t.Fatalf("AddSegment 2 failed: %v", err)
-   }
-   if err := unfrag.Finish(); err != nil {
-      t.Fatalf("Finish failed: %v", err)
-   }
-
-   // Verify Output
-   if _, err := outFile.Seek(0, io.SeekStart); err != nil {
-      t.Fatal(err)
-   }
-   content, err := io.ReadAll(outFile)
-   if err != nil {
-      t.Fatal(err)
-   }
-
-   // Check mdat payload
-   expectedPayload := []byte{0xAA, 0xAA, 0xAA, 0xAA, 0xBB, 0xBB, 0xBB, 0xBB}
-   if !bytes.Contains(content, expectedPayload) {
-      t.Error("Output missing concatenated mdat payloads")
-   }
-
-   // Check moov presence
-   if !bytes.Contains(content, []byte("moov")) {
-      t.Error("Output missing 'moov' box")
-   }
-
-   t.Logf("Successfully created MP4 of size %d bytes", len(content))
-}
-
 // --- Test Helpers ---
 
 func createSyntheticInit() []byte {
@@ -158,6 +158,36 @@ func createSyntheticSegment(seq int, payload []byte) []byte {
    trun := makeBox("trun", trunData)
 
    traf := makeBox("traf", append(tfhd, trun...))
+   moof := makeBox("moof", traf)
+   mdat := makeBox("mdat", payload)
+
+   return append(moof, mdat...)
+}
+
+func createSyntheticEncryptedSegment(payload []byte, iv []byte) []byte {
+   tfhdData := make([]byte, 8)
+   binary.BigEndian.PutUint32(tfhdData[4:8], 1)
+   tfhd := makeBox("tfhd", tfhdData)
+
+   // Senc Box
+   // 4 bytes flags (0), 4 bytes count (1), 8 bytes IV
+   sencPayload := make([]byte, 16)
+   binary.BigEndian.PutUint32(sencPayload[4:8], 1)
+   copy(sencPayload[8:16], iv)
+   senc := makeBox("senc", sencPayload)
+
+   trunFlags := uint32(0x000301)
+   sampleCount := uint32(1)
+
+   trunData := make([]byte, 8)
+   binary.BigEndian.PutUint32(trunData[0:4], trunFlags)
+   binary.BigEndian.PutUint32(trunData[4:8], sampleCount)
+   trunData = append(trunData, 0, 0, 0, 0) // data offset
+   trunData = append(trunData, uint32ToBytes(100)...)
+   trunData = append(trunData, uint32ToBytes(uint32(len(payload)))...)
+   trun := makeBox("trun", trunData)
+
+   traf := makeBox("traf", append(tfhd, append(trun, senc...)...))
    moof := makeBox("moof", traf)
    mdat := makeBox("mdat", payload)
 

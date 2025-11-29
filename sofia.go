@@ -1,7 +1,6 @@
 package sofia
 
 import (
-   "crypto/aes"
    "crypto/cipher"
    "encoding/binary"
    "errors"
@@ -49,7 +48,6 @@ func parseContainer(data []byte, onChild func(BoxHeader, []byte) error) error {
       if boxSize < 8 || offset+boxSize > len(data) {
          return errors.New("invalid child box size")
       }
-
       if err := onChild(h, data[offset:offset+boxSize]); err != nil {
          return err
       }
@@ -170,84 +168,36 @@ func FindMdatPtr(boxes []Box) *MdatBox {
 
 // --- Decryption ---
 
-// Decrypt decrypts a segment's mdat boxes in-place using the provided key.
-func Decrypt(segmentBoxes []Box, key []byte) error {
-   var isEncrypted bool
-   for _, moof := range AllMoof(segmentBoxes) {
-      if traf, ok := moof.Traf(); ok {
-         if _, ok := traf.Senc(); ok {
-            isEncrypted = true
-            break
-         }
-      }
+// DecryptSample decrypts a single sample in-place.
+// info can be nil if the sample is not encrypted.
+func DecryptSample(sample []byte, info *SampleEncryptionInfo, block cipher.Block) {
+   if info == nil || len(info.IV) == 0 {
+      return
    }
-   if !isEncrypted {
-      return nil
-   }
-   if len(key) != 16 {
-      return fmt.Errorf("invalid key length")
-   }
-   block, err := aes.NewCipher(key)
-   if err != nil {
-      return err
-   }
-   for i := 0; i < len(segmentBoxes); i++ {
-      if segmentBoxes[i].Moof != nil {
-         moof := segmentBoxes[i].Moof
-         if i+1 >= len(segmentBoxes) || segmentBoxes[i+1].Mdat == nil {
-            return fmt.Errorf("malformed segment")
-         }
-         mdat := segmentBoxes[i+1].Mdat
-         decryptFragment(moof, mdat.Payload, block)
-         i++
-      }
-   }
-   return nil
-}
 
-func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) {
-   traf, ok := moof.Traf()
-   if !ok {
-      return
+   iv := info.IV
+   if len(iv) == 8 {
+      paddedIV := make([]byte, 16)
+      copy(paddedIV, iv)
+      iv = paddedIV
    }
-   currentMdatOffset := 0
-   tfhd, trun := traf.Tfhd(), traf.Trun()
-   if tfhd == nil || trun == nil {
-      return
-   }
-   senc, ok := traf.Senc()
-   if !ok {
-      return
-   }
-   for i, sampleInfo := range trun.Samples {
-      sampleSize := sampleInfo.Size
-      if sampleSize == 0 {
-         sampleSize = tfhd.DefaultSampleSize
-      }
-      if currentMdatOffset+int(sampleSize) > len(mdatData) {
-         return
-      }
-      sampleData := mdatData[currentMdatOffset : currentMdatOffset+int(sampleSize)]
-      currentMdatOffset += int(sampleSize)
-      iv := senc.Samples[i].IV
-      if len(iv) == 8 {
-         paddedIV := make([]byte, 16)
-         copy(paddedIV, iv)
-         iv = paddedIV
-      }
-      stream := cipher.NewCTR(block, iv)
-      if len(senc.Samples[i].Subsamples) == 0 {
-         stream.XORKeyStream(sampleData, sampleData)
-      } else {
-         sampleOffset := 0
-         for _, sub := range senc.Samples[i].Subsamples {
-            sampleOffset += int(sub.BytesOfClearData)
-            if sub.BytesOfProtectedData > 0 {
-               end := sampleOffset + int(sub.BytesOfProtectedData)
-               chunk := sampleData[sampleOffset:end]
-               stream.XORKeyStream(chunk, chunk)
-               sampleOffset = end
+
+   stream := cipher.NewCTR(block, iv)
+
+   if len(info.Subsamples) == 0 {
+      stream.XORKeyStream(sample, sample)
+   } else {
+      sampleOffset := 0
+      for _, sub := range info.Subsamples {
+         sampleOffset += int(sub.BytesOfClearData)
+         if sub.BytesOfProtectedData > 0 {
+            end := sampleOffset + int(sub.BytesOfProtectedData)
+            if end > len(sample) {
+               end = len(sample)
             }
+            chunk := sample[sampleOffset:end]
+            stream.XORKeyStream(chunk, chunk)
+            sampleOffset = end
          }
       }
    }

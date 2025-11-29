@@ -5,36 +5,34 @@ import (
    "errors"
    "fmt"
    "io"
-   "log"
 )
 
 type Unfragmenter struct {
    Writer              io.WriteSeeker
-   moov                *MoovBox
+   Moov                *MoovBox
    samples             []UnfragSample
    chunkOffsets        []uint64
    segmentSampleCounts []uint32
    mdatStartOffset     int64
    segmentCount        int
-   OnSample            func(*UnfragSample)
+   OnSample            func(sample []byte, encInfo *SampleEncryptionInfo)
+   OnSampleInfo        func(*UnfragSample)
 }
 
 // UnfragSample represents the minimal sample information needed for unfragmenting.
-// It is named differently from trun.SampleInfo to avoid collision.
 type UnfragSample struct {
    Size     uint32
    Duration uint32
 }
 
 func (u *Unfragmenter) Initialize(initSegment []byte) error {
-   if u.moov != nil {
+   if u.Moov != nil {
       return errors.New("already initialized")
    }
    if u.Writer == nil {
       return errors.New("writer is nil")
    }
 
-   log.Println("[Unfrag] Initializing...")
    boxes, err := Parse(initSegment)
    if err != nil {
       return fmt.Errorf("parsing init: %w", err)
@@ -44,9 +42,9 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
    if !ok {
       return errors.New("no moov found")
    }
-   u.moov = moovPtr
+   u.Moov = moovPtr
 
-   if _, ok := u.moov.Trak(); !ok {
+   if _, ok := u.Moov.Trak(); !ok {
       return errors.New("no trak found")
    }
 
@@ -63,7 +61,7 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
 }
 
 func (u *Unfragmenter) AddSegment(segmentData []byte) error {
-   if u.moov == nil {
+   if u.Moov == nil {
       return errors.New("must call Initialize")
    }
 
@@ -89,9 +87,15 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return nil
    }
 
+   // Senc is optional and provides encryption info
+   senc, _ := traf.Senc()
+   sencIndex := 0
+
    var newSamples []UnfragSample
    defDur := tfhd.DefaultSampleDuration
    defSize := tfhd.DefaultSampleSize
+
+   mdatOffset := 0
 
    for _, child := range traf.Children {
       if child.Trun != nil {
@@ -105,11 +109,31 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
                si.Size = s.Size
             }
 
+            // Store original size to ensure parser stays in sync with mdat payload
+            // even if the user modifies si.Size in the callback.
+            originalSize := int(si.Size)
+
+            if mdatOffset+originalSize > len(mdat.Payload) {
+               return errors.New("mdat payload too short for samples")
+            }
+            sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
+
+            var encInfo *SampleEncryptionInfo
+            if senc != nil && sencIndex < len(senc.Samples) {
+               encInfo = &senc.Samples[sencIndex]
+               sencIndex++
+            }
+
             if u.OnSample != nil {
-               u.OnSample(&si)
+               u.OnSample(sampleData, encInfo)
+            }
+
+            if u.OnSampleInfo != nil {
+               u.OnSampleInfo(&si)
             }
 
             newSamples = append(newSamples, si)
+            mdatOffset += originalSize
          }
       }
    }
@@ -132,11 +156,9 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
 }
 
 func (u *Unfragmenter) Finish() error {
-   if u.moov == nil {
+   if u.Moov == nil {
       return errors.New("not initialized")
    }
-
-   log.Println("[Unfrag] Finishing...")
 
    // Capture the end of mdat payload before writing moov
    mdatEndOffset, _ := u.Writer.Seek(0, io.SeekCurrent)
@@ -152,7 +174,7 @@ func (u *Unfragmenter) Finish() error {
    stsc := buildStsc(u.segmentSampleCounts)
    offsetBox := buildStco(u.chunkOffsets)
 
-   trak, _ := u.moov.Trak()
+   trak, _ := u.Moov.Trak()
    mdia, _ := trak.Mdia()
    minf, _ := mdia.Minf()
    stbl, _ := minf.Stbl()
@@ -166,7 +188,7 @@ func (u *Unfragmenter) Finish() error {
       return err
    }
 
-   u.moov.RemoveMvex()
+   u.Moov.RemoveMvex()
 
    var newChildren []StblChild
    if stsd, ok := stbl.Stsd(); ok {
@@ -183,7 +205,7 @@ func (u *Unfragmenter) Finish() error {
 
    stbl.Children = newChildren
 
-   moovBytes := u.moov.Encode()
+   moovBytes := u.Moov.Encode()
    if _, err := u.Writer.Write(moovBytes); err != nil {
       return err
    }

@@ -6,17 +6,15 @@ import (
    "fmt"
 )
 
-// SidxReference holds the data for a single entry in the sidx list.
 type SidxReference struct {
-   ReferenceType      bool   // 1 bit: 0 = media, 1 = index
-   ReferencedSize     uint32 // 31 bits
+   ReferenceType      bool
+   ReferencedSize     uint32
    SubsegmentDuration uint32
-   StartsWithSAP      bool   // 1 bit
-   SAPType            uint8  // 3 bits
-   SAPDeltaTime       uint32 // 28 bits
+   StartsWithSAP      bool
+   SAPType            uint8
+   SAPDeltaTime       uint32
 }
 
-// SidxBox represents the 'sidx' box (Segment Index Box).
 type SidxBox struct {
    Header                   BoxHeader
    Version                  byte
@@ -28,24 +26,20 @@ type SidxBox struct {
    References               []SidxReference
 }
 
-// Parse parses the 'sidx' box from a byte slice.
 func (b *SidxBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-
    if len(data) < 12 {
-      return errors.New("sidx box too short for version and flags")
+      return errors.New("sidx box too short")
    }
-
    b.Version = data[8]
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
 
    offset := 12
    if len(data) < offset+8 {
-      return errors.New("sidx box is too short for referenceID and timescale")
+      return errors.New("sidx box too short")
    }
-
    b.ReferenceID = binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
    b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
@@ -53,7 +47,7 @@ func (b *SidxBox) Parse(data []byte) error {
 
    if b.Version == 0 {
       if len(data) < offset+8 {
-         return errors.New("sidx v0 box is too short for EPT and first_offset")
+         return errors.New("sidx v0 box too short")
       }
       b.EarliestPresentationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
       offset += 4
@@ -61,7 +55,7 @@ func (b *SidxBox) Parse(data []byte) error {
       offset += 4
    } else {
       if len(data) < offset+16 {
-         return errors.New("sidx v1 box is too short for EPT and first_offset")
+         return errors.New("sidx v1 box too short")
       }
       b.EarliestPresentationTime = binary.BigEndian.Uint64(data[offset : offset+8])
       offset += 8
@@ -70,18 +64,16 @@ func (b *SidxBox) Parse(data []byte) error {
    }
 
    if len(data) < offset+4 {
-      return errors.New("sidx box is too short for reference_count")
+      return errors.New("sidx box too short for reference_count")
    }
-
-   offset += 2 // Skip reserved
+   offset += 2 // reserved
    referenceCount := binary.BigEndian.Uint16(data[offset : offset+2])
    offset += 2
 
    b.References = make([]SidxReference, referenceCount)
-
    for i := 0; i < int(referenceCount); i++ {
       if len(data) < offset+12 {
-         return fmt.Errorf("sidx box is truncated at reference index %d", i)
+         return fmt.Errorf("sidx box truncated at index %d", i)
       }
       val1 := binary.BigEndian.Uint32(data[offset : offset+4])
       b.References[i].ReferenceType = (val1 >> 31) == 1

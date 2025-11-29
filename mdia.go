@@ -64,7 +64,9 @@ func (b *MdiaBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         content = append(content, child.Mdhd.Encode()...)
+         // Fix: Use RawData directly because MdhdBox.Encode() was removed.
+         // We patch the RawData in place during Unfragmenter.Finish().
+         content = append(content, child.Mdhd.RawData...)
       } else if child.Minf != nil {
          content = append(content, child.Minf.Encode()...)
       } else if child.Raw != nil {

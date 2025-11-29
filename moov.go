@@ -91,6 +91,20 @@ func (b *MoovBox) RemovePssh() {
    b.Children = kept
 }
 
+// RemoveMvex removes the 'mvex' atom to signal the file is no longer fragmented.
+func (b *MoovBox) RemoveMvex() {
+   var kept []MoovChild
+   for _, child := range b.Children {
+      if len(child.Raw) >= 8 {
+         if string(child.Raw[4:8]) == "mvex" {
+            continue
+         }
+      }
+      kept = append(kept, child)
+   }
+   b.Children = kept
+}
+
 func (b *MoovBox) Trak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {

@@ -1,32 +1,47 @@
 package sofia
 
-import "errors"
+import (
+   "errors"
+   "fmt"
+)
 
-type EncvChild struct {
+type EncChild struct {
    Sinf *SinfBox
    Raw  []byte
 }
 
-type EncvBox struct {
+type EncBox struct {
    Header      BoxHeader
    RawData     []byte
    EntryHeader []byte
-   Children    []EncvChild
+   Children    []EncChild
 }
 
-func (b *EncvBox) Parse(data []byte) error {
+func (b *EncBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
    b.RawData = data[:b.Header.Size]
-   const visualSampleEntrySize = 78
+
+   // Determine entry header size based on box type
+   var entrySize int
+   switch string(b.Header.Type[:]) {
+   case "enca":
+      entrySize = 28
+   case "encv":
+      entrySize = 78
+   default:
+      return fmt.Errorf("unknown encryption box type: %s", string(b.Header.Type[:]))
+   }
+
    payloadOffset := 8
-   if len(data) < payloadOffset+visualSampleEntrySize {
+   if len(data) < payloadOffset+entrySize {
       b.EntryHeader = data[payloadOffset:b.Header.Size]
       return nil
    }
-   b.EntryHeader = data[payloadOffset : payloadOffset+visualSampleEntrySize]
-   boxData := data[payloadOffset+visualSampleEntrySize : b.Header.Size]
+   b.EntryHeader = data[payloadOffset : payloadOffset+entrySize]
+
+   boxData := data[payloadOffset+entrySize : b.Header.Size]
    offset := 0
    for offset < len(boxData) {
       var h BoxHeader
@@ -38,10 +53,10 @@ func (b *EncvBox) Parse(data []byte) error {
          boxSize = len(boxData) - offset
       }
       if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in encv")
+         return errors.New("invalid child box size in encrypted entry")
       }
       childData := boxData[offset : offset+boxSize]
-      var child EncvChild
+      var child EncChild
       switch string(h.Type[:]) {
       case "sinf":
          var sinf SinfBox
@@ -61,10 +76,10 @@ func (b *EncvBox) Parse(data []byte) error {
    return nil
 }
 
-func (b *EncvBox) Encode() []byte {
+func (b *EncBox) Encode() []byte {
    var childrenContent []byte
    for _, child := range b.Children {
-      // Do NOT encode child.Sinf. It is read-only/deleted.
+      // sinf is skipped (read-only/deleted)
       if child.Raw != nil {
          childrenContent = append(childrenContent, child.Raw...)
       }
@@ -75,26 +90,7 @@ func (b *EncvBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// Remove deletes children matching the box type (e.g. "sinf").
-func (b *EncvBox) Remove(boxType string) {
-   var kept []EncvChild
-   for _, child := range b.Children {
-      if boxType == "sinf" && child.Sinf != nil {
-         continue
-      }
-      // Fix: Removed 'child.Raw != nil' check (S1009)
-      if len(child.Raw) >= 8 {
-         if string(child.Raw[4:8]) == boxType {
-            continue
-         }
-      }
-      kept = append(kept, child)
-   }
-   b.Children = kept
-}
-
-// Unprotect converts this 'encv' box into a cleartext visual sample entry (e.g. 'avc1').
-func (b *EncvBox) Unprotect() error {
+func (b *EncBox) Unprotect() error {
    var sinf *SinfBox
    for _, child := range b.Children {
       if child.Sinf != nil {
@@ -111,11 +107,18 @@ func (b *EncvBox) Unprotect() error {
       return errors.New("cannot unprotect: sinf box missing frma")
    }
 
-   // 1. Change Header Type to original format (e.g. "avc1")
+   // Change Type to original format (e.g. "avc1" or "mp4a")
    b.Header.Type = frma.DataFormat
 
-   // 2. Remove 'sinf'
-   b.Remove("sinf")
+   // Remove 'sinf' child
+   var kept []EncChild
+   for _, child := range b.Children {
+      if child.Sinf != nil {
+         continue
+      }
+      kept = append(kept, child)
+   }
+   b.Children = kept
 
    return nil
 }

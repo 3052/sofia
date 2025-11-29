@@ -22,6 +22,7 @@
 - read `pssh` box
 - read `senc` box
 - read `sidx` box
+- read `sinf` box
 - read `tfhd` box
 - read `traf` box
 - read `trak` box

@@ -70,12 +70,18 @@ func (b *EncBox) Encode() []byte {
 
 func (b *EncBox) Unprotect() error {
    var sinf *SinfBox
+   kept := make([]EncChild, 0, len(b.Children))
+
    for _, child := range b.Children {
       if child.Sinf != nil {
-         sinf = child.Sinf
-         break
+         if sinf == nil {
+            sinf = child.Sinf
+         }
+         continue
       }
+      kept = append(kept, child)
    }
+
    if sinf == nil {
       return nil
    }
@@ -87,13 +93,6 @@ func (b *EncBox) Unprotect() error {
    }
 
    b.Header.Type = frma.DataFormat
-
-   var kept []EncChild
-   for _, child := range b.Children {
-      if child.Sinf == nil {
-         kept = append(kept, child)
-      }
-   }
    b.Children = kept
 
    return nil

@@ -168,34 +168,9 @@ func FindMdatPtr(boxes []Box) *MdatBox {
    return nil
 }
 
-// --- Helpers ---
+// --- Decryption ---
 
-func patchDuration(boxData []byte, newDuration uint64) error {
-   if len(boxData) < 32 {
-      return errors.New("box too short to patch duration")
-   }
-   version := boxData[8]
-   if version == 1 {
-      const durationOffset = 32
-      if len(boxData) < durationOffset+8 {
-         return errors.New("box too short for v1 duration")
-      }
-      binary.BigEndian.PutUint64(boxData[durationOffset:], newDuration)
-   } else {
-      const durationOffset = 24
-      if len(boxData) < durationOffset+4 {
-         return errors.New("box too short for v0 duration")
-      }
-      if newDuration > 0xFFFFFFFF {
-         return errors.New("duration overflows 32-bit field")
-      }
-      binary.BigEndian.PutUint32(boxData[durationOffset:], uint32(newDuration))
-   }
-   return nil
-}
-
-// --- Decrypt ---
-
+// Decrypt decrypts a segment's mdat boxes in-place using the provided key.
 func Decrypt(segmentBoxes []Box, key []byte) error {
    var isEncrypted bool
    for _, moof := range AllMoof(segmentBoxes) {

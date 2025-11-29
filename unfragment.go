@@ -16,11 +16,11 @@ type Unfragmenter struct {
    segmentSampleCounts []uint32
    mdatStartOffset     int64
    segmentCount        int
-   OnSample            func(*UnfragSample)
+   OnSample            func(sample []byte, encInfo *SampleEncryptionInfo)
+   OnSampleInfo        func(*UnfragSample)
 }
 
 // UnfragSample represents the minimal sample information needed for unfragmenting.
-// It is named differently from trun.SampleInfo to avoid collision.
 type UnfragSample struct {
    Size     uint32
    Duration uint32
@@ -89,9 +89,15 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return nil
    }
 
+   // Senc is optional and provides encryption info
+   senc, _ := traf.Senc()
+   sencIndex := 0
+
    var newSamples []UnfragSample
    defDur := tfhd.DefaultSampleDuration
    defSize := tfhd.DefaultSampleSize
+
+   mdatOffset := 0
 
    for _, child := range traf.Children {
       if child.Trun != nil {
@@ -105,11 +111,31 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
                si.Size = s.Size
             }
 
+            // Store original size to ensure parser stays in sync with mdat payload
+            // even if the user modifies si.Size in the callback.
+            originalSize := int(si.Size)
+
+            if mdatOffset+originalSize > len(mdat.Payload) {
+               return errors.New("mdat payload too short for samples")
+            }
+            sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
+
+            var encInfo *SampleEncryptionInfo
+            if senc != nil && sencIndex < len(senc.Samples) {
+               encInfo = &senc.Samples[sencIndex]
+               sencIndex++
+            }
+
             if u.OnSample != nil {
-               u.OnSample(&si)
+               u.OnSample(sampleData, encInfo)
+            }
+
+            if u.OnSampleInfo != nil {
+               u.OnSampleInfo(&si)
             }
 
             newSamples = append(newSamples, si)
+            mdatOffset += originalSize
          }
       }
    }

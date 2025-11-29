@@ -69,7 +69,7 @@ func (b *MoovBox) Encode() []byte {
       if child.Trak != nil {
          content = append(content, child.Trak.Encode()...)
       } else if child.Pssh != nil {
-         // pssh is read-only in this simplified version; skipped
+         // Pssh is read-only/skipped.
       } else if child.Raw != nil {
          content = append(content, child.Raw...)
       }
@@ -79,23 +79,12 @@ func (b *MoovBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// Remove deletes all child boxes matching the given type (e.g., "pssh", "mvex").
-func (b *MoovBox) Remove(boxType string) {
+// RemovePssh specifically removes the strongly-typed Pssh children.
+func (b *MoovBox) RemovePssh() {
    var kept []MoovChild
    for _, child := range b.Children {
-      // Check typed fields
-      if boxType == "trak" && child.Trak != nil {
+      if child.Pssh != nil {
          continue
-      }
-      if boxType == "pssh" && child.Pssh != nil {
-         continue
-      }
-      // Check raw fields
-      // Fix: Removed 'child.Raw != nil' check (S1009)
-      if len(child.Raw) >= 8 {
-         if string(child.Raw[4:8]) == boxType {
-            continue
-         }
       }
       kept = append(kept, child)
    }
@@ -111,7 +100,6 @@ func (b *MoovBox) Trak() (*TrakBox, bool) {
    return nil, false
 }
 
-// FindPssh finds the first PsshBox child with a matching SystemID.
 func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
    for _, child := range b.Children {
       if child.Pssh != nil {

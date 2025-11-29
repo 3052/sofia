@@ -91,33 +91,32 @@ func (b *EncBox) Encode() []byte {
 }
 
 func (b *EncBox) Unprotect() error {
-   var sinf *SinfBox
-   for _, child := range b.Children {
-      if child.Sinf != nil {
-         sinf = child.Sinf
-         break
-      }
-   }
-   if sinf == nil {
-      return nil
-   }
-
-   frma := sinf.Frma()
-   if frma == nil {
-      return errors.New("cannot unprotect: sinf box missing frma")
-   }
-
-   // Change Type to original format (e.g. "avc1" or "mp4a")
-   b.Header.Type = frma.DataFormat
-
-   // Remove 'sinf' child
    var kept []EncChild
+   var foundSinf *SinfBox
+
+   // Single pass: Identify sinf and filter it out simultaneously
    for _, child := range b.Children {
       if child.Sinf != nil {
+         if foundSinf == nil {
+            foundSinf = child.Sinf
+         }
+         // Skip appending to 'kept', effectively removing it
          continue
       }
       kept = append(kept, child)
    }
+
+   if foundSinf == nil {
+      return nil // Already unprotected or missing sinf
+   }
+
+   frma := foundSinf.Frma()
+   if frma == nil {
+      return errors.New("cannot unprotect: sinf box missing frma")
+   }
+
+   // Apply changes
+   b.Header.Type = frma.DataFormat
    b.Children = kept
 
    return nil

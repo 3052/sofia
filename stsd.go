@@ -72,9 +72,7 @@ func (b *StsdBox) Parse(data []byte) error {
 
 func (b *StsdBox) Encode() []byte {
    buf := make([]byte, 8)
-
    // Copy raw fields (Version/Flags/Count) from original
-   // 8 bytes: Header(8) -> [8:16] are Ver/Flags/EntryCount
    buf = append(buf, b.RawData[8:16]...)
 
    for _, child := range b.Children {
@@ -86,8 +84,7 @@ func (b *StsdBox) Encode() []byte {
    }
 
    b.Header.Size = uint32(len(buf))
-   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
-   copy(buf[4:8], b.Header.Type[:])
+   b.Header.Put(buf)
    return buf
 }
 

@@ -1,7 +1,5 @@
 package sofia
 
-import "encoding/binary"
-
 type StblChild struct {
    Stsd *StsdBox
    Raw  []byte
@@ -45,8 +43,7 @@ func (b *StblBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(len(buf))
-   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
-   copy(buf[4:8], b.Header.Type[:])
+   b.Header.Put(buf)
    return buf
 }
 

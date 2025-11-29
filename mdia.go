@@ -1,7 +1,5 @@
 package sofia
 
-import "encoding/binary"
-
 type MdiaChild struct {
    Mdhd *MdhdBox
    Minf *MinfBox
@@ -46,6 +44,7 @@ func (b *MdiaBox) Encode() []byte {
    buf := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
+         // Use RawData; we patch directly in Unfragmenter
          buf = append(buf, child.Mdhd.RawData...)
       } else if child.Minf != nil {
          buf = append(buf, child.Minf.Encode()...)
@@ -54,8 +53,7 @@ func (b *MdiaBox) Encode() []byte {
       }
    }
    b.Header.Size = uint32(len(buf))
-   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
-   copy(buf[4:8], b.Header.Type[:])
+   b.Header.Put(buf)
    return buf
 }
 

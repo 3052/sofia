@@ -13,7 +13,6 @@ func (b *FrmaBox) Parse(data []byte) error {
       return err
    }
    b.RawData = data[:b.Header.Size]
-   // The dataFormat is the 4 bytes immediately following the box header.
    if len(data) < 12 {
       return fmt.Errorf("frma box is too small: %d bytes", len(data))
    }

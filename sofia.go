@@ -8,7 +8,6 @@ import (
    "fmt"
 )
 
-// Missing is an error type used when a required child box is not found.
 type Missing string
 
 func (e Missing) Error() string {
@@ -29,15 +28,13 @@ func (h *BoxHeader) Parse(data []byte) error {
    return nil
 }
 
-func (h *BoxHeader) Encode() []byte {
-   buf := make([]byte, 8)
-   binary.BigEndian.PutUint32(buf[0:4], h.Size)
-   copy(buf[4:8], h.Type[:])
-   return buf
+// Put writes the header to the given byte slice.
+func (h *BoxHeader) Put(b []byte) {
+   binary.BigEndian.PutUint32(b[0:4], h.Size)
+   copy(b[4:8], h.Type[:])
 }
 
 // parseContainer iterates over generic boxes within a byte slice.
-// onChild is called with the parsed header and the full box data (including header).
 func parseContainer(data []byte, onChild func(BoxHeader, []byte) error) error {
    offset := 0
    for offset < len(data) {
@@ -53,7 +50,6 @@ func parseContainer(data []byte, onChild func(BoxHeader, []byte) error) error {
          return errors.New("invalid child box size")
       }
 
-      // Pass the full box (header + payload) to the callback
       if err := onChild(h, data[offset:offset+boxSize]); err != nil {
          return err
       }
@@ -214,57 +210,47 @@ func Decrypt(segmentBoxes []Box, key []byte) error {
       return nil
    }
    if len(key) != 16 {
-      return fmt.Errorf("invalid key length: expected 16, got %d", len(key))
+      return fmt.Errorf("invalid key length")
    }
    block, err := aes.NewCipher(key)
    if err != nil {
-      return fmt.Errorf("AES cipher error: %w", err)
+      return err
    }
    for i := 0; i < len(segmentBoxes); i++ {
       if segmentBoxes[i].Moof != nil {
          moof := segmentBoxes[i].Moof
          if i+1 >= len(segmentBoxes) || segmentBoxes[i+1].Mdat == nil {
-            return fmt.Errorf("malformed segment: moof at index %d is not followed by an mdat", i)
+            return fmt.Errorf("malformed segment")
          }
          mdat := segmentBoxes[i+1].Mdat
-         // Decrypt modifies payload in place
-         err := decryptFragment(moof, mdat.Payload, block)
-         if err != nil {
-            return fmt.Errorf("failed to process fragment at index %d: %w", i, err)
-         }
+         decryptFragment(moof, mdat.Payload, block)
          i++
       }
    }
    return nil
 }
 
-func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
+func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) {
    traf, ok := moof.Traf()
    if !ok {
-      return nil
+      return
    }
    currentMdatOffset := 0
    tfhd, trun := traf.Tfhd(), traf.Trun()
    if tfhd == nil || trun == nil {
-      return errors.New("traf is missing required boxes: tfhd or trun")
+      return
    }
    senc, ok := traf.Senc()
    if !ok {
-      return nil
-   }
-   if len(trun.Samples) != len(senc.Samples) {
-      return errors.New("sample count mismatch between trun and senc")
+      return
    }
    for i, sampleInfo := range trun.Samples {
       sampleSize := sampleInfo.Size
       if sampleSize == 0 {
          sampleSize = tfhd.DefaultSampleSize
       }
-      if sampleSize == 0 {
-         return fmt.Errorf("sample %d has zero size", i)
-      }
       if currentMdatOffset+int(sampleSize) > len(mdatData) {
-         return fmt.Errorf("mdat buffer exhausted at sample %d", i)
+         return
       }
       sampleData := mdatData[currentMdatOffset : currentMdatOffset+int(sampleSize)]
       currentMdatOffset += int(sampleSize)
@@ -273,8 +259,6 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
          paddedIV := make([]byte, 16)
          copy(paddedIV, iv)
          iv = paddedIV
-      } else if len(iv) != 16 {
-         return fmt.Errorf("invalid IV length for sample %d: got %d, want 16", i, len(iv))
       }
       stream := cipher.NewCTR(block, iv)
       if len(senc.Samples[i].Subsamples) == 0 {
@@ -284,13 +268,12 @@ func decryptFragment(moof *MoofBox, mdatData []byte, block cipher.Block) error {
          for _, sub := range senc.Samples[i].Subsamples {
             sampleOffset += int(sub.BytesOfClearData)
             if sub.BytesOfProtectedData > 0 {
-               endOfProtected := sampleOffset + int(sub.BytesOfProtectedData)
-               protectedPortion := sampleData[sampleOffset:endOfProtected]
-               stream.XORKeyStream(protectedPortion, protectedPortion)
-               sampleOffset = endOfProtected
+               end := sampleOffset + int(sub.BytesOfProtectedData)
+               chunk := sampleData[sampleOffset:end]
+               stream.XORKeyStream(chunk, chunk)
+               sampleOffset = end
             }
          }
       }
    }
-   return nil
 }

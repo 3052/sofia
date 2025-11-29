@@ -13,7 +13,6 @@ import (
 // TestUnfragmenter_RealFiles looks for real files in the "ignore" directory.
 func TestUnfragmenter_RealFiles(t *testing.T) {
    workDir := "ignore"
-
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
       t.Skipf("Skipping test: directory '%s' not found", workDir)
    }
@@ -25,7 +24,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    }
    defer outFile.Close()
 
-   unfrag := NewUnfragmenter(outFile)
+   unfrag := &Unfragmenter{Writer: outFile}
 
    initPath := filepath.Join(workDir, "init.mp4")
    initData, err := os.ReadFile(initPath)
@@ -42,15 +41,12 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    if err != nil {
       t.Fatalf("Failed to glob segments: %v", err)
    }
-
    if len(segmentFiles) == 0 {
       t.Fatalf("No segment files found matching pattern: %s", globPattern)
    }
-
    sort.Strings(segmentFiles)
 
    t.Logf("Found %d segments. Processing...", len(segmentFiles))
-
    for _, segmentPath := range segmentFiles {
       segData, err := os.ReadFile(segmentPath)
       if err != nil {
@@ -83,7 +79,7 @@ func TestUnfragmenter_Integration(t *testing.T) {
    seg1 := createSyntheticSegment(1, []byte{0xAA, 0xAA, 0xAA, 0xAA})
    seg2 := createSyntheticSegment(2, []byte{0xBB, 0xBB, 0xBB, 0xBB})
 
-   unfrag := NewUnfragmenter(outFile)
+   unfrag := &Unfragmenter{Writer: outFile}
 
    if err := unfrag.Initialize(initSeg); err != nil {
       t.Fatalf("Initialize failed: %v", err)
@@ -139,6 +135,7 @@ func createSyntheticInit() []byte {
    minf := makeBox("minf", stbl)
    mdia := makeBox("mdia", append(mdhd, minf...))
    trak := makeBox("trak", mdia)
+
    moov := makeBox("moov", append(mvhd, trak...))
 
    return append(ftyp, moov...)
@@ -151,14 +148,15 @@ func createSyntheticSegment(seq int, payload []byte) []byte {
 
    trunFlags := uint32(0x000301)
    sampleCount := uint32(1)
+
    trunData := make([]byte, 8)
    binary.BigEndian.PutUint32(trunData[0:4], trunFlags)
    binary.BigEndian.PutUint32(trunData[4:8], sampleCount)
-   trunData = append(trunData, 0, 0, 0, 0)
+   trunData = append(trunData, 0, 0, 0, 0) // data offset
    trunData = append(trunData, uint32ToBytes(100)...)
    trunData = append(trunData, uint32ToBytes(uint32(len(payload)))...)
-
    trun := makeBox("trun", trunData)
+
    traf := makeBox("traf", append(tfhd, trun...))
    moof := makeBox("moof", traf)
    mdat := makeBox("mdat", payload)

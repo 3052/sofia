@@ -9,29 +9,29 @@ import (
 )
 
 type Unfragmenter struct {
-   dst                 io.WriteSeeker
+   Writer              io.WriteSeeker
    moov                *MoovBox
-   Samples             []UnfragSample
+   samples             []UnfragSample
    chunkOffsets        []uint64
    segmentSampleCounts []uint32
    mdatStartOffset     int64
-   payloadWritten      uint64
-   initialized         bool
    segmentCount        int
+   OnSample            func(*UnfragSample)
 }
 
+// UnfragSample represents the minimal sample information needed for unfragmenting.
+// It is named differently from trun.SampleInfo to avoid collision.
 type UnfragSample struct {
    Size     uint32
    Duration uint32
 }
 
-func NewUnfragmenter(dst io.WriteSeeker) *Unfragmenter {
-   return &Unfragmenter{dst: dst}
-}
-
 func (u *Unfragmenter) Initialize(initSegment []byte) error {
-   if u.initialized {
+   if u.moov != nil {
       return errors.New("already initialized")
+   }
+   if u.Writer == nil {
+      return errors.New("writer is nil")
    }
 
    log.Println("[Unfrag] Initializing...")
@@ -50,21 +50,20 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
       return errors.New("no trak found")
    }
 
-   u.mdatStartOffset, _ = u.dst.Seek(0, io.SeekCurrent)
+   u.mdatStartOffset, _ = u.Writer.Seek(0, io.SeekCurrent)
 
    mdatHeader := make([]byte, 16)
    binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
    copy(mdatHeader[4:8], []byte("mdat"))
-   if _, err := u.dst.Write(mdatHeader); err != nil {
+   if _, err := u.Writer.Write(mdatHeader); err != nil {
       return err
    }
 
-   u.initialized = true
    return nil
 }
 
 func (u *Unfragmenter) AddSegment(segmentData []byte) error {
-   if !u.initialized {
+   if u.moov == nil {
       return errors.New("must call Initialize")
    }
 
@@ -105,6 +104,11 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
             if (trun.Flags & 0x000200) != 0 {
                si.Size = s.Size
             }
+
+            if u.OnSample != nil {
+               u.OnSample(&si)
+            }
+
             newSamples = append(newSamples, si)
          }
       }
@@ -114,35 +118,37 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return nil
    }
 
-   currentPos, _ := u.dst.Seek(0, io.SeekCurrent)
+   currentPos, _ := u.Writer.Seek(0, io.SeekCurrent)
    u.chunkOffsets = append(u.chunkOffsets, uint64(currentPos))
 
-   n, err := u.dst.Write(mdat.Payload)
-   if err != nil {
+   if _, err := u.Writer.Write(mdat.Payload); err != nil {
       return err
    }
-   u.payloadWritten += uint64(n)
 
-   u.Samples = append(u.Samples, newSamples...)
+   u.samples = append(u.samples, newSamples...)
    u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(len(newSamples)))
 
    return nil
 }
 
 func (u *Unfragmenter) Finish() error {
-   if !u.initialized {
+   if u.moov == nil {
       return errors.New("not initialized")
    }
 
    log.Println("[Unfrag] Finishing...")
 
+   // Capture the end of mdat payload before writing moov
+   mdatEndOffset, _ := u.Writer.Seek(0, io.SeekCurrent)
+   finalMdatSize := uint64(mdatEndOffset - u.mdatStartOffset)
+
    var totalDuration uint64
-   for _, s := range u.Samples {
+   for _, s := range u.samples {
       totalDuration += uint64(s.Duration)
    }
 
-   stts := buildStts(u.Samples)
-   stsz := buildStsz(u.Samples)
+   stts := buildStts(u.samples)
+   stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
    offsetBox := buildStco(u.chunkOffsets)
 
@@ -178,21 +184,20 @@ func (u *Unfragmenter) Finish() error {
    stbl.Children = newChildren
 
    moovBytes := u.moov.Encode()
-   if _, err := u.dst.Write(moovBytes); err != nil {
+   if _, err := u.Writer.Write(moovBytes); err != nil {
       return err
    }
 
-   if _, err := u.dst.Seek(u.mdatStartOffset+8, io.SeekStart); err != nil {
+   if _, err := u.Writer.Seek(u.mdatStartOffset+8, io.SeekStart); err != nil {
       return err
    }
 
-   finalMdatSize := uint64(16) + u.payloadWritten
    var sizeBuf [8]byte
    binary.BigEndian.PutUint64(sizeBuf[:], finalMdatSize)
-   if _, err := u.dst.Write(sizeBuf[:]); err != nil {
+   if _, err := u.Writer.Write(sizeBuf[:]); err != nil {
       return err
    }
 
-   u.dst.Seek(0, io.SeekEnd)
+   u.Writer.Seek(0, io.SeekEnd)
    return nil
 }

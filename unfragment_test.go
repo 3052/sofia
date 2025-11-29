@@ -2,7 +2,9 @@ package sofia
 
 import (
    "bytes"
+   "crypto/aes"
    "encoding/binary"
+   "encoding/hex"
    "io"
    "os"
    "path/filepath"
@@ -76,9 +78,24 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    }
    defer outFile.Close()
 
-   unfrag := &Unfragmenter{Writer: outFile}
+   // 27736bd0d54481eab2402a879cb863c7
+   key, err := hex.DecodeString("27736bd0d54481eab2402a879cb863c7")
+   if err != nil {
+      t.Fatalf("Failed to decode key: %v", err)
+   }
+   block, err := aes.NewCipher(key)
+   if err != nil {
+      t.Fatalf("Failed to create cipher: %v", err)
+   }
 
-   initPath := filepath.Join(workDir, "init.mp4")
+   unfrag := &Unfragmenter{
+      Writer: outFile,
+      OnSample: func(sample []byte, encInfo *SampleEncryptionInfo) {
+         DecryptSample(sample, encInfo, block)
+      },
+   }
+
+   initPath := filepath.Join(workDir, "_init.mp4")
    initData, err := os.ReadFile(initPath)
    if err != nil {
       t.Fatalf("Failed to read init segment (%s): %v", initPath, err)
@@ -88,7 +105,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       t.Fatalf("Unfragmenter.Initialize failed: %v", err)
    }
 
-   globPattern := filepath.Join(workDir, "segment-*.m4s")
+   globPattern := filepath.Join(workDir, "*.m4s")
    segmentFiles, err := filepath.Glob(globPattern)
    if err != nil {
       t.Fatalf("Failed to glob segments: %v", err)
@@ -158,36 +175,6 @@ func createSyntheticSegment(seq int, payload []byte) []byte {
    trun := makeBox("trun", trunData)
 
    traf := makeBox("traf", append(tfhd, trun...))
-   moof := makeBox("moof", traf)
-   mdat := makeBox("mdat", payload)
-
-   return append(moof, mdat...)
-}
-
-func createSyntheticEncryptedSegment(payload []byte, iv []byte) []byte {
-   tfhdData := make([]byte, 8)
-   binary.BigEndian.PutUint32(tfhdData[4:8], 1)
-   tfhd := makeBox("tfhd", tfhdData)
-
-   // Senc Box
-   // 4 bytes flags (0), 4 bytes count (1), 8 bytes IV
-   sencPayload := make([]byte, 16)
-   binary.BigEndian.PutUint32(sencPayload[4:8], 1)
-   copy(sencPayload[8:16], iv)
-   senc := makeBox("senc", sencPayload)
-
-   trunFlags := uint32(0x000301)
-   sampleCount := uint32(1)
-
-   trunData := make([]byte, 8)
-   binary.BigEndian.PutUint32(trunData[0:4], trunFlags)
-   binary.BigEndian.PutUint32(trunData[4:8], sampleCount)
-   trunData = append(trunData, 0, 0, 0, 0) // data offset
-   trunData = append(trunData, uint32ToBytes(100)...)
-   trunData = append(trunData, uint32ToBytes(uint32(len(payload)))...)
-   trun := makeBox("trun", trunData)
-
-   traf := makeBox("traf", append(tfhd, append(trun, senc...)...))
    moof := makeBox("moof", traf)
    mdat := makeBox("mdat", payload)
 

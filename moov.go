@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "bytes"
-   "encoding/binary"
-)
+import "bytes"
 
 type MoovChild struct {
    Trak *TrakBox
@@ -46,25 +43,18 @@ func (b *MoovBox) Parse(data []byte) error {
 }
 
 func (b *MoovBox) Encode() []byte {
-   // 1. Start with placeholder for header
    buf := make([]byte, 8)
-
-   // 2. Append children
    for _, child := range b.Children {
       if child.Trak != nil {
          buf = append(buf, child.Trak.Encode()...)
       } else if child.Pssh != nil {
-         // Skipped (Read-only)
+         // Skipped
       } else if child.Raw != nil {
          buf = append(buf, child.Raw...)
       }
    }
-
-   // 3. Set Header
    b.Header.Size = uint32(len(buf))
-   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
-   copy(buf[4:8], b.Header.Type[:])
-
+   b.Header.Put(buf)
    return buf
 }
 

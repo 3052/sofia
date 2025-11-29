@@ -71,13 +71,36 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return fmt.Errorf("parsing segment %d: %w", u.segmentCount, err)
    }
 
-   moof := FindMoofPtr(boxes)
-   mdat := FindMdatPtr(boxes)
+   var pendingMoof *MoofBox
+   foundPair := false
 
-   if moof == nil || mdat == nil {
+   for i, box := range boxes {
+      if box.Moof != nil {
+         pendingMoof = box.Moof
+         continue
+      }
+      if box.Mdat != nil {
+         if pendingMoof != nil {
+            if err := u.processFragment(pendingMoof, box.Mdat); err != nil {
+               return fmt.Errorf("processing fragment at box index %d: %w", i, err)
+            }
+            pendingMoof = nil
+            foundPair = true
+         }
+      }
+   }
+
+   if !foundPair {
+      // It's possible the segment was just an empty init segment or uninteresting boxes,
+      // but typically AddSegment expects content. We won't error, just return.
       return nil
    }
 
+   return nil
+}
+
+// processFragment handles a single moof/mdat pair extracted from the segment.
+func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
    traf, ok := moof.Traf()
    if !ok {
       return nil
@@ -142,6 +165,7 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return nil
    }
 
+   // Record chunk offset before writing the data for this fragment
    currentPos, _ := u.Writer.Seek(0, io.SeekCurrent)
    u.chunkOffsets = append(u.chunkOffsets, uint64(currentPos))
 

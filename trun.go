@@ -14,7 +14,6 @@ type SampleInfo struct {
 
 type TrunBox struct {
    Header  BoxHeader
-   RawData []byte
    Flags   uint32
    Samples []SampleInfo
 }
@@ -23,7 +22,6 @@ func (b *TrunBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
    sampleCount := binary.BigEndian.Uint32(data[12:16])
    offset := 16
@@ -33,37 +31,42 @@ func (b *TrunBox) Parse(data []byte) error {
    if b.Flags&0x000004 != 0 {
       offset += 4
    }
+
+   // Calculate size of one sample entry
+   sampleEntrySize := 0
+   if b.Flags&0x000100 != 0 {
+      sampleEntrySize += 4
+   } // Duration
+   if b.Flags&0x000200 != 0 {
+      sampleEntrySize += 4
+   } // Size
+   if b.Flags&0x000400 != 0 {
+      sampleEntrySize += 4
+   } // Flags
+   if b.Flags&0x000800 != 0 {
+      sampleEntrySize += 4
+   } // CTO
+
+   // Safety check
+   if len(data)-offset < int(sampleCount)*sampleEntrySize {
+      return errors.New("trun box too short for declared samples")
+   }
+
    b.Samples = make([]SampleInfo, sampleCount)
-   sampleDurationPresent := b.Flags&0x000100 != 0
-   sampleSizePresent := b.Flags&0x000200 != 0
-   sampleFlagsPresent := b.Flags&0x000400 != 0
-   sampleCTOPresent := b.Flags&0x000800 != 0
    for i := uint32(0); i < sampleCount; i++ {
-      if sampleDurationPresent {
-         if offset+4 > len(data) {
-            return errors.New("trun box truncated at sample duration")
-         }
+      if b.Flags&0x000100 != 0 {
          b.Samples[i].Duration = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
-      if sampleSizePresent {
-         if offset+4 > len(data) {
-            return errors.New("trun box truncated at sample size")
-         }
+      if b.Flags&0x000200 != 0 {
          b.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
-      if sampleFlagsPresent {
-         if offset+4 > len(data) {
-            return errors.New("trun box truncated at sample flags")
-         }
+      if b.Flags&0x000400 != 0 {
          b.Samples[i].Flags = binary.BigEndian.Uint32(data[offset : offset+4])
          offset += 4
       }
-      if sampleCTOPresent {
-         if offset+4 > len(data) {
-            return errors.New("trun box truncated at sample CTO")
-         }
+      if b.Flags&0x000800 != 0 {
          b.Samples[i].CompositionTimeOffset = int32(binary.BigEndian.Uint32(data[offset : offset+4]))
          offset += 4
       }

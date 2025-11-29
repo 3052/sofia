@@ -7,7 +7,6 @@ type TrakChild struct {
 
 type TrakBox struct {
    Header   BoxHeader
-   RawData  []byte
    Children []TrakChild
 }
 
@@ -15,7 +14,6 @@ func (b *TrakBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
    return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child TrakChild
       switch string(h.Type[:]) {

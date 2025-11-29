@@ -7,7 +7,6 @@ type MinfChild struct {
 
 type MinfBox struct {
    Header   BoxHeader
-   RawData  []byte
    Children []MinfChild
 }
 
@@ -15,7 +14,6 @@ func (b *MinfBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
    return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MinfChild
       switch string(h.Type[:]) {

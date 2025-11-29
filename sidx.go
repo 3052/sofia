@@ -3,7 +3,6 @@ package sofia
 import (
    "encoding/binary"
    "errors"
-   "fmt"
 )
 
 type SidxReference struct {
@@ -70,11 +69,13 @@ func (b *SidxBox) Parse(data []byte) error {
    referenceCount := binary.BigEndian.Uint16(data[offset : offset+2])
    offset += 2
 
+   // Pre-check for available data before allocation (Safety)
+   if len(data)-offset < int(referenceCount)*12 {
+      return errors.New("sidx box too short for declared references")
+   }
+
    b.References = make([]SidxReference, referenceCount)
    for i := 0; i < int(referenceCount); i++ {
-      if len(data) < offset+12 {
-         return fmt.Errorf("sidx box truncated at index %d", i)
-      }
       val1 := binary.BigEndian.Uint32(data[offset : offset+4])
       b.References[i].ReferenceType = (val1 >> 31) == 1
       b.References[i].ReferencedSize = val1 & 0x7FFFFFFF

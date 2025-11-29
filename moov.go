@@ -10,7 +10,6 @@ type MoovChild struct {
 
 type MoovBox struct {
    Header   BoxHeader
-   RawData  []byte
    Children []MoovChild
 }
 
@@ -18,7 +17,6 @@ func (b *MoovBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
    return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MoovChild
       switch string(h.Type[:]) {

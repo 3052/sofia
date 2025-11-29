@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "encoding/binary"
-   "errors"
-)
+import "errors"
 
 type StsdChild struct {
    Enc *EncBox
@@ -11,9 +8,9 @@ type StsdChild struct {
 }
 
 type StsdBox struct {
-   Header   BoxHeader
-   RawData  []byte
-   Children []StsdChild
+   Header       BoxHeader
+   HeaderFields [8]byte // Ver(1)+Flags(3)+EntryCount(4)
+   Children     []StsdChild
 }
 
 func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
@@ -34,25 +31,14 @@ func (b *StsdBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
-   entryCount := binary.BigEndian.Uint32(data[12:16])
+   if len(data) < 16 {
+      return errors.New("stsd box too short")
+   }
+   // Copy Version(1) + Flags(3) + EntryCount(4)
+   copy(b.HeaderFields[:], data[8:16])
 
-   boxData := data[16:b.Header.Size]
-   offset := 0
-   for i := uint32(0); i < entryCount && offset < len(boxData); i++ {
-      var h BoxHeader
-      if err := h.Parse(boxData[offset:]); err != nil {
-         break
-      }
-      boxSize := int(h.Size)
-      if boxSize == 0 {
-         boxSize = len(boxData) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in stsd")
-      }
-
-      content := boxData[offset : offset+boxSize]
+   // Parse children starting at offset 16
+   return parseContainer(data[16:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child StsdChild
       switch string(h.Type[:]) {
       case "encv", "enca":
@@ -65,15 +51,14 @@ func (b *StsdBox) Parse(data []byte) error {
          child.Raw = content
       }
       b.Children = append(b.Children, child)
-      offset += boxSize
-   }
-   return nil
+      return nil
+   })
 }
 
 func (b *StsdBox) Encode() []byte {
-   buf := make([]byte, 8)
-   // Copy raw fields (Version/Flags/Count) from original
-   buf = append(buf, b.RawData[8:16]...)
+   // Header(8) + HeaderFields(8)
+   buf := make([]byte, 16)
+   copy(buf[8:16], b.HeaderFields[:])
 
    for _, child := range b.Children {
       if child.Enc != nil {

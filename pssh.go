@@ -19,40 +19,38 @@ func (b *PsshBox) Parse(data []byte) error {
       return err
    }
    if len(data) < 12 {
-      return errors.New("pssh box is too short for version and flags")
+      return errors.New("pssh too short")
    }
    b.Version = data[8]
    copy(b.Flags[:], data[9:12])
    offset := 12
    if len(data) < offset+16 {
-      return errors.New("pssh box is too short for SystemID")
+      return errors.New("pssh too short")
    }
    copy(b.SystemID[:], data[offset:offset+16])
    offset += 16
    if b.Version > 0 {
       if len(data) < offset+4 {
-         return errors.New("pssh v1+ box is too short for KIDCount")
+         return errors.New("pssh too short")
       }
       kidCount := binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
       b.KIDs = make([][16]byte, kidCount)
       for i := 0; i < int(kidCount); i++ {
          if len(data) < offset+16 {
-            return errors.New("pssh box is truncated while parsing KIDs")
+            return errors.New("pssh too short")
          }
-         var kid [16]byte
-         copy(kid[:], data[offset:offset+16])
-         b.KIDs[i] = kid
+         copy(b.KIDs[i][:], data[offset:offset+16])
          offset += 16
       }
    }
    if len(data) < offset+4 {
-      return errors.New("pssh box is too short for DataSize")
+      return errors.New("pssh too short")
    }
    dataSize := binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
    if len(data) < offset+int(dataSize) {
-      return errors.New("pssh data size exceeds box bounds")
+      return errors.New("pssh size mismatch")
    }
    b.Data = data[offset : offset+int(dataSize)]
    return nil

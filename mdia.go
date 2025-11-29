@@ -8,7 +8,6 @@ type MdiaChild struct {
 
 type MdiaBox struct {
    Header   BoxHeader
-   RawData  []byte
    Children []MdiaChild
 }
 
@@ -16,7 +15,6 @@ func (b *MdiaBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
    return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MdiaChild
       switch string(h.Type[:]) {
@@ -44,7 +42,6 @@ func (b *MdiaBox) Encode() []byte {
    buf := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         // Use RawData; we patch directly in Unfragmenter
          buf = append(buf, child.Mdhd.RawData...)
       } else if child.Minf != nil {
          buf = append(buf, child.Minf.Encode()...)
@@ -55,6 +52,15 @@ func (b *MdiaBox) Encode() []byte {
    b.Header.Size = uint32(len(buf))
    b.Header.Put(buf)
    return buf
+}
+
+func (b *MdiaBox) MdhdRaw() ([]byte, bool) {
+   for _, child := range b.Children {
+      if child.Mdhd != nil {
+         return child.Mdhd.RawData, true
+      }
+   }
+   return nil, false
 }
 
 func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {

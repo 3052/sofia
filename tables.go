@@ -151,3 +151,39 @@ func buildStco(offsets []uint64) []byte {
    box := StcoBox{Offsets: entries}
    return box.Encode()
 }
+
+// StssBox (Sync Sample Box)
+type StssBox struct {
+   Header  BoxHeader
+   Indices []uint32
+}
+
+func (b *StssBox) Encode() []byte {
+   buf := make([]byte, 16)
+   binary.BigEndian.PutUint32(buf[12:16], uint32(len(b.Indices)))
+   tmp := make([]byte, 4)
+   for _, idx := range b.Indices {
+      binary.BigEndian.PutUint32(tmp, idx)
+      buf = append(buf, tmp...)
+   }
+   b.Header.Size = uint32(len(buf))
+   b.Header.Type = [4]byte{'s', 't', 's', 's'}
+   b.Header.Put(buf)
+   return buf
+}
+
+func buildStss(samples []UnfragSample) []byte {
+   var indices []uint32
+   for i, s := range samples {
+      if s.IsSync {
+         indices = append(indices, uint32(i+1))
+      }
+   }
+   // If all samples are sync samples, stss is not required (and omitting it saves space).
+   // However, if there is at least one non-sync sample, we MUST provide the table.
+   if len(indices) == len(samples) {
+      return nil
+   }
+   box := StssBox{Indices: indices}
+   return box.Encode()
+}

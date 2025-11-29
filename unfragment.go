@@ -23,6 +23,7 @@ type Unfragmenter struct {
 type UnfragSample struct {
    Size     uint32
    Duration uint32
+   IsSync   bool
 }
 
 func (u *Unfragmenter) Initialize(initSegment []byte) error {
@@ -71,13 +72,33 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       return fmt.Errorf("parsing segment %d: %w", u.segmentCount, err)
    }
 
-   moof := FindMoofPtr(boxes)
-   mdat := FindMdatPtr(boxes)
+   var pendingMoof *MoofBox
+   foundPair := false
 
-   if moof == nil || mdat == nil {
+   for i, box := range boxes {
+      if box.Moof != nil {
+         pendingMoof = box.Moof
+         continue
+      }
+      if box.Mdat != nil {
+         if pendingMoof != nil {
+            if err := u.processFragment(pendingMoof, box.Mdat); err != nil {
+               return fmt.Errorf("processing fragment at box index %d: %w", i, err)
+            }
+            pendingMoof = nil
+            foundPair = true
+         }
+      }
+   }
+
+   if !foundPair {
       return nil
    }
 
+   return nil
+}
+
+func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
    traf, ok := moof.Traf()
    if !ok {
       return nil
@@ -94,6 +115,7 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
    var newSamples []UnfragSample
    defDur := tfhd.DefaultSampleDuration
    defSize := tfhd.DefaultSampleSize
+   defFlags := tfhd.DefaultSampleFlags
 
    mdatOffset := 0
 
@@ -101,16 +123,29 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
       if child.Trun != nil {
          trun := child.Trun
          for _, s := range trun.Samples {
-            si := UnfragSample{Duration: defDur, Size: defSize}
+            si := UnfragSample{Duration: defDur, Size: defSize, IsSync: true}
+
+            currentFlags := defFlags
+
             if (trun.Flags & 0x000100) != 0 {
                si.Duration = s.Duration
             }
             if (trun.Flags & 0x000200) != 0 {
                si.Size = s.Size
             }
+            if (trun.Flags & 0x000400) != 0 {
+               currentFlags = s.Flags
+            }
 
-            // Store original size to ensure parser stays in sync with mdat payload
-            // even if the user modifies si.Size in the callback.
+            // The flag 'sample_is_difference_sample' is typically 0x00010000.
+            // If this bit is 1, the sample is NOT a sync sample (it's a difference sample).
+            // If this bit is 0, the sample IS a sync sample.
+            if (currentFlags & 0x00010000) != 0 {
+               si.IsSync = false
+            } else {
+               si.IsSync = true
+            }
+
             originalSize := int(si.Size)
 
             if mdatOffset+originalSize > len(mdat.Payload) {
@@ -160,7 +195,6 @@ func (u *Unfragmenter) Finish() error {
       return errors.New("not initialized")
    }
 
-   // Capture the end of mdat payload before writing moov
    mdatEndOffset, _ := u.Writer.Seek(0, io.SeekCurrent)
    finalMdatSize := uint64(mdatEndOffset - u.mdatStartOffset)
 
@@ -173,6 +207,7 @@ func (u *Unfragmenter) Finish() error {
    stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
    offsetBox := buildStco(u.chunkOffsets)
+   stss := buildStss(u.samples) // Build the sync sample table
 
    trak, _ := u.Moov.Trak()
    mdia, _ := trak.Mdia()
@@ -183,7 +218,6 @@ func (u *Unfragmenter) Finish() error {
    if !ok {
       return errors.New("missing mdhd")
    }
-   // Update mdhd directly using the new method
    if err := mdhd.SetDuration(totalDuration); err != nil {
       return err
    }
@@ -202,6 +236,11 @@ func (u *Unfragmenter) Finish() error {
    newChildren = append(newChildren, StblChild{Raw: stsz})
    newChildren = append(newChildren, StblChild{Raw: stsc})
    newChildren = append(newChildren, StblChild{Raw: offsetBox})
+
+   // Only append stss if it was generated (i.e., we have mixed sync/non-sync frames)
+   if stss != nil {
+      newChildren = append(newChildren, StblChild{Raw: stss})
+   }
 
    stbl.Children = newChildren
 

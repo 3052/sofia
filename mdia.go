@@ -1,6 +1,6 @@
 package sofia
 
-import "errors"
+import "encoding/binary"
 
 type MdiaChild struct {
    Mdhd *MdhdBox
@@ -19,66 +19,46 @@ func (b *MdiaBox) Parse(data []byte) error {
       return err
    }
    b.RawData = data[:b.Header.Size]
-   boxData := data[8:b.Header.Size]
-   offset := 0
-   for offset < len(boxData) {
-      var h BoxHeader
-      if err := h.Parse(boxData[offset:]); err != nil {
-         break
-      }
-      boxSize := int(h.Size)
-      if boxSize == 0 {
-         boxSize = len(boxData) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in mdia")
-      }
-      childData := boxData[offset : offset+boxSize]
+   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MdiaChild
       switch string(h.Type[:]) {
       case "mdhd":
          var mdhd MdhdBox
-         if err := mdhd.Parse(childData); err != nil {
+         if err := mdhd.Parse(content); err != nil {
             return err
          }
          child.Mdhd = &mdhd
       case "minf":
          var minf MinfBox
-         if err := minf.Parse(childData); err != nil {
+         if err := minf.Parse(content); err != nil {
             return err
          }
          child.Minf = &minf
       default:
-         child.Raw = childData
+         child.Raw = content
       }
       b.Children = append(b.Children, child)
-      offset += boxSize
-      if h.Size == 0 {
-         break
-      }
-   }
-   return nil
+      return nil
+   })
 }
 
 func (b *MdiaBox) Encode() []byte {
-   var content []byte
+   buf := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         // Fix: Use RawData directly because MdhdBox.Encode() was removed.
-         // We patch the RawData in place during Unfragmenter.Finish().
-         content = append(content, child.Mdhd.RawData...)
+         buf = append(buf, child.Mdhd.RawData...)
       } else if child.Minf != nil {
-         content = append(content, child.Minf.Encode()...)
+         buf = append(buf, child.Minf.Encode()...)
       } else if child.Raw != nil {
-         content = append(content, child.Raw...)
+         buf = append(buf, child.Raw...)
       }
    }
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
+   b.Header.Size = uint32(len(buf))
+   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
+   copy(buf[4:8], b.Header.Type[:])
+   return buf
 }
 
-// Mdhd finds the MdhdBox child and returns it, along with a boolean indicating if it was found.
 func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
    for _, child := range b.Children {
       if child.Mdhd != nil {
@@ -88,7 +68,6 @@ func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
    return nil, false
 }
 
-// Minf finds the MinfBox child and returns it, along with a boolean indicating if it was found.
 func (b *MdiaBox) Minf() (*MinfBox, bool) {
    for _, child := range b.Children {
       if child.Minf != nil {

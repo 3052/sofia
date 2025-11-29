@@ -2,7 +2,7 @@ package sofia
 
 import (
    "bytes"
-   "errors"
+   "encoding/binary"
 )
 
 type MoovChild struct {
@@ -22,64 +22,52 @@ func (b *MoovBox) Parse(data []byte) error {
       return err
    }
    b.RawData = data[:b.Header.Size]
-   boxData := data[8:b.Header.Size]
-   offset := 0
-   for offset < len(boxData) {
-      var h BoxHeader
-      if err := h.Parse(boxData[offset:]); err != nil {
-         break
-      }
-      boxSize := int(h.Size)
-      if boxSize == 0 {
-         boxSize = len(boxData) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in moov")
-      }
-      childData := boxData[offset : offset+boxSize]
+   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MoovChild
       switch string(h.Type[:]) {
       case "trak":
          var trak TrakBox
-         if err := trak.Parse(childData); err != nil {
+         if err := trak.Parse(content); err != nil {
             return err
          }
          child.Trak = &trak
       case "pssh":
          var pssh PsshBox
-         if err := pssh.Parse(childData); err != nil {
+         if err := pssh.Parse(content); err != nil {
             return err
          }
          child.Pssh = &pssh
       default:
-         child.Raw = childData
+         child.Raw = content
       }
       b.Children = append(b.Children, child)
-      offset += boxSize
-      if h.Size == 0 {
-         break
-      }
-   }
-   return nil
+      return nil
+   })
 }
 
 func (b *MoovBox) Encode() []byte {
-   var content []byte
+   // 1. Start with placeholder for header
+   buf := make([]byte, 8)
+
+   // 2. Append children
    for _, child := range b.Children {
       if child.Trak != nil {
-         content = append(content, child.Trak.Encode()...)
+         buf = append(buf, child.Trak.Encode()...)
       } else if child.Pssh != nil {
-         // Pssh is read-only/skipped.
+         // Skipped (Read-only)
       } else if child.Raw != nil {
-         content = append(content, child.Raw...)
+         buf = append(buf, child.Raw...)
       }
    }
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
+
+   // 3. Set Header
+   b.Header.Size = uint32(len(buf))
+   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
+   copy(buf[4:8], b.Header.Type[:])
+
+   return buf
 }
 
-// RemovePssh specifically removes the strongly-typed Pssh children.
 func (b *MoovBox) RemovePssh() {
    var kept []MoovChild
    for _, child := range b.Children {
@@ -91,14 +79,11 @@ func (b *MoovBox) RemovePssh() {
    b.Children = kept
 }
 
-// RemoveMvex removes the 'mvex' atom to signal the file is no longer fragmented.
 func (b *MoovBox) RemoveMvex() {
    var kept []MoovChild
    for _, child := range b.Children {
-      if len(child.Raw) >= 8 {
-         if string(child.Raw[4:8]) == "mvex" {
-            continue
-         }
+      if len(child.Raw) >= 8 && string(child.Raw[4:8]) == "mvex" {
+         continue
       }
       kept = append(kept, child)
    }
@@ -116,10 +101,8 @@ func (b *MoovBox) Trak() (*TrakBox, bool) {
 
 func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
    for _, child := range b.Children {
-      if child.Pssh != nil {
-         if bytes.Equal(child.Pssh.SystemID[:], systemID) {
-            return child.Pssh, true
-         }
+      if child.Pssh != nil && bytes.Equal(child.Pssh.SystemID[:], systemID) {
+         return child.Pssh, true
       }
    }
    return nil, false

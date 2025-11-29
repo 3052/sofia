@@ -1,6 +1,7 @@
 package sofia
 
 import (
+   "encoding/binary"
    "errors"
    "fmt"
 )
@@ -23,7 +24,6 @@ func (b *EncBox) Parse(data []byte) error {
    }
    b.RawData = data[:b.Header.Size]
 
-   // Determine entry header size based on box type
    var entrySize int
    switch string(b.Header.Type[:]) {
    case "enca":
@@ -41,82 +41,65 @@ func (b *EncBox) Parse(data []byte) error {
    }
    b.EntryHeader = data[payloadOffset : payloadOffset+entrySize]
 
-   boxData := data[payloadOffset+entrySize : b.Header.Size]
-   offset := 0
-   for offset < len(boxData) {
-      var h BoxHeader
-      if err := h.Parse(boxData[offset:]); err != nil {
-         break
-      }
-      boxSize := int(h.Size)
-      if boxSize == 0 {
-         boxSize = len(boxData) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in encrypted entry")
-      }
-      childData := boxData[offset : offset+boxSize]
+   return parseContainer(data[payloadOffset+entrySize:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child EncChild
       switch string(h.Type[:]) {
       case "sinf":
          var sinf SinfBox
-         if err := sinf.Parse(childData); err != nil {
+         if err := sinf.Parse(content); err != nil {
             return err
          }
          child.Sinf = &sinf
       default:
-         child.Raw = childData
+         child.Raw = content
       }
       b.Children = append(b.Children, child)
-      offset += boxSize
-      if h.Size == 0 {
-         break
-      }
-   }
-   return nil
+      return nil
+   })
 }
 
 func (b *EncBox) Encode() []byte {
-   var childrenContent []byte
+   buf := make([]byte, 8)
+   buf = append(buf, b.EntryHeader...)
+
    for _, child := range b.Children {
-      // sinf is skipped (read-only/deleted)
+      // skip sinf
       if child.Raw != nil {
-         childrenContent = append(childrenContent, child.Raw...)
+         buf = append(buf, child.Raw...)
       }
    }
-   content := append(b.EntryHeader, childrenContent...)
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
+
+   b.Header.Size = uint32(len(buf))
+   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
+   copy(buf[4:8], b.Header.Type[:])
+   return buf
 }
 
 func (b *EncBox) Unprotect() error {
-   var kept []EncChild
-   var foundSinf *SinfBox
-
-   // Single pass: Identify sinf and filter it out simultaneously
+   var sinf *SinfBox
    for _, child := range b.Children {
       if child.Sinf != nil {
-         if foundSinf == nil {
-            foundSinf = child.Sinf
-         }
-         // Skip appending to 'kept', effectively removing it
-         continue
+         sinf = child.Sinf
+         break
       }
-      kept = append(kept, child)
+   }
+   if sinf == nil {
+      return nil
    }
 
-   if foundSinf == nil {
-      return nil // Already unprotected or missing sinf
-   }
-
-   frma := foundSinf.Frma()
+   frma := sinf.Frma()
    if frma == nil {
-      return errors.New("cannot unprotect: sinf box missing frma")
+      return errors.New("cannot unprotect: sinf missing frma")
    }
 
-   // Apply changes
    b.Header.Type = frma.DataFormat
+
+   var kept []EncChild
+   for _, child := range b.Children {
+      if child.Sinf == nil {
+         kept = append(kept, child)
+      }
+   }
    b.Children = kept
 
    return nil

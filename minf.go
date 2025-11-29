@@ -1,6 +1,6 @@
 package sofia
 
-import "errors"
+import "encoding/binary"
 
 type MinfChild struct {
    Stbl *StblBox
@@ -18,56 +18,38 @@ func (b *MinfBox) Parse(data []byte) error {
       return err
    }
    b.RawData = data[:b.Header.Size]
-   boxData := data[8:b.Header.Size]
-   offset := 0
-   for offset < len(boxData) {
-      var h BoxHeader
-      if err := h.Parse(boxData[offset:]); err != nil {
-         break
-      }
-      boxSize := int(h.Size)
-      if boxSize == 0 {
-         boxSize = len(boxData) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(boxData) {
-         return errors.New("invalid child box size in minf")
-      }
-      childData := boxData[offset : offset+boxSize]
+   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MinfChild
       switch string(h.Type[:]) {
       case "stbl":
          var stbl StblBox
-         if err := stbl.Parse(childData); err != nil {
+         if err := stbl.Parse(content); err != nil {
             return err
          }
          child.Stbl = &stbl
       default:
-         child.Raw = childData
+         child.Raw = content
       }
       b.Children = append(b.Children, child)
-      offset += boxSize
-      if h.Size == 0 {
-         break
-      }
-   }
-   return nil
+      return nil
+   })
 }
 
 func (b *MinfBox) Encode() []byte {
-   var content []byte
+   buf := make([]byte, 8)
    for _, child := range b.Children {
       if child.Stbl != nil {
-         content = append(content, child.Stbl.Encode()...)
+         buf = append(buf, child.Stbl.Encode()...)
       } else if child.Raw != nil {
-         content = append(content, child.Raw...)
+         buf = append(buf, child.Raw...)
       }
    }
-   b.Header.Size = uint32(8 + len(content))
-   headerBytes := b.Header.Encode()
-   return append(headerBytes, content...)
+   b.Header.Size = uint32(len(buf))
+   binary.BigEndian.PutUint32(buf[0:4], b.Header.Size)
+   copy(buf[4:8], b.Header.Type[:])
+   return buf
 }
 
-// Stbl finds the StblBox child and returns it, along with a boolean indicating if it was found.
 func (b *MinfBox) Stbl() (*StblBox, bool) {
    for _, child := range b.Children {
       if child.Stbl != nil {

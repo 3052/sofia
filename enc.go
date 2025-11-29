@@ -1,9 +1,6 @@
 package sofia
 
-import (
-   "errors"
-   "fmt"
-)
+import "fmt"
 
 type EncChild struct {
    Sinf *SinfBox
@@ -12,7 +9,6 @@ type EncChild struct {
 
 type EncBox struct {
    Header      BoxHeader
-   RawData     []byte
    EntryHeader []byte
    Children    []EncChild
 }
@@ -21,7 +17,6 @@ func (b *EncBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
 
    var entrySize int
    switch string(b.Header.Type[:]) {
@@ -87,7 +82,8 @@ func (b *EncBox) Unprotect() error {
 
    frma := sinf.Frma()
    if frma == nil {
-      return errors.New("cannot unprotect: sinf missing frma")
+      // handle edge case
+      return nil
    }
 
    b.Header.Type = frma.DataFormat

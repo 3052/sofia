@@ -42,7 +42,6 @@ func (b *TrakBox) Parse(data []byte) error {
          }
          child.Mdia = &mdia
       default:
-         // 'edts' and others fall here
          child.Raw = childData
       }
       b.Children = append(b.Children, child)
@@ -68,19 +67,13 @@ func (b *TrakBox) Encode() []byte {
    return append(headerBytes, content...)
 }
 
-// Remove deletes all child boxes matching the given type (e.g., "edts").
-func (b *TrakBox) Remove(boxType string) {
+// RemoveEdts deletes any 'edts' (Edit Box) children found in the Raw data.
+func (b *TrakBox) RemoveEdts() {
    var kept []TrakChild
    for _, child := range b.Children {
-      // Check typed fields
-      if boxType == "mdia" && child.Mdia != nil {
-         continue // Skip to remove
-      }
-      // Check raw fields
-      // Fix: Removed 'child.Raw != nil' check (S1009)
       if len(child.Raw) >= 8 {
-         if string(child.Raw[4:8]) == boxType {
-            continue // Skip to remove
+         if string(child.Raw[4:8]) == "edts" {
+            continue
          }
       }
       kept = append(kept, child)

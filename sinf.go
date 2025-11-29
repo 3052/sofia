@@ -53,7 +53,8 @@ func (b *SinfBox) Parse(data []byte) error {
    return nil
 }
 
-// Frma finds and returns the first FrmaBox child.
+// Encode removed. This box will never be written.
+
 func (b *SinfBox) Frma() *FrmaBox {
    for _, child := range b.Children {
       if child.Frma != nil {

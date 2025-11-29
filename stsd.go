@@ -6,9 +6,8 @@ import (
 )
 
 type StsdChild struct {
-   Encv *EncvBox
-   Enca *EncaBox
-   Raw  []byte
+   Enc *EncBox // Handles both enca and encv
+   Raw []byte
 }
 
 type StsdBox struct {
@@ -21,17 +20,10 @@ type StsdBox struct {
 func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
    for i := range b.Children {
       child := &b.Children[i]
-      if child.Encv != nil {
-         for _, c := range child.Encv.Children {
+      if child.Enc != nil {
+         for _, c := range child.Enc.Children {
             if c.Sinf != nil {
-               return c.Sinf, &child.Encv.Header, true
-            }
-         }
-      }
-      if child.Enca != nil {
-         for _, c := range child.Enca.Children {
-            if c.Sinf != nil {
-               return c.Sinf, &child.Enca.Header, true
+               return c.Sinf, &child.Enc.Header, true
             }
          }
       }
@@ -62,18 +54,12 @@ func (b *StsdBox) Parse(data []byte) error {
       childData := boxData[offset : offset+boxSize]
       var child StsdChild
       switch string(h.Type[:]) {
-      case "encv":
-         var encv EncvBox
-         if err := encv.Parse(childData); err != nil {
+      case "encv", "enca":
+         var enc EncBox
+         if err := enc.Parse(childData); err != nil {
             return err
          }
-         child.Encv = &encv
-      case "enca":
-         var enca EncaBox
-         if err := enca.Parse(childData); err != nil {
-            return err
-         }
-         child.Enca = &enca
+         child.Enc = &enc
       default:
          child.Raw = childData
       }
@@ -89,10 +75,8 @@ func (b *StsdBox) Parse(data []byte) error {
 func (b *StsdBox) Encode() []byte {
    var content []byte
    for _, child := range b.Children {
-      if child.Encv != nil {
-         content = append(content, child.Encv.Encode()...)
-      } else if child.Enca != nil {
-         content = append(content, child.Enca.Encode()...)
+      if child.Enc != nil {
+         content = append(content, child.Enc.Encode()...)
       } else if child.Raw != nil {
          content = append(content, child.Raw...)
       }
@@ -108,13 +92,8 @@ func (b *StsdBox) Encode() []byte {
 // if they are encrypted (enca/encv).
 func (b *StsdBox) UnprotectAll() error {
    for _, child := range b.Children {
-      if child.Encv != nil {
-         if err := child.Encv.Unprotect(); err != nil {
-            return err
-         }
-      }
-      if child.Enca != nil {
-         if err := child.Enca.Unprotect(); err != nil {
+      if child.Enc != nil {
+         if err := child.Enc.Unprotect(); err != nil {
             return err
          }
       }

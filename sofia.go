@@ -129,16 +129,6 @@ func FindMoov(boxes []Box) (*MoovBox, bool) {
    return nil, false
 }
 
-func AllMoof(boxes []Box) []*MoofBox {
-   var moofs []*MoofBox
-   for _, box := range boxes {
-      if box.Moof != nil {
-         moofs = append(moofs, box.Moof)
-      }
-   }
-   return moofs
-}
-
 func FindSidx(boxes []Box) (*SidxBox, bool) {
    for _, box := range boxes {
       if box.Sidx != nil {
@@ -146,24 +136,6 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
       }
    }
    return nil, false
-}
-
-func FindMoofPtr(boxes []Box) *MoofBox {
-   for _, box := range boxes {
-      if box.Moof != nil {
-         return box.Moof
-      }
-   }
-   return nil
-}
-
-func FindMdatPtr(boxes []Box) *MdatBox {
-   for _, box := range boxes {
-      if box.Mdat != nil {
-         return box.Mdat
-      }
-   }
-   return nil
 }
 
 // --- Decryption ---

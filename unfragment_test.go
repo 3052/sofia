@@ -68,7 +68,7 @@ func TestUnfragmenter_Integration(t *testing.T) {
 func TestUnfragmenter_RealFiles(t *testing.T) {
    workDir := "ignore"
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
-      t.Skipf("Skipping test: directory '%s' not found", workDir)
+      t.Fatalf("directory '%s' not found", workDir)
    }
 
    outPath := filepath.Join(workDir, "joined_output.mp4")

@@ -218,9 +218,8 @@ func (u *Unfragmenter) Finish() error {
    if !ok {
       return errors.New("missing mdhd")
    }
-   if err := mdhd.SetDuration(totalDuration); err != nil {
-      return err
-   }
+   // Updated: No error return to check here
+   mdhd.SetDuration(totalDuration)
 
    u.Moov.RemoveMvex()
 

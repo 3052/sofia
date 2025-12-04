@@ -7,59 +7,114 @@ import (
 )
 
 type MdhdBox struct {
-   Header    BoxHeader
-   RawData   []byte
-   Version   byte
-   Timescale uint32
-   Duration  uint64
+   Header           BoxHeader
+   Version          byte
+   Flags            [3]byte
+   CreationTime     uint64
+   ModificationTime uint64
+   Timescale        uint32
+   Duration         uint64
+   Language         [2]byte
+   Quality          [2]byte
 }
 
 func (b *MdhdBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.RawData = data[:b.Header.Size]
 
    if len(data) < 12 {
-      return fmt.Errorf("mdhd box is too small: %d bytes", len(data))
+      return fmt.Errorf("mdhd box too small")
    }
 
    b.Version = data[8]
+   copy(b.Flags[:], data[9:12])
+
+   offset := 12
    if b.Version == 1 {
-      if len(data) < 36 {
-         return fmt.Errorf("mdhd version 1 box is too small: %d bytes", len(data))
+      if len(data) < 44 {
+         return errors.New("mdhd v1 too short")
       }
-      b.Timescale = binary.BigEndian.Uint32(data[28:32])
-      b.Duration = binary.BigEndian.Uint64(data[32:40])
-   } else {
-      if len(data) < 24 {
-         return fmt.Errorf("mdhd version 0 box is too small: %d bytes", len(data))
+      b.CreationTime = binary.BigEndian.Uint64(data[offset : offset+8])
+      offset += 8
+      b.ModificationTime = binary.BigEndian.Uint64(data[offset : offset+8])
+      offset += 8
+      b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
+      offset += 4
+      b.Duration = binary.BigEndian.Uint64(data[offset : offset+8])
+      offset += 8
+   } else { // Version 0
+      if len(data) < 32 {
+         return errors.New("mdhd v0 too short")
       }
-      b.Timescale = binary.BigEndian.Uint32(data[20:24])
-      b.Duration = uint64(binary.BigEndian.Uint32(data[24:28]))
+      b.CreationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
+      offset += 4
+      b.ModificationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
+      offset += 4
+      b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
+      offset += 4
+      b.Duration = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
+      offset += 4
    }
+
+   if len(data) < offset+4 {
+      return errors.New("mdhd truncated at language/quality")
+   }
+   copy(b.Language[:], data[offset:offset+2])
+   copy(b.Quality[:], data[offset+2:offset+4])
 
    return nil
 }
 
-// SetDuration updates the duration field directly in the RawData.
-func (b *MdhdBox) SetDuration(duration uint64) error {
-   if b.Version == 1 {
-      // Version 1: Duration is at offset 32 (8 bytes)
-      if len(b.RawData) < 40 {
-         return errors.New("mdhd raw data too short for v1 duration")
-      }
-      binary.BigEndian.PutUint64(b.RawData[32:], duration)
-   } else {
-      // Version 0: Duration is at offset 24 (4 bytes)
-      if len(b.RawData) < 28 {
-         return errors.New("mdhd raw data too short for v0 duration")
-      }
-      if duration > 0xFFFFFFFF {
-         return errors.New("duration overflows 32-bit mdhd field")
-      }
-      binary.BigEndian.PutUint32(b.RawData[24:], uint32(duration))
+// SetDuration updates the duration.
+// It automatically upgrades to Version 1 if the duration exceeds 32 bits.
+func (b *MdhdBox) SetDuration(duration uint64) {
+   b.Duration = duration
+   if b.Duration > 0xFFFFFFFF {
+      b.Version = 1
    }
-   b.Duration = duration // Update struct field for consistency
-   return nil
+}
+
+func (b *MdhdBox) Encode() []byte {
+   var size uint32
+   if b.Version == 1 {
+      size = 44
+   } else {
+      size = 32
+   }
+
+   buf := make([]byte, size)
+
+   binary.BigEndian.PutUint32(buf[0:4], size)
+   copy(buf[4:8], b.Header.Type[:])
+
+   buf[8] = b.Version
+   copy(buf[9:12], b.Flags[:])
+
+   offset := 12
+   if b.Version == 1 {
+      binary.BigEndian.PutUint64(buf[offset:offset+8], b.CreationTime)
+      offset += 8
+      binary.BigEndian.PutUint64(buf[offset:offset+8], b.ModificationTime)
+      offset += 8
+      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      offset += 4
+      binary.BigEndian.PutUint64(buf[offset:offset+8], b.Duration)
+      offset += 8
+   } else {
+      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.CreationTime))
+      offset += 4
+      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.ModificationTime))
+      offset += 4
+      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      offset += 4
+      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.Duration))
+      offset += 4
+   }
+
+   copy(buf[offset:offset+2], b.Language[:])
+   copy(buf[offset+2:offset+4], b.Quality[:])
+
+   b.Header.Size = size
+   return buf
 }

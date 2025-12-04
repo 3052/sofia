@@ -42,7 +42,8 @@ func (b *MdiaBox) Encode() []byte {
    buf := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         buf = append(buf, child.Mdhd.RawData...)
+         // Fix 1: Call Encode() instead of accessing RawData
+         buf = append(buf, child.Mdhd.Encode()...)
       } else if child.Minf != nil {
          buf = append(buf, child.Minf.Encode()...)
       } else if child.Raw != nil {
@@ -54,10 +55,12 @@ func (b *MdiaBox) Encode() []byte {
    return buf
 }
 
+// MdhdRaw returns the encoded bytes of the mdhd box.
 func (b *MdiaBox) MdhdRaw() ([]byte, bool) {
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         return child.Mdhd.RawData, true
+         // Fix 2: Call Encode() instead of accessing RawData
+         return child.Mdhd.Encode(), true
       }
    }
    return nil, false

@@ -95,7 +95,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       },
    }
 
-   initPath := filepath.Join(workDir, "_init.mp4")
+   initPath := filepath.Join(workDir, "init.mp4")
    initData, err := os.ReadFile(initPath)
    if err != nil {
       t.Fatalf("Failed to read init segment (%s): %v", initPath, err)

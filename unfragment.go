@@ -50,10 +50,10 @@ func (u *Unfragmenter) Initialize(initSegment []byte) error {
    }
 
    u.mdatStartOffset, _ = u.Writer.Seek(0, io.SeekCurrent)
-
    mdatHeader := make([]byte, 16)
    binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
    copy(mdatHeader[4:8], []byte("mdat"))
+
    if _, err := u.Writer.Write(mdatHeader); err != nil {
       return err
    }
@@ -65,8 +65,8 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
    if u.Moov == nil {
       return errors.New("must call Initialize")
    }
-
    u.segmentCount++
+
    boxes, err := Parse(segmentData)
    if err != nil {
       return fmt.Errorf("parsing segment %d: %w", u.segmentCount, err)
@@ -90,7 +90,6 @@ func (u *Unfragmenter) AddSegment(segmentData []byte) error {
          }
       }
    }
-
    if !foundPair {
       return nil
    }
@@ -103,6 +102,7 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
    if !ok {
       return nil
    }
+
    tfhd := traf.Tfhd()
    if tfhd == nil {
       return nil
@@ -124,7 +124,6 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
          trun := child.Trun
          for _, s := range trun.Samples {
             si := UnfragSample{Duration: defDur, Size: defSize, IsSync: true}
-
             currentFlags := defFlags
 
             if (trun.Flags & 0x000100) != 0 {
@@ -147,7 +146,6 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
             }
 
             originalSize := int(si.Size)
-
             if mdatOffset+originalSize > len(mdat.Payload) {
                return errors.New("mdat payload too short for samples")
             }
@@ -162,7 +160,6 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
             if u.OnSample != nil {
                u.OnSample(sampleData, encInfo)
             }
-
             if u.OnSampleInfo != nil {
                u.OnSampleInfo(&si)
             }
@@ -186,7 +183,6 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
 
    u.samples = append(u.samples, newSamples...)
    u.segmentSampleCounts = append(u.segmentSampleCounts, uint32(len(newSamples)))
-
    return nil
 }
 
@@ -213,13 +209,22 @@ func (u *Unfragmenter) Finish() error {
    mdia, _ := trak.Mdia()
    minf, _ := mdia.Minf()
    stbl, _ := minf.Stbl()
-
    mdhd, ok := mdia.Mdhd()
    if !ok {
       return errors.New("missing mdhd")
    }
-   // Updated: No error return to check here
+
    mdhd.SetDuration(totalDuration)
+
+   // Update Mvhd duration if present
+   if mvhd, ok := u.Moov.Mvhd(); ok {
+      var movieDuration uint64
+      // Convert duration from Track Time Scale to Movie Time Scale
+      if mdhd.Timescale > 0 {
+         movieDuration = (totalDuration * uint64(mvhd.Timescale)) / uint64(mdhd.Timescale)
+      }
+      mvhd.SetDuration(movieDuration)
+   }
 
    u.Moov.RemoveMvex()
 
@@ -240,7 +245,6 @@ func (u *Unfragmenter) Finish() error {
    if stss != nil {
       newChildren = append(newChildren, StblChild{Raw: stss})
    }
-
    stbl.Children = newChildren
 
    moovBytes := u.Moov.Encode()

@@ -3,6 +3,7 @@ package sofia
 import "bytes"
 
 type MoovChild struct {
+   Mvhd *MvhdBox
    Trak *TrakBox
    Pssh *PsshBox
    Raw  []byte
@@ -20,6 +21,12 @@ func (b *MoovBox) Parse(data []byte) error {
    return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
       var child MoovChild
       switch string(h.Type[:]) {
+      case "mvhd":
+         var mvhd MvhdBox
+         if err := mvhd.Parse(content); err != nil {
+            return err
+         }
+         child.Mvhd = &mvhd
       case "trak":
          var trak TrakBox
          if err := trak.Parse(content); err != nil {
@@ -43,7 +50,9 @@ func (b *MoovBox) Parse(data []byte) error {
 func (b *MoovBox) Encode() []byte {
    buf := make([]byte, 8)
    for _, child := range b.Children {
-      if child.Trak != nil {
+      if child.Mvhd != nil {
+         buf = append(buf, child.Mvhd.Encode()...)
+      } else if child.Trak != nil {
          buf = append(buf, child.Trak.Encode()...)
       } else if child.Pssh != nil {
          // Skipped
@@ -82,6 +91,15 @@ func (b *MoovBox) Trak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {
          return child.Trak, true
+      }
+   }
+   return nil, false
+}
+
+func (b *MoovBox) Mvhd() (*MvhdBox, bool) {
+   for _, child := range b.Children {
+      if child.Mvhd != nil {
+         return child.Mvhd, true
       }
    }
    return nil, false

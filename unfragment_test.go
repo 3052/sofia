@@ -78,8 +78,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
    }
    defer outFile.Close()
 
-   // 27736bd0d54481eab2402a879cb863c7
-   key, err := hex.DecodeString("27736bd0d54481eab2402a879cb863c7")
+   key, err := hex.DecodeString("c35acf72e42c8a9ca31da21007a17a65")
    if err != nil {
       t.Fatalf("Failed to decode key: %v", err)
    }
@@ -95,7 +94,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       },
    }
 
-   initPath := filepath.Join(workDir, "init.mp4")
+   initPath := filepath.Join(workDir, "_init.mp4")
    initData, err := os.ReadFile(initPath)
    if err != nil {
       t.Fatalf("Failed to read init segment (%s): %v", initPath, err)

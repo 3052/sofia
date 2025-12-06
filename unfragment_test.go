@@ -66,7 +66,7 @@ func TestUnfragmenter_Integration(t *testing.T) {
 
 // TestUnfragmenter_RealFiles looks for real files in the "ignore" directory.
 func TestUnfragmenter_RealFiles(t *testing.T) {
-   workDir := "ignore"
+   workDir := "testdata"
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
       t.Fatalf("directory '%s' not found", workDir)
    }

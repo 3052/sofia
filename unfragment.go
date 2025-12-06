@@ -16,7 +16,6 @@ type Unfragmenter struct {
    mdatStartOffset     int64
    segmentCount        int
    OnSample            func(sample []byte, encInfo *SampleEncryptionInfo)
-   OnSampleInfo        func(*UnfragSample)
 }
 
 // UnfragSample represents the minimal sample information needed for unfragmenting.
@@ -169,9 +168,6 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
 
             if u.OnSample != nil {
                u.OnSample(sampleData, encInfo)
-            }
-            if u.OnSampleInfo != nil {
-               u.OnSampleInfo(&si)
             }
 
             newSamples = append(newSamples, si)

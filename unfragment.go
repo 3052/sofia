@@ -122,9 +122,22 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
    for _, child := range traf.Children {
       if child.Trun != nil {
          trun := child.Trun
-         for _, s := range trun.Samples {
+         for i, s := range trun.Samples {
             si := UnfragSample{Duration: defDur, Size: defSize, IsSync: true}
+
+            // Determine flags logic:
+            // 1. Start with TFHD Default Flags
             currentFlags := defFlags
+
+            // 2. If 'FirstSampleFlags' is present (0x04) AND this is the first sample (index 0), use it.
+            if i == 0 && (trun.Flags&0x000004) != 0 {
+               currentFlags = trun.FirstSampleFlags
+            }
+
+            // 3. If 'SampleFlags' is present (0x400) in the array entry, it overrides everything.
+            if (trun.Flags & 0x000400) != 0 {
+               currentFlags = s.Flags
+            }
 
             if (trun.Flags & 0x000100) != 0 {
                si.Duration = s.Duration
@@ -132,13 +145,10 @@ func (u *Unfragmenter) processFragment(moof *MoofBox, mdat *MdatBox) error {
             if (trun.Flags & 0x000200) != 0 {
                si.Size = s.Size
             }
-            if (trun.Flags & 0x000400) != 0 {
-               currentFlags = s.Flags
-            }
 
-            // The flag 'sample_is_difference_sample' is typically 0x00010000.
-            // If this bit is 1, the sample is NOT a sync sample (it's a difference sample).
-            // If this bit is 0, the sample IS a sync sample.
+            // Check "sample_is_difference_sample" (bit 17, 0x10000)
+            // 1 = Non-Sync (Difference)
+            // 0 = Sync (Keyframe)
             if (currentFlags & 0x00010000) != 0 {
                si.IsSync = false
             } else {
@@ -203,7 +213,7 @@ func (u *Unfragmenter) Finish() error {
    stsz := buildStsz(u.samples)
    stsc := buildStsc(u.segmentSampleCounts)
    offsetBox := buildStco(u.chunkOffsets)
-   stss := buildStss(u.samples) // Build the sync sample table
+   stss := buildStss(u.samples)
 
    trak, _ := u.Moov.Trak()
    mdia, _ := trak.Mdia()
@@ -214,19 +224,17 @@ func (u *Unfragmenter) Finish() error {
       return errors.New("missing mdhd")
    }
 
+   // 1. Update Media Duration
    mdhd.SetDuration(totalDuration)
 
-   // Update Mvhd duration if present
+   // 2. Update Movie Header: Align Timescale and Duration
    if mvhd, ok := u.Moov.Mvhd(); ok {
-      var movieDuration uint64
-      // Convert duration from Track Time Scale to Movie Time Scale
-      if mdhd.Timescale > 0 {
-         movieDuration = (totalDuration * uint64(mvhd.Timescale)) / uint64(mdhd.Timescale)
-      }
-      mvhd.SetDuration(movieDuration)
+      mvhd.Timescale = mdhd.Timescale // Simple logic: sync timescales
+      mvhd.SetDuration(totalDuration)
    }
 
    u.Moov.RemoveMvex()
+   trak.RemoveEdts()
 
    var newChildren []StblChild
    if stsd, ok := stbl.Stsd(); ok {
@@ -241,7 +249,6 @@ func (u *Unfragmenter) Finish() error {
    newChildren = append(newChildren, StblChild{Raw: stsc})
    newChildren = append(newChildren, StblChild{Raw: offsetBox})
 
-   // Only append stss if it was generated (i.e., we have mixed sync/non-sync frames)
    if stss != nil {
       newChildren = append(newChildren, StblChild{Raw: stss})
    }

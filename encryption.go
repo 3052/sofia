@@ -4,7 +4,6 @@ import (
    "crypto/cipher"
    "encoding/binary"
    "errors"
-   "fmt"
 )
 
 // --- PSSH ---
@@ -92,20 +91,20 @@ func (b *SencBox) Parse(data []byte) error {
    subsamplesPresent := b.Flags&0x000002 != 0
    for i := uint32(0); i < sampleCount; i++ {
       if offset+ivSize > len(data) {
-         return fmt.Errorf("senc truncated")
+         return errors.New("senc truncated")
       }
       b.Samples[i].IV = data[offset : offset+ivSize]
       offset += ivSize
       if subsamplesPresent {
          if offset+2 > len(data) {
-            return fmt.Errorf("senc truncated")
+            return errors.New("senc truncated")
          }
          subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
          offset += 2
          b.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
          for j := uint16(0); j < subsampleCount; j++ {
             if offset+6 > len(data) {
-               return fmt.Errorf("senc truncated")
+               return errors.New("senc truncated")
             }
             clear := binary.BigEndian.Uint16(data[offset : offset+2])
             prot := binary.BigEndian.Uint32(data[offset+2 : offset+6])

@@ -3,8 +3,8 @@ package sofia
 import (
    "encoding/binary"
    "errors"
-   "fmt"
    "io"
+   "strconv"
 )
 
 type Remuxer struct {
@@ -34,7 +34,7 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    }
    boxes, err := Parse(initSegment)
    if err != nil {
-      return fmt.Errorf("parsing init: %w", err)
+      return NewError("parsing init:", err.Error())
    }
    moovPtr, ok := FindMoov(boxes)
    if !ok {
@@ -61,7 +61,9 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
    r.segmentCount++
    boxes, err := Parse(segmentData)
    if err != nil {
-      return fmt.Errorf("parsing segment %d: %w", r.segmentCount, err)
+      return NewError(
+         "parsing segment", strconv.Itoa(r.segmentCount), err.Error(),
+      )
    }
    var pendingMoof *MoofBox
    foundPair := false
@@ -73,7 +75,10 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       if box.Mdat != nil {
          if pendingMoof != nil {
             if err := r.processFragment(pendingMoof, box.Mdat); err != nil {
-               return fmt.Errorf("processing fragment at box index %d: %w", i, err)
+               return NewError(
+                  "processing fragment at box index",
+                  strconv.Itoa(i), err.Error(),
+               )
             }
             pendingMoof = nil
             foundPair = true

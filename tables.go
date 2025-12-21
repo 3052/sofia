@@ -2,6 +2,62 @@ package sofia
 
 import "encoding/binary"
 
+// --- STBL ---
+type StblChild struct {
+   Stsd *StsdBox
+   Raw  []byte
+}
+
+type StblBox struct {
+   Header   BoxHeader
+   Children []StblChild
+}
+
+func (b *StblBox) Parse(data []byte) error {
+   if err := b.Header.Parse(data); err != nil {
+      return err
+   }
+   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+      var child StblChild
+      switch string(h.Type[:]) {
+      case "stsd":
+         var stsd StsdBox
+         if err := stsd.Parse(content); err != nil {
+            return err
+         }
+         child.Stsd = &stsd
+      default:
+         child.Raw = content
+      }
+      b.Children = append(b.Children, child)
+      return nil
+   })
+}
+
+func (b *StblBox) Encode() []byte {
+   buf := make([]byte, 8)
+   for _, child := range b.Children {
+      if child.Stsd != nil {
+         buf = append(buf, child.Stsd.Encode()...)
+      } else if child.Raw != nil {
+         buf = append(buf, child.Raw...)
+      }
+   }
+   b.Header.Size = uint32(len(buf))
+   b.Header.Put(buf)
+   return buf
+}
+
+func (b *StblBox) Stsd() (*StsdBox, bool) {
+   for _, child := range b.Children {
+      if child.Stsd != nil {
+         return child.Stsd, true
+      }
+   }
+   return nil, false
+}
+
+// --- STTS ---
 type SttsEntry struct {
    SampleCount    uint32
    SampleDuration uint32
@@ -27,7 +83,7 @@ func (b *SttsBox) Encode() []byte {
    return buf
 }
 
-func buildStts(samples []UnfragSample) []byte {
+func buildStts(samples []RemuxSample) []byte {
    if len(samples) == 0 {
       return nil
    }
@@ -48,6 +104,7 @@ func buildStts(samples []UnfragSample) []byte {
    return box.Encode()
 }
 
+// --- STSZ ---
 type StszBox struct {
    Header      BoxHeader
    SampleSize  uint32
@@ -70,7 +127,7 @@ func (b *StszBox) Encode() []byte {
    return buf
 }
 
-func buildStsz(samples []UnfragSample) []byte {
+func buildStsz(samples []RemuxSample) []byte {
    entries := make([]uint32, len(samples))
    for i, s := range samples {
       entries[i] = s.Size
@@ -79,6 +136,7 @@ func buildStsz(samples []UnfragSample) []byte {
    return box.Encode()
 }
 
+// --- STSC ---
 type StscEntry struct {
    FirstChunk             uint32
    SamplesPerChunk        uint32
@@ -124,6 +182,7 @@ func buildStsc(counts []uint32) []byte {
    return box.Encode()
 }
 
+// --- STCO ---
 type StcoBox struct {
    Header  BoxHeader
    Offsets []uint32
@@ -152,7 +211,7 @@ func buildStco(offsets []uint64) []byte {
    return box.Encode()
 }
 
-// StssBox (Sync Sample Box)
+// --- STSS ---
 type StssBox struct {
    Header  BoxHeader
    Indices []uint32
@@ -172,7 +231,7 @@ func (b *StssBox) Encode() []byte {
    return buf
 }
 
-func buildStss(samples []UnfragSample) []byte {
+func buildStss(samples []RemuxSample) []byte {
    var indices []uint32
    for i, s := range samples {
       if s.IsSync {

@@ -5,6 +5,21 @@ import (
    "errors"
 )
 
+// --- MDAT ---
+type MdatBox struct {
+   Header  BoxHeader
+   Payload []byte
+}
+
+func (b *MdatBox) Parse(data []byte) error {
+   if err := b.Header.Parse(data); err != nil {
+      return err
+   }
+   b.Payload = data[8:b.Header.Size]
+   return nil
+}
+
+// --- SIDX ---
 type SidxReference struct {
    ReferenceType      bool
    ReferencedSize     uint32
@@ -34,7 +49,6 @@ func (b *SidxBox) Parse(data []byte) error {
    }
    b.Version = data[8]
    b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-
    offset := 12
    if len(data) < offset+8 {
       return errors.New("sidx box too short")
@@ -43,7 +57,6 @@ func (b *SidxBox) Parse(data []byte) error {
    offset += 4
    b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
    offset += 4
-
    if b.Version == 0 {
       if len(data) < offset+8 {
          return errors.New("sidx v0 box too short")
@@ -61,29 +74,24 @@ func (b *SidxBox) Parse(data []byte) error {
       b.FirstOffset = binary.BigEndian.Uint64(data[offset : offset+8])
       offset += 8
    }
-
    if len(data) < offset+4 {
       return errors.New("sidx box too short for reference_count")
    }
    offset += 2 // reserved
    referenceCount := binary.BigEndian.Uint16(data[offset : offset+2])
    offset += 2
-
    // Pre-check for available data before allocation (Safety)
    if len(data)-offset < int(referenceCount)*12 {
       return errors.New("sidx box too short for declared references")
    }
-
    b.References = make([]SidxReference, referenceCount)
    for i := 0; i < int(referenceCount); i++ {
       val1 := binary.BigEndian.Uint32(data[offset : offset+4])
       b.References[i].ReferenceType = (val1 >> 31) == 1
       b.References[i].ReferencedSize = val1 & 0x7FFFFFFF
       offset += 4
-
       b.References[i].SubsegmentDuration = binary.BigEndian.Uint32(data[offset : offset+4])
       offset += 4
-
       val2 := binary.BigEndian.Uint32(data[offset : offset+4])
       b.References[i].StartsWithSAP = (val2 >> 31) == 1
       b.References[i].SAPType = uint8((val2 >> 28) & 0x07)

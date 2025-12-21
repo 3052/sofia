@@ -12,8 +12,8 @@ import (
    "testing"
 )
 
-// TestUnfragmenter_Integration simulates a full cycle with synthetic data.
-func TestUnfragmenter_Integration(t *testing.T) {
+// TestRemuxer_Integration simulates a full cycle with synthetic data.
+func TestRemuxer_Integration(t *testing.T) {
    outFile, err := os.CreateTemp("", "output_*.mp4")
    if err != nil {
       t.Fatal(err)
@@ -26,18 +26,18 @@ func TestUnfragmenter_Integration(t *testing.T) {
    seg1 := createSyntheticSegment(1, []byte{0xAA, 0xAA, 0xAA, 0xAA})
    seg2 := createSyntheticSegment(2, []byte{0xBB, 0xBB, 0xBB, 0xBB})
 
-   unfrag := &Unfragmenter{Writer: outFile}
+   remuxer := &Remuxer{Writer: outFile}
 
-   if err := unfrag.Initialize(initSeg); err != nil {
+   if err := remuxer.Initialize(initSeg); err != nil {
       t.Fatalf("Initialize failed: %v", err)
    }
-   if err := unfrag.AddSegment(seg1); err != nil {
+   if err := remuxer.AddSegment(seg1); err != nil {
       t.Fatalf("AddSegment 1 failed: %v", err)
    }
-   if err := unfrag.AddSegment(seg2); err != nil {
+   if err := remuxer.AddSegment(seg2); err != nil {
       t.Fatalf("AddSegment 2 failed: %v", err)
    }
-   if err := unfrag.Finish(); err != nil {
+   if err := remuxer.Finish(); err != nil {
       t.Fatalf("Finish failed: %v", err)
    }
 
@@ -64,8 +64,8 @@ func TestUnfragmenter_Integration(t *testing.T) {
    t.Logf("Successfully created MP4 of size %d bytes", len(content))
 }
 
-// TestUnfragmenter_RealFiles looks for real files in the "ignore" directory.
-func TestUnfragmenter_RealFiles(t *testing.T) {
+// TestRemuxer_RealFiles looks for real files in the "testdata" directory.
+func TestRemuxer_RealFiles(t *testing.T) {
    workDir := "testdata"
    if _, err := os.Stat(workDir); os.IsNotExist(err) {
       t.Fatalf("directory '%s' not found", workDir)
@@ -87,7 +87,7 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       t.Fatalf("Failed to create cipher: %v", err)
    }
 
-   unfrag := &Unfragmenter{
+   remuxer := &Remuxer{
       Writer: outFile,
       OnSample: func(sample []byte, encInfo *SampleEncryptionInfo) {
          DecryptSample(sample, encInfo, block)
@@ -100,8 +100,8 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       t.Fatalf("Failed to read init segment (%s): %v", initPath, err)
    }
 
-   if err := unfrag.Initialize(initData); err != nil {
-      t.Fatalf("Unfragmenter.Initialize failed: %v", err)
+   if err := remuxer.Initialize(initData); err != nil {
+      t.Fatalf("Remuxer.Initialize failed: %v", err)
    }
 
    globPattern := filepath.Join(workDir, "*.m4s")
@@ -120,13 +120,13 @@ func TestUnfragmenter_RealFiles(t *testing.T) {
       if err != nil {
          t.Fatalf("Failed to read segment %s: %v", segmentPath, err)
       }
-      if err := unfrag.AddSegment(segData); err != nil {
+      if err := remuxer.AddSegment(segData); err != nil {
          t.Fatalf("Failed to add segment %s: %v", segmentPath, err)
       }
    }
 
-   if err := unfrag.Finish(); err != nil {
-      t.Fatalf("Unfragmenter.Finish failed: %v", err)
+   if err := remuxer.Finish(); err != nil {
+      t.Fatalf("Remuxer.Finish failed: %v", err)
    }
 
    stat, _ := outFile.Stat()

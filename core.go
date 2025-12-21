@@ -1,7 +1,6 @@
 package sofia
 
 import (
-   "crypto/cipher"
    "encoding/binary"
    "errors"
    "fmt"
@@ -119,7 +118,6 @@ func Parse(data []byte) ([]Box, error) {
 }
 
 // --- Finders ---
-
 func FindMoov(boxes []Box) (*MoovBox, bool) {
    for _, box := range boxes {
       if box.Moov != nil {
@@ -136,41 +134,4 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
       }
    }
    return nil, false
-}
-
-// --- Decryption ---
-
-// DecryptSample decrypts a single sample in-place.
-// info can be nil if the sample is not encrypted.
-func DecryptSample(sample []byte, info *SampleEncryptionInfo, block cipher.Block) {
-   if info == nil || len(info.IV) == 0 {
-      return
-   }
-
-   iv := info.IV
-   if len(iv) == 8 {
-      paddedIV := make([]byte, 16)
-      copy(paddedIV, iv)
-      iv = paddedIV
-   }
-
-   stream := cipher.NewCTR(block, iv)
-
-   if len(info.Subsamples) == 0 {
-      stream.XORKeyStream(sample, sample)
-   } else {
-      sampleOffset := 0
-      for _, sub := range info.Subsamples {
-         sampleOffset += int(sub.BytesOfClearData)
-         if sub.BytesOfProtectedData > 0 {
-            end := sampleOffset + int(sub.BytesOfProtectedData)
-            if end > len(sample) {
-               end = len(sample)
-            }
-            chunk := sample[sampleOffset:end]
-            stream.XORKeyStream(chunk, chunk)
-            sampleOffset = end
-         }
-      }
-   }
 }

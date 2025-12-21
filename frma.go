@@ -1,6 +1,6 @@
 package sofia
 
-import "fmt"
+import "errors"
 
 type FrmaBox struct {
    Header     BoxHeader
@@ -12,7 +12,7 @@ func (b *FrmaBox) Parse(data []byte) error {
       return err
    }
    if len(data) < 12 {
-      return fmt.Errorf("frma box is too small")
+      return errors.New("frma box is too small")
    }
    copy(b.DataFormat[:], data[8:12])
    return nil

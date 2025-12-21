@@ -24,9 +24,9 @@ func (b *MoovBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child MoovChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "mvhd":
          var mvhd MvhdBox
          if err := mvhd.Parse(content); err != nil {
@@ -54,21 +54,21 @@ func (b *MoovBox) Parse(data []byte) error {
 }
 
 func (b *MoovBox) Encode() []byte {
-   buf := make([]byte, 8)
+   buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mvhd != nil {
-         buf = append(buf, child.Mvhd.Encode()...)
+         buffer = append(buffer, child.Mvhd.Encode()...)
       } else if child.Trak != nil {
-         buf = append(buf, child.Trak.Encode()...)
+         buffer = append(buffer, child.Trak.Encode()...)
       } else if child.Pssh != nil {
          // Skipped
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *MoovBox) RemovePssh() {
@@ -189,34 +189,34 @@ func (b *MvhdBox) Encode() []byte {
       baseSize = 32
    }
    totalSize := baseSize + uint32(len(b.RemainingData))
-   buf := make([]byte, totalSize)
-   binary.BigEndian.PutUint32(buf[0:4], totalSize)
-   copy(buf[4:8], b.Header.Type[:])
-   buf[8] = b.Version
-   copy(buf[9:12], b.Flags[:])
+   buffer := make([]byte, totalSize)
+   binary.BigEndian.PutUint32(buffer[0:4], totalSize)
+   copy(buffer[4:8], b.Header.Type[:])
+   buffer[8] = b.Version
+   copy(buffer[9:12], b.Flags[:])
    offset := 12
    if b.Version == 1 {
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.CreationTime)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.CreationTime)
       offset += 8
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.ModificationTime)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.ModificationTime)
       offset += 8
-      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
       offset += 4
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.Duration)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.Duration)
       offset += 8
    } else {
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.CreationTime))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.CreationTime))
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.ModificationTime))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.ModificationTime))
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.Duration))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.Duration))
       offset += 4
    }
-   copy(buf[offset:], b.RemainingData)
+   copy(buffer[offset:], b.RemainingData)
    b.Header.Size = totalSize
-   return buf
+   return buffer
 }
 
 // --- TRAK ---
@@ -234,9 +234,9 @@ func (b *TrakBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child TrakChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "mdia":
          var mdia MdiaBox
          if err := mdia.Parse(content); err != nil {
@@ -252,17 +252,17 @@ func (b *TrakBox) Parse(data []byte) error {
 }
 
 func (b *TrakBox) Encode() []byte {
-   buf := make([]byte, 8)
+   buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdia != nil {
-         buf = append(buf, child.Mdia.Encode()...)
+         buffer = append(buffer, child.Mdia.Encode()...)
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *TrakBox) RemoveEdts() {
@@ -301,9 +301,9 @@ func (b *MdiaBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child MdiaChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "mdhd":
          var mdhd MdhdBox
          if err := mdhd.Parse(content); err != nil {
@@ -325,19 +325,19 @@ func (b *MdiaBox) Parse(data []byte) error {
 }
 
 func (b *MdiaBox) Encode() []byte {
-   buf := make([]byte, 8)
+   buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
-         buf = append(buf, child.Mdhd.Encode()...)
+         buffer = append(buffer, child.Mdhd.Encode()...)
       } else if child.Minf != nil {
-         buf = append(buf, child.Minf.Encode()...)
+         buffer = append(buffer, child.Minf.Encode()...)
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *MdiaBox) MdhdRaw() ([]byte, bool) {
@@ -437,35 +437,35 @@ func (b *MdhdBox) Encode() []byte {
    } else {
       size = 32
    }
-   buf := make([]byte, size)
-   binary.BigEndian.PutUint32(buf[0:4], size)
-   copy(buf[4:8], b.Header.Type[:])
-   buf[8] = b.Version
-   copy(buf[9:12], b.Flags[:])
+   buffer := make([]byte, size)
+   binary.BigEndian.PutUint32(buffer[0:4], size)
+   copy(buffer[4:8], b.Header.Type[:])
+   buffer[8] = b.Version
+   copy(buffer[9:12], b.Flags[:])
    offset := 12
    if b.Version == 1 {
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.CreationTime)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.CreationTime)
       offset += 8
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.ModificationTime)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.ModificationTime)
       offset += 8
-      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
       offset += 4
-      binary.BigEndian.PutUint64(buf[offset:offset+8], b.Duration)
+      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.Duration)
       offset += 8
    } else {
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.CreationTime))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.CreationTime))
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.ModificationTime))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.ModificationTime))
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], b.Timescale)
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
       offset += 4
-      binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(b.Duration))
+      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.Duration))
       offset += 4
    }
-   copy(buf[offset:offset+2], b.Language[:])
-   copy(buf[offset+2:offset+4], b.Quality[:])
+   copy(buffer[offset:offset+2], b.Language[:])
+   copy(buffer[offset+2:offset+4], b.Quality[:])
    b.Header.Size = size
-   return buf
+   return buffer
 }
 
 // --- MINF ---
@@ -483,9 +483,9 @@ func (b *MinfBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child MinfChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "stbl":
          var stbl StblBox
          if err := stbl.Parse(content); err != nil {
@@ -501,17 +501,17 @@ func (b *MinfBox) Parse(data []byte) error {
 }
 
 func (b *MinfBox) Encode() []byte {
-   buf := make([]byte, 8)
+   buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Stbl != nil {
-         buf = append(buf, child.Stbl.Encode()...)
+         buffer = append(buffer, child.Stbl.Encode()...)
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *MinfBox) Stbl() (*StblBox, bool) {

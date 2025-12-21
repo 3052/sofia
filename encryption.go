@@ -100,10 +100,10 @@ func (b *SencBox) Parse(data []byte) error {
          if offset+2 > len(data) {
             return fmt.Errorf("senc truncated")
          }
-         cnt := binary.BigEndian.Uint16(data[offset : offset+2])
+         subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
          offset += 2
-         b.Samples[i].Subsamples = make([]SubsampleInfo, cnt)
-         for j := uint16(0); j < cnt; j++ {
+         b.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
+         for j := uint16(0); j < subsampleCount; j++ {
             if offset+6 > len(data) {
                return fmt.Errorf("senc truncated")
             }
@@ -136,10 +136,10 @@ func DecryptSample(sample []byte, info *SampleEncryptionInfo, block cipher.Block
       stream.XORKeyStream(sample, sample)
    } else {
       sampleOffset := 0
-      for _, sub := range info.Subsamples {
-         sampleOffset += int(sub.BytesOfClearData)
-         if sub.BytesOfProtectedData > 0 {
-            end := sampleOffset + int(sub.BytesOfProtectedData)
+      for _, subsample := range info.Subsamples {
+         sampleOffset += int(subsample.BytesOfClearData)
+         if subsample.BytesOfProtectedData > 0 {
+            end := sampleOffset + int(subsample.BytesOfProtectedData)
             if end > len(sample) {
                end = len(sample)
             }

@@ -17,9 +17,9 @@ func (b *StblBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child StblChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "stsd":
          var stsd StsdBox
          if err := stsd.Parse(content); err != nil {
@@ -35,17 +35,17 @@ func (b *StblBox) Parse(data []byte) error {
 }
 
 func (b *StblBox) Encode() []byte {
-   buf := make([]byte, 8)
+   buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Stsd != nil {
-         buf = append(buf, child.Stsd.Encode()...)
+         buffer = append(buffer, child.Stsd.Encode()...)
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *StblBox) Stsd() (*StsdBox, bool) {
@@ -69,18 +69,18 @@ type SttsBox struct {
 }
 
 func (b *SttsBox) Encode() []byte {
-   buf := make([]byte, 16)
-   binary.BigEndian.PutUint32(buf[12:16], uint32(len(b.Entries)))
-   tmp := make([]byte, 8)
+   buffer := make([]byte, 16)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
+   tempBuffer := make([]byte, 8)
    for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tmp[0:4], entry.SampleCount)
-      binary.BigEndian.PutUint32(tmp[4:8], entry.SampleDuration)
-      buf = append(buf, tmp...)
+      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
+      binary.BigEndian.PutUint32(tempBuffer[4:8], entry.SampleDuration)
+      buffer = append(buffer, tempBuffer...)
    }
-   b.Header.Size = uint32(len(buf))
+   b.Header.Size = uint32(len(buffer))
    b.Header.Type = [4]byte{'s', 't', 't', 's'}
-   b.Header.Put(buf)
-   return buf
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func buildStts(samples []RemuxSample) []byte {
@@ -88,18 +88,18 @@ func buildStts(samples []RemuxSample) []byte {
       return nil
    }
    var entries []SttsEntry
-   currDur := samples[0].Duration
-   currCnt := uint32(0)
-   for _, s := range samples {
-      if s.Duration == currDur {
-         currCnt++
+   currentDuration := samples[0].Duration
+   currentCount := uint32(0)
+   for _, sample := range samples {
+      if sample.Duration == currentDuration {
+         currentCount++
       } else {
-         entries = append(entries, SttsEntry{currCnt, currDur})
-         currDur = s.Duration
-         currCnt = 1
+         entries = append(entries, SttsEntry{currentCount, currentDuration})
+         currentDuration = sample.Duration
+         currentCount = 1
       }
    }
-   entries = append(entries, SttsEntry{currCnt, currDur})
+   entries = append(entries, SttsEntry{currentCount, currentDuration})
    box := SttsBox{Entries: entries}
    return box.Encode()
 }
@@ -113,24 +113,24 @@ type StszBox struct {
 }
 
 func (b *StszBox) Encode() []byte {
-   buf := make([]byte, 20)
-   binary.BigEndian.PutUint32(buf[12:16], b.SampleSize)
-   binary.BigEndian.PutUint32(buf[16:20], b.SampleCount)
-   tmp := make([]byte, 4)
+   buffer := make([]byte, 20)
+   binary.BigEndian.PutUint32(buffer[12:16], b.SampleSize)
+   binary.BigEndian.PutUint32(buffer[16:20], b.SampleCount)
+   tempBuffer := make([]byte, 4)
    for _, size := range b.EntrySizes {
-      binary.BigEndian.PutUint32(tmp, size)
-      buf = append(buf, tmp...)
+      binary.BigEndian.PutUint32(tempBuffer, size)
+      buffer = append(buffer, tempBuffer...)
    }
-   b.Header.Size = uint32(len(buf))
+   b.Header.Size = uint32(len(buffer))
    b.Header.Type = [4]byte{'s', 't', 's', 'z'}
-   b.Header.Put(buf)
-   return buf
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func buildStsz(samples []RemuxSample) []byte {
    entries := make([]uint32, len(samples))
-   for i, s := range samples {
-      entries[i] = s.Size
+   for i, sample := range samples {
+      entries[i] = sample.Size
    }
    box := StszBox{SampleSize: 0, SampleCount: uint32(len(samples)), EntrySizes: entries}
    return box.Encode()
@@ -149,33 +149,33 @@ type StscBox struct {
 }
 
 func (b *StscBox) Encode() []byte {
-   buf := make([]byte, 16)
-   binary.BigEndian.PutUint32(buf[12:16], uint32(len(b.Entries)))
-   tmp := make([]byte, 12)
+   buffer := make([]byte, 16)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
+   tempBuffer := make([]byte, 12)
    for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tmp[0:4], entry.FirstChunk)
-      binary.BigEndian.PutUint32(tmp[4:8], entry.SamplesPerChunk)
-      binary.BigEndian.PutUint32(tmp[8:12], entry.SampleDescriptionIndex)
-      buf = append(buf, tmp...)
+      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.FirstChunk)
+      binary.BigEndian.PutUint32(tempBuffer[4:8], entry.SamplesPerChunk)
+      binary.BigEndian.PutUint32(tempBuffer[8:12], entry.SampleDescriptionIndex)
+      buffer = append(buffer, tempBuffer...)
    }
-   b.Header.Size = uint32(len(buf))
+   b.Header.Size = uint32(len(buffer))
    b.Header.Type = [4]byte{'s', 't', 's', 'c'}
-   b.Header.Put(buf)
-   return buf
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func buildStsc(counts []uint32) []byte {
    var entries []StscEntry
    chunkIdx := uint32(1)
-   for _, cnt := range counts {
+   for _, count := range counts {
       if len(entries) > 0 {
          last := &entries[len(entries)-1]
-         if last.SamplesPerChunk == cnt {
+         if last.SamplesPerChunk == count {
             chunkIdx++
             continue
          }
       }
-      entries = append(entries, StscEntry{chunkIdx, cnt, 1})
+      entries = append(entries, StscEntry{chunkIdx, count, 1})
       chunkIdx++
    }
    box := StscBox{Entries: entries}
@@ -189,23 +189,23 @@ type StcoBox struct {
 }
 
 func (b *StcoBox) Encode() []byte {
-   buf := make([]byte, 16)
-   binary.BigEndian.PutUint32(buf[12:16], uint32(len(b.Offsets)))
-   tmp := make([]byte, 4)
-   for _, o := range b.Offsets {
-      binary.BigEndian.PutUint32(tmp, o)
-      buf = append(buf, tmp...)
+   buffer := make([]byte, 16)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Offsets)))
+   tempBuffer := make([]byte, 4)
+   for _, offset := range b.Offsets {
+      binary.BigEndian.PutUint32(tempBuffer, offset)
+      buffer = append(buffer, tempBuffer...)
    }
-   b.Header.Size = uint32(len(buf))
+   b.Header.Size = uint32(len(buffer))
    b.Header.Type = [4]byte{'s', 't', 'c', 'o'}
-   b.Header.Put(buf)
-   return buf
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func buildStco(offsets []uint64) []byte {
    entries := make([]uint32, len(offsets))
-   for i, o := range offsets {
-      entries[i] = uint32(o)
+   for i, offset := range offsets {
+      entries[i] = uint32(offset)
    }
    box := StcoBox{Offsets: entries}
    return box.Encode()
@@ -218,23 +218,23 @@ type StssBox struct {
 }
 
 func (b *StssBox) Encode() []byte {
-   buf := make([]byte, 16)
-   binary.BigEndian.PutUint32(buf[12:16], uint32(len(b.Indices)))
-   tmp := make([]byte, 4)
-   for _, idx := range b.Indices {
-      binary.BigEndian.PutUint32(tmp, idx)
-      buf = append(buf, tmp...)
+   buffer := make([]byte, 16)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Indices)))
+   tempBuffer := make([]byte, 4)
+   for _, index := range b.Indices {
+      binary.BigEndian.PutUint32(tempBuffer, index)
+      buffer = append(buffer, tempBuffer...)
    }
-   b.Header.Size = uint32(len(buf))
+   b.Header.Size = uint32(len(buffer))
    b.Header.Type = [4]byte{'s', 't', 's', 's'}
-   b.Header.Put(buf)
-   return buf
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func buildStss(samples []RemuxSample) []byte {
    var indices []uint32
-   for i, s := range samples {
-      if s.IsSync {
+   for i, sample := range samples {
+      if sample.IsSync {
          indices = append(indices, uint32(i+1))
       }
    }

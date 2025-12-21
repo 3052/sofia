@@ -26,8 +26,8 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
    for _, child := range traf.Children {
       if child.Trun != nil {
          trun := child.Trun
-         for i, s := range trun.Samples {
-            si := RemuxSample{Duration: defDur, Size: defSize, IsSync: true}
+         for i, sample := range trun.Samples {
+            remuxSample := RemuxSample{Duration: defDur, Size: defSize, IsSync: true}
             // Determine flags logic:
             // 1. Start with TFHD Default Flags
             currentFlags := defFlags
@@ -37,23 +37,23 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             }
             // 3. If 'SampleFlags' is present (0x400) in the array entry, it overrides everything.
             if (trun.Flags & 0x000400) != 0 {
-               currentFlags = s.Flags
+               currentFlags = sample.Flags
             }
             if (trun.Flags & 0x000100) != 0 {
-               si.Duration = s.Duration
+               remuxSample.Duration = sample.Duration
             }
             if (trun.Flags & 0x000200) != 0 {
-               si.Size = s.Size
+               remuxSample.Size = sample.Size
             }
             // Check "sample_is_difference_sample" (bit 17, 0x10000)
             // 1 = Non-Sync (Difference)
             // 0 = Sync (Keyframe)
             if (currentFlags & 0x00010000) != 0 {
-               si.IsSync = false
+               remuxSample.IsSync = false
             } else {
-               si.IsSync = true
+               remuxSample.IsSync = true
             }
-            originalSize := int(si.Size)
+            originalSize := int(remuxSample.Size)
             if mdatOffset+originalSize > len(mdat.Payload) {
                return errors.New("mdat payload too short for samples")
             }
@@ -66,7 +66,7 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             if r.OnSample != nil {
                r.OnSample(sampleData, encInfo)
             }
-            newSamples = append(newSamples, si)
+            newSamples = append(newSamples, remuxSample)
             mdatOffset += originalSize
          }
       }
@@ -91,8 +91,8 @@ func (r *Remuxer) Finish() error {
    mdatEndOffset, _ := r.Writer.Seek(0, io.SeekCurrent)
    finalMdatSize := uint64(mdatEndOffset - r.mdatStartOffset)
    var totalDuration uint64
-   for _, s := range r.samples {
-      totalDuration += uint64(s.Duration)
+   for _, sample := range r.samples {
+      totalDuration += uint64(sample.Duration)
    }
    stts := buildStts(r.samples)
    stsz := buildStsz(r.samples)

@@ -182,14 +182,14 @@ func createSyntheticSegment(seq int, payload []byte) []byte {
 
 func makeBox(typeStr string, payload []byte) []byte {
    size := 8 + len(payload)
-   buf := make([]byte, 8)
-   binary.BigEndian.PutUint32(buf[0:4], uint32(size))
-   copy(buf[4:8], []byte(typeStr))
-   return append(buf, payload...)
+   buffer := make([]byte, 8)
+   binary.BigEndian.PutUint32(buffer[0:4], uint32(size))
+   copy(buffer[4:8], []byte(typeStr))
+   return append(buffer, payload...)
 }
 
 func uint32ToBytes(v uint32) []byte {
-   b := make([]byte, 4)
-   binary.BigEndian.PutUint32(b, v)
-   return b
+   buffer := make([]byte, 4)
+   binary.BigEndian.PutUint32(buffer, v)
+   return buffer
 }

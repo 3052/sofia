@@ -3,14 +3,7 @@ package sofia
 import (
    "encoding/binary"
    "errors"
-   "fmt"
 )
-
-type Missing string
-
-func (e Missing) Error() string {
-   return fmt.Sprintf("box '%s' not found", string(e))
-}
 
 type BoxHeader struct {
    Size uint32
@@ -27,27 +20,27 @@ func (h *BoxHeader) Parse(data []byte) error {
 }
 
 // Put writes the header to the given byte slice.
-func (h *BoxHeader) Put(b []byte) {
-   binary.BigEndian.PutUint32(b[0:4], h.Size)
-   copy(b[4:8], h.Type[:])
+func (h *BoxHeader) Put(buffer []byte) {
+   binary.BigEndian.PutUint32(buffer[0:4], h.Size)
+   copy(buffer[4:8], h.Type[:])
 }
 
 // parseContainer iterates over generic boxes within a byte slice.
 func parseContainer(data []byte, onChild func(BoxHeader, []byte) error) error {
    offset := 0
    for offset < len(data) {
-      var h BoxHeader
-      if err := h.Parse(data[offset:]); err != nil {
+      var header BoxHeader
+      if err := header.Parse(data[offset:]); err != nil {
          break
       }
-      boxSize := int(h.Size)
+      boxSize := int(header.Size)
       if boxSize == 0 {
          boxSize = len(data) - offset
       }
       if boxSize < 8 || offset+boxSize > len(data) {
          return errors.New("invalid child box size")
       }
-      if err := onChild(h, data[offset:offset+boxSize]); err != nil {
+      if err := onChild(header, data[offset:offset+boxSize]); err != nil {
          return err
       }
       offset += boxSize
@@ -75,9 +68,9 @@ func (b *Box) Encode() []byte {
 
 func Parse(data []byte) ([]Box, error) {
    var boxes []Box
-   err := parseContainer(data, func(h BoxHeader, boxData []byte) error {
+   err := parseContainer(data, func(header BoxHeader, boxData []byte) error {
       var currentBox Box
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "moov":
          var moov MoovBox
          if err := moov.Parse(boxData); err != nil {

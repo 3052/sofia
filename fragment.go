@@ -21,9 +21,9 @@ func (b *MoofBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child MoofChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "traf":
          var traf TrafBox
          if err := traf.Parse(content); err != nil {
@@ -70,9 +70,9 @@ func (b *TrafBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child TrafChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "tfhd":
          var tfhd TfhdBox
          if err := tfhd.Parse(content); err != nil {

@@ -21,9 +21,9 @@ func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
    for i := range b.Children {
       child := &b.Children[i]
       if child.Enc != nil {
-         for _, c := range child.Enc.Children {
-            if c.Sinf != nil {
-               return c.Sinf, &child.Enc.Header, true
+         for _, encChild := range child.Enc.Children {
+            if encChild.Sinf != nil {
+               return encChild.Sinf, &child.Enc.Header, true
             }
          }
       }
@@ -41,9 +41,9 @@ func (b *StsdBox) Parse(data []byte) error {
    // Copy Version(1) + Flags(3) + EntryCount(4)
    copy(b.HeaderFields[:], data[8:16])
    // Parse children starting at offset 16
-   return parseContainer(data[16:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[16:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child StsdChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "encv", "enca":
          var enc EncBox
          if err := enc.Parse(content); err != nil {
@@ -60,18 +60,18 @@ func (b *StsdBox) Parse(data []byte) error {
 
 func (b *StsdBox) Encode() []byte {
    // Header(8) + HeaderFields(8)
-   buf := make([]byte, 16)
-   copy(buf[8:16], b.HeaderFields[:])
+   buffer := make([]byte, 16)
+   copy(buffer[8:16], b.HeaderFields[:])
    for _, child := range b.Children {
       if child.Enc != nil {
-         buf = append(buf, child.Enc.Encode()...)
+         buffer = append(buffer, child.Enc.Encode()...)
       } else if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *StsdBox) UnprotectAll() error {
@@ -116,9 +116,9 @@ func (b *EncBox) Parse(data []byte) error {
       return nil
    }
    b.EntryHeader = data[payloadOffset : payloadOffset+entrySize]
-   return parseContainer(data[payloadOffset+entrySize:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[payloadOffset+entrySize:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child EncChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "sinf":
          var sinf SinfBox
          if err := sinf.Parse(content); err != nil {
@@ -134,17 +134,17 @@ func (b *EncBox) Parse(data []byte) error {
 }
 
 func (b *EncBox) Encode() []byte {
-   buf := make([]byte, 8)
-   buf = append(buf, b.EntryHeader...)
+   buffer := make([]byte, 8)
+   buffer = append(buffer, b.EntryHeader...)
    for _, child := range b.Children {
       // skip sinf
       if child.Raw != nil {
-         buf = append(buf, child.Raw...)
+         buffer = append(buffer, child.Raw...)
       }
    }
-   b.Header.Size = uint32(len(buf))
-   b.Header.Put(buf)
-   return buf
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 func (b *EncBox) Unprotect() error {
@@ -187,9 +187,9 @@ func (b *SinfBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(h BoxHeader, content []byte) error {
+   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child SinfChild
-      switch string(h.Type[:]) {
+      switch string(header.Type[:]) {
       case "frma":
          var frma FrmaBox
          if err := frma.Parse(content); err != nil {

@@ -105,7 +105,7 @@ func (b *EncBox) Parse(data []byte) error {
    case "encv":
       entrySize = 78
    default:
-      return NewError(
+      return new_error(
          "unknown encryption box type:", string(b.Header.Type[:]),
       )
    }

@@ -34,7 +34,7 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    }
    boxes, err := Parse(initSegment)
    if err != nil {
-      return NewError("parsing init:", err.Error())
+      return new_error("parsing init:", err.Error())
    }
    moovPtr, ok := FindMoov(boxes)
    if !ok {
@@ -61,7 +61,7 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
    r.segmentCount++
    boxes, err := Parse(segmentData)
    if err != nil {
-      return NewError(
+      return new_error(
          "parsing segment", strconv.Itoa(r.segmentCount), err.Error(),
       )
    }
@@ -75,7 +75,7 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       if box.Mdat != nil {
          if pendingMoof != nil {
             if err := r.processFragment(pendingMoof, box.Mdat); err != nil {
-               return NewError(
+               return new_error(
                   "processing fragment at box index",
                   strconv.Itoa(i), err.Error(),
                )

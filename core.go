@@ -6,8 +6,8 @@ import (
    "strings"
 )
 
-// NewError combines multiple strings into a single error.
-func NewError(messages ...string) error {
+// new_error combines multiple strings into a single error.
+func new_error(messages ...string) error {
    text := strings.Join(messages, " ")
    return errors.New(text)
 }

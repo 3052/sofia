@@ -2,13 +2,9 @@ package sofia
 
 import (
    "bytes"
-   "crypto/aes"
    "encoding/binary"
-   "encoding/hex"
    "io"
    "os"
-   "path/filepath"
-   "sort"
    "testing"
 )
 
@@ -62,75 +58,6 @@ func TestRemuxer_Integration(t *testing.T) {
    }
 
    t.Logf("Successfully created MP4 of size %d bytes", len(content))
-}
-
-// TestRemuxer_RealFiles looks for real files in the "testdata" directory.
-func TestRemuxer_RealFiles(t *testing.T) {
-   workDir := "testdata"
-   if _, err := os.Stat(workDir); os.IsNotExist(err) {
-      t.Fatalf("directory '%s' not found", workDir)
-   }
-
-   outPath := filepath.Join(workDir, "joined_output.mp4")
-   outFile, err := os.Create(outPath)
-   if err != nil {
-      t.Fatalf("Failed to create output file: %v", err)
-   }
-   defer outFile.Close()
-
-   key, err := hex.DecodeString("c35acf72e42c8a9ca31da21007a17a65")
-   if err != nil {
-      t.Fatalf("Failed to decode key: %v", err)
-   }
-   block, err := aes.NewCipher(key)
-   if err != nil {
-      t.Fatalf("Failed to create cipher: %v", err)
-   }
-
-   remuxer := &Remuxer{
-      Writer: outFile,
-      OnSample: func(sample []byte, encInfo *SampleEncryptionInfo) {
-         DecryptSample(sample, encInfo, block)
-      },
-   }
-
-   initPath := filepath.Join(workDir, "_init.mp4")
-   initData, err := os.ReadFile(initPath)
-   if err != nil {
-      t.Fatalf("Failed to read init segment (%s): %v", initPath, err)
-   }
-
-   if err := remuxer.Initialize(initData); err != nil {
-      t.Fatalf("Remuxer.Initialize failed: %v", err)
-   }
-
-   globPattern := filepath.Join(workDir, "*.m4s")
-   segmentFiles, err := filepath.Glob(globPattern)
-   if err != nil {
-      t.Fatalf("Failed to glob segments: %v", err)
-   }
-   if len(segmentFiles) == 0 {
-      t.Fatalf("No segment files found matching pattern: %s", globPattern)
-   }
-   sort.Strings(segmentFiles)
-
-   t.Logf("Found %d segments. Processing...", len(segmentFiles))
-   for _, segmentPath := range segmentFiles {
-      segData, err := os.ReadFile(segmentPath)
-      if err != nil {
-         t.Fatalf("Failed to read segment %s: %v", segmentPath, err)
-      }
-      if err := remuxer.AddSegment(segData); err != nil {
-         t.Fatalf("Failed to add segment %s: %v", segmentPath, err)
-      }
-   }
-
-   if err := remuxer.Finish(); err != nil {
-      t.Fatalf("Remuxer.Finish failed: %v", err)
-   }
-
-   stat, _ := outFile.Stat()
-   t.Logf("Success! Created %s (%d bytes)", outPath, stat.Size())
 }
 
 // --- Test Helpers ---

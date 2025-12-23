@@ -5,7 +5,18 @@ import (
    "errors"
    "io"
    "strconv"
+   "strings"
 )
+
+func remuxError(op string, index int, err error) error {
+   var sb strings.Builder
+   sb.WriteString(op)
+   sb.WriteByte(' ')
+   sb.WriteString(strconv.Itoa(index))
+   sb.WriteByte(' ')
+   sb.WriteString(err.Error())
+   return errors.New(sb.String())
+}
 
 type Remuxer struct {
    Writer              io.WriteSeeker
@@ -34,7 +45,7 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    }
    boxes, err := Parse(initSegment)
    if err != nil {
-      return new_error("parsing init:", err.Error())
+      return errors.New("parsing init " + err.Error())
    }
    moovPtr, ok := FindMoov(boxes)
    if !ok {
@@ -61,12 +72,9 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
    r.segmentCount++
    boxes, err := Parse(segmentData)
    if err != nil {
-      return new_error(
-         "parsing segment", strconv.Itoa(r.segmentCount), err.Error(),
-      )
+      return remuxError("parsing segment", r.segmentCount, err)
    }
    var pendingMoof *MoofBox
-   foundPair := false
    for i, box := range boxes {
       if box.Moof != nil {
          pendingMoof = box.Moof
@@ -75,18 +83,11 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       if box.Mdat != nil {
          if pendingMoof != nil {
             if err := r.processFragment(pendingMoof, box.Mdat); err != nil {
-               return new_error(
-                  "processing fragment at box index",
-                  strconv.Itoa(i), err.Error(),
-               )
+               return remuxError("processing fragment at box index", i, err)
             }
             pendingMoof = nil
-            foundPair = true
          }
       }
-   }
-   if !foundPair {
-      return nil
    }
    return nil
 }

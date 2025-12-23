@@ -1,6 +1,16 @@
 package sofia
 
-import "errors"
+import (
+   "errors"
+   "strings"
+)
+
+func encryptionBoxError(boxType [4]byte) error {
+   var sb strings.Builder
+   sb.WriteString("unknown encryption box type ")
+   sb.Write(boxType[:])
+   return errors.New(sb.String())
+}
 
 // --- STSD ---
 type StsdChild struct {
@@ -105,9 +115,7 @@ func (b *EncBox) Parse(data []byte) error {
    case "encv":
       entrySize = 78
    default:
-      return new_error(
-         "unknown encryption box type:", string(b.Header.Type[:]),
-      )
+      return encryptionBoxError(b.Header.Type)
    }
    payloadOffset := 8
    if len(data) < payloadOffset+entrySize {

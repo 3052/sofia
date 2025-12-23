@@ -3,14 +3,7 @@ package sofia
 import (
    "encoding/binary"
    "errors"
-   "strings"
 )
-
-// new_error combines multiple strings into a single error.
-func new_error(messages ...string) error {
-   text := strings.Join(messages, " ")
-   return errors.New(text)
-}
 
 type BoxHeader struct {
    Size uint32

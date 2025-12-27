@@ -10,7 +10,6 @@ type TrakChild struct {
    Mdia *MdiaBox
    Raw  []byte
 }
-
 type TrakBox struct {
    Header   BoxHeader
    Children []TrakChild
@@ -36,7 +35,6 @@ func (b *TrakBox) Parse(data []byte) error {
       return nil
    })
 }
-
 func (b *TrakBox) Encode() []byte {
    buffer := make([]byte, 8)
    for _, child := range b.Children {
@@ -50,7 +48,6 @@ func (b *TrakBox) Encode() []byte {
    b.Header.Put(buffer)
    return buffer
 }
-
 func (b *TrakBox) RemoveEdts() {
    var kept []TrakChild
    for _, child := range b.Children {
@@ -61,7 +58,6 @@ func (b *TrakBox) RemoveEdts() {
    }
    b.Children = kept
 }
-
 func (b *TrakBox) Mdia() (*MdiaBox, bool) {
    for _, child := range b.Children {
       if child.Mdia != nil {
@@ -74,10 +70,10 @@ func (b *TrakBox) Mdia() (*MdiaBox, bool) {
 // --- MDIA ---
 type MdiaChild struct {
    Mdhd *MdhdBox
+   Hdlr *HdlrBox
    Minf *MinfBox
    Raw  []byte
 }
-
 type MdiaBox struct {
    Header   BoxHeader
    Children []MdiaChild
@@ -96,6 +92,12 @@ func (b *MdiaBox) Parse(data []byte) error {
             return err
          }
          child.Mdhd = &mdhd
+      case "hdlr":
+         var hdlr HdlrBox
+         if err := hdlr.Parse(content); err != nil {
+            return err
+         }
+         child.Hdlr = &hdlr
       case "minf":
          var minf MinfBox
          if err := minf.Parse(content); err != nil {
@@ -109,12 +111,13 @@ func (b *MdiaBox) Parse(data []byte) error {
       return nil
    })
 }
-
 func (b *MdiaBox) Encode() []byte {
    buffer := make([]byte, 8)
    for _, child := range b.Children {
       if child.Mdhd != nil {
          buffer = append(buffer, child.Mdhd.Encode()...)
+      } else if child.Hdlr != nil {
+         // hdlr is not encoded in our simplified remuxer.
       } else if child.Minf != nil {
          buffer = append(buffer, child.Minf.Encode()...)
       } else if child.Raw != nil {
@@ -125,16 +128,6 @@ func (b *MdiaBox) Encode() []byte {
    b.Header.Put(buffer)
    return buffer
 }
-
-func (b *MdiaBox) MdhdRaw() ([]byte, bool) {
-   for _, child := range b.Children {
-      if child.Mdhd != nil {
-         return child.Mdhd.Encode(), true
-      }
-   }
-   return nil, false
-}
-
 func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
    for _, child := range b.Children {
       if child.Mdhd != nil {
@@ -143,7 +136,14 @@ func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
    }
    return nil, false
 }
-
+func (b *MdiaBox) Hdlr() (*HdlrBox, bool) {
+   for _, child := range b.Children {
+      if child.Hdlr != nil {
+         return child.Hdlr, true
+      }
+   }
+   return nil, false
+}
 func (b *MdiaBox) Minf() (*MinfBox, bool) {
    for _, child := range b.Children {
       if child.Minf != nil {
@@ -208,14 +208,12 @@ func (b *MdhdBox) Parse(data []byte) error {
    copy(b.Quality[:], data[offset+2:offset+4])
    return nil
 }
-
 func (b *MdhdBox) SetDuration(duration uint64) {
    b.Duration = duration
    if b.Duration > 0xFFFFFFFF {
       b.Version = 1
    }
 }
-
 func (b *MdhdBox) Encode() []byte {
    var size uint32
    if b.Version == 1 {
@@ -254,12 +252,37 @@ func (b *MdhdBox) Encode() []byte {
    return buffer
 }
 
+// --- HDLR ---
+type HdlrBox struct {
+   Header      BoxHeader
+   HandlerType [4]byte
+   Name        string
+}
+
+func (b *HdlrBox) Parse(data []byte) error {
+   if err := b.Header.Parse(data); err != nil {
+      return err
+   }
+   if len(data) < 32 {
+      return errors.New("hdlr box too short")
+   }
+   copy(b.HandlerType[:], data[16:20])
+   // Find null terminator for name string
+   nameEnd := 32
+   for nameEnd < len(data) && data[nameEnd] != 0 {
+      nameEnd++
+   }
+   if nameEnd <= len(data) {
+      b.Name = string(data[32:nameEnd])
+   }
+   return nil
+}
+
 // --- MINF ---
 type MinfChild struct {
    Stbl *StblBox
    Raw  []byte
 }
-
 type MinfBox struct {
    Header   BoxHeader
    Children []MinfChild
@@ -285,7 +308,6 @@ func (b *MinfBox) Parse(data []byte) error {
       return nil
    })
 }
-
 func (b *MinfBox) Encode() []byte {
    buffer := make([]byte, 8)
    for _, child := range b.Children {
@@ -299,7 +321,6 @@ func (b *MinfBox) Encode() []byte {
    b.Header.Put(buffer)
    return buffer
 }
-
 func (b *MinfBox) Stbl() (*StblBox, bool) {
    for _, child := range b.Children {
       if child.Stbl != nil {

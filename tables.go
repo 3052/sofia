@@ -238,8 +238,6 @@ func buildStss(samples []RemuxSample) []byte {
          indices = append(indices, uint32(i+1))
       }
    }
-   // If all samples are sync samples, stss is not required (and omitting it saves space).
-   // However, if there is at least one non-sync sample, we MUST provide the table.
    if len(indices) == len(samples) {
       return nil
    }

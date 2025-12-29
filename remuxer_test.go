@@ -34,7 +34,7 @@ func TestRemuxAndDecrypt(t *testing.T) {
    }
 
    // 4. Write result to (time.Now().Unix()).mp4
-   outputFileName := fmt.Sprintf("%d.mp4", time.Now().Unix())
+   outputFileName := fmt.Sprintf("testdata/%d.mp4", time.Now().Unix())
    outFile, err := os.Create(outputFileName)
    if err != nil {
       t.Fatalf("Failed to create output file: %v", err)
@@ -45,23 +45,19 @@ func TestRemuxAndDecrypt(t *testing.T) {
 
    remuxer := &Remuxer{
       Writer: outFile,
-      // Define the OnSample callback to handle decryption for each sample
       OnSample: func(sample []byte, encInfo *SampleEncryptionInfo) {
          DecryptSample(sample, encInfo, block)
       },
    }
 
-   // Initialize the remuxer with the init segment
    if err := remuxer.Initialize(initData); err != nil {
       t.Fatalf("Remuxer initialization failed: %v", err)
    }
 
-   // Add the media segment for processing and decryption
    if err := remuxer.AddSegment(segmentData); err != nil {
       t.Fatalf("Failed to add segment: %v", err)
    }
 
-   // Finalize the MP4 file structure
    if err := remuxer.Finish(); err != nil {
       t.Fatalf("Remuxer finish failed: %v", err)
    }

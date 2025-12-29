@@ -45,9 +45,7 @@ func (b *StsdBox) Parse(data []byte) error {
    if len(data) < 16 {
       return errors.New("stsd box too short")
    }
-   // Copy Version(1) + Flags(3) + EntryCount(4)
    copy(b.HeaderFields[:], data[8:16])
-   // Parse children starting at offset 16
    return parseContainer(data[16:b.Header.Size], func(header BoxHeader, content []byte) error {
       var child StsdChild
       switch string(header.Type[:]) {
@@ -66,7 +64,6 @@ func (b *StsdBox) Parse(data []byte) error {
 }
 
 func (b *StsdBox) Encode() []byte {
-   // Header(8) + HeaderFields(8)
    buffer := make([]byte, 16)
    copy(buffer[8:16], b.HeaderFields[:])
    for _, child := range b.Children {
@@ -144,7 +141,6 @@ func (b *EncBox) Encode() []byte {
    buffer := make([]byte, 8)
    buffer = append(buffer, b.EntryHeader...)
    for _, child := range b.Children {
-      // skip sinf
       if child.Raw != nil {
          buffer = append(buffer, child.Raw...)
       }
@@ -171,7 +167,6 @@ func (b *EncBox) Unprotect() error {
    }
    frma := sinf.Frma()
    if frma == nil {
-      // handle edge case
       return nil
    }
    b.Header.Type = frma.DataFormat

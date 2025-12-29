@@ -23,9 +23,14 @@ type MoovBox struct {
 func (b *MoovBox) IsAudio() bool {
    if trak, ok := b.Trak(); ok {
       if mdia, ok := trak.Mdia(); ok {
-         if hdlr, ok := mdia.Hdlr(); ok {
-            // Handler type for audio is 'soun'
-            return string(hdlr.HandlerType[:]) == "soun"
+         for _, child := range mdia.Children {
+            // Check if the raw box is an 'hdlr' box.
+            // The handler_type is at offset 16 of the box content.
+            if len(child.Raw) >= 20 && string(child.Raw[4:8]) == "hdlr" {
+               handlerType := string(child.Raw[16:20])
+               // Handler type for audio is 'soun'
+               return handlerType == "soun"
+            }
          }
       }
    }
@@ -64,6 +69,7 @@ func (b *MoovBox) Parse(data []byte) error {
       return nil
    })
 }
+
 func (b *MoovBox) Encode() []byte {
    buffer := make([]byte, 8)
    for _, child := range b.Children {
@@ -81,6 +87,7 @@ func (b *MoovBox) Encode() []byte {
    b.Header.Put(buffer)
    return buffer
 }
+
 func (b *MoovBox) RemovePssh() {
    var kept []MoovChild
    for _, child := range b.Children {
@@ -91,6 +98,7 @@ func (b *MoovBox) RemovePssh() {
    }
    b.Children = kept
 }
+
 func (b *MoovBox) RemoveMvex() {
    var kept []MoovChild
    for _, child := range b.Children {
@@ -101,6 +109,7 @@ func (b *MoovBox) RemoveMvex() {
    }
    b.Children = kept
 }
+
 func (b *MoovBox) Trak() (*TrakBox, bool) {
    for _, child := range b.Children {
       if child.Trak != nil {
@@ -109,6 +118,7 @@ func (b *MoovBox) Trak() (*TrakBox, bool) {
    }
    return nil, false
 }
+
 func (b *MoovBox) Mvhd() (*MvhdBox, bool) {
    for _, child := range b.Children {
       if child.Mvhd != nil {
@@ -117,6 +127,7 @@ func (b *MoovBox) Mvhd() (*MvhdBox, bool) {
    }
    return nil, false
 }
+
 func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
    for _, child := range b.Children {
       if child.Pssh != nil && bytes.Equal(child.Pssh.SystemID[:], systemID) {
@@ -179,12 +190,14 @@ func (b *MvhdBox) Parse(data []byte) error {
    }
    return nil
 }
+
 func (b *MvhdBox) SetDuration(duration uint64) {
    b.Duration = duration
    if b.Duration > 0xFFFFFFFF {
       b.Version = 1
    }
 }
+
 func (b *MvhdBox) Encode() []byte {
    var baseSize uint32
    if b.Version == 1 {

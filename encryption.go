@@ -117,9 +117,6 @@ func (b *SencBox) Parse(data []byte) error {
 }
 
 // --- Logic ---
-
-// DecryptSample decrypts a single sample in-place.
-// info can be nil if the sample is not encrypted.
 func DecryptSample(sample []byte, info *SampleEncryptionInfo, block cipher.Block) {
    if info == nil || len(info.IV) == 0 {
       return

@@ -47,13 +47,14 @@
 ## standard
 
 ISO/IEC 14496-12:
-
 <https://wikipedia.org/wiki/ISO_base_media_file_format>
 
 ISO/IEC 14496-14:
-
 <https://wikipedia.org/wiki/MP4_file_format>
 
 ISO/IEC 23001-7:
-
 <https://wikipedia.org/wiki/MPEG_Common_Encryption>
+
+## Discord
+
+https://discord.com/invite/rMFzDRQhSx

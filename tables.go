@@ -2,6 +2,71 @@ package sofia
 
 import "encoding/binary"
 
+// Filename: sofia/tables.go
+// Add the following code to this file.
+
+// --- CTTS ---
+type CttsEntry struct {
+   SampleCount  uint32
+   SampleOffset int32
+}
+
+type CttsBox struct {
+   Header  BoxHeader
+   Entries []CttsEntry
+}
+
+func (b *CttsBox) Encode() []byte {
+   buffer := make([]byte, 16)
+   // Version 0, Flags 0
+   binary.BigEndian.PutUint32(buffer[8:12], 0)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
+   tempBuffer := make([]byte, 8)
+   for _, entry := range b.Entries {
+      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
+      binary.BigEndian.PutUint32(tempBuffer[4:8], uint32(entry.SampleOffset))
+      buffer = append(buffer, tempBuffer...)
+   }
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Type = [4]byte{'c', 't', 't', 's'}
+   b.Header.Put(buffer)
+   return buffer
+}
+
+func buildCtts(samples []RemuxSample) []byte {
+   hasCTO := false
+   for _, sample := range samples {
+      if sample.CompositionTimeOffset != 0 {
+         hasCTO = true
+         break
+      }
+   }
+   if !hasCTO {
+      return nil // No ctts box needed if all offsets are 0
+   }
+
+   var entries []CttsEntry
+   if len(samples) > 0 {
+      currentOffset := samples[0].CompositionTimeOffset
+      currentCount := uint32(0)
+      for _, sample := range samples {
+         if sample.CompositionTimeOffset == currentOffset {
+            currentCount++
+         } else {
+            entries = append(entries, CttsEntry{currentCount, currentOffset})
+            currentOffset = sample.CompositionTimeOffset
+            currentCount = 1
+         }
+      }
+      entries = append(entries, CttsEntry{currentCount, currentOffset})
+   }
+
+   box := CttsBox{Entries: entries}
+   return box.Encode()
+}
+
+// ... (rest of tables.go) ...
+
 // --- STBL ---
 type StblChild struct {
    Stsd *StsdBox

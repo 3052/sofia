@@ -268,12 +268,39 @@ func (b *StcoBox) Encode() []byte {
 }
 
 func buildStco(offsets []uint64) []byte {
-   entries := make([]uint32, len(offsets))
-   for i, offset := range offsets {
-      entries[i] = uint32(offset)
-   }
-   box := StcoBox{Offsets: entries}
-   return box.Encode()
+	// If any offset doesn't fit in 32 bits, emit a co64 box instead
+	for _, off := range offsets {
+		if off >= 0x100000000 {
+			box := Co64Box{Offsets: offsets}
+			return box.Encode()
+		}
+	}
+	entries := make([]uint32, len(offsets))
+	for i, offset := range offsets {
+		entries[i] = uint32(offset)
+	}
+	box := StcoBox{Offsets: entries}
+	return box.Encode()
+}
+
+// --- CO64 ---
+type Co64Box struct {
+	Header  BoxHeader
+	Offsets []uint64
+}
+
+func (b *Co64Box) Encode() []byte {
+	buffer := make([]byte, 16)
+	binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Offsets)))
+	tempBuffer := make([]byte, 8)
+	for _, offset := range b.Offsets {
+		binary.BigEndian.PutUint64(tempBuffer, offset)
+		buffer = append(buffer, tempBuffer...)
+	}
+	b.Header.Size = uint32(len(buffer))
+	b.Header.Type = [4]byte{'c', 'o', '6', '4'}
+	b.Header.Put(buffer)
+	return buffer
 }
 
 // --- STSS ---

@@ -1,5 +1,3 @@
-// Filename: sofia/remuxer.go
-
 package sofia
 
 import (
@@ -35,10 +33,9 @@ type RemuxSample struct {
    Size                  uint32
    Duration              uint32
    IsSync                bool
-   CompositionTimeOffset int32 // <<< 1. ADD THIS FIELD
+   CompositionTimeOffset int32
 }
 
-// ... (Initialize function remains the same) ...
 func (r *Remuxer) Initialize(initSegment []byte) error {
    if r.Moov != nil {
       return errors.New("already initialized")
@@ -68,7 +65,6 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    return nil
 }
 
-// ... (AddSegment function remains the same) ...
 func (r *Remuxer) AddSegment(segmentData []byte) error {
    if r.Moov == nil {
       return errors.New("must call Initialize")
@@ -116,12 +112,11 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
       if child.Trun != nil {
          trun := child.Trun
          for i, sample := range trun.Samples {
-            // Initialize with default values first
             remuxSample := RemuxSample{
                Duration:              defDur,
                Size:                  defSize,
                IsSync:                true,
-               CompositionTimeOffset: 0, // Default to 0
+               CompositionTimeOffset: 0,
             }
             currentFlags := defFlags
             if i == 0 && (trun.Flags&0x000004) != 0 {
@@ -136,7 +131,6 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             if (trun.Flags & 0x000200) != 0 {
                remuxSample.Size = sample.Size
             }
-            //  <<< 2. POPULATE THE NEW FIELD
             if (trun.Flags & 0x000800) != 0 {
                remuxSample.CompositionTimeOffset = sample.CompositionTimeOffset
             }
@@ -189,12 +183,9 @@ func (r *Remuxer) Finish() error {
    stts := buildStts(r.samples)
    stsz := buildStsz(r.samples)
    stsc := buildStsc(r.segmentSampleCounts)
-   offsetBox := buildStco(r.chunkOffsets)
+   offsetBox := buildChunkOffsetBox(r.chunkOffsets)
    stss := buildStss(r.samples)
-
-   // <<< 3. BUILD THE CTTS BOX
    ctts := buildCtts(r.samples)
-
    trak, _ := r.Moov.Trak()
    mdia, _ := trak.Mdia()
    minf, _ := mdia.Minf()
@@ -218,12 +209,9 @@ func (r *Remuxer) Finish() error {
       return errors.New("missing stsd")
    }
    newChildren = append(newChildren, StblChild{Raw: stts})
-
-   // <<< 4. ADD THE CTTS BOX TO THE STBL (if it exists)
    if ctts != nil {
       newChildren = append(newChildren, StblChild{Raw: ctts})
    }
-
    newChildren = append(newChildren, StblChild{Raw: stsz})
    newChildren = append(newChildren, StblChild{Raw: stsc})
    newChildren = append(newChildren, StblChild{Raw: offsetBox})

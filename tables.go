@@ -2,71 +2,6 @@ package sofia
 
 import "encoding/binary"
 
-// Filename: sofia/tables.go
-// Add the following code to this file.
-
-// --- CTTS ---
-type CttsEntry struct {
-   SampleCount  uint32
-   SampleOffset int32
-}
-
-type CttsBox struct {
-   Header  BoxHeader
-   Entries []CttsEntry
-}
-
-func (b *CttsBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   // Version 0, Flags 0
-   binary.BigEndian.PutUint32(buffer[8:12], 0)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
-   tempBuffer := make([]byte, 8)
-   for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
-      binary.BigEndian.PutUint32(tempBuffer[4:8], uint32(entry.SampleOffset))
-      buffer = append(buffer, tempBuffer...)
-   }
-   b.Header.Size = uint32(len(buffer))
-   b.Header.Type = [4]byte{'c', 't', 't', 's'}
-   b.Header.Put(buffer)
-   return buffer
-}
-
-func buildCtts(samples []RemuxSample) []byte {
-   hasCTO := false
-   for _, sample := range samples {
-      if sample.CompositionTimeOffset != 0 {
-         hasCTO = true
-         break
-      }
-   }
-   if !hasCTO {
-      return nil // No ctts box needed if all offsets are 0
-   }
-
-   var entries []CttsEntry
-   if len(samples) > 0 {
-      currentOffset := samples[0].CompositionTimeOffset
-      currentCount := uint32(0)
-      for _, sample := range samples {
-         if sample.CompositionTimeOffset == currentOffset {
-            currentCount++
-         } else {
-            entries = append(entries, CttsEntry{currentCount, currentOffset})
-            currentOffset = sample.CompositionTimeOffset
-            currentCount = 1
-         }
-      }
-      entries = append(entries, CttsEntry{currentCount, currentOffset})
-   }
-
-   box := CttsBox{Entries: entries}
-   return box.Encode()
-}
-
-// ... (rest of tables.go) ...
-
 // --- STBL ---
 type StblChild struct {
    Stsd *StsdBox
@@ -169,6 +104,66 @@ func buildStts(samples []RemuxSample) []byte {
    return box.Encode()
 }
 
+// --- CTTS ---
+type CttsEntry struct {
+   SampleCount  uint32
+   SampleOffset int32
+}
+
+type CttsBox struct {
+   Header  BoxHeader
+   Entries []CttsEntry
+}
+
+func (b *CttsBox) Encode() []byte {
+   buffer := make([]byte, 16)
+   // Version 0, Flags 0
+   binary.BigEndian.PutUint32(buffer[8:12], 0)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
+   tempBuffer := make([]byte, 8)
+   for _, entry := range b.Entries {
+      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
+      binary.BigEndian.PutUint32(tempBuffer[4:8], uint32(entry.SampleOffset))
+      buffer = append(buffer, tempBuffer...)
+   }
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Type = [4]byte{'c', 't', 't', 's'}
+   b.Header.Put(buffer)
+   return buffer
+}
+
+func buildCtts(samples []RemuxSample) []byte {
+   hasCTO := false
+   for _, sample := range samples {
+      if sample.CompositionTimeOffset != 0 {
+         hasCTO = true
+         break
+      }
+   }
+   if !hasCTO {
+      return nil // No ctts box needed if all offsets are 0
+   }
+
+   var entries []CttsEntry
+   if len(samples) > 0 {
+      currentOffset := samples[0].CompositionTimeOffset
+      currentCount := uint32(0)
+      for _, sample := range samples {
+         if sample.CompositionTimeOffset == currentOffset {
+            currentCount++
+         } else {
+            entries = append(entries, CttsEntry{currentCount, currentOffset})
+            currentOffset = sample.CompositionTimeOffset
+            currentCount = 1
+         }
+      }
+      entries = append(entries, CttsEntry{currentCount, currentOffset})
+   }
+
+   box := CttsBox{Entries: entries}
+   return box.Encode()
+}
+
 // --- STSZ ---
 type StszBox struct {
    Header      BoxHeader
@@ -267,12 +262,48 @@ func (b *StcoBox) Encode() []byte {
    return buffer
 }
 
-func buildStco(offsets []uint64) []byte {
-   entries := make([]uint32, len(offsets))
-   for i, offset := range offsets {
-      entries[i] = uint32(offset)
+// --- CO64 ---
+type Co64Box struct {
+   Header  BoxHeader
+   Offsets []uint64
+}
+
+func (b *Co64Box) Encode() []byte {
+   buffer := make([]byte, 16)
+   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Offsets)))
+   tempBuffer := make([]byte, 8)
+   for _, offset := range b.Offsets {
+      binary.BigEndian.PutUint64(tempBuffer, offset)
+      buffer = append(buffer, tempBuffer...)
    }
-   box := StcoBox{Offsets: entries}
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Type = [4]byte{'c', 'o', '6', '4'}
+   b.Header.Put(buffer)
+   return buffer
+}
+
+// buildChunkOffsetBox decides whether to use stco or co64.
+func buildChunkOffsetBox(offsets []uint64) []byte {
+   use64bit := false
+   for _, offset := range offsets {
+      if offset > 0xFFFFFFFF {
+         use64bit = true
+         break
+      }
+   }
+
+   if use64bit {
+      // Build a 'co64' box
+      box := Co64Box{Offsets: offsets}
+      return box.Encode()
+   }
+
+   // Build an 'stco' box
+   entries32 := make([]uint32, len(offsets))
+   for i, offset := range offsets {
+      entries32[i] = uint32(offset)
+   }
+   box := StcoBox{Offsets: entries32}
    return box.Encode()
 }
 

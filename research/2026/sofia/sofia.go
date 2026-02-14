@@ -1,6 +1,7 @@
 package main
 
 import (
+   "41.neocities.org/sofia" // Using the import path as instructed.
    "crypto/aes"
    "encoding/hex"
    "fmt"
@@ -8,8 +9,6 @@ import (
    "os"
    "path/filepath"
    "sort"
-
-   "41.neocities.org/sofia" // Using the import path as instructed.
 )
 
 const (

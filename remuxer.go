@@ -52,7 +52,7 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
       return errors.New("no moov found")
    }
    r.Moov = moovPtr
-   if _, ok := r.Moov.Trak(); !ok {
+   if len(r.Moov.Trak) == 0 {
       return errors.New("no trak found")
    }
    r.mdatStartOffset, _ = r.Writer.Seek(0, io.SeekCurrent)
@@ -93,70 +93,68 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
 }
 
 func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
-   traf, ok := moof.Traf()
-   if !ok {
+   traf := moof.Traf
+   if traf == nil {
       return nil
    }
-   tfhd := traf.Tfhd()
+   tfhd := traf.Tfhd
    if tfhd == nil {
       return nil
    }
-   senc, _ := traf.Senc()
+   senc := traf.Senc
    sencIndex := 0
    var newSamples []RemuxSample
    defDur := tfhd.DefaultSampleDuration
    defSize := tfhd.DefaultSampleSize
    defFlags := tfhd.DefaultSampleFlags
    mdatOffset := 0
-   for _, child := range traf.Children {
-      if child.Trun != nil {
-         trun := child.Trun
-         for i, sample := range trun.Samples {
-            remuxSample := RemuxSample{
-               Duration:              defDur,
-               Size:                  defSize,
-               IsSync:                true,
-               CompositionTimeOffset: 0,
-            }
-            currentFlags := defFlags
-            if i == 0 && (trun.Flags&0x000004) != 0 {
-               currentFlags = trun.FirstSampleFlags
-            }
-            if (trun.Flags & 0x000400) != 0 {
-               currentFlags = sample.Flags
-            }
-            if (trun.Flags & 0x000100) != 0 {
-               remuxSample.Duration = sample.Duration
-            }
-            if (trun.Flags & 0x000200) != 0 {
-               remuxSample.Size = sample.Size
-            }
-            if (trun.Flags & 0x000800) != 0 {
-               remuxSample.CompositionTimeOffset = sample.CompositionTimeOffset
-            }
-            if (currentFlags & 0x00010000) != 0 {
-               remuxSample.IsSync = false
-            } else {
-               remuxSample.IsSync = true
-            }
-            originalSize := int(remuxSample.Size)
-            if mdatOffset+originalSize > len(mdat.Payload) {
-               return errors.New("mdat payload too short for samples")
-            }
-            sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
-            var encInfo *SampleEncryptionInfo
-            if senc != nil && sencIndex < len(senc.Samples) {
-               encInfo = &senc.Samples[sencIndex]
-               sencIndex++
-            }
-            if r.OnSample != nil {
-               r.OnSample(sampleData, encInfo)
-            }
-            newSamples = append(newSamples, remuxSample)
-            mdatOffset += originalSize
+   for _, trun := range traf.Trun {
+      for i, sample := range trun.Samples {
+         remuxSample := RemuxSample{
+            Duration:              defDur,
+            Size:                  defSize,
+            IsSync:                true,
+            CompositionTimeOffset: 0,
          }
+         currentFlags := defFlags
+         if i == 0 && (trun.Flags&0x000004) != 0 {
+            currentFlags = trun.FirstSampleFlags
+         }
+         if (trun.Flags & 0x000400) != 0 {
+            currentFlags = sample.Flags
+         }
+         if (trun.Flags & 0x000100) != 0 {
+            remuxSample.Duration = sample.Duration
+         }
+         if (trun.Flags & 0x000200) != 0 {
+            remuxSample.Size = sample.Size
+         }
+         if (trun.Flags & 0x000800) != 0 {
+            remuxSample.CompositionTimeOffset = sample.CompositionTimeOffset
+         }
+         if (currentFlags & 0x00010000) != 0 {
+            remuxSample.IsSync = false
+         } else {
+            remuxSample.IsSync = true
+         }
+         originalSize := int(remuxSample.Size)
+         if mdatOffset+originalSize > len(mdat.Payload) {
+            return errors.New("mdat payload too short for samples")
+         }
+         sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
+         var encInfo *SampleEncryptionInfo
+         if senc != nil && sencIndex < len(senc.Samples) {
+            encInfo = &senc.Samples[sencIndex]
+            sencIndex++
+         }
+         if r.OnSample != nil {
+            r.OnSample(sampleData, encInfo)
+         }
+         newSamples = append(newSamples, remuxSample)
+         mdatOffset += originalSize
       }
    }
+
    if len(newSamples) == 0 {
       return nil
    }
@@ -186,39 +184,49 @@ func (r *Remuxer) Finish() error {
    offsetBox := buildChunkOffsetBox(r.chunkOffsets)
    stss := buildStss(r.samples)
    ctts := buildCtts(r.samples)
-   trak, _ := r.Moov.Trak()
-   mdia, _ := trak.Mdia()
-   minf, _ := mdia.Minf()
-   stbl, _ := minf.Stbl()
-   mdhd, ok := mdia.Mdhd()
-   if !ok {
+
+   if len(r.Moov.Trak) == 0 {
+      return errors.New("cannot finish remux: no trak in moov")
+   }
+   trak := r.Moov.Trak[0]
+   if trak.Mdia == nil {
+      return errors.New("missing mdia")
+   }
+   mdia := trak.Mdia
+   if mdia.Minf == nil {
+      return errors.New("missing minf")
+   }
+   minf := mdia.Minf
+   if minf.Stbl == nil {
+      return errors.New("missing stbl")
+   }
+   stbl := minf.Stbl
+   mdhd := mdia.Mdhd
+   if mdhd == nil {
       return errors.New("missing mdhd")
    }
    mdhd.SetDuration(totalDuration)
-   if mvhd, ok := r.Moov.Mvhd(); ok {
+   if mvhd := r.Moov.Mvhd; mvhd != nil {
       mvhd.Timescale = mdhd.Timescale
       mvhd.SetDuration(totalDuration)
    }
    r.Moov.RemoveMvex()
    trak.RemoveEdts()
-   var newChildren []StblChild
-   if stsd, ok := stbl.Stsd(); ok {
-      stsd.UnprotectAll()
-      newChildren = append(newChildren, StblChild{Stsd: stsd})
-   } else {
+   stbl.RawChildren = nil // Clear existing table boxes
+   if stbl.Stsd == nil {
       return errors.New("missing stsd")
    }
-   newChildren = append(newChildren, StblChild{Raw: stts})
+   stbl.Stsd.UnprotectAll()
+   stbl.RawChildren = append(stbl.RawChildren, stts)
    if ctts != nil {
-      newChildren = append(newChildren, StblChild{Raw: ctts})
+      stbl.RawChildren = append(stbl.RawChildren, ctts)
    }
-   newChildren = append(newChildren, StblChild{Raw: stsz})
-   newChildren = append(newChildren, StblChild{Raw: stsc})
-   newChildren = append(newChildren, StblChild{Raw: offsetBox})
+   stbl.RawChildren = append(stbl.RawChildren, stsz)
+   stbl.RawChildren = append(stbl.RawChildren, stsc)
+   stbl.RawChildren = append(stbl.RawChildren, offsetBox)
    if stss != nil {
-      newChildren = append(newChildren, StblChild{Raw: stss})
+      stbl.RawChildren = append(stbl.RawChildren, stss)
    }
-   stbl.Children = newChildren
    moovBytes := r.Moov.Encode()
    if _, err := r.Writer.Write(moovBytes); err != nil {
       return err

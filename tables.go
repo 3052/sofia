@@ -1,60 +1,63 @@
 package sofia
 
-import "encoding/binary"
+import (
+   "errors"
+)
 
 // --- STBL ---
-type StblChild struct {
-   Stsd *StsdBox
-   Raw  []byte
-}
-
 type StblBox struct {
-   Header   BoxHeader
-   Children []StblChild
+   Header      BoxHeader
+   Stsd        *StsdBox
+   RawChildren [][]byte
 }
 
 func (b *StblBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child StblChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "stsd":
          var stsd StsdBox
          if err := stsd.Parse(content); err != nil {
             return err
          }
-         child.Stsd = &stsd
+         b.Stsd = &stsd
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
+      offset += boxSize
+   }
+   return nil
 }
 
 func (b *StblBox) Encode() []byte {
    buffer := make([]byte, 8)
-   for _, child := range b.Children {
-      if child.Stsd != nil {
-         buffer = append(buffer, child.Stsd.Encode()...)
-      } else if child.Raw != nil {
-         buffer = append(buffer, child.Raw...)
-      }
+   if b.Stsd != nil {
+      buffer = append(buffer, b.Stsd.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
    }
    b.Header.Size = uint32(len(buffer))
    b.Header.Put(buffer)
    return buffer
-}
-
-func (b *StblBox) Stsd() (*StsdBox, bool) {
-   for _, child := range b.Children {
-      if child.Stsd != nil {
-         return child.Stsd, true
-      }
-   }
-   return nil, false
 }
 
 // --- STTS ---
@@ -69,15 +72,18 @@ type SttsBox struct {
 }
 
 func (b *SttsBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
-   tempBuffer := make([]byte, 8)
+   size := 16 + len(b.Entries)*8
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip header
+   w.PutBytes([]byte{0, 0, 0, 0})
+   w.PutUint32(uint32(len(b.Entries)))
    for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
-      binary.BigEndian.PutUint32(tempBuffer[4:8], entry.SampleDuration)
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint32(entry.SampleCount)
+      w.PutUint32(entry.SampleDuration)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'s', 't', 't', 's'}
    b.Header.Put(buffer)
    return buffer
@@ -116,17 +122,18 @@ type CttsBox struct {
 }
 
 func (b *CttsBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   // Version 0, Flags 0
-   binary.BigEndian.PutUint32(buffer[8:12], 0)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
-   tempBuffer := make([]byte, 8)
+   size := 16 + len(b.Entries)*8
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8   // Skip header
+   w.PutUint32(0) // Version 0, Flags 0
+   w.PutUint32(uint32(len(b.Entries)))
    for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.SampleCount)
-      binary.BigEndian.PutUint32(tempBuffer[4:8], uint32(entry.SampleOffset))
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint32(entry.SampleCount)
+      w.PutUint32(uint32(entry.SampleOffset))
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'c', 't', 't', 's'}
    b.Header.Put(buffer)
    return buffer
@@ -173,15 +180,18 @@ type StszBox struct {
 }
 
 func (b *StszBox) Encode() []byte {
-   buffer := make([]byte, 20)
-   binary.BigEndian.PutUint32(buffer[12:16], b.SampleSize)
-   binary.BigEndian.PutUint32(buffer[16:20], b.SampleCount)
-   tempBuffer := make([]byte, 4)
-   for _, size := range b.EntrySizes {
-      binary.BigEndian.PutUint32(tempBuffer, size)
-      buffer = append(buffer, tempBuffer...)
+   size := 20 + len(b.EntrySizes)*4
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip header
+   w.PutUint32(0)
+   w.PutUint32(b.SampleSize)
+   w.PutUint32(b.SampleCount)
+   for _, entrySize := range b.EntrySizes {
+      w.PutUint32(entrySize)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'s', 't', 's', 'z'}
    b.Header.Put(buffer)
    return buffer
@@ -209,16 +219,19 @@ type StscBox struct {
 }
 
 func (b *StscBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Entries)))
-   tempBuffer := make([]byte, 12)
+   size := 16 + len(b.Entries)*12
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip header
+   w.PutUint32(0)
+   w.PutUint32(uint32(len(b.Entries)))
    for _, entry := range b.Entries {
-      binary.BigEndian.PutUint32(tempBuffer[0:4], entry.FirstChunk)
-      binary.BigEndian.PutUint32(tempBuffer[4:8], entry.SamplesPerChunk)
-      binary.BigEndian.PutUint32(tempBuffer[8:12], entry.SampleDescriptionIndex)
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint32(entry.FirstChunk)
+      w.PutUint32(entry.SamplesPerChunk)
+      w.PutUint32(entry.SampleDescriptionIndex)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'s', 't', 's', 'c'}
    b.Header.Put(buffer)
    return buffer
@@ -249,14 +262,17 @@ type StcoBox struct {
 }
 
 func (b *StcoBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Offsets)))
-   tempBuffer := make([]byte, 4)
+   size := 16 + len(b.Offsets)*4
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip header
+   w.PutUint32(0)
+   w.PutUint32(uint32(len(b.Offsets)))
    for _, offset := range b.Offsets {
-      binary.BigEndian.PutUint32(tempBuffer, offset)
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint32(offset)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'s', 't', 'c', 'o'}
    b.Header.Put(buffer)
    return buffer
@@ -269,14 +285,17 @@ type Co64Box struct {
 }
 
 func (b *Co64Box) Encode() []byte {
-   buffer := make([]byte, 16)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Offsets)))
-   tempBuffer := make([]byte, 8)
+   size := 16 + len(b.Offsets)*8
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip header
+   w.PutUint32(0)
+   w.PutUint32(uint32(len(b.Offsets)))
    for _, offset := range b.Offsets {
-      binary.BigEndian.PutUint64(tempBuffer, offset)
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint64(offset)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'c', 'o', '6', '4'}
    b.Header.Put(buffer)
    return buffer
@@ -314,14 +333,17 @@ type StssBox struct {
 }
 
 func (b *StssBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   binary.BigEndian.PutUint32(buffer[12:16], uint32(len(b.Indices)))
-   tempBuffer := make([]byte, 4)
+   size := 16 + len(b.Indices)*4
+   buffer := make([]byte, size)
+   w := writer{buf: buffer}
+   w.offset = 8 // Skip Header
+   w.PutUint32(0)
+   w.PutUint32(uint32(len(b.Indices)))
    for _, index := range b.Indices {
-      binary.BigEndian.PutUint32(tempBuffer, index)
-      buffer = append(buffer, tempBuffer...)
+      w.PutUint32(index)
    }
-   b.Header.Size = uint32(len(buffer))
+
+   b.Header.Size = uint32(size)
    b.Header.Type = [4]byte{'s', 't', 's', 's'}
    b.Header.Put(buffer)
    return buffer

@@ -1,50 +1,57 @@
 package sofia
 
-import (
-   "encoding/binary"
-   "errors"
-)
+import "errors"
 
 // --- TRAK ---
-type TrakChild struct {
-   Mdia *MdiaBox
-   Raw  []byte
-}
-
 type TrakBox struct {
-   Header   BoxHeader
-   Children []TrakChild
+   Header      BoxHeader
+   Mdia        *MdiaBox
+   RawChildren [][]byte
 }
 
 func (b *TrakBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child TrakChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "mdia":
          var mdia MdiaBox
          if err := mdia.Parse(content); err != nil {
             return err
          }
-         child.Mdia = &mdia
+         b.Mdia = &mdia
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
+      offset += boxSize
+   }
+   return nil
 }
 
 func (b *TrakBox) Encode() []byte {
    buffer := make([]byte, 8)
-   for _, child := range b.Children {
-      if child.Mdia != nil {
-         buffer = append(buffer, child.Mdia.Encode()...)
-      } else if child.Raw != nil {
-         buffer = append(buffer, child.Raw...)
-      }
+   if b.Mdia != nil {
+      buffer = append(buffer, b.Mdia.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
    }
    b.Header.Size = uint32(len(buffer))
    b.Header.Put(buffer)
@@ -52,96 +59,80 @@ func (b *TrakBox) Encode() []byte {
 }
 
 func (b *TrakBox) RemoveEdts() {
-   var kept []TrakChild
-   for _, child := range b.Children {
-      if len(child.Raw) >= 8 && string(child.Raw[4:8]) == "edts" {
+   var kept [][]byte
+   for _, child := range b.RawChildren {
+      if len(child) >= 8 && string(child[4:8]) == "edts" {
          continue
       }
       kept = append(kept, child)
    }
-   b.Children = kept
-}
-
-func (b *TrakBox) Mdia() (*MdiaBox, bool) {
-   for _, child := range b.Children {
-      if child.Mdia != nil {
-         return child.Mdia, true
-      }
-   }
-   return nil, false
+   b.RawChildren = kept
 }
 
 // --- MDIA ---
-type MdiaChild struct {
-   Mdhd *MdhdBox
-   Minf *MinfBox
-   Raw  []byte
-}
-
 type MdiaBox struct {
-   Header   BoxHeader
-   Children []MdiaChild
+   Header      BoxHeader
+   Mdhd        *MdhdBox
+   Minf        *MinfBox
+   RawChildren [][]byte
 }
 
 func (b *MdiaBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child MdiaChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "mdhd":
          var mdhd MdhdBox
          if err := mdhd.Parse(content); err != nil {
             return err
          }
-         child.Mdhd = &mdhd
+         b.Mdhd = &mdhd
       case "minf":
          var minf MinfBox
          if err := minf.Parse(content); err != nil {
             return err
          }
-         child.Minf = &minf
+         b.Minf = &minf
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
+      offset += boxSize
+   }
+   return nil
 }
 
 func (b *MdiaBox) Encode() []byte {
    buffer := make([]byte, 8)
-   for _, child := range b.Children {
-      if child.Mdhd != nil {
-         buffer = append(buffer, child.Mdhd.Encode()...)
-      } else if child.Minf != nil {
-         buffer = append(buffer, child.Minf.Encode()...)
-      } else if child.Raw != nil {
-         buffer = append(buffer, child.Raw...)
-      }
+   if b.Mdhd != nil {
+      buffer = append(buffer, b.Mdhd.Encode()...)
+   }
+   if b.Minf != nil {
+      buffer = append(buffer, b.Minf.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
    }
    b.Header.Size = uint32(len(buffer))
    b.Header.Put(buffer)
    return buffer
-}
-
-func (b *MdiaBox) Mdhd() (*MdhdBox, bool) {
-   for _, child := range b.Children {
-      if child.Mdhd != nil {
-         return child.Mdhd, true
-      }
-   }
-   return nil, false
-}
-
-func (b *MdiaBox) Minf() (*MinfBox, bool) {
-   for _, child := range b.Children {
-      if child.Minf != nil {
-         return child.Minf, true
-      }
-   }
-   return nil, false
 }
 
 // --- MDHD ---
@@ -164,39 +155,35 @@ func (b *MdhdBox) Parse(data []byte) error {
    if len(data) < 12 {
       return errors.New("mdhd box too small")
    }
-   b.Version = data[8]
-   copy(b.Flags[:], data[9:12])
-   offset := 12
+
+   p := parser{data: data, offset: 8}
+   versionAndFlags := p.Bytes(4)
+   b.Version = versionAndFlags[0]
+   copy(b.Flags[:], versionAndFlags[1:])
+
    if b.Version == 1 {
       if len(data) < 44 {
          return errors.New("mdhd v1 too short")
       }
-      b.CreationTime = binary.BigEndian.Uint64(data[offset : offset+8])
-      offset += 8
-      b.ModificationTime = binary.BigEndian.Uint64(data[offset : offset+8])
-      offset += 8
-      b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
-      b.Duration = binary.BigEndian.Uint64(data[offset : offset+8])
-      offset += 8
+      b.CreationTime = p.Uint64()
+      b.ModificationTime = p.Uint64()
+      b.Timescale = p.Uint32()
+      b.Duration = p.Uint64()
    } else { // Version 0
       if len(data) < 32 {
          return errors.New("mdhd v0 too short")
       }
-      b.CreationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
-      offset += 4
-      b.ModificationTime = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
-      offset += 4
-      b.Timescale = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
-      b.Duration = uint64(binary.BigEndian.Uint32(data[offset : offset+4]))
-      offset += 4
+      b.CreationTime = uint64(p.Uint32())
+      b.ModificationTime = uint64(p.Uint32())
+      b.Timescale = p.Uint32()
+      b.Duration = uint64(p.Uint32())
    }
-   if len(data) < offset+4 {
+
+   if len(data) < p.offset+4 {
       return errors.New("mdhd truncated at language/quality")
    }
-   copy(b.Language[:], data[offset:offset+2])
-   copy(b.Quality[:], data[offset+2:offset+4])
+   copy(b.Language[:], p.Bytes(2))
+   copy(b.Quality[:], p.Bytes(2))
    return nil
 }
 
@@ -215,87 +202,84 @@ func (b *MdhdBox) Encode() []byte {
       size = 32
    }
    buffer := make([]byte, size)
-   binary.BigEndian.PutUint32(buffer[0:4], size)
-   copy(buffer[4:8], b.Header.Type[:])
-   buffer[8] = b.Version
-   copy(buffer[9:12], b.Flags[:])
-   offset := 12
+   w := writer{buf: buffer}
+
+   w.PutUint32(size)
+   w.PutBytes(b.Header.Type[:])
+   w.PutByte(b.Version)
+   w.PutBytes(b.Flags[:])
+
    if b.Version == 1 {
-      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.CreationTime)
-      offset += 8
-      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.ModificationTime)
-      offset += 8
-      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
-      offset += 4
-      binary.BigEndian.PutUint64(buffer[offset:offset+8], b.Duration)
-      offset += 8
+      w.PutUint64(b.CreationTime)
+      w.PutUint64(b.ModificationTime)
+      w.PutUint32(b.Timescale)
+      w.PutUint64(b.Duration)
    } else {
-      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.CreationTime))
-      offset += 4
-      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.ModificationTime))
-      offset += 4
-      binary.BigEndian.PutUint32(buffer[offset:offset+4], b.Timescale)
-      offset += 4
-      binary.BigEndian.PutUint32(buffer[offset:offset+4], uint32(b.Duration))
-      offset += 4
+      w.PutUint32(uint32(b.CreationTime))
+      w.PutUint32(uint32(b.ModificationTime))
+      w.PutUint32(b.Timescale)
+      w.PutUint32(uint32(b.Duration))
    }
-   copy(buffer[offset:offset+2], b.Language[:])
-   copy(buffer[offset+2:offset+4], b.Quality[:])
+
+   w.PutBytes(b.Language[:])
+   w.PutBytes(b.Quality[:])
+
    b.Header.Size = size
    return buffer
 }
 
 // --- MINF ---
-type MinfChild struct {
-   Stbl *StblBox
-   Raw  []byte
-}
-
 type MinfBox struct {
-   Header   BoxHeader
-   Children []MinfChild
+   Header      BoxHeader
+   Stbl        *StblBox
+   RawChildren [][]byte
 }
 
 func (b *MinfBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child MinfChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "stbl":
          var stbl StblBox
          if err := stbl.Parse(content); err != nil {
             return err
          }
-         child.Stbl = &stbl
+         b.Stbl = &stbl
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
+      offset += boxSize
+   }
+   return nil
 }
 
 func (b *MinfBox) Encode() []byte {
    buffer := make([]byte, 8)
-   for _, child := range b.Children {
-      if child.Stbl != nil {
-         buffer = append(buffer, child.Stbl.Encode()...)
-      } else if child.Raw != nil {
-         buffer = append(buffer, child.Raw...)
-      }
+   if b.Stbl != nil {
+      buffer = append(buffer, b.Stbl.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
    }
    b.Header.Size = uint32(len(buffer))
    b.Header.Put(buffer)
    return buffer
-}
-
-func (b *MinfBox) Stbl() (*StblBox, bool) {
-   for _, child := range b.Children {
-      if child.Stbl != nil {
-         return child.Stbl, true
-      }
-   }
-   return nil, false
 }

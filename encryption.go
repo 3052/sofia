@@ -2,7 +2,6 @@ package sofia
 
 import (
    "crypto/cipher"
-   "encoding/binary"
    "errors"
 )
 
@@ -20,41 +19,38 @@ func (b *PsshBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   if len(data) < 12 {
+   if len(data) < 28 { // 8 byte header + 4 byte version/flags + 16 byte systemID
       return errors.New("pssh too short")
    }
-   b.Version = data[8]
-   copy(b.Flags[:], data[9:12])
-   offset := 12
-   if len(data) < offset+16 {
-      return errors.New("pssh too short")
-   }
-   copy(b.SystemID[:], data[offset:offset+16])
-   offset += 16
+
+   p := parser{data: data, offset: 8}
+   versionAndFlags := p.Bytes(4)
+   b.Version = versionAndFlags[0]
+   copy(b.Flags[:], versionAndFlags[1:])
+   copy(b.SystemID[:], p.Bytes(16))
+
    if b.Version > 0 {
-      if len(data) < offset+4 {
-         return errors.New("pssh too short")
+      if len(data) < p.offset+4 {
+         return errors.New("pssh too short for KID count")
       }
-      kidCount := binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      kidCount := p.Uint32()
+      if len(data) < p.offset+int(kidCount*16) {
+         return errors.New("pssh too short for KIDs")
+      }
       b.KIDs = make([][16]byte, kidCount)
       for i := 0; i < int(kidCount); i++ {
-         if len(data) < offset+16 {
-            return errors.New("pssh too short")
-         }
-         copy(b.KIDs[i][:], data[offset:offset+16])
-         offset += 16
+         copy(b.KIDs[i][:], p.Bytes(16))
       }
    }
-   if len(data) < offset+4 {
-      return errors.New("pssh too short")
+
+   if len(data) < p.offset+4 {
+      return errors.New("pssh too short for data size")
    }
-   dataSize := binary.BigEndian.Uint32(data[offset : offset+4])
-   offset += 4
-   if len(data) < offset+int(dataSize) {
+   dataSize := p.Uint32()
+   if len(data) < p.offset+int(dataSize) {
       return errors.New("pssh size mismatch")
    }
-   b.Data = data[offset : offset+int(dataSize)]
+   b.Data = p.Bytes(int(dataSize))
    return nil
 }
 
@@ -79,37 +75,36 @@ func (b *SencBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-   offset := 12
-   if offset+4 > len(data) {
+   if len(data) < 16 { // 8 byte header, 4 byte flags, 4 byte sample count
       return errors.New("senc too short")
    }
-   sampleCount := binary.BigEndian.Uint32(data[offset : offset+4])
-   offset += 4
+
+   p := parser{data: data, offset: 8}
+   b.Flags = p.Uint32() & 0x00FFFFFF
+   sampleCount := p.Uint32()
+
    b.Samples = make([]SampleEncryptionInfo, sampleCount)
    const ivSize = 8
    subsamplesPresent := b.Flags&0x000002 != 0
    for i := uint32(0); i < sampleCount; i++ {
-      if offset+ivSize > len(data) {
-         return errors.New("senc truncated")
+      if len(data) < p.offset+ivSize {
+         return errors.New("senc truncated while reading IV")
       }
-      b.Samples[i].IV = data[offset : offset+ivSize]
-      offset += ivSize
+      b.Samples[i].IV = p.Bytes(ivSize)
+
       if subsamplesPresent {
-         if offset+2 > len(data) {
-            return errors.New("senc truncated")
+         if len(data) < p.offset+2 {
+            return errors.New("senc truncated while reading subsample count")
          }
-         subsampleCount := binary.BigEndian.Uint16(data[offset : offset+2])
-         offset += 2
+         subsampleCount := p.Uint16()
          b.Samples[i].Subsamples = make([]SubsampleInfo, subsampleCount)
          for j := uint16(0); j < subsampleCount; j++ {
-            if offset+6 > len(data) {
-               return errors.New("senc truncated")
+            if len(data) < p.offset+6 {
+               return errors.New("senc truncated while reading subsample")
             }
-            clear := binary.BigEndian.Uint16(data[offset : offset+2])
-            prot := binary.BigEndian.Uint32(data[offset+2 : offset+6])
+            clear := p.Uint16()
+            prot := p.Uint32()
             b.Samples[i].Subsamples[j] = SubsampleInfo{clear, prot}
-            offset += 6
          }
       }
    }

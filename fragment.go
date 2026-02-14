@@ -1,129 +1,112 @@
 package sofia
 
-import (
-   "encoding/binary"
-   "errors"
-)
+import "errors"
 
 // --- MOOF ---
-type MoofChild struct {
-   Traf *TrafBox
-   Pssh *PsshBox
-   Raw  []byte
-}
-
 type MoofBox struct {
-   Header   BoxHeader
-   Children []MoofChild
+   Header      BoxHeader
+   Traf        *TrafBox
+   Pssh        []*PsshBox
+   RawChildren [][]byte
 }
 
 func (b *MoofBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child MoofChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "traf":
          var traf TrafBox
          if err := traf.Parse(content); err != nil {
             return err
          }
-         child.Traf = &traf
+         b.Traf = &traf
       case "pssh":
          var pssh PsshBox
          if err := pssh.Parse(content); err != nil {
             return err
          }
-         child.Pssh = &pssh
+         b.Pssh = append(b.Pssh, &pssh)
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
-}
-
-func (b *MoofBox) Traf() (*TrafBox, bool) {
-   for _, child := range b.Children {
-      if child.Traf != nil {
-         return child.Traf, true
-      }
+      offset += boxSize
    }
-   return nil, false
+   return nil
 }
 
 // --- TRAF ---
-type TrafChild struct {
-   Tfhd *TfhdBox
-   Trun *TrunBox
-   Senc *SencBox
-   Raw  []byte
-}
-
 type TrafBox struct {
-   Header   BoxHeader
-   Children []TrafChild
+   Header      BoxHeader
+   Tfhd        *TfhdBox
+   Trun        []*TrunBox
+   Senc        *SencBox
+   RawChildren [][]byte
 }
 
 func (b *TrafBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   return parseContainer(data[8:b.Header.Size], func(header BoxHeader, content []byte) error {
-      var child TrafChild
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "tfhd":
          var tfhd TfhdBox
          if err := tfhd.Parse(content); err != nil {
             return err
          }
-         child.Tfhd = &tfhd
+         b.Tfhd = &tfhd
       case "trun":
          var trun TrunBox
          if err := trun.Parse(content); err != nil {
             return err
          }
-         child.Trun = &trun
+         b.Trun = append(b.Trun, &trun)
       case "senc":
          var senc SencBox
          if err := senc.Parse(content); err != nil {
             return err
          }
-         child.Senc = &senc
+         b.Senc = &senc
       default:
-         child.Raw = content
+         b.RawChildren = append(b.RawChildren, content)
       }
-      b.Children = append(b.Children, child)
-      return nil
-   })
-}
-
-func (b *TrafBox) Tfhd() *TfhdBox {
-   for _, child := range b.Children {
-      if child.Tfhd != nil {
-         return child.Tfhd
-      }
+      offset += boxSize
    }
    return nil
-}
-
-func (b *TrafBox) Trun() *TrunBox {
-   for _, child := range b.Children {
-      if child.Trun != nil {
-         return child.Trun
-      }
-   }
-   return nil
-}
-
-func (b *TrafBox) Senc() (*SencBox, bool) {
-   for _, child := range b.Children {
-      if child.Senc != nil {
-         return child.Senc, true
-      }
-   }
-   return nil, false
 }
 
 // --- TFHD ---
@@ -142,43 +125,43 @@ func (b *TfhdBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-   b.TrackID = binary.BigEndian.Uint32(data[12:16])
-   offset := 16
-   if b.Flags&0x000001 != 0 {
-      if offset+8 > len(data) {
-         return errors.New("tfhd too short")
-      }
-      b.BaseDataOffset = binary.BigEndian.Uint64(data[offset : offset+8])
-      offset += 8
+   if len(data) < 16 {
+      return errors.New("tfhd too short")
    }
-   if b.Flags&0x000002 != 0 {
-      if offset+4 > len(data) {
-         return errors.New("tfhd too short")
+   p := parser{data: data, offset: 8}
+   flags := p.Uint32()
+   b.Flags = flags & 0x00FFFFFF
+   b.TrackID = p.Uint32()
+
+   if b.Flags&0x000001 != 0 { // base-data-offset-present
+      if len(data) < p.offset+8 {
+         return errors.New("tfhd too short for BaseDataOffset")
       }
-      b.SampleDescriptionIndex = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      b.BaseDataOffset = p.Uint64()
    }
-   if b.Flags&0x000008 != 0 {
-      if offset+4 > len(data) {
-         return errors.New("tfhd too short")
+   if b.Flags&0x000002 != 0 { // sample-description-index-present
+      if len(data) < p.offset+4 {
+         return errors.New("tfhd too short for SampleDescriptionIndex")
       }
-      b.DefaultSampleDuration = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      b.SampleDescriptionIndex = p.Uint32()
    }
-   if b.Flags&0x000010 != 0 {
-      if offset+4 > len(data) {
-         return errors.New("tfhd too short")
+   if b.Flags&0x000008 != 0 { // default-sample-duration-present
+      if len(data) < p.offset+4 {
+         return errors.New("tfhd too short for DefaultSampleDuration")
       }
-      b.DefaultSampleSize = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      b.DefaultSampleDuration = p.Uint32()
    }
-   if b.Flags&0x000020 != 0 {
-      if offset+4 > len(data) {
-         return errors.New("tfhd too short")
+   if b.Flags&0x000010 != 0 { // default-sample-size-present
+      if len(data) < p.offset+4 {
+         return errors.New("tfhd too short for DefaultSampleSize")
       }
-      b.DefaultSampleFlags = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      b.DefaultSampleSize = p.Uint32()
+   }
+   if b.Flags&0x000020 != 0 { // default-sample-flags-present
+      if len(data) < p.offset+4 {
+         return errors.New("tfhd too short for DefaultSampleFlags")
+      }
+      b.DefaultSampleFlags = p.Uint32()
    }
    return nil
 }
@@ -204,23 +187,28 @@ func (b *TrunBox) Parse(data []byte) error {
    if err := b.Header.Parse(data); err != nil {
       return err
    }
-   b.Flags = binary.BigEndian.Uint32(data[8:12]) & 0x00FFFFFF
-   b.SampleCount = binary.BigEndian.Uint32(data[12:16])
-   offset := 16
+   if len(data) < 16 {
+      return errors.New("trun too short")
+   }
+
+   p := parser{data: data, offset: 8}
+   flags := p.Uint32()
+   b.Flags = flags & 0x00FFFFFF
+   b.SampleCount = p.Uint32()
+
    if b.Flags&0x000001 != 0 {
-      if offset+4 > len(data) {
+      if len(data) < p.offset+4 {
          return errors.New("trun too short for data offset")
       }
-      b.DataOffset = int32(binary.BigEndian.Uint32(data[offset : offset+4]))
-      offset += 4
+      b.DataOffset = p.Int32()
    }
    if b.Flags&0x000004 != 0 {
-      if offset+4 > len(data) {
+      if len(data) < p.offset+4 {
          return errors.New("trun too short for first sample flags")
       }
-      b.FirstSampleFlags = binary.BigEndian.Uint32(data[offset : offset+4])
-      offset += 4
+      b.FirstSampleFlags = p.Uint32()
    }
+
    sampleEntrySize := 0
    if b.Flags&0x000100 != 0 {
       sampleEntrySize += 4
@@ -234,27 +222,23 @@ func (b *TrunBox) Parse(data []byte) error {
    if b.Flags&0x000800 != 0 {
       sampleEntrySize += 4
    } // CTO
-   if len(data)-offset < int(b.SampleCount)*sampleEntrySize {
+   if len(data)-p.offset < int(b.SampleCount)*sampleEntrySize {
       return errors.New("trun box too short for declared samples")
    }
+
    b.Samples = make([]SampleInfo, b.SampleCount)
    for i := uint32(0); i < b.SampleCount; i++ {
       if b.Flags&0x000100 != 0 {
-         b.Samples[i].Duration = binary.BigEndian.Uint32(data[offset : offset+4])
-         offset += 4
+         b.Samples[i].Duration = p.Uint32()
       }
       if b.Flags&0x000200 != 0 {
-         b.Samples[i].Size = binary.BigEndian.Uint32(data[offset : offset+4])
-         offset += 4
+         b.Samples[i].Size = p.Uint32()
       }
       if b.Flags&0x000400 != 0 {
-         b.Samples[i].Flags = binary.BigEndian.Uint32(data[offset : offset+4])
-         offset += 4
+         b.Samples[i].Flags = p.Uint32()
       }
       if b.Flags&0x000800 != 0 {
-         val := binary.BigEndian.Uint32(data[offset : offset+4])
-         b.Samples[i].CompositionTimeOffset = int32(val)
-         offset += 4
+         b.Samples[i].CompositionTimeOffset = p.Int32()
       }
    }
    return nil

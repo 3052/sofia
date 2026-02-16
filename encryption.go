@@ -81,20 +81,22 @@ func (b *TencBox) Parse(data []byte) error {
    b.Version = byte(versionAndFlags >> 24)
    b.Flags = versionAndFlags & 0x00FFFFFF
 
-   // This parser only implements Version 0, as it is the most common.
-   // Version > 0 uses bit-level fields not seen elsewhere in this package.
    if b.Version == 0 {
-      // Required fields for v0: reserved(1) + isProtected(1) + perSampleIVSize(1) + KID(16) = 19 bytes
-      if len(data) < p.offset+19 {
+      // Based on the error, the reserved field for this file is 2 bytes.
+      // Payload: reserved(2) + isProtected(1) + perSampleIVSize(1) + KID(16) = 20 bytes.
+      const requiredV0PayloadSize = 20
+      if len(data) < p.offset+requiredV0PayloadSize {
          return errors.New("tenc v0 box too short for required fields")
       }
-      _ = p.Bytes(1) // Skip reserved byte
+
+      // Correctly skip the 2 reserved bytes.
+      _ = p.Bytes(2)
+
       b.DefaultIsProtected = p.Bytes(1)[0]
       b.DefaultPerSampleIVSize = p.Bytes(1)[0]
       copy(b.DefaultKID[:], p.Bytes(16))
 
       if b.DefaultIsProtected == 1 && b.DefaultPerSampleIVSize == 0 {
-         // Check for optional Constant IV fields, if there's more data in the box.
          if p.offset < int(b.Header.Size) {
             if len(data) < p.offset+1 {
                return errors.New("tenc box truncated before constant IV size")

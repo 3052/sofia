@@ -12,86 +12,6 @@ func encryptionBoxError(boxType [4]byte) error {
    return errors.New(sb.String())
 }
 
-// --- STSD ---
-type StsdBox struct {
-   Header       BoxHeader
-   HeaderFields [8]byte // Ver(1)+Flags(3)+EntryCount(4)
-   EncChildren  []*EncBox
-   RawChildren  [][]byte
-}
-
-func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
-   for _, enc := range b.EncChildren {
-      if enc.Sinf != nil {
-         return enc.Sinf, &enc.Header, true
-      }
-   }
-   return nil, nil, false
-}
-
-func (b *StsdBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
-   }
-   if len(data) < 16 {
-      return errors.New("stsd box too short")
-   }
-   copy(b.HeaderFields[:], data[8:16])
-
-   payload := data[16:b.Header.Size]
-   offset := 0
-   for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
-         break
-      }
-      boxSize := int(header.Size)
-      if boxSize == 0 {
-         boxSize = len(payload) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
-      }
-
-      content := payload[offset : offset+boxSize]
-      switch string(header.Type[:]) {
-      case "encv", "enca":
-         var enc EncBox
-         if err := enc.Parse(content); err != nil {
-            return err
-         }
-         b.EncChildren = append(b.EncChildren, &enc)
-      default:
-         b.RawChildren = append(b.RawChildren, content)
-      }
-      offset += boxSize
-   }
-   return nil
-}
-
-func (b *StsdBox) Encode() []byte {
-   buffer := make([]byte, 16)
-   copy(buffer[8:16], b.HeaderFields[:])
-   for _, child := range b.EncChildren {
-      buffer = append(buffer, child.Encode()...)
-   }
-   for _, child := range b.RawChildren {
-      buffer = append(buffer, child...)
-   }
-   b.Header.Size = uint32(len(buffer))
-   b.Header.Put(buffer)
-   return buffer
-}
-
-func (b *StsdBox) UnprotectAll() error {
-   for _, child := range b.EncChildren {
-      if err := child.Unprotect(); err != nil {
-         return err
-      }
-   }
-   return nil
-}
-
 // --- ENC (Encrypted Sample Entry) ---
 type EncBox struct {
    Header      BoxHeader
@@ -174,6 +94,88 @@ func (b *EncBox) Unprotect() error {
    b.Sinf = nil // Remove the sinf box
    return nil
 }
+
+// --- STSD ---
+type StsdBox struct {
+   Header       BoxHeader
+   HeaderFields [8]byte // Ver(1)+Flags(3)+EntryCount(4)
+   EncChildren  []*EncBox
+   RawChildren  [][]byte
+}
+
+func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
+   for _, enc := range b.EncChildren {
+      if enc.Sinf != nil {
+         return enc.Sinf, &enc.Header, true
+      }
+   }
+   return nil, nil, false
+}
+
+func (b *StsdBox) Parse(data []byte) error {
+   if err := b.Header.Parse(data); err != nil {
+      return err
+   }
+   if len(data) < 16 {
+      return errors.New("stsd box too short")
+   }
+   copy(b.HeaderFields[:], data[8:16])
+
+   payload := data[16:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
+      switch string(header.Type[:]) {
+      case "encv", "enca":
+         var enc EncBox
+         if err := enc.Parse(content); err != nil {
+            return err
+         }
+         b.EncChildren = append(b.EncChildren, &enc)
+      default:
+         b.RawChildren = append(b.RawChildren, content)
+      }
+      offset += boxSize
+   }
+   return nil
+}
+
+func (b *StsdBox) Encode() []byte {
+   buffer := make([]byte, 16)
+   copy(buffer[8:16], b.HeaderFields[:])
+   for _, child := range b.EncChildren {
+      buffer = append(buffer, child.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
+   }
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
+}
+
+func (b *StsdBox) UnprotectAll() error {
+   for _, child := range b.EncChildren {
+      if err := child.Unprotect(); err != nil {
+         return err
+      }
+   }
+   return nil
+}
+
+///
 
 // --- SINF ---
 type SinfBox struct {

@@ -59,10 +59,8 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    mdatHeader := make([]byte, 16)
    binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
    copy(mdatHeader[4:8], []byte("mdat"))
-   if _, err := r.Writer.Write(mdatHeader); err != nil {
-      return err
-   }
-   return nil
+   _, err = r.Writer.Write(mdatHeader)
+   return err
 }
 
 func (r *Remuxer) AddSegment(segmentData []byte) error {

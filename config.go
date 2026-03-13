@@ -95,6 +95,49 @@ func (b *EncBox) Unprotect() error {
    return nil
 }
 
+// --- SCHI (Scheme Information) ---
+type SchiBox struct {
+   Header      BoxHeader
+   Tenc        *TencBox
+   RawChildren [][]byte
+}
+
+func (b *SchiBox) Parse(data []byte) error {
+   if err := b.Header.Parse(data); err != nil {
+      return err
+   }
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      var header BoxHeader
+      if err := header.Parse(payload[offset:]); err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
+      switch string(header.Type[:]) {
+      case "tenc":
+         var tenc TencBox
+         if err := tenc.Parse(content); err != nil {
+            return err
+         }
+         b.Tenc = &tenc
+      default:
+         b.RawChildren = append(b.RawChildren, content)
+      }
+      offset += boxSize
+   }
+   return nil
+}
+
 // --- SINF ---
 type SinfBox struct {
    Header      BoxHeader
@@ -226,49 +269,6 @@ func (b *StsdBox) UnprotectAll() error {
 }
 
 ///
-
-// --- SCHI (Scheme Information) ---
-type SchiBox struct {
-   Header      BoxHeader
-   Tenc        *TencBox
-   RawChildren [][]byte
-}
-
-func (b *SchiBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
-   }
-
-   payload := data[8:b.Header.Size]
-   offset := 0
-   for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
-         break
-      }
-      boxSize := int(header.Size)
-      if boxSize == 0 {
-         boxSize = len(payload) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
-      }
-
-      content := payload[offset : offset+boxSize]
-      switch string(header.Type[:]) {
-      case "tenc":
-         var tenc TencBox
-         if err := tenc.Parse(content); err != nil {
-            return err
-         }
-         b.Tenc = &tenc
-      default:
-         b.RawChildren = append(b.RawChildren, content)
-      }
-      offset += boxSize
-   }
-   return nil
-}
 
 // --- FRMA ---
 type FrmaBox struct {

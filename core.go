@@ -5,6 +5,28 @@ import (
    "errors"
 )
 
+// --- BoxHeader ---
+type BoxHeader struct {
+   Size uint32
+   Type [4]byte
+}
+
+func (h *BoxHeader) Parse(data []byte) error {
+   if len(data) < 8 {
+      return errors.New("not enough data for box header")
+   }
+   p := parser{data: data}
+   h.Size = p.Uint32()
+   copy(h.Type[:], p.Bytes(4))
+   return nil
+}
+
+func (h *BoxHeader) Put(buffer []byte) {
+   w := writer{buf: buffer}
+   w.PutUint32(h.Size)
+   w.PutBytes(h.Type[:])
+}
+
 // --- READING HELPER ---
 
 type parser struct {
@@ -80,27 +102,7 @@ func (w *writer) PutByte(data byte) {
    w.offset++
 }
 
-// --- BoxHeader ---
-type BoxHeader struct {
-   Size uint32
-   Type [4]byte
-}
-
-func (h *BoxHeader) Parse(data []byte) error {
-   if len(data) < 8 {
-      return errors.New("not enough data for box header")
-   }
-   p := parser{data: data}
-   h.Size = p.Uint32()
-   copy(h.Type[:], p.Bytes(4))
-   return nil
-}
-
-func (h *BoxHeader) Put(buffer []byte) {
-   w := writer{buf: buffer}
-   w.PutUint32(h.Size)
-   w.PutBytes(h.Type[:])
-}
+///
 
 // --- Box ---
 type Box struct {

@@ -1,3 +1,4 @@
+// movie.go
 package sofia
 
 import (
@@ -7,42 +8,26 @@ import (
 
 // --- MOOV ---
 type MoovBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Mvhd        *MvhdBox
    Trak        []*TrakBox
    Pssh        []*PsshBox
    RawChildren [][]byte
 }
 
-// IsAudio checks the handler type within the first track to determine if it's audio.
-func (b *MoovBox) IsAudio() bool {
-   if len(b.Trak) > 0 {
-      trak := b.Trak[0]
-      if trak.Mdia != nil {
-         for _, child := range trak.Mdia.RawChildren {
-            // Check if the raw box is an 'hdlr' box.
-            // The handler_type is at offset 16 of the box content.
-            if len(child) >= 20 && string(child[4:8]) == "hdlr" {
-               handlerType := string(child[16:20])
-               // Handler type for audio is 'soun'
-               return handlerType == "soun"
-            }
-         }
-      }
-   }
-   return false
-}
-
-func (b *MoovBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMoovBox(data []byte) (*MoovBox, error) {
+   b := &MoovBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -50,35 +35,35 @@ func (b *MoovBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "mvhd":
-         var mvhd MvhdBox
-         if err := mvhd.Parse(content); err != nil {
-            return err
+         mvhd, err := DecodeMvhdBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Mvhd = &mvhd
+         b.Mvhd = mvhd
       case "trak":
-         var trak TrakBox
-         if err := trak.Parse(content); err != nil {
-            return err
+         trak, err := DecodeTrakBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Trak = append(b.Trak, &trak)
+         b.Trak = append(b.Trak, trak)
       case "pssh":
-         var pssh PsshBox
-         if err := pssh.Parse(content); err != nil {
-            return err
+         pssh, err := DecodePsshBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Pssh = append(b.Pssh, &pssh)
+         b.Pssh = append(b.Pssh, pssh)
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 func (b *MoovBox) Encode() []byte {
@@ -124,7 +109,7 @@ func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
 
 // --- MVHD ---
 type MvhdBox struct {
-   Header           BoxHeader
+   Header           *BoxHeader
    Version          byte
    Flags            [3]byte
    CreationTime     uint64
@@ -134,12 +119,16 @@ type MvhdBox struct {
    RemainingData    []byte
 }
 
-func (b *MvhdBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMvhdBox(data []byte) (*MvhdBox, error) {
+   b := &MvhdBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
+
    if len(data) < 12 {
-      return errors.New("mvhd box too small")
+      return nil, errors.New("mvhd box too small")
    }
 
    p := parser{data: data, offset: 8}
@@ -149,7 +138,7 @@ func (b *MvhdBox) Parse(data []byte) error {
 
    if b.Version == 1 {
       if len(data) < 36 { // 8 header + 4 version/flags + 24 v1 body
-         return errors.New("mvhd v1 too short")
+         return nil, errors.New("mvhd v1 too short")
       }
       b.CreationTime = p.Uint64()
       b.ModificationTime = p.Uint64()
@@ -157,7 +146,7 @@ func (b *MvhdBox) Parse(data []byte) error {
       b.Duration = p.Uint64()
    } else { // Version 0
       if len(data) < 24 { // 8 header + 4 version/flags + 12 v0 body
-         return errors.New("mvhd v0 too short")
+         return nil, errors.New("mvhd v0 too short")
       }
       b.CreationTime = uint64(p.Uint32())
       b.ModificationTime = uint64(p.Uint32())
@@ -166,7 +155,7 @@ func (b *MvhdBox) Parse(data []byte) error {
    }
 
    b.RemainingData = data[p.offset:b.Header.Size]
-   return nil
+   return b, nil
 }
 
 func (b *MvhdBox) SetDuration(duration uint64) {

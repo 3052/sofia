@@ -1,3 +1,4 @@
+// core.go
 package sofia
 
 import (
@@ -11,14 +12,15 @@ type BoxHeader struct {
    Type [4]byte
 }
 
-func (h *BoxHeader) Parse(data []byte) error {
+func DecodeBoxHeader(data []byte) (*BoxHeader, error) {
    if len(data) < 8 {
-      return errors.New("not enough data for box header")
+      return nil, errors.New("not enough data for box header")
    }
+   h := &BoxHeader{}
    p := parser{data: data}
    h.Size = p.Uint32()
    copy(h.Type[:], p.Bytes(4))
-   return nil
+   return h, nil
 }
 
 func (h *BoxHeader) Put(buffer []byte) {
@@ -123,12 +125,12 @@ func (b *Box) Encode() []byte {
    }
 }
 
-func Parse(data []byte) ([]Box, error) {
+func DecodeBoxes(data []byte) ([]Box, error) {
    var boxes []Box
    offset := 0
    for offset < len(data) {
-      var header BoxHeader
-      if err := header.Parse(data[offset:]); err != nil {
+      header, err := DecodeBoxHeader(data[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -143,35 +145,35 @@ func Parse(data []byte) ([]Box, error) {
       var currentBox Box
       switch string(header.Type[:]) {
       case "moov":
-         var moov MoovBox
-         if err := moov.Parse(boxData); err != nil {
+         moov, err := DecodeMoovBox(boxData)
+         if err != nil {
             return nil, err
          }
-         currentBox.Moov = &moov
+         currentBox.Moov = moov
       case "moof":
-         var moof MoofBox
-         if err := moof.Parse(boxData); err != nil {
+         moof, err := DecodeMoofBox(boxData)
+         if err != nil {
             return nil, err
          }
-         currentBox.Moof = &moof
+         currentBox.Moof = moof
       case "mdat":
-         var mdat MdatBox
-         if err := mdat.Parse(boxData); err != nil {
+         mdat, err := DecodeMdatBox(boxData)
+         if err != nil {
             return nil, err
          }
-         currentBox.Mdat = &mdat
+         currentBox.Mdat = mdat
       case "sidx":
-         var sidx SidxBox
-         if err := sidx.Parse(boxData); err != nil {
+         sidx, err := DecodeSidxBox(boxData)
+         if err != nil {
             return nil, err
          }
-         currentBox.Sidx = &sidx
+         currentBox.Sidx = sidx
       case "pssh":
-         var pssh PsshBox
-         if err := pssh.Parse(boxData); err != nil {
+         pssh, err := DecodePsshBox(boxData)
+         if err != nil {
             return nil, err
          }
-         currentBox.Pssh = &pssh
+         currentBox.Pssh = pssh
       default:
          currentBox.Raw = boxData
       }
@@ -202,16 +204,19 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
 
 // --- MDAT ---
 type MdatBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Payload []byte
 }
 
-func (b *MdatBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMdatBox(data []byte) (*MdatBox, error) {
+   b := &MdatBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
    b.Payload = data[8:b.Header.Size]
-   return nil
+   return b, nil
 }
 
 // --- SIDX ---
@@ -225,7 +230,7 @@ type SidxReference struct {
 }
 
 type SidxBox struct {
-   Header                   BoxHeader
+   Header                   *BoxHeader
    Version                  byte
    Flags                    uint32
    ReferenceID              uint32
@@ -235,12 +240,16 @@ type SidxBox struct {
    References               []SidxReference
 }
 
-func (b *SidxBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeSidxBox(data []byte) (*SidxBox, error) {
+   b := &SidxBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
+
    if len(data) < 20 { // 8 byte header + 12 bytes of fields before version check
-      return errors.New("sidx box too short")
+      return nil, errors.New("sidx box too short")
    }
 
    p := parser{data: data, offset: 8}
@@ -252,26 +261,26 @@ func (b *SidxBox) Parse(data []byte) error {
 
    if b.Version == 0 {
       if len(data) < p.offset+8 {
-         return errors.New("sidx v0 box too short")
+         return nil, errors.New("sidx v0 box too short")
       }
       b.EarliestPresentationTime = uint64(p.Uint32())
       b.FirstOffset = uint64(p.Uint32())
    } else {
       if len(data) < p.offset+16 {
-         return errors.New("sidx v1 box too short")
+         return nil, errors.New("sidx v1 box too short")
       }
       b.EarliestPresentationTime = p.Uint64()
       b.FirstOffset = p.Uint64()
    }
 
    if len(data) < p.offset+4 {
-      return errors.New("sidx box too short for reference_count")
+      return nil, errors.New("sidx box too short for reference_count")
    }
    _ = p.Uint16() // reserved
    referenceCount := p.Uint16()
 
    if len(data)-p.offset < int(referenceCount)*12 {
-      return errors.New("sidx box too short for declared references")
+      return nil, errors.New("sidx box too short for declared references")
    }
 
    b.References = make([]SidxReference, referenceCount)
@@ -287,5 +296,5 @@ func (b *SidxBox) Parse(data []byte) error {
       b.References[i].SAPType = uint8((val2 >> 28) & 0x07)
       b.References[i].SAPDeltaTime = val2 & 0x0FFFFFFF
    }
-   return nil
+   return b, nil
 }

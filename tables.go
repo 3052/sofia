@@ -1,26 +1,28 @@
+// tables.go
 package sofia
 
-import (
-   "errors"
-)
+import "errors"
 
 // --- STBL ---
 type StblBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Stsd        *StsdBox
    RawChildren [][]byte
 }
 
-func (b *StblBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeStblBox(data []byte) (*StblBox, error) {
+   b := &StblBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -28,23 +30,23 @@ func (b *StblBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "stsd":
-         var stsd StsdBox
-         if err := stsd.Parse(content); err != nil {
-            return err
+         stsd, err := DecodeStsdBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Stsd = &stsd
+         b.Stsd = stsd
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 func (b *StblBox) Encode() []byte {
@@ -67,7 +69,7 @@ type SttsEntry struct {
 }
 
 type SttsBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Entries []SttsEntry
 }
 
@@ -106,7 +108,7 @@ func buildStts(samples []RemuxSample) []byte {
       }
    }
    entries = append(entries, SttsEntry{currentCount, currentDuration})
-   box := SttsBox{Entries: entries}
+   box := SttsBox{Header: &BoxHeader{}, Entries: entries}
    return box.Encode()
 }
 
@@ -117,7 +119,7 @@ type CttsEntry struct {
 }
 
 type CttsBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Entries []CttsEntry
 }
 
@@ -167,13 +169,13 @@ func buildCtts(samples []RemuxSample) []byte {
       entries = append(entries, CttsEntry{currentCount, currentOffset})
    }
 
-   box := CttsBox{Entries: entries}
+   box := CttsBox{Header: &BoxHeader{}, Entries: entries}
    return box.Encode()
 }
 
 // --- STSZ ---
 type StszBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    SampleSize  uint32
    SampleCount uint32
    EntrySizes  []uint32
@@ -202,7 +204,7 @@ func buildStsz(samples []RemuxSample) []byte {
    for i, sample := range samples {
       entries[i] = sample.Size
    }
-   box := StszBox{SampleSize: 0, SampleCount: uint32(len(samples)), EntrySizes: entries}
+   box := StszBox{Header: &BoxHeader{}, SampleSize: 0, SampleCount: uint32(len(samples)), EntrySizes: entries}
    return box.Encode()
 }
 
@@ -214,7 +216,7 @@ type StscEntry struct {
 }
 
 type StscBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Entries []StscEntry
 }
 
@@ -251,13 +253,13 @@ func buildStsc(counts []uint32) []byte {
       entries = append(entries, StscEntry{chunkIdx, count, 1})
       chunkIdx++
    }
-   box := StscBox{Entries: entries}
+   box := StscBox{Header: &BoxHeader{}, Entries: entries}
    return box.Encode()
 }
 
 // --- STCO ---
 type StcoBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Offsets []uint32
 }
 
@@ -280,7 +282,7 @@ func (b *StcoBox) Encode() []byte {
 
 // --- CO64 ---
 type Co64Box struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Offsets []uint64
 }
 
@@ -313,7 +315,7 @@ func buildChunkOffsetBox(offsets []uint64) []byte {
 
    if use64bit {
       // Build a 'co64' box
-      box := Co64Box{Offsets: offsets}
+      box := Co64Box{Header: &BoxHeader{}, Offsets: offsets}
       return box.Encode()
    }
 
@@ -322,13 +324,13 @@ func buildChunkOffsetBox(offsets []uint64) []byte {
    for i, offset := range offsets {
       entries32[i] = uint32(offset)
    }
-   box := StcoBox{Offsets: entries32}
+   box := StcoBox{Header: &BoxHeader{}, Offsets: entries32}
    return box.Encode()
 }
 
 // --- STSS ---
 type StssBox struct {
-   Header  BoxHeader
+   Header  *BoxHeader
    Indices []uint32
 }
 
@@ -359,6 +361,6 @@ func buildStss(samples []RemuxSample) []byte {
    if len(indices) == len(samples) {
       return nil
    }
-   box := StssBox{Indices: indices}
+   box := StssBox{Header: &BoxHeader{}, Indices: indices}
    return box.Encode()
 }

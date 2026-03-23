@@ -26,7 +26,7 @@ func TestTencBox_Parsing(t *testing.T) {
    }
 
    // 3. Parse the file to get the box structure.
-   boxes, err := Parse(initSegment)
+   boxes, err := DecodeBoxes(initSegment)
    if err != nil {
       t.Fatalf("Failed to parse init segment: %v", err)
    }

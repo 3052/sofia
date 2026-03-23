@@ -1,25 +1,29 @@
+// fragment.go
 package sofia
 
 import "errors"
 
 // --- MOOF ---
 type MoofBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Traf        *TrafBox
    Pssh        []*PsshBox
    RawChildren [][]byte
 }
 
-func (b *MoofBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMoofBox(data []byte) (*MoofBox, error) {
+   b := &MoofBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -27,34 +31,34 @@ func (b *MoofBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "traf":
-         var traf TrafBox
-         if err := traf.Parse(content); err != nil {
-            return err
+         traf, err := DecodeTrafBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Traf = &traf
+         b.Traf = traf
       case "pssh":
-         var pssh PsshBox
-         if err := pssh.Parse(content); err != nil {
-            return err
+         pssh, err := DecodePsshBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Pssh = append(b.Pssh, &pssh)
+         b.Pssh = append(b.Pssh, pssh)
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 // --- TRAF ---
 type TrafBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Tfhd        *TfhdBox
    Trun        []*TrunBox
    Senc        *SencBox
@@ -62,16 +66,19 @@ type TrafBox struct {
    RawChildren [][]byte
 }
 
-func (b *TrafBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeTrafBox(data []byte) (*TrafBox, error) {
+   b := &TrafBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -79,46 +86,46 @@ func (b *TrafBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "tfhd":
-         var tfhd TfhdBox
-         if err := tfhd.Parse(content); err != nil {
-            return err
+         tfhd, err := DecodeTfhdBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Tfhd = &tfhd
+         b.Tfhd = tfhd
       case "trun":
-         var trun TrunBox
-         if err := trun.Parse(content); err != nil {
-            return err
+         trun, err := DecodeTrunBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Trun = append(b.Trun, &trun)
+         b.Trun = append(b.Trun, trun)
       case "senc":
-         var senc SencBox
-         if err := senc.Parse(content); err != nil {
-            return err
+         senc, err := DecodeSencBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Senc = &senc
+         b.Senc = senc
       case "tenc":
-         var tenc TencBox
-         if err := tenc.Parse(content); err != nil {
-            return err
+         tenc, err := DecodeTencBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Tenc = &tenc
+         b.Tenc = tenc
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 // --- TFHD ---
 type TfhdBox struct {
-   Header                 BoxHeader
+   Header                 *BoxHeader
    Flags                  uint32
    TrackID                uint32
    BaseDataOffset         uint64
@@ -128,12 +135,16 @@ type TfhdBox struct {
    DefaultSampleFlags     uint32
 }
 
-func (b *TfhdBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeTfhdBox(data []byte) (*TfhdBox, error) {
+   b := &TfhdBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
+
    if len(data) < 16 {
-      return errors.New("tfhd too short")
+      return nil, errors.New("tfhd too short")
    }
    p := parser{data: data, offset: 8}
    flags := p.Uint32()
@@ -142,39 +153,39 @@ func (b *TfhdBox) Parse(data []byte) error {
 
    if b.Flags&0x000001 != 0 { // base-data-offset-present
       if len(data) < p.offset+8 {
-         return errors.New("tfhd too short for BaseDataOffset")
+         return nil, errors.New("tfhd too short for BaseDataOffset")
       }
       b.BaseDataOffset = p.Uint64()
    }
    if b.Flags&0x000002 != 0 { // sample-description-index-present
       if len(data) < p.offset+4 {
-         return errors.New("tfhd too short for SampleDescriptionIndex")
+         return nil, errors.New("tfhd too short for SampleDescriptionIndex")
       }
       b.SampleDescriptionIndex = p.Uint32()
    }
    if b.Flags&0x000008 != 0 { // default-sample-duration-present
       if len(data) < p.offset+4 {
-         return errors.New("tfhd too short for DefaultSampleDuration")
+         return nil, errors.New("tfhd too short for DefaultSampleDuration")
       }
       b.DefaultSampleDuration = p.Uint32()
    }
    if b.Flags&0x000010 != 0 { // default-sample-size-present
       if len(data) < p.offset+4 {
-         return errors.New("tfhd too short for DefaultSampleSize")
+         return nil, errors.New("tfhd too short for DefaultSampleSize")
       }
       b.DefaultSampleSize = p.Uint32()
    }
    if b.Flags&0x000020 != 0 { // default-sample-flags-present
       if len(data) < p.offset+4 {
-         return errors.New("tfhd too short for DefaultSampleFlags")
+         return nil, errors.New("tfhd too short for DefaultSampleFlags")
       }
       b.DefaultSampleFlags = p.Uint32()
    }
-   return nil
+   return b, nil
 }
 
 // --- TRUN ---
-type SampleInfo struct {
+type TrunSample struct {
    Size                  uint32
    Duration              uint32
    Flags                 uint32
@@ -182,20 +193,24 @@ type SampleInfo struct {
 }
 
 type TrunBox struct {
-   Header           BoxHeader
+   Header           *BoxHeader
    Flags            uint32
    SampleCount      uint32
    DataOffset       int32
    FirstSampleFlags uint32
-   Samples          []SampleInfo
+   Samples          []TrunSample
 }
 
-func (b *TrunBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeTrunBox(data []byte) (*TrunBox, error) {
+   b := &TrunBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
+
    if len(data) < 16 {
-      return errors.New("trun too short")
+      return nil, errors.New("trun too short")
    }
 
    p := parser{data: data, offset: 8}
@@ -205,13 +220,13 @@ func (b *TrunBox) Parse(data []byte) error {
 
    if b.Flags&0x000001 != 0 {
       if len(data) < p.offset+4 {
-         return errors.New("trun too short for data offset")
+         return nil, errors.New("trun too short for data offset")
       }
       b.DataOffset = p.Int32()
    }
    if b.Flags&0x000004 != 0 {
       if len(data) < p.offset+4 {
-         return errors.New("trun too short for first sample flags")
+         return nil, errors.New("trun too short for first sample flags")
       }
       b.FirstSampleFlags = p.Uint32()
    }
@@ -230,10 +245,10 @@ func (b *TrunBox) Parse(data []byte) error {
       sampleEntrySize += 4
    } // CTO
    if len(data)-p.offset < int(b.SampleCount)*sampleEntrySize {
-      return errors.New("trun box too short for declared samples")
+      return nil, errors.New("trun box too short for declared samples")
    }
 
-   b.Samples = make([]SampleInfo, b.SampleCount)
+   b.Samples = make([]TrunSample, b.SampleCount)
    for i := uint32(0); i < b.SampleCount; i++ {
       if b.Flags&0x000100 != 0 {
          b.Samples[i].Duration = p.Uint32()
@@ -248,5 +263,5 @@ func (b *TrunBox) Parse(data []byte) error {
          b.Samples[i].CompositionTimeOffset = p.Int32()
       }
    }
-   return nil
+   return b, nil
 }

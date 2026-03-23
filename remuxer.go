@@ -1,22 +1,12 @@
+// remuxer.go
 package sofia
 
 import (
    "encoding/binary"
    "errors"
+   "fmt"
    "io"
-   "strconv"
-   "strings"
 )
-
-func remuxError(op string, index int, err error) error {
-   var sb strings.Builder
-   sb.WriteString(op)
-   sb.WriteByte(' ')
-   sb.WriteString(strconv.Itoa(index))
-   sb.WriteByte(' ')
-   sb.WriteString(err.Error())
-   return errors.New(sb.String())
-}
 
 type Remuxer struct {
    Writer              io.WriteSeeker
@@ -26,7 +16,7 @@ type Remuxer struct {
    segmentSampleCounts []uint32
    mdatStartOffset     int64
    segmentCount        int
-   OnSample            func(sample []byte, encInfo *SampleEncryptionInfo)
+   OnSample            func(data []byte, sample *SencSample)
 }
 
 type RemuxSample struct {
@@ -43,9 +33,9 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    if r.Writer == nil {
       return errors.New("writer is nil")
    }
-   boxes, err := Parse(initSegment)
+   boxes, err := DecodeBoxes(initSegment)
    if err != nil {
-      return errors.New("parsing init " + err.Error())
+      return fmt.Errorf("parsing init segment: %w", err)
    }
    moovPtr, ok := FindMoov(boxes)
    if !ok {
@@ -68,9 +58,9 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       return errors.New("must call Initialize")
    }
    r.segmentCount++
-   boxes, err := Parse(segmentData)
+   boxes, err := DecodeBoxes(segmentData)
    if err != nil {
-      return remuxError("parsing segment", r.segmentCount, err)
+      return fmt.Errorf("parsing segment %d: %w", r.segmentCount, err)
    }
    var pendingMoof *MoofBox
    for i, box := range boxes {
@@ -81,7 +71,7 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       if box.Mdat != nil {
          if pendingMoof != nil {
             if err := r.processFragment(pendingMoof, box.Mdat); err != nil {
-               return remuxError("processing fragment at box index", i, err)
+               return fmt.Errorf("processing fragment at box index %d: %w", i, err)
             }
             pendingMoof = nil
          }
@@ -140,7 +130,7 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             return errors.New("mdat payload too short for samples")
          }
          sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
-         var encInfo *SampleEncryptionInfo
+         var encInfo *SencSample
          if senc != nil && sencIndex < len(senc.Samples) {
             encInfo = &senc.Samples[sencIndex]
             sencIndex++
@@ -214,7 +204,7 @@ func (r *Remuxer) Finish() error {
    if stbl.Stsd == nil {
       return errors.New("missing stsd")
    }
-   stbl.Stsd.UnprotectAll()
+   stbl.Stsd.RemoveSinf()
    stbl.RawChildren = append(stbl.RawChildren, stts)
    if ctts != nil {
       stbl.RawChildren = append(stbl.RawChildren, ctts)

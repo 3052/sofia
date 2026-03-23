@@ -1,24 +1,28 @@
+// track.go
 package sofia
 
 import "errors"
 
 // --- TRAK ---
 type TrakBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Mdia        *MdiaBox
    RawChildren [][]byte
 }
 
-func (b *TrakBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeTrakBox(data []byte) (*TrakBox, error) {
+   b := &TrakBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -26,23 +30,23 @@ func (b *TrakBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "mdia":
-         var mdia MdiaBox
-         if err := mdia.Parse(content); err != nil {
-            return err
+         mdia, err := DecodeMdiaBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Mdia = &mdia
+         b.Mdia = mdia
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 func (b *TrakBox) Encode() []byte {
@@ -71,22 +75,25 @@ func (b *TrakBox) RemoveEdts() {
 
 // --- MDIA ---
 type MdiaBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Mdhd        *MdhdBox
    Minf        *MinfBox
    RawChildren [][]byte
 }
 
-func (b *MdiaBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMdiaBox(data []byte) (*MdiaBox, error) {
+   b := &MdiaBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -94,29 +101,29 @@ func (b *MdiaBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "mdhd":
-         var mdhd MdhdBox
-         if err := mdhd.Parse(content); err != nil {
-            return err
+         mdhd, err := DecodeMdhdBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Mdhd = &mdhd
+         b.Mdhd = mdhd
       case "minf":
-         var minf MinfBox
-         if err := minf.Parse(content); err != nil {
-            return err
+         minf, err := DecodeMinfBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Minf = &minf
+         b.Minf = minf
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 func (b *MdiaBox) Encode() []byte {
@@ -137,7 +144,7 @@ func (b *MdiaBox) Encode() []byte {
 
 // --- MDHD ---
 type MdhdBox struct {
-   Header           BoxHeader
+   Header           *BoxHeader
    Version          byte
    Flags            [3]byte
    CreationTime     uint64
@@ -148,12 +155,16 @@ type MdhdBox struct {
    Quality          [2]byte
 }
 
-func (b *MdhdBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMdhdBox(data []byte) (*MdhdBox, error) {
+   b := &MdhdBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
+
    if len(data) < 12 {
-      return errors.New("mdhd box too small")
+      return nil, errors.New("mdhd box too small")
    }
 
    p := parser{data: data, offset: 8}
@@ -163,7 +174,7 @@ func (b *MdhdBox) Parse(data []byte) error {
 
    if b.Version == 1 {
       if len(data) < 44 {
-         return errors.New("mdhd v1 too short")
+         return nil, errors.New("mdhd v1 too short")
       }
       b.CreationTime = p.Uint64()
       b.ModificationTime = p.Uint64()
@@ -171,7 +182,7 @@ func (b *MdhdBox) Parse(data []byte) error {
       b.Duration = p.Uint64()
    } else { // Version 0
       if len(data) < 32 {
-         return errors.New("mdhd v0 too short")
+         return nil, errors.New("mdhd v0 too short")
       }
       b.CreationTime = uint64(p.Uint32())
       b.ModificationTime = uint64(p.Uint32())
@@ -180,11 +191,11 @@ func (b *MdhdBox) Parse(data []byte) error {
    }
 
    if len(data) < p.offset+4 {
-      return errors.New("mdhd truncated at language/quality")
+      return nil, errors.New("mdhd truncated at language/quality")
    }
    copy(b.Language[:], p.Bytes(2))
    copy(b.Quality[:], p.Bytes(2))
-   return nil
+   return b, nil
 }
 
 func (b *MdhdBox) SetDuration(duration uint64) {
@@ -230,21 +241,24 @@ func (b *MdhdBox) Encode() []byte {
 
 // --- MINF ---
 type MinfBox struct {
-   Header      BoxHeader
+   Header      *BoxHeader
    Stbl        *StblBox
    RawChildren [][]byte
 }
 
-func (b *MinfBox) Parse(data []byte) error {
-   if err := b.Header.Parse(data); err != nil {
-      return err
+func DecodeMinfBox(data []byte) (*MinfBox, error) {
+   b := &MinfBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
    }
 
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
-      var header BoxHeader
-      if err := header.Parse(payload[offset:]); err != nil {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
          break
       }
       boxSize := int(header.Size)
@@ -252,23 +266,23 @@ func (b *MinfBox) Parse(data []byte) error {
          boxSize = len(payload) - offset
       }
       if boxSize < 8 || offset+boxSize > len(payload) {
-         return errors.New("invalid child box size")
+         return nil, errors.New("invalid child box size")
       }
 
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "stbl":
-         var stbl StblBox
-         if err := stbl.Parse(content); err != nil {
-            return err
+         stbl, err := DecodeStblBox(content)
+         if err != nil {
+            return nil, err
          }
-         b.Stbl = &stbl
+         b.Stbl = stbl
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
       offset += boxSize
    }
-   return nil
+   return b, nil
 }
 
 func (b *MinfBox) Encode() []byte {

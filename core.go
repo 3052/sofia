@@ -6,6 +6,83 @@ import (
    "errors"
 )
 
+// --- Box ---
+type Box struct {
+   Moov *MoovBox
+   Moof *MoofBox
+   Mdat *MdatBox
+   Sidx *SidxBox
+   Pssh *PsshBox
+   Raw  []byte
+}
+
+func (b *Box) Encode() []byte {
+   switch {
+   case b.Moov != nil:
+      return b.Moov.Encode()
+   default:
+      return b.Raw
+   }
+}
+
+func DecodeBoxes(data []byte) ([]Box, error) {
+   var boxes []Box
+   offset := 0
+   for offset < len(data) {
+      header, err := DecodeBoxHeader(data[offset:])
+      if err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(data) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(data) {
+         return nil, errors.New("invalid child box size")
+      }
+
+      boxData := data[offset : offset+boxSize]
+      var currentBox Box
+      switch string(header.Type[:]) {
+      case "moov":
+         moov, err := DecodeMoovBox(boxData)
+         if err != nil {
+            return nil, err
+         }
+         currentBox.Moov = moov
+      case "moof":
+         moof, err := DecodeMoofBox(boxData)
+         if err != nil {
+            return nil, err
+         }
+         currentBox.Moof = moof
+      case "mdat":
+         mdat, err := DecodeMdatBox(boxData)
+         if err != nil {
+            return nil, err
+         }
+         currentBox.Mdat = mdat
+      case "sidx":
+         sidx, err := DecodeSidxBox(boxData)
+         if err != nil {
+            return nil, err
+         }
+         currentBox.Sidx = sidx
+      case "pssh":
+         pssh, err := DecodePsshBox(boxData)
+         if err != nil {
+            return nil, err
+         }
+         currentBox.Pssh = pssh
+      default:
+         currentBox.Raw = boxData
+      }
+      boxes = append(boxes, currentBox)
+      offset += boxSize
+   }
+   return boxes, nil
+}
+
 // --- BoxHeader ---
 type BoxHeader struct {
    Size uint32
@@ -105,83 +182,6 @@ func (w *writer) PutByte(data byte) {
 }
 
 ///
-
-// --- Box ---
-type Box struct {
-   Moov *MoovBox
-   Moof *MoofBox
-   Mdat *MdatBox
-   Sidx *SidxBox
-   Pssh *PsshBox
-   Raw  []byte
-}
-
-func (b *Box) Encode() []byte {
-   switch {
-   case b.Moov != nil:
-      return b.Moov.Encode()
-   default:
-      return b.Raw
-   }
-}
-
-func DecodeBoxes(data []byte) ([]Box, error) {
-   var boxes []Box
-   offset := 0
-   for offset < len(data) {
-      header, err := DecodeBoxHeader(data[offset:])
-      if err != nil {
-         break
-      }
-      boxSize := int(header.Size)
-      if boxSize == 0 {
-         boxSize = len(data) - offset
-      }
-      if boxSize < 8 || offset+boxSize > len(data) {
-         return nil, errors.New("invalid child box size")
-      }
-
-      boxData := data[offset : offset+boxSize]
-      var currentBox Box
-      switch string(header.Type[:]) {
-      case "moov":
-         moov, err := DecodeMoovBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Moov = moov
-      case "moof":
-         moof, err := DecodeMoofBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Moof = moof
-      case "mdat":
-         mdat, err := DecodeMdatBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Mdat = mdat
-      case "sidx":
-         sidx, err := DecodeSidxBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Sidx = sidx
-      case "pssh":
-         pssh, err := DecodePsshBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Pssh = pssh
-      default:
-         currentBox.Raw = boxData
-      }
-      boxes = append(boxes, currentBox)
-      offset += boxSize
-   }
-   return boxes, nil
-}
 
 // --- Finders ---
 func FindMoov(boxes []Box) (*MoovBox, bool) {

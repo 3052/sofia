@@ -8,29 +8,16 @@
 
 ## features
 
-- delete `edts` box
-- delete `pssh` box
-- delete `sinf` box
-- read `enca` box
-- read `encv` box
-- read `frma` box
-- read `mdat` box
-- read `mdhd` box
-- read `mdia` box
-- read `moof` box
-- read `moov` box
-- read `pssh` box
-- read `senc` box
-- read `sidx` box
-- read `sinf` box
-- read `tfhd` box
-- read `traf` box
-- read `trak` box
-- read `trun` box
-- update `enca` box
-- update `encv` box
-- write `mdat` box
-- write `moov` box
+* **`Remuxer.Initialize`**: Writes a 16-byte `mdat` (Media Data) header directly to the `io.WriteSeeker`.
+* **`Remuxer.AddSegment`**: Appends raw media sample payloads directly to the `io.WriteSeeker` file as segments are processed.
+* **`Remuxer.Finish`**: Appends the final `moov` metadata box to the end of the `io.WriteSeeker` file, and seeks backward to overwrite the `mdat` placeholder size with the final calculated byte size.
+* **`Decrypt`**: Applies an AES-CTR XOR key stream directly onto the data byte slice. If this slice is backed by a memory-mapped file, it modifies the file on disk in-place.
+* **`MoovBox.RemovePssh`**: Mutates the in-memory `MoovBox` to strip out all PSSH (Protection System Specific Header) boxes, altering the structure before it is written to a file.
+* **`MoovBox.RemoveMvex`**: Mutates the in-memory `MoovBox` to strip out the `mvex` (Movie Extends) boxes, altering the structure before it is written to a file.
+* **`TrakBox.RemoveEdts`**: Mutates the in-memory `TrakBox` to strip out the `edts` (Edit List) boxes, altering the structure before it is written to a file.
+* **`StsdBox.RemoveSinf`**: Mutates the in-memory `StsdBox` to strip out the `sinf` (Protection Scheme Information) boxes and alters the entry header format, altering the structure before it is written to a file.
+* **`MvhdBox.SetDuration`**: Mutates the in-memory `MvhdBox` to update the total duration of the movie, automatically adjusting the version flag if a 64-bit size is required.
+* **`MdhdBox.SetDuration`**: Mutates the in-memory `MdhdBox` to update the media duration, automatically adjusting the version flag if a 64-bit size is required.
 
 ## prior art
 

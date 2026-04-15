@@ -106,6 +106,16 @@ func (h *BoxHeader) Put(buffer []byte) {
    w.PutBytes(h.Type[:])
 }
 
+// --- Finders ---
+func FindMoov(boxes []Box) (*MoovBox, bool) {
+   for _, box := range boxes {
+      if box.Moov != nil {
+         return box.Moov, true
+      }
+   }
+   return nil, false
+}
+
 // --- READING HELPER ---
 
 type parser struct {
@@ -182,16 +192,6 @@ func (w *writer) PutByte(data byte) {
 }
 
 ///
-
-// --- Finders ---
-func FindMoov(boxes []Box) (*MoovBox, bool) {
-   for _, box := range boxes {
-      if box.Moov != nil {
-         return box.Moov, true
-      }
-   }
-   return nil, false
-}
 
 func FindSidx(boxes []Box) (*SidxBox, bool) {
    for _, box := range boxes {

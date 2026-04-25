@@ -116,6 +116,15 @@ func FindMoov(boxes []Box) (*MoovBox, bool) {
    return nil, false
 }
 
+func FindSidx(boxes []Box) (*SidxBox, bool) {
+   for _, box := range boxes {
+      if box.Sidx != nil {
+         return box.Sidx, true
+      }
+   }
+   return nil, false
+}
+
 // --- READING HELPER ---
 
 type parser struct {
@@ -192,15 +201,6 @@ func (w *writer) PutByte(data byte) {
 }
 
 ///
-
-func FindSidx(boxes []Box) (*SidxBox, bool) {
-   for _, box := range boxes {
-      if box.Sidx != nil {
-         return box.Sidx, true
-      }
-   }
-   return nil, false
-}
 
 // --- MDAT ---
 type MdatBox struct {

@@ -106,7 +106,23 @@ func (h *BoxHeader) Put(buffer []byte) {
    w.PutBytes(h.Type[:])
 }
 
-// --- Finders ---
+// --- MDAT ---
+type MdatBox struct {
+   Header  *BoxHeader
+   Payload []byte
+}
+
+func DecodeMdatBox(data []byte) (*MdatBox, error) {
+   b := &MdatBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
+   }
+   b.Payload = data[8:b.Header.Size]
+   return b, nil
+}
+
 func FindMoov(boxes []Box) (*MoovBox, bool) {
    for _, box := range boxes {
       if box.Moov != nil {
@@ -201,23 +217,6 @@ func (w *writer) PutByte(data byte) {
 }
 
 ///
-
-// --- MDAT ---
-type MdatBox struct {
-   Header  *BoxHeader
-   Payload []byte
-}
-
-func DecodeMdatBox(data []byte) (*MdatBox, error) {
-   b := &MdatBox{}
-   var err error
-   b.Header, err = DecodeBoxHeader(data)
-   if err != nil {
-      return nil, err
-   }
-   b.Payload = data[8:b.Header.Size]
-   return b, nil
-}
 
 // --- SIDX ---
 type SidxReference struct {

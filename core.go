@@ -141,83 +141,6 @@ func FindSidx(boxes []Box) (*SidxBox, bool) {
    return nil, false
 }
 
-// --- READING HELPER ---
-
-type parser struct {
-   data   []byte
-   offset int
-}
-
-func (p *parser) Uint16() uint16 {
-   val := binary.BigEndian.Uint16(p.data[p.offset:])
-   p.offset += 2
-   return val
-}
-
-func (p *parser) Uint32() uint32 {
-   val := binary.BigEndian.Uint32(p.data[p.offset:])
-   p.offset += 4
-   return val
-}
-
-func (p *parser) Int32() int32 {
-   val := int32(binary.BigEndian.Uint32(p.data[p.offset:]))
-   p.offset += 4
-   return val
-}
-
-func (p *parser) Uint64() uint64 {
-   val := binary.BigEndian.Uint64(p.data[p.offset:])
-   p.offset += 8
-   return val
-}
-
-func (p *parser) Bytes(n int) []byte {
-   val := p.data[p.offset : p.offset+n]
-   p.offset += n
-   return val
-}
-
-func (p *parser) Byte() byte {
-   val := p.data[p.offset]
-   p.offset++
-   return val
-}
-
-// --- WRITING HELPER ---
-
-type writer struct {
-   buf    []byte
-   offset int
-}
-
-func (w *writer) PutUint16(val uint16) {
-   binary.BigEndian.PutUint16(w.buf[w.offset:], val)
-   w.offset += 2
-}
-
-func (w *writer) PutUint32(val uint32) {
-   binary.BigEndian.PutUint32(w.buf[w.offset:], val)
-   w.offset += 4
-}
-
-func (w *writer) PutUint64(val uint64) {
-   binary.BigEndian.PutUint64(w.buf[w.offset:], val)
-   w.offset += 8
-}
-
-func (w *writer) PutBytes(data []byte) {
-   copy(w.buf[w.offset:], data)
-   w.offset += len(data)
-}
-
-func (w *writer) PutByte(data byte) {
-   w.buf[w.offset] = data
-   w.offset++
-}
-
-///
-
 // --- SIDX ---
 type SidxReference struct {
    ReferenceType      bool
@@ -296,4 +219,79 @@ func DecodeSidxBox(data []byte) (*SidxBox, error) {
       b.References[i].SAPDeltaTime = val2 & 0x0FFFFFFF
    }
    return b, nil
+}
+
+// --- READING HELPER ---
+
+type parser struct {
+   data   []byte
+   offset int
+}
+
+func (p *parser) Uint16() uint16 {
+   val := binary.BigEndian.Uint16(p.data[p.offset:])
+   p.offset += 2
+   return val
+}
+
+func (p *parser) Uint32() uint32 {
+   val := binary.BigEndian.Uint32(p.data[p.offset:])
+   p.offset += 4
+   return val
+}
+
+func (p *parser) Int32() int32 {
+   val := int32(binary.BigEndian.Uint32(p.data[p.offset:]))
+   p.offset += 4
+   return val
+}
+
+func (p *parser) Uint64() uint64 {
+   val := binary.BigEndian.Uint64(p.data[p.offset:])
+   p.offset += 8
+   return val
+}
+
+func (p *parser) Bytes(n int) []byte {
+   val := p.data[p.offset : p.offset+n]
+   p.offset += n
+   return val
+}
+
+func (p *parser) Byte() byte {
+   val := p.data[p.offset]
+   p.offset++
+   return val
+}
+
+// --- WRITING HELPER ---
+
+type writer struct {
+   buf    []byte
+   offset int
+}
+
+func (w *writer) PutUint16(val uint16) {
+   binary.BigEndian.PutUint16(w.buf[w.offset:], val)
+   w.offset += 2
+}
+
+func (w *writer) PutUint32(val uint32) {
+   binary.BigEndian.PutUint32(w.buf[w.offset:], val)
+   w.offset += 4
+}
+
+func (w *writer) PutUint64(val uint64) {
+   binary.BigEndian.PutUint64(w.buf[w.offset:], val)
+   w.offset += 8
+}
+
+func (w *writer) PutBytes(data []byte) {
+   copy(w.buf[w.offset:], data)
+   w.offset += len(data)
+}
+
+func (w *writer) PutByte(data byte) {
+   w.buf[w.offset] = data
+   w.offset++
 }

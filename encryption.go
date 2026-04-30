@@ -59,6 +59,12 @@ func DecodePsshBox(data []byte) (*PsshBox, error) {
    return b, nil
 }
 
+// --- SENC ---
+type Subsample struct {
+   BytesOfClearData     uint16
+   BytesOfProtectedData uint32
+}
+
 // --- TENC ---
 // TencBox defines the Track Encryption Box ('tenc'), which contains
 // default encryption parameters for a track.
@@ -122,11 +128,7 @@ func DecodeTencBox(data []byte) (*TencBox, error) {
    return b, nil
 }
 
-// --- SENC ---
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
-}
+///
 
 type SencSample struct {
    IV         []byte

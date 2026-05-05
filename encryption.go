@@ -59,6 +59,11 @@ func DecodePsshBox(data []byte) (*PsshBox, error) {
    return b, nil
 }
 
+type SencSample struct {
+   IV         []byte
+   Subsamples []Subsample
+}
+
 // --- SENC ---
 type Subsample struct {
    BytesOfClearData     uint16
@@ -129,11 +134,6 @@ func DecodeTencBox(data []byte) (*TencBox, error) {
 }
 
 ///
-
-type SencSample struct {
-   IV         []byte
-   Subsamples []Subsample
-}
 
 type SencBox struct {
    Header  *BoxHeader

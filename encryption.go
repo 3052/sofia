@@ -6,6 +6,37 @@ import (
    "errors"
 )
 
+// --- Logic ---
+func Decrypt(data []byte, sample *SencSample, block cipher.Block) {
+   if sample == nil || len(sample.IV) == 0 {
+      return
+   }
+   iv := sample.IV
+   if len(iv) == 8 {
+      paddedIV := make([]byte, 16)
+      copy(paddedIV, iv)
+      iv = paddedIV
+   }
+   stream := cipher.NewCTR(block, iv)
+   if len(sample.Subsamples) == 0 {
+      stream.XORKeyStream(data, data)
+   } else {
+      offset := 0
+      for _, subsample := range sample.Subsamples {
+         offset += int(subsample.BytesOfClearData)
+         if subsample.BytesOfProtectedData > 0 {
+            end := offset + int(subsample.BytesOfProtectedData)
+            if end > len(data) {
+               end = len(data)
+            }
+            chunk := data[offset:end]
+            stream.XORKeyStream(chunk, chunk)
+            offset = end
+         }
+      }
+   }
+}
+
 // --- PSSH ---
 type PsshBox struct {
    Header   *BoxHeader
@@ -181,37 +212,4 @@ func DecodeTencBox(data []byte) (*TencBox, error) {
    }
    // For other versions, we do nothing and leave the fields as their zero-value.
    return b, nil
-}
-
-///
-
-// --- Logic ---
-func Decrypt(data []byte, sample *SencSample, block cipher.Block) {
-   if sample == nil || len(sample.IV) == 0 {
-      return
-   }
-   iv := sample.IV
-   if len(iv) == 8 {
-      paddedIV := make([]byte, 16)
-      copy(paddedIV, iv)
-      iv = paddedIV
-   }
-   stream := cipher.NewCTR(block, iv)
-   if len(sample.Subsamples) == 0 {
-      stream.XORKeyStream(data, data)
-   } else {
-      offset := 0
-      for _, subsample := range sample.Subsamples {
-         offset += int(subsample.BytesOfClearData)
-         if subsample.BytesOfProtectedData > 0 {
-            end := offset + int(subsample.BytesOfProtectedData)
-            if end > len(data) {
-               end = len(data)
-            }
-            chunk := data[offset:end]
-            stream.XORKeyStream(chunk, chunk)
-            offset = end
-         }
-      }
-   }
 }

@@ -184,14 +184,6 @@ func DecodeTfhdBox(data []byte) (*TfhdBox, error) {
    return b, nil
 }
 
-// --- TRUN ---
-type TrunSample struct {
-   Size                  uint32
-   Duration              uint32
-   Flags                 uint32
-   CompositionTimeOffset int32
-}
-
 type TrunBox struct {
    Header           *BoxHeader
    Flags            uint32
@@ -264,4 +256,12 @@ func DecodeTrunBox(data []byte) (*TrunBox, error) {
       }
    }
    return b, nil
+}
+
+// --- TRUN ---
+type TrunSample struct {
+   Size                  uint32
+   Duration              uint32
+   Flags                 uint32
+   CompositionTimeOffset int32
 }

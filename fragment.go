@@ -56,6 +56,67 @@ func DecodeMoofBox(data []byte) (*MoofBox, error) {
    return b, nil
 }
 
+// --- TFHD ---
+type TfhdBox struct {
+   Header                 *BoxHeader
+   Flags                  uint32
+   TrackID                uint32
+   BaseDataOffset         uint64
+   SampleDescriptionIndex uint32
+   DefaultSampleDuration  uint32
+   DefaultSampleSize      uint32
+   DefaultSampleFlags     uint32
+}
+
+func DecodeTfhdBox(data []byte) (*TfhdBox, error) {
+   b := &TfhdBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
+   }
+
+   if len(data) < 16 {
+      return nil, errors.New("tfhd too short")
+   }
+   p := parser{data: data, offset: 8}
+   flags := p.Uint32()
+   b.Flags = flags & 0x00FFFFFF
+   b.TrackID = p.Uint32()
+
+   if b.Flags&0x000001 != 0 { // base-data-offset-present
+      if len(data) < p.offset+8 {
+         return nil, errors.New("tfhd too short for BaseDataOffset")
+      }
+      b.BaseDataOffset = p.Uint64()
+   }
+   if b.Flags&0x000002 != 0 { // sample-description-index-present
+      if len(data) < p.offset+4 {
+         return nil, errors.New("tfhd too short for SampleDescriptionIndex")
+      }
+      b.SampleDescriptionIndex = p.Uint32()
+   }
+   if b.Flags&0x000008 != 0 { // default-sample-duration-present
+      if len(data) < p.offset+4 {
+         return nil, errors.New("tfhd too short for DefaultSampleDuration")
+      }
+      b.DefaultSampleDuration = p.Uint32()
+   }
+   if b.Flags&0x000010 != 0 { // default-sample-size-present
+      if len(data) < p.offset+4 {
+         return nil, errors.New("tfhd too short for DefaultSampleSize")
+      }
+      b.DefaultSampleSize = p.Uint32()
+   }
+   if b.Flags&0x000020 != 0 { // default-sample-flags-present
+      if len(data) < p.offset+4 {
+         return nil, errors.New("tfhd too short for DefaultSampleFlags")
+      }
+      b.DefaultSampleFlags = p.Uint32()
+   }
+   return b, nil
+}
+
 // --- TRAF ---
 type TrafBox struct {
    Header      *BoxHeader
@@ -123,66 +184,7 @@ func DecodeTrafBox(data []byte) (*TrafBox, error) {
    return b, nil
 }
 
-// --- TFHD ---
-type TfhdBox struct {
-   Header                 *BoxHeader
-   Flags                  uint32
-   TrackID                uint32
-   BaseDataOffset         uint64
-   SampleDescriptionIndex uint32
-   DefaultSampleDuration  uint32
-   DefaultSampleSize      uint32
-   DefaultSampleFlags     uint32
-}
-
-func DecodeTfhdBox(data []byte) (*TfhdBox, error) {
-   b := &TfhdBox{}
-   var err error
-   b.Header, err = DecodeBoxHeader(data)
-   if err != nil {
-      return nil, err
-   }
-
-   if len(data) < 16 {
-      return nil, errors.New("tfhd too short")
-   }
-   p := parser{data: data, offset: 8}
-   flags := p.Uint32()
-   b.Flags = flags & 0x00FFFFFF
-   b.TrackID = p.Uint32()
-
-   if b.Flags&0x000001 != 0 { // base-data-offset-present
-      if len(data) < p.offset+8 {
-         return nil, errors.New("tfhd too short for BaseDataOffset")
-      }
-      b.BaseDataOffset = p.Uint64()
-   }
-   if b.Flags&0x000002 != 0 { // sample-description-index-present
-      if len(data) < p.offset+4 {
-         return nil, errors.New("tfhd too short for SampleDescriptionIndex")
-      }
-      b.SampleDescriptionIndex = p.Uint32()
-   }
-   if b.Flags&0x000008 != 0 { // default-sample-duration-present
-      if len(data) < p.offset+4 {
-         return nil, errors.New("tfhd too short for DefaultSampleDuration")
-      }
-      b.DefaultSampleDuration = p.Uint32()
-   }
-   if b.Flags&0x000010 != 0 { // default-sample-size-present
-      if len(data) < p.offset+4 {
-         return nil, errors.New("tfhd too short for DefaultSampleSize")
-      }
-      b.DefaultSampleSize = p.Uint32()
-   }
-   if b.Flags&0x000020 != 0 { // default-sample-flags-present
-      if len(data) < p.offset+4 {
-         return nil, errors.New("tfhd too short for DefaultSampleFlags")
-      }
-      b.DefaultSampleFlags = p.Uint32()
-   }
-   return b, nil
-}
+///
 
 type TrunBox struct {
    Header           *BoxHeader

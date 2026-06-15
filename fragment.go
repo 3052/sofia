@@ -184,8 +184,6 @@ func DecodeTrafBox(data []byte) (*TrafBox, error) {
    return b, nil
 }
 
-///
-
 type TrunBox struct {
    Header           *BoxHeader
    Flags            uint32

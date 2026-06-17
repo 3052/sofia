@@ -8,6 +8,13 @@ import (
    "io"
 )
 
+type RemuxSample struct {
+   Size                  uint32
+   Duration              uint32
+   IsSync                bool
+   CompositionTimeOffset int32
+}
+
 type Remuxer struct {
    Writer              io.WriteSeeker
    Moov                *MoovBox
@@ -19,12 +26,7 @@ type Remuxer struct {
    OnSample            func(data []byte, sample *SencSample)
 }
 
-type RemuxSample struct {
-   Size                  uint32
-   Duration              uint32
-   IsSync                bool
-   CompositionTimeOffset int32
-}
+///
 
 func (r *Remuxer) Initialize(initSegment []byte) error {
    if r.Moov != nil {

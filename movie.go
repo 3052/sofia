@@ -83,8 +83,13 @@ func (b *MoovBox) Encode() []byte {
    return buffer
 }
 
-func (b *MoovBox) RemovePssh() {
-   b.Pssh = nil
+func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
+   for _, pssh := range b.Pssh {
+      if bytes.Equal(pssh.SystemID[:], systemID) {
+         return pssh, true
+      }
+   }
+   return nil, false
 }
 
 func (b *MoovBox) RemoveMvex() {
@@ -98,13 +103,8 @@ func (b *MoovBox) RemoveMvex() {
    b.RawChildren = kept
 }
 
-func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
-   for _, pssh := range b.Pssh {
-      if bytes.Equal(pssh.SystemID[:], systemID) {
-         return pssh, true
-      }
-   }
-   return nil, false
+func (b *MoovBox) RemovePssh() {
+   b.Pssh = nil
 }
 
 // --- MVHD ---
@@ -158,13 +158,6 @@ func DecodeMvhdBox(data []byte) (*MvhdBox, error) {
    return b, nil
 }
 
-func (b *MvhdBox) SetDuration(duration uint64) {
-   b.Duration = duration
-   if b.Duration > 0xFFFFFFFF {
-      b.Version = 1
-   }
-}
-
 func (b *MvhdBox) Encode() []byte {
    var bodySize int
    if b.Version == 1 {
@@ -196,4 +189,11 @@ func (b *MvhdBox) Encode() []byte {
    w.PutBytes(b.RemainingData)
    b.Header.Size = totalSize
    return buffer
+}
+
+func (b *MvhdBox) SetDuration(duration uint64) {
+   b.Duration = duration
+   if b.Duration > 0xFFFFFFFF {
+      b.Version = 1
+   }
 }

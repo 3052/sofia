@@ -208,15 +208,6 @@ type StsdBox struct {
    RawChildren  [][]byte
 }
 
-func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
-   for _, enc := range b.EncChildren {
-      if enc.Sinf != nil {
-         return enc.Sinf, enc.Header, true
-      }
-   }
-   return nil, nil, false
-}
-
 func DecodeStsdBox(data []byte) (*StsdBox, error) {
    b := &StsdBox{}
    var err error
@@ -288,4 +279,13 @@ func (b *StsdBox) RemoveSinf() error {
       child.Sinf = nil // Remove the sinf box
    }
    return nil
+}
+
+func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
+   for _, enc := range b.EncChildren {
+      if enc.Sinf != nil {
+         return enc.Sinf, enc.Header, true
+      }
+   }
+   return nil, nil, false
 }

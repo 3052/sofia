@@ -26,35 +26,6 @@ type Remuxer struct {
    OnSample            func(data []byte, sample *SencSample)
 }
 
-///
-
-func (r *Remuxer) Initialize(initSegment []byte) error {
-   if r.Moov != nil {
-      return errors.New("already initialized")
-   }
-   if r.Writer == nil {
-      return errors.New("writer is nil")
-   }
-   boxes, err := DecodeBoxes(initSegment)
-   if err != nil {
-      return fmt.Errorf("parsing init segment: %w", err)
-   }
-   moovPtr, ok := FindMoov(boxes)
-   if !ok {
-      return errors.New("no moov found")
-   }
-   r.Moov = moovPtr
-   if len(r.Moov.Trak) == 0 {
-      return errors.New("no trak found")
-   }
-   r.mdatStartOffset, _ = r.Writer.Seek(0, io.SeekCurrent)
-   mdatHeader := make([]byte, 16)
-   binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
-   copy(mdatHeader[4:8], []byte("mdat"))
-   _, err = r.Writer.Write(mdatHeader)
-   return err
-}
-
 func (r *Remuxer) AddSegment(segmentData []byte) error {
    if r.Moov == nil {
       return errors.New("must call Initialize")
@@ -79,82 +50,6 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
          }
       }
    }
-   return nil
-}
-
-func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
-   traf := moof.Traf
-   if traf == nil {
-      return nil
-   }
-   tfhd := traf.Tfhd
-   if tfhd == nil {
-      return nil
-   }
-   senc := traf.Senc
-   sencIndex := 0
-   var newSamples []RemuxSample
-   defDur := tfhd.DefaultSampleDuration
-   defSize := tfhd.DefaultSampleSize
-   defFlags := tfhd.DefaultSampleFlags
-   mdatOffset := 0
-   for _, trun := range traf.Trun {
-      for i, sample := range trun.Samples {
-         remuxSample := RemuxSample{
-            Duration:              defDur,
-            Size:                  defSize,
-            IsSync:                true,
-            CompositionTimeOffset: 0,
-         }
-         currentFlags := defFlags
-         if i == 0 && (trun.Flags&0x000004) != 0 {
-            currentFlags = trun.FirstSampleFlags
-         }
-         if (trun.Flags & 0x000400) != 0 {
-            currentFlags = sample.Flags
-         }
-         if (trun.Flags & 0x000100) != 0 {
-            remuxSample.Duration = sample.Duration
-         }
-         if (trun.Flags & 0x000200) != 0 {
-            remuxSample.Size = sample.Size
-         }
-         if (trun.Flags & 0x000800) != 0 {
-            remuxSample.CompositionTimeOffset = sample.CompositionTimeOffset
-         }
-         if (currentFlags & 0x00010000) != 0 {
-            remuxSample.IsSync = false
-         } else {
-            remuxSample.IsSync = true
-         }
-         originalSize := int(remuxSample.Size)
-         if mdatOffset+originalSize > len(mdat.Payload) {
-            return errors.New("mdat payload too short for samples")
-         }
-         sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
-         var encInfo *SencSample
-         if senc != nil && sencIndex < len(senc.Samples) {
-            encInfo = &senc.Samples[sencIndex]
-            sencIndex++
-         }
-         if r.OnSample != nil {
-            r.OnSample(sampleData, encInfo)
-         }
-         newSamples = append(newSamples, remuxSample)
-         mdatOffset += originalSize
-      }
-   }
-
-   if len(newSamples) == 0 {
-      return nil
-   }
-   currentPos, _ := r.Writer.Seek(0, io.SeekCurrent)
-   r.chunkOffsets = append(r.chunkOffsets, uint64(currentPos))
-   if _, err := r.Writer.Write(mdat.Payload); err != nil {
-      return err
-   }
-   r.samples = append(r.samples, newSamples...)
-   r.segmentSampleCounts = append(r.segmentSampleCounts, uint32(len(newSamples)))
    return nil
 }
 
@@ -230,5 +125,110 @@ func (r *Remuxer) Finish() error {
       return err
    }
    r.Writer.Seek(0, io.SeekEnd)
+   return nil
+}
+
+///
+
+func (r *Remuxer) Initialize(initSegment []byte) error {
+   if r.Moov != nil {
+      return errors.New("already initialized")
+   }
+   if r.Writer == nil {
+      return errors.New("writer is nil")
+   }
+   boxes, err := DecodeBoxes(initSegment)
+   if err != nil {
+      return fmt.Errorf("parsing init segment: %w", err)
+   }
+   moovPtr, ok := FindMoov(boxes)
+   if !ok {
+      return errors.New("no moov found")
+   }
+   r.Moov = moovPtr
+   if len(r.Moov.Trak) == 0 {
+      return errors.New("no trak found")
+   }
+   r.mdatStartOffset, _ = r.Writer.Seek(0, io.SeekCurrent)
+   mdatHeader := make([]byte, 16)
+   binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
+   copy(mdatHeader[4:8], []byte("mdat"))
+   _, err = r.Writer.Write(mdatHeader)
+   return err
+}
+
+func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
+   traf := moof.Traf
+   if traf == nil {
+      return nil
+   }
+   tfhd := traf.Tfhd
+   if tfhd == nil {
+      return nil
+   }
+   senc := traf.Senc
+   sencIndex := 0
+   var newSamples []RemuxSample
+   defDur := tfhd.DefaultSampleDuration
+   defSize := tfhd.DefaultSampleSize
+   defFlags := tfhd.DefaultSampleFlags
+   mdatOffset := 0
+   for _, trun := range traf.Trun {
+      for i, sample := range trun.Samples {
+         remuxSample := RemuxSample{
+            Duration:              defDur,
+            Size:                  defSize,
+            IsSync:                true,
+            CompositionTimeOffset: 0,
+         }
+         currentFlags := defFlags
+         if i == 0 && (trun.Flags&0x000004) != 0 {
+            currentFlags = trun.FirstSampleFlags
+         }
+         if (trun.Flags & 0x000400) != 0 {
+            currentFlags = sample.Flags
+         }
+         if (trun.Flags & 0x000100) != 0 {
+            remuxSample.Duration = sample.Duration
+         }
+         if (trun.Flags & 0x000200) != 0 {
+            remuxSample.Size = sample.Size
+         }
+         if (trun.Flags & 0x000800) != 0 {
+            remuxSample.CompositionTimeOffset = sample.CompositionTimeOffset
+         }
+         if (currentFlags & 0x00010000) != 0 {
+            remuxSample.IsSync = false
+         } else {
+            remuxSample.IsSync = true
+         }
+         originalSize := int(remuxSample.Size)
+         if mdatOffset+originalSize > len(mdat.Payload) {
+            return errors.New("mdat payload too short for samples")
+         }
+         sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
+         var encInfo *SencSample
+         if senc != nil && sencIndex < len(senc.Samples) {
+            encInfo = &senc.Samples[sencIndex]
+            sencIndex++
+         }
+         if r.OnSample != nil {
+            r.OnSample(sampleData, encInfo)
+         }
+         newSamples = append(newSamples, remuxSample)
+         mdatOffset += originalSize
+      }
+   }
+
+   if len(newSamples) == 0 {
+      return nil
+   }
+   currentPos, _ := r.Writer.Seek(0, io.SeekCurrent)
+   r.chunkOffsets = append(r.chunkOffsets, uint64(currentPos))
+   if _, err := r.Writer.Write(mdat.Payload); err != nil {
+      return err
+   }
+   r.samples = append(r.samples, newSamples...)
+   r.segmentSampleCounts = append(r.segmentSampleCounts, uint32(len(newSamples)))
    return nil
 }

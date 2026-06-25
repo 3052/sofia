@@ -6,6 +6,15 @@ import (
    "errors"
 )
 
+func FindMoov(boxes []Box) (*MoovBox, bool) {
+   for _, box := range boxes {
+      if box.Moov != nil {
+         return box.Moov, true
+      }
+   }
+   return nil, false
+}
+
 // --- Box ---
 type Box struct {
    Moov *MoovBox
@@ -14,15 +23,6 @@ type Box struct {
    Sidx *SidxBox
    Pssh *PsshBox
    Raw  []byte
-}
-
-func (b *Box) Encode() []byte {
-   switch {
-   case b.Moov != nil:
-      return b.Moov.Encode()
-   default:
-      return b.Raw
-   }
 }
 
 func DecodeBoxes(data []byte) ([]Box, error) {
@@ -83,6 +83,15 @@ func DecodeBoxes(data []byte) ([]Box, error) {
    return boxes, nil
 }
 
+func (b *Box) Encode() []byte {
+   switch {
+   case b.Moov != nil:
+      return b.Moov.Encode()
+   default:
+      return b.Raw
+   }
+}
+
 // --- BoxHeader ---
 type BoxHeader struct {
    Size uint32
@@ -121,34 +130,6 @@ func DecodeMdatBox(data []byte) (*MdatBox, error) {
    }
    b.Payload = data[8:b.Header.Size]
    return b, nil
-}
-
-func FindMoov(boxes []Box) (*MoovBox, bool) {
-   for _, box := range boxes {
-      if box.Moov != nil {
-         return box.Moov, true
-      }
-   }
-   return nil, false
-}
-
-func FindSidx(boxes []Box) (*SidxBox, bool) {
-   for _, box := range boxes {
-      if box.Sidx != nil {
-         return box.Sidx, true
-      }
-   }
-   return nil, false
-}
-
-// --- SIDX ---
-type SidxReference struct {
-   ReferenceType      bool
-   ReferencedSize     uint32
-   SubsegmentDuration uint32
-   StartsWithSAP      bool
-   SAPType            uint8
-   SAPDeltaTime       uint32
 }
 
 type SidxBox struct {
@@ -221,11 +202,48 @@ func DecodeSidxBox(data []byte) (*SidxBox, error) {
    return b, nil
 }
 
+func FindSidx(boxes []Box) (*SidxBox, bool) {
+   for _, box := range boxes {
+      if box.Sidx != nil {
+         return box.Sidx, true
+      }
+   }
+   return nil, false
+}
+
+// --- SIDX ---
+type SidxReference struct {
+   ReferenceType      bool
+   ReferencedSize     uint32
+   SubsegmentDuration uint32
+   StartsWithSAP      bool
+   SAPType            uint8
+   SAPDeltaTime       uint32
+}
+
 // --- READING HELPER ---
 
 type parser struct {
    data   []byte
    offset int
+}
+
+func (p *parser) Byte() byte {
+   val := p.data[p.offset]
+   p.offset++
+   return val
+}
+
+func (p *parser) Bytes(n int) []byte {
+   val := p.data[p.offset : p.offset+n]
+   p.offset += n
+   return val
+}
+
+func (p *parser) Int32() int32 {
+   val := int32(binary.BigEndian.Uint32(p.data[p.offset:]))
+   p.offset += 4
+   return val
 }
 
 func (p *parser) Uint16() uint16 {
@@ -240,27 +258,9 @@ func (p *parser) Uint32() uint32 {
    return val
 }
 
-func (p *parser) Int32() int32 {
-   val := int32(binary.BigEndian.Uint32(p.data[p.offset:]))
-   p.offset += 4
-   return val
-}
-
 func (p *parser) Uint64() uint64 {
    val := binary.BigEndian.Uint64(p.data[p.offset:])
    p.offset += 8
-   return val
-}
-
-func (p *parser) Bytes(n int) []byte {
-   val := p.data[p.offset : p.offset+n]
-   p.offset += n
-   return val
-}
-
-func (p *parser) Byte() byte {
-   val := p.data[p.offset]
-   p.offset++
    return val
 }
 
@@ -269,6 +269,16 @@ func (p *parser) Byte() byte {
 type writer struct {
    buf    []byte
    offset int
+}
+
+func (w *writer) PutByte(data byte) {
+   w.buf[w.offset] = data
+   w.offset++
+}
+
+func (w *writer) PutBytes(data []byte) {
+   copy(w.buf[w.offset:], data)
+   w.offset += len(data)
 }
 
 func (w *writer) PutUint16(val uint16) {
@@ -284,14 +294,4 @@ func (w *writer) PutUint32(val uint32) {
 func (w *writer) PutUint64(val uint64) {
    binary.BigEndian.PutUint64(w.buf[w.offset:], val)
    w.offset += 8
-}
-
-func (w *writer) PutBytes(data []byte) {
-   copy(w.buf[w.offset:], data)
-   w.offset += len(data)
-}
-
-func (w *writer) PutByte(data byte) {
-   w.buf[w.offset] = data
-   w.offset++
 }

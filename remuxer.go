@@ -128,8 +128,6 @@ func (r *Remuxer) Finish() error {
    return nil
 }
 
-///
-
 func (r *Remuxer) Initialize(initSegment []byte) error {
    if r.Moov != nil {
       return errors.New("already initialized")

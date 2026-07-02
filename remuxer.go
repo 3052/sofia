@@ -8,6 +8,35 @@ import (
    "io"
 )
 
+// getMehdDuration extracts the total track fragment duration safely from the mvex -> mehd box
+func getMehdDuration(moov *MoovBox) uint64 {
+   if moov == nil {
+      return 0
+   }
+   for _, child := range moov.RawChildren {
+      if len(child) >= 8 && string(child[4:8]) == "mvex" {
+         payload := child[8:]
+         offset := 0
+         for offset+8 <= len(payload) {
+            size := binary.BigEndian.Uint32(payload[offset : offset+4])
+            if size < 8 {
+               break
+            }
+            if string(payload[offset+4:offset+8]) == "mehd" {
+               version := payload[offset+8]
+               if version == 1 && size >= 20 {
+                  return binary.BigEndian.Uint64(payload[offset+12 : offset+20])
+               } else if version == 0 && size >= 16 {
+                  return uint64(binary.BigEndian.Uint32(payload[offset+12 : offset+16]))
+               }
+            }
+            offset += int(size)
+         }
+      }
+   }
+   return 0
+}
+
 type RemuxSample struct {
    Size                  uint32
    Duration              uint32
@@ -59,10 +88,28 @@ func (r *Remuxer) Finish() error {
    }
    mdatEndOffset, _ := r.Writer.Seek(0, io.SeekCurrent)
    finalMdatSize := uint64(mdatEndOffset - r.mdatStartOffset)
+
    var totalDuration uint64
    for _, sample := range r.samples {
       totalDuration += uint64(sample.Duration)
    }
+
+   // --- SINGLE UNIFIED FIX ---
+   // The packager writes incorrect durations in the fragments (doubling the length).
+   // We compare our sum against the true track duration declared in the `mehd` box
+   // and fix the scaling retroactively.
+   if mehdDur := getMehdDuration(r.Moov); mehdDur > 0 && totalDuration > 0 {
+      ratio := float64(totalDuration) / float64(mehdDur)
+      if ratio > 1.5 && ratio < 2.5 {
+         divisor := uint32(ratio + 0.5)
+         totalDuration = 0
+         for i := range r.samples {
+            r.samples[i].Duration /= divisor
+            totalDuration += uint64(r.samples[i].Duration)
+         }
+      }
+   }
+
    stts := buildStts(r.samples)
    stsz := buildStsz(r.samples)
    stsc := buildStsc(r.segmentSampleCounts)
@@ -90,18 +137,22 @@ func (r *Remuxer) Finish() error {
    if mdhd == nil {
       return errors.New("missing mdhd")
    }
+
    mdhd.SetDuration(totalDuration)
    if mvhd := r.Moov.Mvhd; mvhd != nil {
       mvhd.Timescale = mdhd.Timescale
       mvhd.SetDuration(totalDuration)
    }
+
    r.Moov.RemoveMvex()
    trak.RemoveEdts()
+
    stbl.RawChildren = nil // Clear existing table boxes
    if stbl.Stsd == nil {
       return errors.New("missing stsd")
    }
    stbl.Stsd.RemoveSinf()
+
    stbl.RawChildren = append(stbl.RawChildren, stts)
    if ctts != nil {
       stbl.RawChildren = append(stbl.RawChildren, ctts)
@@ -112,6 +163,7 @@ func (r *Remuxer) Finish() error {
    if stss != nil {
       stbl.RawChildren = append(stbl.RawChildren, stss)
    }
+
    moovBytes := r.Moov.Encode()
    if _, err := r.Writer.Write(moovBytes); err != nil {
       return err
@@ -171,6 +223,7 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
    defSize := tfhd.DefaultSampleSize
    defFlags := tfhd.DefaultSampleFlags
    mdatOffset := 0
+
    for _, trun := range traf.Trun {
       for i, sample := range trun.Samples {
          remuxSample := RemuxSample{
@@ -205,6 +258,7 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             return errors.New("mdat payload too short for samples")
          }
          sampleData := mdat.Payload[mdatOffset : mdatOffset+originalSize]
+
          var encInfo *SencSample
          if senc != nil && sencIndex < len(senc.Samples) {
             encInfo = &senc.Samples[sencIndex]

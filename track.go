@@ -169,6 +169,16 @@ func (b *MdiaBox) Encode() []byte {
    return buffer
 }
 
+func (b *MdiaBox) HandlerType() string {
+   for _, child := range b.RawChildren {
+      // hdlr box header(8) + version/flags(4) + pre_defined(4) + handler_type(4) = 20
+      if len(child) >= 20 && string(child[4:8]) == "hdlr" {
+         return string(child[16:20])
+      }
+   }
+   return ""
+}
+
 // --- MINF ---
 type MinfBox struct {
    Header      *BoxHeader

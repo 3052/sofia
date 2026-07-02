@@ -2,6 +2,7 @@
 package sofia
 
 import (
+   "encoding/binary"
    "errors"
    "fmt"
 )
@@ -250,6 +251,29 @@ func DecodeStsdBox(data []byte) (*StsdBox, error) {
       offset += boxSize
    }
    return b, nil
+}
+
+// AudioSampleRate extracts the 16.16 fixed-point sample rate from an AudioSampleEntry.
+// Note: This should only be called on tracks where the handler type is "soun".
+func (b *StsdBox) AudioSampleRate() uint32 {
+   for _, child := range b.RawChildren {
+      // ISO/IEC 14496-12: SampleEntry(16) + Audio-specific fields(16) + SampleRate(4) = 36 bytes minimum
+      if len(child) >= 36 {
+         sr := binary.BigEndian.Uint32(child[32:36])
+         return sr >> 16
+      }
+   }
+
+   for _, enc := range b.EncChildren {
+      // If encrypted, the enca EntryHeader holds the first 28 bytes of the payload
+      // 8 (box header) + 24 (offset to sample rate inside payload) = 32
+      if string(enc.Header.Type[:]) == "enca" && len(enc.EntryHeader) >= 28 {
+         sr := binary.BigEndian.Uint32(enc.EntryHeader[24:28])
+         return sr >> 16
+      }
+   }
+
+   return 0
 }
 
 func (b *StsdBox) Encode() []byte {

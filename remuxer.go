@@ -90,6 +90,19 @@ func (r *Remuxer) Finish() error {
    if mdhd == nil {
       return errors.New("missing mdhd")
    }
+
+   // Detect and fix the doubled duration discrepancy in some HE-AAC DASH streams
+   // We only apply this fix if we are strictly dealing with a "soun" (audio) track.
+   if mdia.HandlerType() == "soun" && stbl.Stsd != nil {
+      if sr := stbl.Stsd.AudioSampleRate(); sr > 0 {
+         // If track timescale is exactly half the output sample rate (the core rate),
+         // yet durations use the full 48000hz assumption, we match timescale to sample rate.
+         if mdhd.Timescale*2 == sr {
+            mdhd.Timescale = sr
+         }
+      }
+   }
+
    mdhd.SetDuration(totalDuration)
    if mvhd := r.Moov.Mvhd; mvhd != nil {
       mvhd.Timescale = mdhd.Timescale

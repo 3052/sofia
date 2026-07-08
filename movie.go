@@ -137,7 +137,7 @@ func DecodeMvhdBox(data []byte) (*MvhdBox, error) {
    copy(b.Flags[:], versionAndFlags[1:])
 
    if b.Version == 1 {
-      if len(data) < 36 { // 8 header + 4 version/flags + 24 v1 body
+      if len(data) < 40 { // 8 header + 4 version/flags + 28 v1 body
          return nil, errors.New("mvhd v1 too short")
       }
       b.CreationTime = p.Uint64()
@@ -145,7 +145,7 @@ func DecodeMvhdBox(data []byte) (*MvhdBox, error) {
       b.Timescale = p.Uint32()
       b.Duration = p.Uint64()
    } else { // Version 0
-      if len(data) < 24 { // 8 header + 4 version/flags + 12 v0 body
+      if len(data) < 28 { // 8 header + 4 version/flags + 16 v0 body
          return nil, errors.New("mvhd v0 too short")
       }
       b.CreationTime = uint64(p.Uint32())

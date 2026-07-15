@@ -57,7 +57,10 @@ func (r *Remuxer) Finish() error {
    if r.Moov == nil {
       return errors.New("not initialized")
    }
-   mdatEndOffset, _ := r.Writer.Seek(0, io.SeekCurrent)
+   mdatEndOffset, err := r.Writer.Seek(0, io.SeekCurrent)
+   if err != nil {
+      return fmt.Errorf("seeking to get mdat end offset: %w", err)
+   }
    finalMdatSize := uint64(mdatEndOffset - r.mdatStartOffset)
    var totalDuration uint64
    for _, sample := range r.samples {
@@ -117,14 +120,16 @@ func (r *Remuxer) Finish() error {
       return err
    }
    if _, err := r.Writer.Seek(r.mdatStartOffset+8, io.SeekStart); err != nil {
-      return err
+      return fmt.Errorf("seeking to patch mdat size: %w", err)
    }
    var sizeBuf [8]byte
    binary.BigEndian.PutUint64(sizeBuf[:], finalMdatSize)
    if _, err := r.Writer.Write(sizeBuf[:]); err != nil {
       return err
    }
-   r.Writer.Seek(0, io.SeekEnd)
+   if _, err := r.Writer.Seek(0, io.SeekEnd); err != nil {
+      return fmt.Errorf("seeking to end of file: %w", err)
+   }
    return nil
 }
 
@@ -147,7 +152,10 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    if len(r.Moov.Trak) == 0 {
       return errors.New("no trak found")
    }
-   r.mdatStartOffset, _ = r.Writer.Seek(0, io.SeekCurrent)
+   r.mdatStartOffset, err = r.Writer.Seek(0, io.SeekCurrent)
+   if err != nil {
+      return fmt.Errorf("seeking to get current position: %w", err)
+   }
    mdatHeader := make([]byte, 16)
    binary.BigEndian.PutUint32(mdatHeader[0:4], 1)
    copy(mdatHeader[4:8], []byte("mdat"))
@@ -180,11 +188,20 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
             CompositionTimeOffset: 0,
          }
          currentFlags := defFlags
-         if i == 0 && (trun.Flags&0x000004) != 0 {
-            currentFlags = trun.FirstSampleFlags
-         }
+         // NOTE: The order of these two flag checks matters!
+         // Per ISO/IEC 14496-12, if both sample_flags_present (0x000400) and
+         // first_sample_flags_present (0x000004) are set, FirstSampleFlags
+         // must OVERRIDE sample.Flags for the first sample (i==0).
+         // Therefore, we must check sample_flags_present FIRST, then let
+         // first_sample_flags_present overwrite it for i==0.
+         // DO NOT swap these blocks, or FirstSampleFlags will be clobbered
+         // by sample.Flags and the keyframe (sync sample) detection will be
+         // corrupted for the first sample of each trun.
          if (trun.Flags & 0x000400) != 0 {
             currentFlags = sample.Flags
+         }
+         if i == 0 && (trun.Flags&0x000004) != 0 {
+            currentFlags = trun.FirstSampleFlags
          }
          if (trun.Flags & 0x000100) != 0 {
             remuxSample.Duration = sample.Duration
@@ -221,7 +238,10 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
    if len(newSamples) == 0 {
       return nil
    }
-   currentPos, _ := r.Writer.Seek(0, io.SeekCurrent)
+   currentPos, err := r.Writer.Seek(0, io.SeekCurrent)
+   if err != nil {
+      return fmt.Errorf("seeking to get chunk offset: %w", err)
+   }
    r.chunkOffsets = append(r.chunkOffsets, uint64(currentPos))
    if _, err := r.Writer.Write(mdat.Payload); err != nil {
       return err

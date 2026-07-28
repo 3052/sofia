@@ -72,6 +72,9 @@ func DecodeEncBox(data []byte) (*EncBox, error) {
 func (b *EncBox) Encode() []byte {
    buffer := make([]byte, 8)
    buffer = append(buffer, b.EntryHeader...)
+   if b.Sinf != nil {
+      buffer = append(buffer, b.Sinf.Encode()...)
+   }
    for _, child := range b.RawChildren {
       buffer = append(buffer, child...)
    }
@@ -99,6 +102,15 @@ func DecodeFrmaBox(data []byte) (*FrmaBox, error) {
    }
    copy(b.DataFormat[:], data[8:12])
    return b, nil
+}
+
+func (b *FrmaBox) Encode() []byte {
+   buffer := make([]byte, 12)
+   w := writer{buf: buffer}
+   w.PutUint32(12)
+   w.PutBytes([]byte{'f', 'r', 'm', 'a'})
+   w.PutBytes(b.DataFormat[:])
+   return buffer
 }
 
 // --- SCHI (Scheme Information) ---
@@ -145,6 +157,19 @@ func DecodeSchiBox(data []byte) (*SchiBox, error) {
       offset += boxSize
    }
    return b, nil
+}
+
+func (b *SchiBox) Encode() []byte {
+   buffer := make([]byte, 8)
+   if b.Tenc != nil {
+      buffer = append(buffer, b.Tenc.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
+   }
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 // --- SINF ---
@@ -198,6 +223,22 @@ func DecodeSinfBox(data []byte) (*SinfBox, error) {
       offset += boxSize
    }
    return b, nil
+}
+
+func (b *SinfBox) Encode() []byte {
+   buffer := make([]byte, 8)
+   if b.Frma != nil {
+      buffer = append(buffer, b.Frma.Encode()...)
+   }
+   if b.Schi != nil {
+      buffer = append(buffer, b.Schi.Encode()...)
+   }
+   for _, child := range b.RawChildren {
+      buffer = append(buffer, child...)
+   }
+   b.Header.Size = uint32(len(buffer))
+   b.Header.Put(buffer)
+   return buffer
 }
 
 // --- STSD ---

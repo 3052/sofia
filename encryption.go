@@ -213,3 +213,26 @@ func DecodeTencBox(data []byte) (*TencBox, error) {
    // For other versions, we do nothing and leave the fields as their zero-value.
    return b, nil
 }
+
+func (b *TencBox) Encode() []byte {
+   bodySize := 4 /* ver/flags */ + 2 /* reserved */ + 1 + 1 + 16 /* KID */
+   hasConstantIV := b.DefaultIsProtected == 1 && b.DefaultPerSampleIVSize == 0
+   if hasConstantIV {
+      bodySize += 1 + len(b.DefaultConstantIV)
+   }
+   total := uint32(8 + bodySize)
+   buffer := make([]byte, total)
+   w := writer{buf: buffer}
+   w.PutUint32(total)
+   w.PutBytes([]byte{'t', 'e', 'n', 'c'})
+   w.PutUint32(uint32(b.Version)<<24 | (b.Flags & 0x00FFFFFF))
+   w.PutBytes([]byte{0, 0}) // 2 reserved bytes (matches v0 decode)
+   w.PutByte(b.DefaultIsProtected)
+   w.PutByte(b.DefaultPerSampleIVSize)
+   w.PutBytes(b.DefaultKID[:])
+   if hasConstantIV {
+      w.PutByte(b.DefaultConstantIVSize)
+      w.PutBytes(b.DefaultConstantIV)
+   }
+   return buffer
+}

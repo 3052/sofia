@@ -83,15 +83,6 @@ func DecodeBoxes(data []byte) ([]Box, error) {
    return boxes, nil
 }
 
-func (b *Box) Encode() []byte {
-   switch {
-   case b.Moov != nil:
-      return b.Moov.Encode()
-   default:
-      return b.Raw
-   }
-}
-
 // --- BoxHeader ---
 type BoxHeader struct {
    Size uint32

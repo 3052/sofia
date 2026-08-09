@@ -1,4 +1,3 @@
-// config.go
 package sofia
 
 import (
@@ -330,3 +329,5 @@ func (b *StsdBox) Sinf() (*SinfBox, *BoxHeader, bool) {
    }
    return nil, nil, false
 }
+
+// config.go

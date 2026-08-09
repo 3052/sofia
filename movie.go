@@ -1,4 +1,3 @@
-// movie.go
 package sofia
 
 import (
@@ -197,3 +196,5 @@ func (b *MvhdBox) SetDuration(duration uint64) {
       b.Version = 1
    }
 }
+
+// movie.go

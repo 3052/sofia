@@ -1,4 +1,3 @@
-// track.go
 package sofia
 
 import "errors"
@@ -297,3 +296,5 @@ func (b *TrakBox) RemoveEdts() {
    }
    b.RawChildren = kept
 }
+
+// track.go

@@ -1,4 +1,3 @@
-// core.go
 package sofia
 
 import (
@@ -286,3 +285,5 @@ func (w *writer) PutUint64(val uint64) {
    binary.BigEndian.PutUint64(w.buf[w.offset:], val)
    w.offset += 8
 }
+
+// core.go

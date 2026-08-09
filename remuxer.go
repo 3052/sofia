@@ -1,4 +1,3 @@
-// remuxer.go
 package sofia
 
 import (
@@ -250,3 +249,5 @@ func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {
    r.segmentSampleCounts = append(r.segmentSampleCounts, uint32(len(newSamples)))
    return nil
 }
+
+// remuxer.go

@@ -1,4 +1,3 @@
-// fragment.go
 package sofia
 
 import "errors"
@@ -265,3 +264,5 @@ type TrunSample struct {
    Flags                 uint32
    CompositionTimeOffset int32
 }
+
+// fragment.go

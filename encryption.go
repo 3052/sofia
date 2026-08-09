@@ -1,4 +1,3 @@
-// encryption.go
 package sofia
 
 import (
@@ -236,3 +235,5 @@ func (b *TencBox) Encode() []byte {
    }
    return buffer
 }
+
+// encryption.go

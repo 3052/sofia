@@ -1,4 +1,3 @@
-// tables.go
 package sofia
 
 import "errors"
@@ -364,3 +363,5 @@ type SttsEntry struct {
    SampleCount    uint32
    SampleDuration uint32
 }
+
+// tables.go

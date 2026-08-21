@@ -21,6 +21,15 @@ func DecodeEncBox(data []byte) (*EncBox, error) {
       return nil, err
    }
 
+   boxSize := int(b.Header.Size)
+   if boxSize == 0 {
+      boxSize = len(data)
+      b.Header.Size = uint32(boxSize)
+   }
+   if boxSize < 8 || boxSize > len(data) {
+      return nil, fmt.Errorf("enc box size %d invalid for %d bytes of data", boxSize, len(data))
+   }
+
    var entrySize int
    switch string(b.Header.Type[:]) {
    case "enca":
@@ -30,29 +39,29 @@ func DecodeEncBox(data []byte) (*EncBox, error) {
    default:
       return nil, fmt.Errorf("unknown encryption box type %q", b.Header.Type[:])
    }
+
    payloadOffset := 8
-   if len(data) < payloadOffset+entrySize {
-      b.EntryHeader = data[payloadOffset:b.Header.Size]
-      return b, nil
+   if boxSize < payloadOffset+entrySize {
+      return nil, fmt.Errorf("enc box too small for sample entry header: need %d bytes, have %d", payloadOffset+entrySize, boxSize)
    }
    b.EntryHeader = data[payloadOffset : payloadOffset+entrySize]
 
-   payload := data[payloadOffset+entrySize : b.Header.Size]
+   payload := data[payloadOffset+entrySize : boxSize]
    offset := 0
    for offset < len(payload) {
       header, err := DecodeBoxHeader(payload[offset:])
       if err != nil {
          break
       }
-      boxSize := int(header.Size)
-      if boxSize == 0 {
-         boxSize = len(payload) - offset
+      childSize := int(header.Size)
+      if childSize == 0 {
+         childSize = len(payload) - offset
       }
-      if boxSize < 8 || offset+boxSize > len(payload) {
+      if childSize < 8 || offset+childSize > len(payload) {
          return nil, errors.New("invalid child box size")
       }
 
-      content := payload[offset : offset+boxSize]
+      content := payload[offset : offset+childSize]
       switch string(header.Type[:]) {
       case "sinf":
          sinf, err := DecodeSinfBox(content)
@@ -63,7 +72,7 @@ func DecodeEncBox(data []byte) (*EncBox, error) {
       default:
          b.RawChildren = append(b.RawChildren, content)
       }
-      offset += boxSize
+      offset += childSize
    }
    return b, nil
 }

@@ -20,7 +20,6 @@ type Box struct {
    Moof *MoofBox
    Mdat *MdatBox
    Sidx *SidxBox
-   Pssh *PsshBox
    Raw  []byte
 }
 
@@ -67,12 +66,6 @@ func DecodeBoxes(data []byte) ([]Box, error) {
             return nil, err
          }
          currentBox.Sidx = sidx
-      case "pssh":
-         pssh, err := DecodePsshBox(boxData)
-         if err != nil {
-            return nil, err
-         }
-         currentBox.Pssh = pssh
       default:
          currentBox.Raw = boxData
       }

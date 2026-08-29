@@ -6,7 +6,6 @@ import "errors"
 type MoofBox struct {
    Header      *BoxHeader
    Traf        *TrafBox
-   Pssh        []*PsshBox
    RawChildren [][]byte
 }
 
@@ -41,12 +40,6 @@ func DecodeMoofBox(data []byte) (*MoofBox, error) {
             return nil, err
          }
          b.Traf = traf
-      case "pssh":
-         pssh, err := DecodePsshBox(content)
-         if err != nil {
-            return nil, err
-         }
-         b.Pssh = append(b.Pssh, pssh)
       default:
          b.RawChildren = append(b.RawChildren, content)
       }

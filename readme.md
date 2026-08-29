@@ -16,8 +16,6 @@
 
 **`Decrypt`**: Applies an AES-CTR XOR key stream directly onto the data byte slice. If this slice is backed by a memory-mapped file, it modifies the file on disk in-place.
 
-**`MoovBox.RemovePssh`**: Mutates the in-memory `MoovBox` to strip out all PSSH (Protection System Specific Header) boxes, altering the structure before it is written to a file.
-
 **`MoovBox.RemoveMvex`**: Mutates the in-memory `MoovBox` to strip out the `mvex` (Movie Extends) boxes, altering the structure before it is written to a file.
 
 **`TrakBox.RemoveEdts`**: Mutates the in-memory `TrakBox` to strip out the `edts` (Edit List) boxes, altering the structure before it is written to a file.

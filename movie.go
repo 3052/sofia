@@ -102,10 +102,6 @@ func (b *MoovBox) RemoveMvex() {
    b.RawChildren = kept
 }
 
-func (b *MoovBox) RemovePssh() {
-   b.Pssh = nil
-}
-
 // --- MVHD ---
 type MvhdBox struct {
    Header           *BoxHeader

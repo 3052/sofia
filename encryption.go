@@ -36,6 +36,19 @@ func Decrypt(data []byte, sample *SencSample, block cipher.Block) {
    }
 }
 
+// ExtractPsshData takes a byte slice that may be raw protobuf, a single PSSH box,
+// or nested PSSH boxes, and returns the innermost data payload.
+func ExtractPsshData(data []byte) ([]byte, error) {
+   for len(data) >= 8 && string(data[4:8]) == "pssh" {
+      box, err := DecodePsshBox(data)
+      if err != nil {
+         return nil, err
+      }
+      data = box.Data
+   }
+   return data, nil
+}
+
 // --- PSSH ---
 type PsshBox struct {
    Header   *BoxHeader

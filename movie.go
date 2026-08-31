@@ -82,6 +82,31 @@ func (b *MoovBox) Encode() []byte {
    return buffer
 }
 
+// FindDefaultKID walks the first track's sample entries and returns the first
+// non-zero default KID declared by a 'tenc' box, following
+// trak > mdia > minf > stbl > stsd > enc > sinf > schi > tenc.
+// An all-zero KID means no key is declared by that box, so it is skipped.
+// Returns nil if no KID is found.
+func (b *MoovBox) FindDefaultKID() []byte {
+   if len(b.Trak) == 0 {
+      return nil
+   }
+   trak := b.Trak[0]
+   if trak.Mdia == nil || trak.Mdia.Minf == nil || trak.Mdia.Minf.Stbl == nil || trak.Mdia.Minf.Stbl.Stsd == nil {
+      return nil
+   }
+   for _, enc := range trak.Mdia.Minf.Stbl.Stsd.EncChildren {
+      if enc.Sinf == nil || enc.Sinf.Schi == nil || enc.Sinf.Schi.Tenc == nil {
+         continue
+      }
+      kid := enc.Sinf.Schi.Tenc.DefaultKID
+      if kid != ([16]byte{}) {
+         return kid[:]
+      }
+   }
+   return nil
+}
+
 func (b *MoovBox) FindPssh(systemID []byte) (*PsshBox, bool) {
    for _, pssh := range b.Pssh {
       if bytes.Equal(pssh.SystemID[:], systemID) {

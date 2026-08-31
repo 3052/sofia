@@ -7,6 +7,14 @@ import (
    "io"
 )
 
+// AppendResult describes the fragments an AddSegment call appended to the file.
+type AppendResult struct {
+   EndOffset       int64
+   ChunkOffsets    []uint64
+   SamplesPerChunk []uint32
+   Samples         []RemuxSample
+}
+
 type RemuxSample struct {
    Size                  uint32
    Duration              uint32
@@ -25,15 +33,17 @@ type Remuxer struct {
    OnSample            func(data []byte, sample *SencSample)
 }
 
-func (r *Remuxer) AddSegment(segmentData []byte) error {
+func (r *Remuxer) AddSegment(segmentData []byte) (*AppendResult, error) {
    if r.Moov == nil {
-      return errors.New("must call Initialize")
+      return nil, errors.New("must call Initialize")
    }
    r.segmentCount++
    boxes, err := DecodeBoxes(segmentData)
    if err != nil {
-      return fmt.Errorf("parsing segment %d: %w", r.segmentCount, err)
+      return nil, fmt.Errorf("parsing segment %d: %w", r.segmentCount, err)
    }
+   sampleBase := len(r.samples)
+   chunkBase := len(r.chunkOffsets)
    var pendingMoof *MoofBox
    for i, box := range boxes {
       if box.Moof != nil {
@@ -43,13 +53,22 @@ func (r *Remuxer) AddSegment(segmentData []byte) error {
       if box.Mdat != nil {
          if pendingMoof != nil {
             if err := r.processFragment(pendingMoof, box.Mdat); err != nil {
-               return fmt.Errorf("processing fragment at box index %d: %w", i, err)
+               return nil, fmt.Errorf("processing fragment at box index %d: %w", i, err)
             }
             pendingMoof = nil
          }
       }
    }
-   return nil
+   endOffset, err := r.Writer.Seek(0, io.SeekCurrent)
+   if err != nil {
+      return nil, fmt.Errorf("seeking to get segment end offset: %w", err)
+   }
+   return &AppendResult{
+      EndOffset:       endOffset,
+      ChunkOffsets:    r.chunkOffsets[chunkBase:],
+      SamplesPerChunk: r.segmentSampleCounts[chunkBase:],
+      Samples:         r.samples[sampleBase:],
+   }, nil
 }
 
 func (r *Remuxer) Finish() error {
@@ -160,6 +179,47 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    copy(mdatHeader[4:8], []byte("mdat"))
    _, err = r.Writer.Write(mdatHeader)
    return err
+}
+
+// Resume prepares the remuxer to continue writing a file that was
+// interrupted mid-download. The file must have been created by Initialize,
+// so its extended-size 'mdat' box sits at the start of the file. samples,
+// chunkOffsets and samplesPerChunk must describe the fragments already
+// present in the file, and segmentsDone is the number of AddSegment calls
+// that produced them. On success the writer is positioned at the end of
+// the valid data, ready for AddSegment.
+func (r *Remuxer) Resume(initSegment []byte, segmentsDone int, samples []RemuxSample, chunkOffsets []uint64, samplesPerChunk []uint32) error {
+   if r.Moov != nil {
+      return errors.New("already initialized")
+   }
+   if r.Writer == nil {
+      return errors.New("writer is nil")
+   }
+   if len(chunkOffsets) != len(samplesPerChunk) {
+      return errors.New("inconsistent resume state")
+   }
+   boxes, err := DecodeBoxes(initSegment)
+   if err != nil {
+      return fmt.Errorf("parsing init segment: %w", err)
+   }
+   moovPtr, ok := FindMoov(boxes)
+   if !ok {
+      return errors.New("no moov found")
+   }
+   r.Moov = moovPtr
+   if len(r.Moov.Trak) == 0 {
+      return errors.New("no trak found")
+   }
+   // Initialize always writes the mdat header at the start of a fresh file.
+   r.mdatStartOffset = 0
+   r.samples = samples
+   r.chunkOffsets = chunkOffsets
+   r.segmentSampleCounts = samplesPerChunk
+   r.segmentCount = segmentsDone
+   if _, err := r.Writer.Seek(0, io.SeekEnd); err != nil {
+      return fmt.Errorf("seeking to end of file: %w", err)
+   }
+   return nil
 }
 
 func (r *Remuxer) processFragment(moof *MoofBox, mdat *MdatBox) error {

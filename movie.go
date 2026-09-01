@@ -5,6 +5,52 @@ import (
    "errors"
 )
 
+// --- MOOF ---
+type MoofBox struct {
+   Header      *BoxHeader
+   Traf        *TrafBox
+   RawChildren [][]byte
+}
+
+func DecodeMoofBox(data []byte) (*MoofBox, error) {
+   b := &MoofBox{}
+   var err error
+   b.Header, err = DecodeBoxHeader(data)
+   if err != nil {
+      return nil, err
+   }
+
+   payload := data[8:b.Header.Size]
+   offset := 0
+   for offset < len(payload) {
+      header, err := DecodeBoxHeader(payload[offset:])
+      if err != nil {
+         break
+      }
+      boxSize := int(header.Size)
+      if boxSize == 0 {
+         boxSize = len(payload) - offset
+      }
+      if boxSize < 8 || offset+boxSize > len(payload) {
+         return nil, errors.New("invalid child box size")
+      }
+
+      content := payload[offset : offset+boxSize]
+      switch string(header.Type[:]) {
+      case "traf":
+         traf, err := DecodeTrafBox(content)
+         if err != nil {
+            return nil, err
+         }
+         b.Traf = traf
+      default:
+         b.RawChildren = append(b.RawChildren, content)
+      }
+      offset += boxSize
+   }
+   return b, nil
+}
+
 // --- MOOV ---
 type MoovBox struct {
    Header      *BoxHeader

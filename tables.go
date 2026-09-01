@@ -27,7 +27,7 @@ func buildChunkOffsetBox(offsets []uint64) []byte {
    return box.Encode()
 }
 
-func buildCtts(samples []RemuxSample) []byte {
+func buildCtts(samples []*RemuxSample) []byte {
    hasCTO := false
    for _, sample := range samples {
       if sample.CompositionTimeOffset != 0 {
@@ -77,7 +77,7 @@ func buildStsc(counts []uint32) []byte {
    return box.Encode()
 }
 
-func buildStss(samples []RemuxSample) []byte {
+func buildStss(samples []*RemuxSample) []byte {
    var indices []uint32
    for i, sample := range samples {
       if sample.IsSync {
@@ -91,7 +91,7 @@ func buildStss(samples []RemuxSample) []byte {
    return box.Encode()
 }
 
-func buildStsz(samples []RemuxSample) []byte {
+func buildStsz(samples []*RemuxSample) []byte {
    entries := make([]uint32, len(samples))
    for i, sample := range samples {
       entries[i] = sample.Size
@@ -100,7 +100,7 @@ func buildStsz(samples []RemuxSample) []byte {
    return box.Encode()
 }
 
-func buildStts(samples []RemuxSample) []byte {
+func buildStts(samples []*RemuxSample) []byte {
    if len(samples) == 0 {
       return nil
    }

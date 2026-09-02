@@ -2,172 +2,125 @@ package sofia
 
 import "errors"
 
-// buildChunkOffsetBox decides whether to use stco or co64.
-func buildChunkOffsetBox(offsets []uint64) []byte {
-   use64bit := false
-   for _, offset := range offsets {
-      if offset > 0xFFFFFFFF {
-         use64bit = true
-         break
-      }
+// encodeTable builds a table box from raw 4-byte entries. count is the
+// entry count written into the box, which differs from len(entries) when
+// one entry spans several words (stts, ctts, stsc).
+func encodeTable(name string, count int, entries []uint32) []byte {
+   buffer := make([]byte, 16+len(entries)*4)
+   w := writer{buf: buffer}
+   w.offset = 8
+   w.PutUint32(0) // version and flags
+   w.PutUint32(uint32(count))
+   for _, entry := range entries {
+      w.PutUint32(entry)
    }
-
-   if use64bit {
-      // Build a 'co64' box
-      box := Co64Box{Header: &BoxHeader{}, Offsets: offsets}
-      return box.Encode()
-   }
-
-   // Build an 'stco' box
-   entries32 := make([]uint32, len(offsets))
-   for i, offset := range offsets {
-      entries32[i] = uint32(offset)
-   }
-   box := StcoBox{Header: &BoxHeader{}, Offsets: entries32}
-   return box.Encode()
+   header := &BoxHeader{Size: uint32(len(buffer))}
+   copy(header.Type[:], name)
+   header.Put(buffer)
+   return buffer
 }
 
-func buildCtts(samples []*RemuxSample) []byte {
-   hasCTO := false
-   for _, sample := range samples {
-      if sample.CompositionTimeOffset != 0 {
-         hasCTO = true
-         break
-      }
+// encodeTable64 is encodeTable with 8-byte entries.
+func encodeTable64(name string, entries []uint64) []byte {
+   buffer := make([]byte, 16+len(entries)*8)
+   w := writer{buf: buffer}
+   w.offset = 8
+   w.PutUint32(0) // version and flags
+   w.PutUint32(uint32(len(entries)))
+   for _, entry := range entries {
+      w.PutUint64(entry)
    }
-   if !hasCTO {
-      return nil // No ctts box needed if all offsets are 0
-   }
-
-   var entries []CttsEntry
-   if len(samples) > 0 {
-      currentOffset := samples[0].CompositionTimeOffset
-      currentCount := uint32(0)
-      for _, sample := range samples {
-         if sample.CompositionTimeOffset == currentOffset {
-            currentCount++
-         } else {
-            entries = append(entries, CttsEntry{currentCount, currentOffset})
-            currentOffset = sample.CompositionTimeOffset
-            currentCount = 1
-         }
-      }
-      entries = append(entries, CttsEntry{currentCount, currentOffset})
-   }
-
-   box := CttsBox{Header: &BoxHeader{}, Entries: entries}
-   return box.Encode()
+   header := &BoxHeader{Size: uint32(len(buffer))}
+   copy(header.Type[:], name)
+   header.Put(buffer)
+   return buffer
 }
 
-func buildStsc(counts []uint32) []byte {
-   var entries []StscEntry
-   chunkIdx := uint32(1)
-   for _, count := range counts {
-      if len(entries) > 0 {
-         last := &entries[len(entries)-1]
-         if last.SamplesPerChunk == count {
-            chunkIdx++
-            continue
-         }
-      }
-      entries = append(entries, StscEntry{chunkIdx, count, 1})
-      chunkIdx++
+// The sample tables of a progressive MP4. stbl is the container; its child
+// boxes map to RemuxSample fields (stts durations, ctts composition time
+// offsets, stsz sizes, stss sync flags) and to chunk locations (stsc
+// counts, stco/co64 offsets). The table boxes store only their entries:
+// headers exist only in encoded bytes and are rebuilt by the encoders.
+
+// tableU32 decodes the common table shape — version/flags, entry count,
+// then count 4-byte entries — and returns the raw entries.
+func tableU32(data []byte) ([]uint32, error) {
+   if len(data) < 16 {
+      return nil, errors.New("box too short")
    }
-   box := StscBox{Header: &BoxHeader{}, Entries: entries}
-   return box.Encode()
+   p := parser{data: data, offset: 8}
+   _ = p.Uint32() // version and flags
+   count := p.Uint32()
+   if int(count) > (len(data)-p.offset)/4 {
+      return nil, errors.New("box too short for declared entries")
+   }
+   entries := make([]uint32, count)
+   for i := range entries {
+      entries[i] = p.Uint32()
+   }
+   return entries, nil
 }
 
-func buildStss(samples []*RemuxSample) []byte {
-   var indices []uint32
-   for i, sample := range samples {
-      if sample.IsSync {
-         indices = append(indices, uint32(i+1))
-      }
+// tableU64 is tableU32 with 8-byte entries.
+func tableU64(data []byte) ([]uint64, error) {
+   if len(data) < 16 {
+      return nil, errors.New("box too short")
    }
-   if len(indices) == len(samples) {
-      return nil
+   p := parser{data: data, offset: 8}
+   _ = p.Uint32() // version and flags
+   count := p.Uint32()
+   if int(count) > (len(data)-p.offset)/8 {
+      return nil, errors.New("box too short for declared entries")
    }
-   box := StssBox{Header: &BoxHeader{}, Indices: indices}
-   return box.Encode()
-}
-
-func buildStsz(samples []*RemuxSample) []byte {
-   entries := make([]uint32, len(samples))
-   for i, sample := range samples {
-      entries[i] = sample.Size
+   entries := make([]uint64, count)
+   for i := range entries {
+      entries[i] = p.Uint64()
    }
-   box := StszBox{Header: &BoxHeader{}, SampleSize: 0, SampleCount: uint32(len(samples)), EntrySizes: entries}
-   return box.Encode()
-}
-
-func buildStts(samples []*RemuxSample) []byte {
-   if len(samples) == 0 {
-      return nil
-   }
-   var entries []SttsEntry
-   currentDuration := samples[0].Duration
-   currentCount := uint32(0)
-   for _, sample := range samples {
-      if sample.Duration == currentDuration {
-         currentCount++
-      } else {
-         entries = append(entries, SttsEntry{currentCount, currentDuration})
-         currentDuration = sample.Duration
-         currentCount = 1
-      }
-   }
-   entries = append(entries, SttsEntry{currentCount, currentDuration})
-   box := SttsBox{Header: &BoxHeader{}, Entries: entries}
-   return box.Encode()
+   return entries, nil
 }
 
 // --- CO64 ---
 type Co64Box struct {
-   Header  *BoxHeader
    Offsets []uint64
 }
 
-func (b *Co64Box) Encode() []byte {
-   size := 16 + len(b.Offsets)*8
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8 // Skip header
-   w.PutUint32(0)
-   w.PutUint32(uint32(len(b.Offsets)))
-   for _, offset := range b.Offsets {
-      w.PutUint64(offset)
+func DecodeCo64Box(data []byte) (*Co64Box, error) {
+   offsets, err := tableU64(data)
+   if err != nil {
+      return nil, err
    }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'c', 'o', '6', '4'}
-   b.Header.Put(buffer)
-   return buffer
+   return &Co64Box{Offsets: offsets}, nil
 }
 
-type CttsBox struct {
-   Header  *BoxHeader
-   Entries []CttsEntry
-}
-
-func (b *CttsBox) Encode() []byte {
-   size := 16 + len(b.Entries)*8
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8   // Skip header
-   w.PutUint32(0) // Version 0, Flags 0
-   w.PutUint32(uint32(len(b.Entries)))
-   for _, entry := range b.Entries {
-      w.PutUint32(entry.SampleCount)
-      w.PutUint32(uint32(entry.SampleOffset))
-   }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'c', 't', 't', 's'}
-   b.Header.Put(buffer)
-   return buffer
+func (b Co64Box) Encode() []byte {
+   return encodeTable64("co64", b.Offsets)
 }
 
 // --- CTTS ---
+type CttsBox struct {
+   Entries []CttsEntry
+}
+
+func DecodeCttsBox(data []byte) (*CttsBox, error) {
+   raw, err := tableU32(data)
+   if err != nil {
+      return nil, err
+   }
+   b := &CttsBox{Entries: make([]CttsEntry, len(raw)/2)}
+   for i := range b.Entries {
+      b.Entries[i] = CttsEntry{raw[2*i], int32(raw[2*i+1])}
+   }
+   return b, nil
+}
+
+func (b CttsBox) Encode() []byte {
+   raw := make([]uint32, 2*len(b.Entries))
+   for i, entry := range b.Entries {
+      raw[2*i], raw[2*i+1] = entry.SampleCount, uint32(entry.SampleOffset)
+   }
+   return encodeTable("ctts", len(b.Entries), raw)
+}
+
 type CttsEntry struct {
    SampleCount  uint32
    SampleOffset int32
@@ -177,17 +130,22 @@ type CttsEntry struct {
 type StblBox struct {
    Header      *BoxHeader
    Stsd        *StsdBox
+   Stts        *SttsBox
+   Ctts        *CttsBox
+   Stsz        *StszBox
+   Stsc        *StscBox
+   Stco        *StcoBox
+   Co64        *Co64Box
+   Stss        *StssBox
    RawChildren [][]byte
 }
 
 func DecodeStblBox(data []byte) (*StblBox, error) {
    b := &StblBox{}
    var err error
-   b.Header, err = DecodeBoxHeader(data)
-   if err != nil {
+   if b.Header, err = DecodeBoxHeader(data); err != nil {
       return nil, err
    }
-
    payload := data[8:b.Header.Size]
    offset := 0
    for offset < len(payload) {
@@ -202,17 +160,29 @@ func DecodeStblBox(data []byte) (*StblBox, error) {
       if boxSize < 8 || offset+boxSize > len(payload) {
          return nil, errors.New("invalid child box size")
       }
-
       content := payload[offset : offset+boxSize]
       switch string(header.Type[:]) {
       case "stsd":
-         stsd, err := DecodeStsdBox(content)
-         if err != nil {
-            return nil, err
-         }
-         b.Stsd = stsd
+         b.Stsd, err = DecodeStsdBox(content)
+      case "stts":
+         b.Stts, err = DecodeSttsBox(content)
+      case "ctts":
+         b.Ctts, err = DecodeCttsBox(content)
+      case "stsz":
+         b.Stsz, err = DecodeStszBox(content)
+      case "stsc":
+         b.Stsc, err = DecodeStscBox(content)
+      case "stco":
+         b.Stco, err = DecodeStcoBox(content)
+      case "co64":
+         b.Co64, err = DecodeCo64Box(content)
+      case "stss":
+         b.Stss, err = DecodeStssBox(content)
       default:
          b.RawChildren = append(b.RawChildren, content)
+      }
+      if err != nil {
+         return nil, err
       }
       offset += boxSize
    }
@@ -234,52 +204,53 @@ func (b *StblBox) Encode() []byte {
 
 // --- STCO ---
 type StcoBox struct {
-   Header  *BoxHeader
    Offsets []uint32
 }
 
-func (b *StcoBox) Encode() []byte {
-   size := 16 + len(b.Offsets)*4
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8 // Skip header
-   w.PutUint32(0)
-   w.PutUint32(uint32(len(b.Offsets)))
-   for _, offset := range b.Offsets {
-      w.PutUint32(offset)
+func DecodeStcoBox(data []byte) (*StcoBox, error) {
+   offsets, err := tableU32(data)
+   if err != nil {
+      return nil, err
    }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'s', 't', 'c', 'o'}
-   b.Header.Put(buffer)
-   return buffer
+   return &StcoBox{Offsets: offsets}, nil
 }
 
-type StscBox struct {
-   Header  *BoxHeader
-   Entries []StscEntry
-}
-
-func (b *StscBox) Encode() []byte {
-   size := 16 + len(b.Entries)*12
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8 // Skip header
-   w.PutUint32(0)
-   w.PutUint32(uint32(len(b.Entries)))
-   for _, entry := range b.Entries {
-      w.PutUint32(entry.FirstChunk)
-      w.PutUint32(entry.SamplesPerChunk)
-      w.PutUint32(entry.SampleDescriptionIndex)
-   }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'s', 't', 's', 'c'}
-   b.Header.Put(buffer)
-   return buffer
+func (b StcoBox) Encode() []byte {
+   return encodeTable("stco", len(b.Offsets), b.Offsets)
 }
 
 // --- STSC ---
+type StscBox struct {
+   Entries []StscEntry
+}
+
+func DecodeStscBox(data []byte) (*StscBox, error) {
+   if len(data) < 16 {
+      return nil, errors.New("box too short")
+   }
+   p := parser{data: data, offset: 8}
+   _ = p.Uint32() // version and flags
+   count := p.Uint32()
+   if int(count) > (len(data)-p.offset)/12 {
+      return nil, errors.New("box too short for declared entries")
+   }
+   b := &StscBox{Entries: make([]StscEntry, count)}
+   for i := range b.Entries {
+      b.Entries[i].FirstChunk = p.Uint32()
+      b.Entries[i].SamplesPerChunk = p.Uint32()
+      b.Entries[i].SampleDescriptionIndex = p.Uint32()
+   }
+   return b, nil
+}
+
+func (b StscBox) Encode() []byte {
+   raw := make([]uint32, 3*len(b.Entries))
+   for i, entry := range b.Entries {
+      raw[3*i], raw[3*i+1], raw[3*i+2] = entry.FirstChunk, entry.SamplesPerChunk, entry.SampleDescriptionIndex
+   }
+   return encodeTable("stsc", len(b.Entries), raw)
+}
+
 type StscEntry struct {
    FirstChunk             uint32
    SamplesPerChunk        uint32
@@ -288,77 +259,91 @@ type StscEntry struct {
 
 // --- STSS ---
 type StssBox struct {
-   Header  *BoxHeader
    Indices []uint32
 }
 
-func (b *StssBox) Encode() []byte {
-   size := 16 + len(b.Indices)*4
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8 // Skip Header
-   w.PutUint32(0)
-   w.PutUint32(uint32(len(b.Indices)))
-   for _, index := range b.Indices {
-      w.PutUint32(index)
+func DecodeStssBox(data []byte) (*StssBox, error) {
+   indices, err := tableU32(data)
+   if err != nil {
+      return nil, err
    }
+   return &StssBox{Indices: indices}, nil
+}
 
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'s', 't', 's', 's'}
-   b.Header.Put(buffer)
-   return buffer
+func (b StssBox) Encode() []byte {
+   return encodeTable("stss", len(b.Indices), b.Indices)
 }
 
 // --- STSZ ---
 type StszBox struct {
-   Header      *BoxHeader
    SampleSize  uint32
    SampleCount uint32
    EntrySizes  []uint32
 }
 
-func (b *StszBox) Encode() []byte {
-   size := 20 + len(b.EntrySizes)*4
-   buffer := make([]byte, size)
+func DecodeStszBox(data []byte) (*StszBox, error) {
+   if len(data) < 20 {
+      return nil, errors.New("stsz box too short")
+   }
+   p := parser{data: data, offset: 8}
+   _ = p.Uint32() // version and flags
+   b := &StszBox{}
+   b.SampleSize = p.Uint32()
+   b.SampleCount = p.Uint32()
+   if b.SampleSize != 0 {
+      return b, nil // constant sample size: no per-sample entries
+   }
+   if int(b.SampleCount) > (len(data)-p.offset)/4 {
+      return nil, errors.New("stsz box too short for declared entries")
+   }
+   b.EntrySizes = make([]uint32, b.SampleCount)
+   for i := range b.EntrySizes {
+      b.EntrySizes[i] = p.Uint32()
+   }
+   return b, nil
+}
+
+func (b StszBox) Encode() []byte {
+   buffer := make([]byte, 20+len(b.EntrySizes)*4)
    w := writer{buf: buffer}
-   w.offset = 8 // Skip header
-   w.PutUint32(0)
+   w.offset = 8
+   w.PutUint32(0) // version and flags
    w.PutUint32(b.SampleSize)
    w.PutUint32(b.SampleCount)
-   for _, entrySize := range b.EntrySizes {
-      w.PutUint32(entrySize)
+   for _, size := range b.EntrySizes {
+      w.PutUint32(size)
    }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'s', 't', 's', 'z'}
-   b.Header.Put(buffer)
-   return buffer
-}
-
-type SttsBox struct {
-   Header  *BoxHeader
-   Entries []SttsEntry
-}
-
-func (b *SttsBox) Encode() []byte {
-   size := 16 + len(b.Entries)*8
-   buffer := make([]byte, size)
-   w := writer{buf: buffer}
-   w.offset = 8 // Skip header
-   w.PutBytes([]byte{0, 0, 0, 0})
-   w.PutUint32(uint32(len(b.Entries)))
-   for _, entry := range b.Entries {
-      w.PutUint32(entry.SampleCount)
-      w.PutUint32(entry.SampleDuration)
-   }
-
-   b.Header.Size = uint32(size)
-   b.Header.Type = [4]byte{'s', 't', 't', 's'}
-   b.Header.Put(buffer)
+   header := &BoxHeader{Size: uint32(len(buffer))}
+   copy(header.Type[:], "stsz")
+   header.Put(buffer)
    return buffer
 }
 
 // --- STTS ---
+type SttsBox struct {
+   Entries []SttsEntry
+}
+
+func DecodeSttsBox(data []byte) (*SttsBox, error) {
+   raw, err := tableU32(data)
+   if err != nil {
+      return nil, err
+   }
+   b := &SttsBox{Entries: make([]SttsEntry, len(raw)/2)}
+   for i := range b.Entries {
+      b.Entries[i] = SttsEntry{raw[2*i], raw[2*i+1]}
+   }
+   return b, nil
+}
+
+func (b SttsBox) Encode() []byte {
+   raw := make([]uint32, 2*len(b.Entries))
+   for i, entry := range b.Entries {
+      raw[2*i], raw[2*i+1] = entry.SampleCount, entry.SampleDuration
+   }
+   return encodeTable("stts", len(b.Entries), raw)
+}
+
 type SttsEntry struct {
    SampleCount    uint32
    SampleDuration uint32

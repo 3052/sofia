@@ -114,7 +114,14 @@ func DecodeMdatBox(data []byte) (*MdatBox, error) {
    if err != nil {
       return nil, err
    }
-   b.Payload = data[8:b.Header.Size]
+   size := int(b.Header.Size)
+   if size == 0 { // box extends to the end of the data
+      size = len(data)
+   }
+   if size < 8 || size > len(data) {
+      return nil, errors.New("mdat box size out of range")
+   }
+   b.Payload = data[8:size]
    return b, nil
 }
 

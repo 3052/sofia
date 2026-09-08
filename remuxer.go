@@ -63,13 +63,15 @@ func readBoxHeader(r io.Reader) (typ [4]byte, size int64, err error) {
    return
 }
 
-// skipBox discards a box payload. size -1 means discard to EOF.
+// skipBox discards a box payload. The header was already consumed by
+// readBoxHeader, so only size-8 bytes remain. size -1 means discard to
+// EOF.
 func skipBox(r io.Reader, size int64) error {
    if size < 0 {
       _, err := io.Copy(io.Discard, r)
       return err
    }
-   _, err := io.CopyN(io.Discard, r, size)
+   _, err := io.CopyN(io.Discard, r, size-8)
    return err
 }
 

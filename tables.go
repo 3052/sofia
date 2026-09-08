@@ -2,6 +2,113 @@ package sofia
 
 import "errors"
 
+// The sample tables of a progressive MP4. stbl is the container; its child
+// boxes map to RemuxSample fields (stts durations, ctts composition time
+// offsets, stsz sizes, stss sync flags) and to chunk locations (stsc
+// counts, stco/co64 offsets). The table boxes store only their entries:
+// headers exist only in encoded bytes and are rebuilt by the encoders.
+// The build functions turn remuxer state into the table boxes Finish
+// appends to the file.
+
+// buildChunkOffsetBox decides whether to use stco or co64.
+func buildChunkOffsetBox(offsets []uint64) []byte {
+   for _, offset := range offsets {
+      if offset > 0xFFFFFFFF {
+         return encodeTable64("co64", offsets)
+      }
+   }
+   entries32 := make([]uint32, len(offsets))
+   for i, offset := range offsets {
+      entries32[i] = uint32(offset)
+   }
+   return encodeTable("stco", len(entries32), entries32)
+}
+
+func buildCtts(samples []*RemuxSample) []byte {
+   hasCTO := false
+   for _, sample := range samples {
+      if sample.CompositionTimeOffset != 0 {
+         hasCTO = true
+         break
+      }
+   }
+   if !hasCTO {
+      return nil // no ctts box needed if all offsets are 0
+   }
+
+   var entries []CttsEntry
+   if len(samples) > 0 {
+      currentOffset := samples[0].CompositionTimeOffset
+      currentCount := uint32(0)
+      for _, sample := range samples {
+         if sample.CompositionTimeOffset == currentOffset {
+            currentCount++
+         } else {
+            entries = append(entries, CttsEntry{currentCount, currentOffset})
+            currentOffset = sample.CompositionTimeOffset
+            currentCount = 1
+         }
+      }
+      entries = append(entries, CttsEntry{currentCount, currentOffset})
+   }
+   return CttsBox{Entries: entries}.Encode()
+}
+
+func buildStsc(counts []uint32) []byte {
+   var entries []StscEntry
+   chunkIdx := uint32(1)
+   for _, count := range counts {
+      if n := len(entries); n > 0 && entries[n-1].SamplesPerChunk == count {
+         chunkIdx++
+         continue
+      }
+      entries = append(entries, StscEntry{chunkIdx, count, 1})
+      chunkIdx++
+   }
+   return StscBox{Entries: entries}.Encode()
+}
+
+func buildStss(samples []*RemuxSample) []byte {
+   var indices []uint32
+   for i, sample := range samples {
+      if sample.IsSync {
+         indices = append(indices, uint32(i+1))
+      }
+   }
+   if len(indices) == len(samples) {
+      return nil
+   }
+   return StssBox{Indices: indices}.Encode()
+}
+
+func buildStsz(samples []*RemuxSample) []byte {
+   entries := make([]uint32, len(samples))
+   for i, sample := range samples {
+      entries[i] = sample.Size
+   }
+   return StszBox{SampleCount: uint32(len(samples)), EntrySizes: entries}.Encode()
+}
+
+func buildStts(samples []*RemuxSample) []byte {
+   if len(samples) == 0 {
+      return nil
+   }
+   var entries []SttsEntry
+   currentDuration := samples[0].Duration
+   currentCount := uint32(0)
+   for _, sample := range samples {
+      if sample.Duration == currentDuration {
+         currentCount++
+      } else {
+         entries = append(entries, SttsEntry{currentCount, currentDuration})
+         currentDuration = sample.Duration
+         currentCount = 1
+      }
+   }
+   entries = append(entries, SttsEntry{currentCount, currentDuration})
+   return SttsBox{Entries: entries}.Encode()
+}
+
 // encodeTable builds a table box from raw 4-byte entries. count is the
 // entry count written into the box, which differs from len(entries) when
 // one entry spans several words (stts, ctts, stsc).
@@ -35,12 +142,6 @@ func encodeTable64(name string, entries []uint64) []byte {
    header.Put(buffer)
    return buffer
 }
-
-// The sample tables of a progressive MP4. stbl is the container; its child
-// boxes map to RemuxSample fields (stts durations, ctts composition time
-// offsets, stsz sizes, stss sync flags) and to chunk locations (stsc
-// counts, stco/co64 offsets). The table boxes store only their entries:
-// headers exist only in encoded bytes and are rebuilt by the encoders.
 
 // tableU32 decodes the common table shape — version/flags, entry count,
 // then count 4-byte entries — and returns the raw entries.
@@ -238,7 +339,7 @@ func DecodeStscBox(data []byte) (*StscBox, error) {
    _ = p.Uint32() // version and flags
    count := p.Uint32()
    if int(count) > (len(data)-p.offset)/12 {
-      return nil, errors.New("box too short for declared entries")
+      return nil, errors.New("stsc box too short for declared entries")
    }
    b := &StscBox{Entries: make([]StscEntry, count)}
    for i := range b.Entries {

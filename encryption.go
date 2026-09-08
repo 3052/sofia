@@ -102,67 +102,6 @@ func DecodePsshBox(data []byte) (*PsshBox, error) {
    return b, nil
 }
 
-type SencBox struct {
-   Header  *BoxHeader
-   Flags   uint32
-   Samples []SencSample
-}
-
-func DecodeSencBox(data []byte) (*SencBox, error) {
-   b := &SencBox{}
-   var err error
-   b.Header, err = DecodeBoxHeader(data)
-   if err != nil {
-      return nil, err
-   }
-
-   if len(data) < 16 { // 8 byte header, 4 byte flags, 4 byte sample count
-      return nil, errors.New("senc too short")
-   }
-
-   p := parser{data: data, offset: 8}
-   b.Flags = p.Uint32() & 0x00FFFFFF
-   sampleCount := p.Uint32()
-
-   b.Samples = make([]SencSample, sampleCount)
-   const ivSize = 8
-   subsamplesPresent := b.Flags&0x000002 != 0
-   for i := uint32(0); i < sampleCount; i++ {
-      if len(data) < p.offset+ivSize {
-         return nil, errors.New("senc truncated while reading IV")
-      }
-      b.Samples[i].IV = p.Bytes(ivSize)
-
-      if subsamplesPresent {
-         if len(data) < p.offset+2 {
-            return nil, errors.New("senc truncated while reading subsample count")
-         }
-         subsampleCount := p.Uint16()
-         b.Samples[i].Subsamples = make([]Subsample, subsampleCount)
-         for j := uint16(0); j < subsampleCount; j++ {
-            if len(data) < p.offset+6 {
-               return nil, errors.New("senc truncated while reading subsample")
-            }
-            clear := p.Uint16()
-            prot := p.Uint32()
-            b.Samples[i].Subsamples[j] = Subsample{clear, prot}
-         }
-      }
-   }
-   return b, nil
-}
-
-type SencSample struct {
-   IV         []byte
-   Subsamples []Subsample
-}
-
-// --- SENC ---
-type Subsample struct {
-   BytesOfClearData     uint16
-   BytesOfProtectedData uint32
-}
-
 // --- TENC ---
 // TencBox defines the Track Encryption Box ('tenc'), which contains
 // default encryption parameters for a track.

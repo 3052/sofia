@@ -1,3 +1,4 @@
+// remuxer.go
 package sofia
 
 import (
@@ -7,6 +8,71 @@ import (
    "io"
 )
 
+// ErrStopped is returned by Process when the Stop channel was closed.
+// Every segment processed before the return is durable in the output
+// file; Progress reports where a resume should re-request from.
+var ErrStopped = errors.New("process stopped")
+
+// readBox buffers a complete box, header included, so the []byte
+// decoders can work on it unchanged. Only for small boxes: never mdat.
+func readBox(r io.Reader, typ [4]byte, size int64) ([]byte, error) {
+   if size < 0 {
+      return nil, errors.New("box extends to EOF; cannot buffer it")
+   }
+   if size > 0xFFFFFFFF {
+      return nil, errors.New("box too large to buffer")
+   }
+   buf := make([]byte, size)
+   binary.BigEndian.PutUint32(buf[0:4], uint32(size))
+   copy(buf[4:8], typ[:])
+   if _, err := io.ReadFull(r, buf[8:]); err != nil {
+      return nil, err
+   }
+   return buf, nil
+}
+
+// readBoxHeader reads one box header from r and returns the box type
+// with the full box size, header included. A size of -1 means the size
+// field was 0 and the box extends to the end of the stream, which only
+// makes sense for mdat.
+func readBoxHeader(r io.Reader) (typ [4]byte, size int64, err error) {
+   var head [8]byte
+   if _, err = io.ReadFull(r, head[:]); err != nil {
+      return
+   }
+   copy(typ[:], head[4:8])
+   n := binary.BigEndian.Uint32(head[0:4])
+   switch {
+   case n == 0:
+      size = -1
+   case n == 1:
+      var large [8]byte
+      if _, err = io.ReadFull(r, large[:]); err != nil {
+         return
+      }
+      size = int64(binary.BigEndian.Uint64(large[:]))
+      if size < 16 {
+         err = errors.New("invalid box largesize")
+      }
+   default:
+      size = int64(n)
+      if size < 8 {
+         err = errors.New("invalid box size")
+      }
+   }
+   return
+}
+
+// skipBox discards a box payload. size -1 means discard to EOF.
+func skipBox(r io.Reader, size int64) error {
+   if size < 0 {
+      _, err := io.Copy(io.Discard, r)
+      return err
+   }
+   _, err := io.CopyN(io.Discard, r, size)
+   return err
+}
+
 type RemuxSample struct {
    Size                  uint32
    Duration              uint32
@@ -15,31 +81,36 @@ type RemuxSample struct {
 }
 
 type Remuxer struct {
-   Writer              io.WriteSeeker
-   Moov                *MoovBox
+   Writer   io.WriteSeeker
+   Moov     *MoovBox
+   OnSample func(data []byte, sample *SencSample)
+   // OnMoov, when set, is called by Process when it consumes a moov from
+   // the stream, before any segment is processed. Returning an error
+   // aborts Process. This is where a caller fetches its DRM key: the KID
+   // lives in the moov, and the key must be in hand before any sample is
+   // decrypted. While the callback runs the reader is simply not being
+   // read; the open HTTP connection sits backpressured.
+   OnMoov func(moov *MoovBox) error
+   // Stop, when closed, asks Process to return ErrStopped at the next
+   // segment boundary. A nil Stop means Process never stops early. The
+   // caller owns the channel and closes it; sofia only receives.
+   Stop <-chan struct{}
+
    samples             []*RemuxSample
    chunkOffsets        []uint64
    segmentSampleCounts []uint32
    mdatStartOffset     int64
    segmentCount        int
-   OnSample            func(data []byte, sample *SencSample)
 
-   // Feed state: buf holds the bytes of a box that is not yet complete,
-   // bytesFed counts every byte ever fed, pendingMoof is the moof whose
-   // mdat has not fully arrived, and resumeOffset is the input position
-   // (relative to the first byte fed) just past the last complete
-   // fragment.
-   buf          []byte
-   bytesFed     int64
-   pendingMoof  *MoofBox
+   // Process state: resumeOffset is the byte position, relative to the
+   // first byte this session's Process call read, just past the last
+   // complete segment.
    resumeOffset int64
 }
 
 // AddSegment processes one complete, standalone segment: every
 // moof+mdat pair inside it becomes a fragment. Trailing bytes that do
-// not form a complete box are ignored. Callers feeding a continuous
-// single-URL stream must use Feed instead, which keeps incomplete boxes
-// buffered across calls.
+// not form a complete box are ignored.
 func (r *Remuxer) AddSegment(segmentData []byte) error {
    if r.Moov == nil {
       return errors.New("must call Initialize")
@@ -91,67 +162,6 @@ func (r *Remuxer) AdoptState(initSegment []byte, state *RemuxState, segmentsDone
    r.chunkOffsets = state.ChunkOffsets
    r.segmentSampleCounts = state.SamplesPerChunk
    r.segmentCount = segmentsDone
-   return nil
-}
-
-// Feed streams a continuous single-URL file in slices: data is appended
-// to an internal buffer and every box that is fully buffered is
-// processed — ftyp, sidx and styp are skipped, and each complete
-// moof+mdat pair becomes a fragment. Bytes of a box that is not yet
-// complete stay buffered until a later Feed completes it, so the buffer
-// never grows past the largest incomplete box, which in practice is the
-// mdat of one fragment. Initialize must be called first.
-func (r *Remuxer) Feed(data []byte) error {
-   if r.Moov == nil {
-      return errors.New("must call Initialize")
-   }
-   r.buf = append(r.buf, data...)
-   r.bytesFed += int64(len(data))
-   for len(r.buf) >= 8 {
-      header, err := DecodeBoxHeader(r.buf)
-      if err != nil {
-         return err
-      }
-      boxSize := int(header.Size)
-      if boxSize == 0 {
-         // box extends to the end of the data
-         boxSize = len(r.buf)
-      }
-      if boxSize < 8 {
-         return errors.New("invalid box size")
-      }
-      if boxSize > len(r.buf) {
-         // incomplete box: wait for more data
-         return nil
-      }
-      boxData := r.buf[:boxSize]
-      switch string(header.Type[:]) {
-      case "moof":
-         moof, err := DecodeMoofBox(boxData)
-         if err != nil {
-            return fmt.Errorf("parsing moof: %w", err)
-         }
-         r.pendingMoof = moof
-      case "mdat":
-         if r.pendingMoof != nil {
-            mdat, err := DecodeMdatBox(boxData)
-            if err != nil {
-               return err
-            }
-            if err := r.processFragment(r.pendingMoof, mdat); err != nil {
-               return err
-            }
-            r.pendingMoof = nil
-            r.segmentCount++
-            // input position (relative to the first byte fed) just past
-            // this fragment
-            r.resumeOffset = r.bytesFed - int64(len(r.buf)-boxSize)
-         }
-      default:
-         // ftyp, sidx, styp, moov (already installed): skipped
-      }
-      r.buf = r.buf[boxSize:]
-   }
    return nil
 }
 
@@ -208,14 +218,14 @@ func (r *Remuxer) Finish() error {
    }
    stbl.Stsd.RemoveSinf()
    stbl.RawChildren = append(stbl.RawChildren, stts)
-   if ctts != nil {
-      stbl.RawChildren = append(stbl.RawChildren, ctts)
-   }
    stbl.RawChildren = append(stbl.RawChildren, stsz)
    stbl.RawChildren = append(stbl.RawChildren, stsc)
    stbl.RawChildren = append(stbl.RawChildren, offsetBox)
    if stss != nil {
       stbl.RawChildren = append(stbl.RawChildren, stss)
+   }
+   if ctts != nil {
+      stbl.RawChildren = append(stbl.RawChildren, ctts)
    }
    moovBytes := r.Moov.Encode()
    if _, err := r.Writer.Write(moovBytes); err != nil {
@@ -242,6 +252,130 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    if err := r.initMoov(initSegment); err != nil {
       return err
    }
+   return r.beginMoovFrom(r.Moov)
+}
+
+// Process streams a continuous MP4 from reader: ftyp, sidx, styp and
+// free boxes are skipped without interpretation, the first moov
+// initializes the remuxer (calling OnMoov before any segment is
+// processed; a moov arriving when the remuxer is already initialized —
+// from an init segment or a resume — is skipped), and each moof+mdat
+// pair becomes a segment processed exactly as AddSegment would process
+// it. One segment at a time is held in memory — the moof and mdat
+// bytes — and released before the next segment is read. The reader is
+// consumed directly with no intermediate buffering: it should be the
+// raw HTTP response body.
+//
+// It returns nil at EOF, ErrStopped when Stop was closed, or the first
+// error. Stop is checked between segments, so a segment whose moof was
+// already read still completes.
+func (r *Remuxer) Process(reader io.Reader) error {
+   br := &boxReader{R: reader}
+   var pendingMoof *MoofBox
+   for {
+      if r.Stop != nil {
+         select {
+         case <-r.Stop:
+            return ErrStopped
+         default:
+         }
+      }
+      typ, size, err := readBoxHeader(br)
+      if err == io.EOF {
+         return nil
+      }
+      if err != nil {
+         return err
+      }
+      switch string(typ[:]) {
+      case "moov":
+         if r.Moov != nil {
+            err = skipBox(br, size)
+            break
+         }
+         data, bufErr := readBox(br, typ, size)
+         if bufErr != nil {
+            err = bufErr
+            break
+         }
+         moov, decErr := DecodeMoovBox(data)
+         if decErr != nil {
+            err = decErr
+            break
+         }
+         if err = r.beginMoovFrom(moov); err != nil {
+            break
+         }
+         if r.OnMoov != nil {
+            err = r.OnMoov(moov)
+         }
+      case "moof":
+         data, bufErr := readBox(br, typ, size)
+         if bufErr != nil {
+            err = bufErr
+            break
+         }
+         pendingMoof, err = DecodeMoofBox(data)
+      case "mdat":
+         if pendingMoof == nil {
+            err = skipBox(br, size)
+            break
+         }
+         var mdat *MdatBox
+         if size < 0 {
+            // box extends to EOF: the payload is the rest of the stream
+            data, readErr := io.ReadAll(br)
+            if readErr != nil {
+               err = readErr
+               break
+            }
+            mdat = &MdatBox{Payload: data}
+         } else {
+            data, bufErr := readBox(br, typ, size)
+            if bufErr != nil {
+               err = bufErr
+               break
+            }
+            mdat, err = DecodeMdatBox(data)
+            if err != nil {
+               break
+            }
+         }
+         if err = r.processFragment(pendingMoof, mdat); err != nil {
+            break
+         }
+         pendingMoof = nil
+         r.segmentCount++
+         r.resumeOffset = br.N
+      default:
+         err = skipBox(br, size)
+      }
+      if err != nil {
+         return err
+      }
+   }
+}
+
+// Progress reports the resume point after Process returns: the number
+// of bytes consumed just past the last complete segment, and the number
+// of segments processed. The offset is relative to the first byte this
+// session's Process call read, so a resumed session adds the offset it
+// started from.
+func (r *Remuxer) Progress() (inputOffset int64, segmentsDone int) {
+   return r.resumeOffset, r.segmentCount
+}
+
+// beginMoovFrom installs a moov decoded from a stream or an init segment
+// and writes the placeholder mdat header at the current writer
+// position. Initialize and Process both go through here.
+func (r *Remuxer) beginMoovFrom(moov *MoovBox) error {
+   if r.Writer == nil {
+      return errors.New("writer is nil")
+   }
+   if len(moov.Trak) == 0 {
+      return errors.New("no trak found")
+   }
+   r.Moov = moov
    var err error
    r.mdatStartOffset, err = r.Writer.Seek(0, io.SeekCurrent)
    if err != nil {
@@ -252,16 +386,6 @@ func (r *Remuxer) Initialize(initSegment []byte) error {
    copy(mdatHeader[4:8], []byte("mdat"))
    _, err = r.Writer.Write(mdatHeader)
    return err
-}
-
-// Progress returns the resume point for a single-URL stream: the input
-// byte offset just past the last fully processed fragment — relative to
-// the FIRST byte fed to this Remuxer, so a resumed session must add its
-// own starting offset — and the number of fragments completed. Bytes of
-// a fragment that was still incomplete when the download stopped are
-// re-fed on resume.
-func (r *Remuxer) Progress() (inputOffset int64, fragmentsDone int) {
-   return r.resumeOffset, r.segmentCount
 }
 
 func (r *Remuxer) initMoov(initSegment []byte) error {
@@ -281,6 +405,19 @@ func (r *Remuxer) initMoov(initSegment []byte) error {
       return errors.New("no trak found")
    }
    return nil
+}
+
+// boxReader counts every byte consumed so Progress can report a
+// byte-exact resume offset.
+type boxReader struct {
+   R io.Reader
+   N int64
+}
+
+func (b *boxReader) Read(p []byte) (int, error) {
+   n, err := b.R.Read(p)
+   b.N += int64(n)
+   return n, err
 }
 
 // remuxer.go

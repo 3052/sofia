@@ -1,4 +1,3 @@
- [!NOTE]
  ⚠️ **Development has moved to Codeberg:**
 https://codeberg.org/26/sofia
 
